@@ -24,7 +24,7 @@ The component currently supports react v18.x.
 
 ## Local development Quickstart
 
-- Install dependencies: ```shell ./setup.sh```
+- Install dependencies: ```source ./setup.sh```
 - Run local server: `yarn start` (starts local CRA server with component wrapper in a UI workbench)
 - Build: `yarn build`
 - Electron: `yarn dev-electron`
