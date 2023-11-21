@@ -24,9 +24,10 @@ The component currently supports react v18.x.
 
 ## Local development Quickstart
 
-- Install dependencies: `yarn`
+- Install dependencies: ```shell ./setup.sh```
 - Run local server: `yarn start` (starts local CRA server with component wrapper in a UI workbench)
 - Build: `yarn build`
+- Electron: `yarn dev-electron`
 
 ## Basic Usage
 
@@ -97,7 +98,7 @@ interface Corpus {
 - `language` language code via [ISO 639-3](https://iso639-3.sil.org/code_tables/639/data)
 - `words: Word[]` object representing a word in the corpus. See [`Word`](#word) below.
 - `fullText?: string` _optional_ - full unsegmented text of the corpus
-- `syntax?: SyntaxRoot` _optional_ - syntactic parsing of the corpus. See [`SyntaxRoot`](#syntax-root) below.
+- `syntax?: SyntaxRoot` _optional_ - syntactic parsing of the corpus. See [`SyntaxRoot`](#syntaxroot) below.
 
 #### `Word`
 
@@ -143,7 +144,7 @@ interface Alignment {
 
 - `source: string` id of the source corpus
 - `target: string` id of the target corpus
-- `polarity: AlignmentPolarity` describes the directionality of the alignment see [`AlignmentPolarity`](#alignment-polarity) below.
+- `polarity: AlignmentPolarity` describes the directionality of the alignment see [`AlignmentPolarity`](#alignmentpolarity) below.
 - `links: Link[]` relationship entities between the two corpora. see [`Links`](#links)
 
 #### `AlignmentPolarity`
