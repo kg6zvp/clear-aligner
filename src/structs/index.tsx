@@ -43,6 +43,13 @@ export interface Corpus {
   syntax?: SyntaxRoot;
 }
 
+export enum CorpusType {
+  SBL = 'sbl',
+  NVI = 'nvi',
+  LEB = 'leb',
+  BACK_TRANS = 'backTrans'
+}
+
 // An instance of alignment
 export interface Link {
   _id?: string;
