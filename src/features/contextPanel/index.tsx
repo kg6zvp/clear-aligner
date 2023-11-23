@@ -1,23 +1,11 @@
 import { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 
-import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import Treedown from 'features/treedown';
 import LinkBuilderComponent from 'features/linkBuilder';
-
-import { Corpus, TreedownType } from 'structs';
 
 export const ContextPanel = (): ReactElement => {
   useDebug('ContextPanel');
-
-  const greekCorpus =
-    useAppSelector((state) => {
-      const syntaxCorpora = ['sbl', 'nestle1904'];
-      return state.alignment.present.corpora.find((corpus: Corpus) => {
-        return syntaxCorpora.includes(corpus.id);
-      });
-    }) ?? ({} as Corpus);
 
   return (
     <Stack

@@ -1,4 +1,4 @@
-import { ReactElement, useState, useEffect } from 'react';
+import React, { ReactElement, useState, useEffect } from 'react';
 
 import { Corpus, SyntaxType, SyntaxRoot } from 'structs';
 
@@ -60,40 +60,29 @@ const getDefaultRef = (): number[] => {
   return [book, chapter, verse];
 };
 
-const Workbench = (props: WorkbenchProps): ReactElement => {
+const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
   const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
-
-  const [updatedAlignments, setUpdatedAlignments] = useState(null);
 
   document.title = getRefParam()
     ? `${documentTitle} ${getRefParam()}`
     : documentTitle;
 
-  const [theme, setTheme] = useState('night');
+  const [theme] = useState('night');
 
-  const [showSourceText, setShowSourceText] = useState(true);
-  const [showTargetText, setShowTargetText] = useState(true);
-  const [showLwcText, setShowLwcText] = useState(true);
-  const [showBackText, setShowBackText] = useState(true);
+  const [showSourceText] = useState(true);
+  const [showTargetText] = useState(true);
+  const [showLwcText] = useState(true);
+  const [showBackText] = useState(true);
 
-  const [book, setBook] = useState(defaultBook);
-  const [chapter, setChapter] = useState(defaultChapter);
-  const [verse, setVerse] = useState(defaultVerse);
+  const [book] = useState(defaultBook);
+  const [chapter] = useState(defaultChapter);
+  const [verse] = useState(defaultVerse);
 
   const [syntaxData, setSyntaxData] = useState(
     placeholderTreedown as SyntaxRoot
   );
 
   const bookDoc = books.find((bookItem) => bookItem.BookNumber === book);
-
-  let chapterCount = 0;
-
-  if (bookDoc && bookDoc?.ChapterCount) {
-    chapterCount = Number(bookDoc.ChapterCount);
-  }
-  const chapters = Array.from(Array(chapterCount).keys()).map((x) => x + 1);
-
-  const verses = Array.from(Array(200).keys()).map((x) => x + 1);
 
   useEffect(() => {
     const loadSyntaxData = async () => {
@@ -213,9 +202,6 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
               },
             },
           ]}
-          alignmentUpdated={(alignments: any) => {
-            setUpdatedAlignments(alignments);
-          }}
         />
       </div>
     </div>
