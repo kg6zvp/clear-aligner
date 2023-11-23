@@ -227,7 +227,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         <Tooltip
           placement="top"
           arrow
-          open={currentCorpusViewports.length === 0}
+          open={Boolean(!currentCorpusViewports.length && corporaWithoutViewport.length)}
           title={
             <>
               <Typography color="info.light">Click here</Typography>
@@ -243,6 +243,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           >
             <Button
               variant="contained"
+              disabled={!corporaWithoutViewport.length}
               onClick={() => {
                 dispatch(
                   addCorpusViewport({

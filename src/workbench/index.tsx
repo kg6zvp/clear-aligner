@@ -1,4 +1,4 @@
-import { ReactElement, useState, useEffect, useCallback } from 'react';
+import React, { ReactElement } from 'react';
 
 import {Corpus, SyntaxType, SyntaxRoot, CorpusType} from 'structs';
 
@@ -63,57 +63,28 @@ const getDefaultRef = (): number[] => {
 const Workbench = (props: WorkbenchProps): ReactElement => {
   const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
 
-  const [updatedAlignments, setUpdatedAlignments] = useState(null);
-
   document.title = getRefParam()
     ? `${documentTitle} ${getRefParam()}`
     : documentTitle;
 
-  const [theme, setTheme] = useState('night');
+  const [theme] = React.useState('night');
+  const [corpora, setCorpora] = React.useState<Corpus[]>([]);
 
-  const [showSourceText, setShowSourceText] = useState(true);
-  const [showTargetText, setShowTargetText] = useState(true);
-  const [showLwcText, setShowLwcText] = useState(true);
-  const [showBackText, setShowBackText] = useState(true);
+  const [book] = React.useState(defaultBook);
+  const [chapter] = React.useState(defaultChapter);
+  const [verse] = React.useState(defaultVerse);
 
-  const [book, setBook] = useState(defaultBook);
-  const [chapter, setChapter] = useState(defaultChapter);
-  const [verse, setVerse] = useState(defaultVerse);
-
-  const [syntaxData, setSyntaxData] = useState(
+  const [syntaxData, setSyntaxData] = React.useState(
     placeholderTreedown as SyntaxRoot
   );
 
-  const bookDoc = books.find((bookItem) => bookItem.BookNumber === book);
+  const bookDoc = React.useMemo(() => books.find((bookItem) => bookItem.BookNumber === book), [books]);
 
-  let chapterCount = 0;
-
-  if (bookDoc && bookDoc?.ChapterCount) {
-    chapterCount = Number(bookDoc.ChapterCount);
-  }
-
-  const [corpora, setCorpora] = useState<Corpus[]>([]);
-
-  const displayText = (text: string) => {
-    switch(text) {
-      case CorpusType.SBL:
-        return showSourceText;
-      case CorpusType.NVI:
-        return showTargetText;
-      case CorpusType.LEB:
-        return showLwcText;
-      case CorpusType.BACK_TRANS:
-        return showBackText;
-      default:
-        return false;
-    }
-  }
-
-  const updateCorpora = useCallback(() => {
+  const updateCorpora = React.useCallback(() => {
     new Promise((res) => {
       const retrievedCorpora: Corpus[] = [];
       const texts = Object.values(CorpusType);
-      texts.filter(displayText).forEach((text, idx) => {
+      texts.forEach((text, idx) => {
         queryText(text, book, chapter, verse).then(foundCorpora => {
           retrievedCorpora.push({
             ...foundCorpora,
@@ -127,7 +98,7 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
     }).then(res => setCorpora(res as Corpus[]));
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     void updateCorpora();
     const loadSyntaxData = async () => {
       try {
@@ -217,9 +188,6 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
               },
             },
           ]}
-          alignmentUpdated={(alignments: any) => {
-            setUpdatedAlignments(alignments);
-          }}
         />
       </div>
     </div>
