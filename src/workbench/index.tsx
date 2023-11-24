@@ -9,7 +9,13 @@ import fetchSyntaxData from 'workbench/fetchSyntaxData';
 import {getAvailableCorporaIds, queryText} from 'workbench/query';
 import books from 'workbench/books';
 
-interface WorkbenchProps {}
+import placeholderTreedown from 'features/treedown/treedown.json';
+import BCVWP from "../BCVWP/BCVWPSupport";
+
+interface WorkbenchProps {
+  corpora?: Corpus[];
+  currentPosition: BCVWP;
+}
 
 const documentTitle = '🌲⬇️';
 
@@ -58,19 +64,21 @@ const getDefaultRef = (): number[] => {
   return [book, chapter, verse];
 };
 
-const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
+const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: WorkbenchProps): ReactElement => {
   const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
 
   document.title = getRefParam()
     ? `${documentTitle} ${getRefParam()}`
     : documentTitle;
 
-  const [theme] = React.useState('night');
-  const [corpora, setCorpora] = React.useState<Corpus[]>([]);
+  const [showSourceText, setShowSourceText] = React.useState(true);
+  const [showTargetText, setShowTargetText] = React.useState(true);
+  const [showLwcText, setShowLwcText] = React.useState(true);
+  const [showBackText, setShowBackText] = React.useState(true);
 
-  const [book] = React.useState(defaultBook);
-  const [chapter] = React.useState(defaultChapter);
-  const [verse] = React.useState(defaultVerse);
+  const book = currentPosition.book ?? 0;
+  const chapter = currentPosition.chapter ?? 1;
+  const verse = currentPosition.verse ?? 1;
 
   const bookDoc = React.useMemo(
     () => books.find((bookItem) => bookItem.BookNumber === book),
@@ -108,8 +116,38 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
     loadSyntaxData().catch(console.error);
   }, [bookDoc, book, chapter, verse]);
 
-  return (
-    <div>
+  const corpora: Corpus[] = [];
+
+  if (showSourceText) {
+    const sourceCorpus = {
+      ...queryText('sbl', book, chapter, verse),
+      syntax: { ...syntaxData, _syntaxType: SyntaxType.Source },
+    };
+
+    corpora.push(sourceCorpus);
+  }
+
+  if (showTargetText) {
+    corpora.push({
+      ...queryText('nvi', book, chapter, verse),
+      syntax: { ...syntaxData, _syntaxType: SyntaxType.Mapped },
+    });
+  }
+
+  if (showLwcText) {
+    corpora.push({
+      ...queryText('leb', book, chapter, verse),
+      syntax: { ...syntaxData, _syntaxType: SyntaxType.MappedSecondary },
+    });
+  }
+
+  if (showBackText) {
+    corpora.push(queryText('backTrans', book, chapter, verse));
+  }
+
+  return (<>
+      {corpora &&
+          (<div>
       <div
         style={{
           display: 'flex',
@@ -123,7 +161,6 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
         }}
       >
         <EditorWrapper
-          theme={theme as 'night' | 'day'}
           corpora={corpora}
           alignments={[
             {
@@ -139,8 +176,8 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
           ]}
         />
       </div>
-    </div>
-  );
+    </div>)}
+      </>);
 };
 
 export default Workbench;

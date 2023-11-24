@@ -18,19 +18,14 @@ import '../../styles/theme.css';
 interface EditorProps {
   corpora: Corpus[];
   alignments: Alignment[];
-  theme: 'night' | 'day';
   alignmentUpdated: Function;
 }
 
 export const Editor = (props: EditorProps): ReactElement => {
-  const { corpora, alignments, theme, alignmentUpdated } = props;
+  const { corpora, alignments, alignmentUpdated } = props;
   useDebug('Editor');
 
   const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    dispatch(setTheme(theme));
-  }, [dispatch, theme]);
 
   useEffect(() => {
     if (alignments) {

@@ -1,13 +1,17 @@
 import React, {useMemo, useState} from 'react';
 import {Autocomplete, TextField} from "@mui/material";
+import {Corpus} from "../structs";
+import BCVWP, {parseFromString} from "../BCVWP/BCVWPSupport";
+import BCVWPSupport from "../BCVWP/BCVWPSupport";
+import {BOOK_LIST, findBookByIndex} from "../BCVWP/BookLookup";
 
 export interface Verse {
-    reference: string; // supports verses with letter references
+    reference: number;
 }
 
 export interface Chapter {
     reference: number;
-    verses: Verse[]|number;
+    verses: Verse[];
 }
 
 export interface Book {
@@ -17,131 +21,109 @@ export interface Book {
 
 interface NavigableBook extends Book {
     /**
-     * old testament, new testament, apocrypha, etc.
-     */
-    division: string;
-    /**
      * 1-based index within the division
      */
     index: number;
 }
 
-/**
- * encapsulates a
- */
-export interface Division {
-    title: string;
-    books: Book[];
-}
-
-/**
- * Encapsulates the navigation elements
- */
-export interface Navigation {
-    /**
-     * Old Testament, New Testament, Apocrypha, etc.
-     */
-    division?: string;
-    /**
-     * book, 1-indexed
-     */
-    book?: number;
-    /**
-     * chapter number
-     */
-    chapter?: number;
-    /**
-     * verse number
-     */
-    verse?: number;
-}
-
 export interface BCVNavigationProps {
-    divisions: Division[];
-    currentPosition?: Navigation;
-    onNavigate?: (selection: Navigation) => undefined;
+    horizontal?: boolean;
+    corpora: Corpus[];
+    currentPosition?: BCVWP;
+    onNavigate?: (selection: BCVWP) => void;
 }
 
-const divisionsToBooksWithDivisionTitleAndIndex = (divisions: Division[]): NavigableBook[] => {
-    return divisions?.flatMap(division => ([
-        ...division.books.map((book, index) => ({
-            division: division.title,
-            title: book.title,
-            index: index + 1, //1-based index
-            chapters: book.chapters
-        } as NavigableBook))
-    ])) as NavigableBook[] ?? [];
-};
+const getReferenceListFromCorpora = (corpora: Corpus[]): NavigableBook[] =>
+    corpora
+        .map(corpus => parseFromString(corpus.id))
+        .map((ref): NavigableBook => ({
+            index: ref.book ?? 0,
+            title: ref.getBookInfo()?.name ?? '',
+            chapters: [{
+                reference: ref.chapter ?? 0,
+                verses: [{
+                    reference: ref.verse ?? 0
+                }]
+            }]
+        }))
+        .filter(ref => ref.index !== 0 && ref.title !== '' && ref.chapters.length > 0 && ref.chapters[0].reference !== 0 && ref.chapters[0].verses.length > 0 && ref.chapters[0].verses[0].reference !== 0)
+        /**
+         * merge the individual verse references into books with lists of available chapters and verses
+         */
+        .reduce((accumulator, currentReference): NavigableBook[] => {
+            const book = accumulator.find(book => book.index === currentReference.index);
+            if (!book) {
+                // add book
+                return [...accumulator, currentReference];
+            }
+            const currentChapter = currentReference.chapters[0];
+            const chapter = book.chapters.find(chapter => chapter.reference == currentChapter.reference);
+            if (!chapter) {
+                // add chapter
+                book.chapters = [...book.chapters, currentChapter]
+                    .sort((a, b): number => a.reference - b.reference);
+                return [...accumulator.filter(b => b.index !== currentReference.index), book];
+            }
+            const currentVerse = currentChapter.verses[0];
+            const verse = chapter.verses.find(verse => verse.reference === currentVerse.reference);
+            if (!verse) {
+                // add verse
+                chapter.verses = [...chapter.verses, currentVerse]
+                    .sort((a, b): number => a.reference - b.reference);
+                return [...accumulator.filter(b => b.index !== currentReference.index), book];
+            }
+            return accumulator;
+        }, [] as NavigableBook[])
+        .sort((a, b): number => a.index - b.index);
 
-const findBookInNavigableBooks = (booksWithNavigationInfo: NavigableBook[], divisionTitle?: string, bookIndex?: number): NavigableBook|undefined =>
-    booksWithNavigationInfo?.find(navigableBook => navigableBook.division && navigableBook.division === divisionTitle
-                                                                                && navigableBook.index && navigableBook.index === bookIndex);
+/**
+ * use 0 as a non-value since everything is 1-indexed
+ */
+const NO_VALUE = 0;
+
+const findBookInNavigableBooksByIndex = (navigableBooks: NavigableBook[], index?: number): NavigableBook|null|undefined =>
+    index ? navigableBooks.find(book => book.index === index) : null;
 
 /**
  * BCVNavigation component for use in React
- * @param divisions passed as a prop because different translations sometimes differ in even the number of chapters or verses in the books or may include apocryphal books for scholarly analysis
- * @param currentPosition optional prop to specify current position
- * @param onNavigate callback function which will receive division, book, chapter and verse coordinates
+ * @param props.corpora list of references available for navigation
+ * @param props.currentPosition optional prop to specify current position
+ * @param props.onNavigate callback function which will receive division, book, chapter and verse coordinates
  */
-const BCVNavigation = ({ divisions, currentPosition, onNavigate } : BCVNavigationProps) => {
+const BCVNavigation = ({ corpora, currentPosition, onNavigate, horizontal } : BCVNavigationProps) => {
     const booksWithNavigationInfo = useMemo(() =>
-        divisionsToBooksWithDivisionTitleAndIndex(divisions), [divisions]);
-    const [selectedBook, setSelectedBook] = useState(findBookInNavigableBooks(booksWithNavigationInfo, currentPosition?.division, currentPosition?.book) as NavigableBook|null);
-    const [selectedChapter, setSelectedChapter] = useState(currentPosition?.chapter as number|undefined|null);
-    const [selectedVerse, setSelectedVerse] = useState(currentPosition?.verse as number|undefined|null);
+        getReferenceListFromCorpora(corpora), [corpora]);
+    const [selectedBook, setSelectedBook] = useState(findBookInNavigableBooksByIndex(booksWithNavigationInfo, currentPosition?.book));
+    const [selectedChapter, setSelectedChapter] = useState(currentPosition?.chapter ?? NO_VALUE);
+    const [selectedVerse, setSelectedVerse] = useState(currentPosition?.verse ?? NO_VALUE);
 
+    console.log('selectedChapter', selectedChapter);
+    console.log('selectedVerse', selectedVerse);
     const availableChapters = useMemo(() =>
         selectedBook ? selectedBook?.chapters : undefined,
-        [divisions, selectedBook]);
+        [booksWithNavigationInfo, selectedBook]);
 
     const availableVerses = useMemo(() =>
-        availableChapters && selectedChapter && selectedChapter >= 1 ? availableChapters[selectedChapter-1]?.verses : undefined,
+        availableChapters && selectedChapter && selectedChapter !== NO_VALUE ? availableChapters.find(chapter => chapter.reference === selectedChapter)?.verses : undefined,
         [availableChapters, selectedChapter]);
 
     const handleSetBook = (book?: NavigableBook) => {
-        setSelectedBook(book as NavigableBook|null);
-        setSelectedChapter(0);
-        setSelectedVerse(0);
+        setSelectedBook(book ?? null);
+        setSelectedChapter(NO_VALUE);
+        setSelectedVerse(NO_VALUE);
     };
 
     const handleSetChapter = (chapterIndex?: number) => {
-        setSelectedChapter(chapterIndex);
-        setSelectedVerse(0);
-    };
-
-    const renderVerseSelection = (verses?: Verse[] | number) => {
-        if (!verses) return <></>;
-        if (Array.isArray(verses)) { // Verse[]
-            return (verses as Verse[]).map((verse, i) =>
-                (<option
-                    key={i}
-                    value={verse.reference} >
-                    {verse.reference}
-                </option>));
-        }
-        const keys: number[] = [];
-        for (let i = 1; i <= (verses as number); ++i) {
-            keys.push(i);
-        }
-        return (keys.map(v =>
-            (<option
-                key={v}
-                value={v}>
-                {v}
-            </option>)));
+        setSelectedChapter(chapterIndex ?? NO_VALUE);
+        setSelectedVerse(NO_VALUE);
     };
 
     const handleNavigation = useMemo(() =>
-        () => onNavigate && selectedBook && selectedChapter && selectedVerse && onNavigate({
-            division: selectedBook.division,
-            book: selectedBook.index,
-            chapter: selectedChapter,
-            verse: selectedVerse
-        }), [selectedBook, selectedChapter, selectedVerse]);
+        () => onNavigate && selectedBook && selectedChapter && selectedVerse && onNavigate(new BCVWP(selectedBook.index, selectedChapter, selectedVerse)), [selectedBook, selectedChapter, selectedVerse]);
 
     return <>
         <label>
-            Book{' '}
+            {'Book '}
             <Autocomplete
                 disablePortal
                 id='book-selection'
@@ -152,50 +134,59 @@ const BCVNavigation = ({ divisions, currentPosition, onNavigate } : BCVNavigatio
                 }}
                 options={booksWithNavigationInfo}
                 typeof={'select'}
-                groupBy={(book: NavigableBook) => book?.division}
+                groupBy={(book: NavigableBook) => {
+                    if (book.index < 40) return 'Old Testament';
+                    if (book.index > 39 && book.index < 68) return 'New Testament';
+                    return 'Apocrypha';
+                }}
                 getOptionLabel={(option) => option.title}
                 value={selectedBook}
-                onChange={(_, value) => handleSetBook(value ? value : undefined)}
+                onChange={(_, value) => handleSetBook(value ?? undefined)}
                 renderInput={(params) => <TextField {...params} variant={'standard'} />} />
         </label>
-        <br/>
+        {!horizontal && <br/>}
         <label>
-            Chapter{' '}
+            {'Chapter '}
             <select
                 disabled={!selectedBook}
-                value={selectedChapter ?? ''}
+                value={selectedChapter}
                 onChange={(e) =>
                     handleSetChapter(e.target.value ? Number(e.target.value) : undefined as number|undefined)} >
                 <option
-                    value={0} >
+                    key={NO_VALUE}
+                    value={NO_VALUE} >
                     Select a chapter
                 </option>
-                {availableChapters?.map((c, i) =>
+                {availableChapters?.map((c) =>
                     <option
-                        key={i+1}
-                        value={i+1}>
+                        key={c.reference}
+                        value={c.reference}>
                         {c.reference}
                     </option>
                 )}
             </select>
         </label>
-        <br/>
+        {!horizontal && <br/>}
         <label>
-            Verse{' '}
+            {'Verse '}
             <select
                 disabled={!selectedChapter}
-                value={selectedVerse ?? ''}
-                onChange={(e) => {
-                    setSelectedVerse(e.target.value ? Number(e.target.value) : undefined as number | undefined);
-                }} >
+                value={selectedVerse}
+                onChange={(e) => setSelectedVerse(e.target.value ? Number(e.target.value) : NO_VALUE as number)} >
                 <option
-                    value={undefined} >
+                    key={NO_VALUE}
+                    value={NO_VALUE} >
                     Select a verse
                 </option>
-                {renderVerseSelection(availableVerses)}
+                {availableVerses?.map((verse) =>
+                        (<option
+                            key={verse.reference}
+                            value={verse.reference} >
+                            {verse.reference}
+                        </option>))}
             </select>
         </label>
-        <br/>
+        {!horizontal && <br/>}
         <button
             disabled={!selectedBook || !selectedChapter || !selectedVerse}
             onClick={() => handleNavigation()}>
