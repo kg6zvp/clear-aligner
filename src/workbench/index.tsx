@@ -1,6 +1,6 @@
-import { ReactElement, useState, useEffect } from 'react';
+import React, { ReactElement } from 'react';
 
-import { Corpus, SyntaxType, SyntaxRoot } from 'structs';
+import {Corpus, SyntaxType, SyntaxRoot, CorpusType} from 'structs';
 
 import EditorWrapper from 'features/editor';
 
@@ -63,39 +63,43 @@ const getDefaultRef = (): number[] => {
 const Workbench = (props: WorkbenchProps): ReactElement => {
   const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
 
-  const [updatedAlignments, setUpdatedAlignments] = useState(null);
-
   document.title = getRefParam()
     ? `${documentTitle} ${getRefParam()}`
     : documentTitle;
 
-  const [theme, setTheme] = useState('night');
+  const [theme] = React.useState('night');
+  const [corpora, setCorpora] = React.useState<Corpus[]>([]);
 
-  const [showSourceText, setShowSourceText] = useState(true);
-  const [showTargetText, setShowTargetText] = useState(true);
-  const [showLwcText, setShowLwcText] = useState(true);
-  const [showBackText, setShowBackText] = useState(true);
+  const [book] = React.useState(defaultBook);
+  const [chapter] = React.useState(defaultChapter);
+  const [verse] = React.useState(defaultVerse);
 
-  const [book, setBook] = useState(defaultBook);
-  const [chapter, setChapter] = useState(defaultChapter);
-  const [verse, setVerse] = useState(defaultVerse);
-
-  const [syntaxData, setSyntaxData] = useState(
+  const [syntaxData, setSyntaxData] = React.useState(
     placeholderTreedown as SyntaxRoot
   );
 
-  const bookDoc = books.find((bookItem) => bookItem.BookNumber === book);
+  const bookDoc = React.useMemo(() => books.find((bookItem) => bookItem.BookNumber === book), [books]);
 
-  let chapterCount = 0;
+  const updateCorpora = React.useCallback(() => {
+    new Promise((res) => {
+      const retrievedCorpora: Corpus[] = [];
+      const texts = Object.values(CorpusType);
+      texts.forEach((text, idx) => {
+        queryText(text, book, chapter, verse).then(foundCorpora => {
+          retrievedCorpora.push({
+            ...foundCorpora,
+            syntax: {...syntaxData, _syntaxType: SyntaxType.Source},
+          });
+          if(idx === text.length - 1) {
+            res(retrievedCorpora);
+          }
+        });
+      });
+    }).then(res => setCorpora(res as Corpus[]));
+  }, []);
 
-  if (bookDoc && bookDoc?.ChapterCount) {
-    chapterCount = Number(bookDoc.ChapterCount);
-  }
-  const chapters = Array.from(Array(chapterCount).keys()).map((x) => x + 1);
-
-  const verses = Array.from(Array(200).keys()).map((x) => x + 1);
-
-  useEffect(() => {
+  React.useEffect(() => {
+    void updateCorpora();
     const loadSyntaxData = async () => {
       try {
         const syntaxData = await fetchSyntaxData(bookDoc, chapter, verse);
@@ -112,35 +116,6 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
 
     loadSyntaxData().catch(console.error);
   }, [bookDoc, book, chapter, verse]);
-
-  const corpora: Corpus[] = [];
-
-  if (showSourceText) {
-    const sourceCorpus = {
-      ...queryText('sbl', book, chapter, verse),
-      syntax: { ...syntaxData, _syntaxType: SyntaxType.Source },
-    };
-
-    corpora.push(sourceCorpus);
-  }
-
-  if (showTargetText) {
-    corpora.push({
-      ...queryText('nvi', book, chapter, verse),
-      syntax: { ...syntaxData, _syntaxType: SyntaxType.Mapped },
-    });
-  }
-
-  if (showLwcText) {
-    corpora.push({
-      ...queryText('leb', book, chapter, verse),
-      syntax: { ...syntaxData, _syntaxType: SyntaxType.MappedSecondary },
-    });
-  }
-
-  if (showBackText) {
-    corpora.push(queryText('backTrans', book, chapter, verse));
-  }
 
   return (
     <div>
@@ -213,9 +188,6 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
               },
             },
           ]}
-          alignmentUpdated={(alignments: any) => {
-            setUpdatedAlignments(alignments);
-          }}
         />
       </div>
     </div>

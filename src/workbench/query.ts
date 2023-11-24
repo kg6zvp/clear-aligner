@@ -1,13 +1,6 @@
-import { Corpus } from 'structs';
-
-const sblText =
-  'οὐ μόνον δέ, ἀλλὰ καὶ καυχώμεθα ἐν ταῖς θλίψεσιν, εἰδότες ὅτι ἡ θλῖψις ὑπομονὴν κατεργάζεται,';
-const lebText =
-  'And not only this, but we also boast in our afflictions, because we know that affliction produces patient endurance,';
-const nviText =
-  'Y no solo en esto, sino también en nuestros sufrimientos, porque sabemos que el sufrimiento produce perseverancia;';
-const backTransText =
-  'And not only in this, otherwise too in our sufferings, because we know that the suffering produces perseverance;';
+import { Corpus, CorpusType } from 'structs';
+// @ts-ignore
+import MACULA from 'tsv/source_macula-greek-SBLGNT.tsv'
 
 const availableCorpora: Corpus[] = [
   {
@@ -42,58 +35,87 @@ const availableCorpora: Corpus[] = [
   },
 ];
 
-export const queryText = (
-  corpusId: string,
-  book: number,
-  chapter: number,
-  verse: number
-): Corpus => {
-  let text = '';
+const parseTsv = async (tsv: RequestInfo, fieldConversions: Record<string, string> = {}) => {
+  const fetchedTsv = await fetch(tsv);
+  const response = await fetchedTsv.text();
+  const [header, ...rows] = response.split('\n');
+  const headerMap: Record<number, string> = {};
+  header.split('\t').forEach((header, idx) => {
+    headerMap[idx] = fieldConversions[header] || header;
+  });
 
-  if (corpusId === 'sbl') {
-    text = sblText;
+  return rows.map(row => {
+    const splitRow = row.split('\t');
+    const rowData: Record<string, string> = {};
+    splitRow.forEach((val, idx) => {
+      const header = headerMap[idx];
+      if (!header) return;
+      rowData[header] = val;
+    });
+    return rowData;
+  });
+}
+
+const convertBcvToIdentifier = (corpusId: string, book: number, chapter: number, verse: number) => {
+  const convertedSections = book + [chapter, verse].map((section: number) => {
+    const paddedNum = `000${section}`;
+    return paddedNum.slice(paddedNum.length - 3, paddedNum.length)
+  }).join('');
+
+  switch (corpusId) {
+    case CorpusType.SBL:
+      return `n${convertedSections}`;
+    default:
+      return convertedSections;
   }
+}
 
-  if (corpusId === 'leb') {
-    text = lebText;
+const getTsvFromCorpusId = (corpusId: string) => {
+  switch(corpusId) {
+    case CorpusType.SBL:
+    default:
+      return MACULA;
   }
+}
 
-  if (corpusId === 'nvi') {
-    text = nviText;
-  }
-
-  if (corpusId === 'backTrans') {
-    text = backTransText;
-  }
-
+export const queryText = async (
+    corpusId: string,
+    book: number,
+    chapter: number,
+    verse: number
+): Promise<Corpus> => {
   const corpus = availableCorpora.find((corpus) => {
     return corpus.id === corpusId;
   });
+
+  const bcvId = convertBcvToIdentifier(corpusId, book, chapter, verse);
+  const maculaData = await parseTsv(getTsvFromCorpusId(corpusId), {"xml:id": "n", "ref": "osisId"});
+  const queriedData = maculaData.filter(m => (m.n || "").includes(bcvId));
 
   if (!corpus) {
     throw new Error(`Unable to find requested corpus: ${corpusId}`);
   }
 
-  const words = text.split(' ').map((word: string, index: number) => {
-    let id = '';
+  const words = queriedData
+      .map((textData, index) => {
+        let id = '';
+        if (corpus.id === CorpusType.SBL) {
+          const bookString = String(book).padStart(2, '0');
+          const chapterString = String(chapter).padStart(3, '0');
+          const verseString = String(verse).padStart(3, '0');
+          const positionString = String(index + 1).padStart(3, '0');
+          id = `${bookString}${chapterString}${verseString}${positionString}0010`;
+        } else {
+          id = `${corpusId}_${index}`;
+        }
 
-    if (corpus.id === 'sbl') {
-      const bookString = String(book).padStart(2, '0');
-      const chapterString = String(chapter).padStart(3, '0');
-      const verseString = String(verse).padStart(3, '0');
-      const positionString = String(index + 1).padStart(3, '0');
-      id = `${bookString}${chapterString}${verseString}${positionString}0010`;
-    } else {
-      id = `${corpusId}_${index}`;
-    }
-
-    return {
-      id,
-      corpusId: corpusId,
-      position: index,
-      text: word,
-    };
-  });
+        return {
+          id,
+          corpusId: corpusId,
+          position: index,
+          text: textData.text,
+        };
+      });
 
   return {
     id: corpus?.id ?? '',
