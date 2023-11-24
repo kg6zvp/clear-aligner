@@ -1,12 +1,12 @@
 import React, { ReactElement } from 'react';
 
-import {Corpus, SyntaxType, SyntaxRoot, CorpusType} from 'structs';
+import {Corpus, SyntaxRoot} from 'structs';
 
 import EditorWrapper from 'features/editor';
 
 import fetchSyntaxData from 'workbench/fetchSyntaxData';
 
-import { queryText } from 'workbench/query';
+import {getAvailableCorpora} from 'workbench/query';
 import books from 'workbench/books';
 
 import placeholderTreedown from 'features/treedown/treedown.json';
@@ -80,26 +80,14 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
 
   const bookDoc = React.useMemo(() => books.find((bookItem) => bookItem.BookNumber === book), [books]);
 
-  const updateCorpora = React.useCallback(() => {
-    new Promise((res) => {
-      const retrievedCorpora: Corpus[] = [];
-      const texts = Object.values(CorpusType);
-      texts.forEach((text, idx) => {
-        queryText(text, book, chapter, verse).then(foundCorpora => {
-          retrievedCorpora.push({
-            ...foundCorpora,
-            syntax: {...syntaxData, _syntaxType: SyntaxType.Source},
-          });
-          if(idx === text.length - 1) {
-            res(retrievedCorpora);
-          }
-        });
-      });
-    }).then(res => setCorpora(res as Corpus[]));
+  // Add starting Corpora
+  const addCorpora = React.useCallback(() => {
+    getAvailableCorpora()
+        .then(res => setCorpora(res as Corpus[]));
   }, []);
 
   React.useEffect(() => {
-    void updateCorpora();
+    void addCorpora();
     const loadSyntaxData = async () => {
       try {
         const syntaxData = await fetchSyntaxData(bookDoc, chapter, verse);

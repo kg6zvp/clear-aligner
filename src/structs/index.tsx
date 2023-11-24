@@ -23,6 +23,8 @@ export interface Word {
   corpusId: string;
 
   text: string;
+  // character[s] following the text. i.e. punctuation.
+  after?: string;
   position: number;
 }
 
@@ -43,11 +45,9 @@ export interface Corpus {
   syntax?: SyntaxRoot;
 }
 
-export enum CorpusType {
-  SBL = 'sbl',
-  NVI = 'nvi',
-  LEB = 'leb',
-  BACK_TRANS = 'backTrans'
+export enum CorpusFileFormat {
+  TSV_MACULA,
+  TSV_TARGET
 }
 
 // An instance of alignment
