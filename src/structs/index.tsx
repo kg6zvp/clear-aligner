@@ -47,7 +47,7 @@ export interface Corpus {
 
 export enum CorpusFileFormat {
   TSV_MACULA,
-  TSV_TARGET
+  TSV_TARGET,
 }
 
 // An instance of alignment
