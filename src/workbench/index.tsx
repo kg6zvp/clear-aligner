@@ -60,7 +60,7 @@ const getDefaultRef = (): number[] => {
   return [book, chapter, verse];
 };
 
-const Workbench = (props: WorkbenchProps): ReactElement => {
+const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
   const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
 
   document.title = getRefParam()
@@ -116,7 +116,8 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
     };
 
     loadSyntaxData().catch(console.error);
-  }, [bookDoc, book, chapter, verse, updateCorpora]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookDoc, book, chapter, verse]);
 
   return (
     <div>
