@@ -9,10 +9,13 @@ let isInitialized: boolean = false;
 
 const availableCorpora: Corpus[] = [];
 
+const punctuationFilter = [',', '.', '[', ']', ':', '‘', '’', '—', '?', '!', ';', 'FALSE', '(', ')', 'TRUE',];
+
 const parseTsvByFileType = async (
   tsv: RequestInfo,
+  refCorpus: Corpus,
   fileType: CorpusFileFormat
-) => {
+) : Promise<Word[]> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
@@ -21,33 +24,7 @@ const parseTsvByFileType = async (
     headerMap[header] = idx;
   });
 
-  const corpus: Corpus = {
-    id: '',
-    name: '',
-    fullName: '',
-    language: '',
-    words: [],
-  };
-
-  const punctuationFilter = [
-    ',',
-    '.',
-    '[',
-    ']',
-    ':',
-    '‘',
-    '’',
-    '—',
-    '?',
-    '!',
-    ';',
-    'FALSE',
-    '(',
-    ')',
-    'TRUE',
-  ];
-
-  corpus.words = rows.reduce((accumulator, row) => {
+  return rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
     let id, pos;
@@ -66,7 +43,7 @@ const parseTsvByFileType = async (
 
         accumulator.push({
           id: id, // standardize n40001001002 to  40001001002
-          corpusId: '',
+          corpusId: refCorpus.id,
           text: values[headerMap['text']],
           position: pos,
         });
@@ -80,7 +57,7 @@ const parseTsvByFileType = async (
 
         accumulator.push({
           id: id, // standardize n40001001002 to  40001001002
-          corpusId: '',
+          corpusId: refCorpus.id,
           text: values[headerMap['text']],
           after: values[headerMap['after']],
           position: pos,
@@ -90,8 +67,6 @@ const parseTsvByFileType = async (
 
     return accumulator;
   }, [] as Word[]);
-
-  return corpus;
 }
 
 const convertBcvToIdentifier = (
@@ -112,28 +87,39 @@ const convertBcvToIdentifier = (
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
     // SBL GNT
-    const sblGnt = await parseTsvByFileType(
+    const sblGnt = {
+      id: 'sbl',
+      // id: 'sbl-gnt',
+      name: 'SBL GNT',
+      fullName: 'SBL Greek New Testament',
+      language: 'grc',
+      words: []
+    };
+
+    // @ts-ignore
+    sblGnt.words = await parseTsvByFileType(
       MACULA_SBLGNT,
-      // source_macula_greek_SBLGNT,
+      sblGnt,
       CorpusFileFormat.TSV_MACULA
     );
-    // doing this instead of the spread operator as not to copy the full words list again
-    sblGnt.id = 'sbl-gnt';
-    sblGnt.name = 'SBL GNT';
-    sblGnt.fullName = 'SBL Greek New Testament';
-    sblGnt.language = 'grc';
 
     availableCorpora.push(sblGnt);
 
     //
-    const na27Ylt = await parseTsvByFileType(
+    const na27Ylt = {
+      id: 'na27-YLT',
+      name: 'NA27 YLT',
+      fullName: 'Nestle-Aland 27th Edition YLT text',
+      language: 'eng',
+      words: []
+    };
+
+    // @ts-ignore
+    na27Ylt.words = await parseTsvByFileType(
       NA27_YLT,
+      na27Ylt,
       CorpusFileFormat.TSV_TARGET
     );
-    na27Ylt.id = 'na27-YLT';
-    na27Ylt.name = 'NA27 YLT';
-    na27Ylt.fullName = 'Nestle-Aland 27th Edition YLT text';
-    na27Ylt.language = 'eng';
 
     availableCorpora.push(na27Ylt);
 
