@@ -88,8 +88,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
     // SBL GNT
     const sblGnt = {
-      id: 'sbl',
-      // id: 'sbl-gnt',
+      id: 'sbl-gnt',
       name: 'SBL GNT',
       fullName: 'SBL Greek New Testament',
       language: 'grc',
@@ -105,7 +104,6 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
     availableCorpora.push(sblGnt);
 
-    //
     const na27Ylt = {
       id: 'na27-YLT',
       name: 'NA27 YLT',
