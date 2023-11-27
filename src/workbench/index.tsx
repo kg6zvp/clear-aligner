@@ -60,7 +60,7 @@ const getDefaultRef = (): number[] => {
   return [book, chapter, verse];
 };
 
-const Workbench = (props: WorkbenchProps): ReactElement => {
+const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
   const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
 
   document.title = getRefParam()
@@ -78,7 +78,7 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
     placeholderTreedown as SyntaxRoot
   );
 
-  const bookDoc = React.useMemo(() => books.find((bookItem) => bookItem.BookNumber === book), [books]);
+  const bookDoc = React.useMemo(() => books.find((bookItem) => bookItem.BookNumber === book), [book]);
 
   const updateCorpora = React.useCallback(() => {
     new Promise((res) => {
@@ -96,7 +96,7 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
         });
       });
     }).then(res => setCorpora(res as Corpus[]));
-  }, []);
+  }, [book, chapter, verse, syntaxData]);
 
   React.useEffect(() => {
     void updateCorpora();
@@ -115,6 +115,7 @@ const Workbench = (props: WorkbenchProps): ReactElement => {
     };
 
     loadSyntaxData().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookDoc, book, chapter, verse]);
 
   return (
