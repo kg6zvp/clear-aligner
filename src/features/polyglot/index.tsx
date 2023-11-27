@@ -1,5 +1,5 @@
 import { ReactElement, useRef } from 'react';
-import { Card, Container, Stack, Typography } from '@mui/material';
+import {Card, CircularProgress, Container, Stack, Grid, Typography} from '@mui/material';
 
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
@@ -17,6 +17,10 @@ export const Polyglot = (): ReactElement => {
     return state.app.corpusViewports;
   });
 
+  const corporaWithoutViewport = corpora.filter((corpus) => (
+      !corpusViewports.map(viewport => viewport.corpusId).includes(corpus.id)
+  ));
+
   const initialArray: HTMLDivElement[] = [];
   const corpusViewportRefs = useRef(initialArray);
 
@@ -29,9 +33,20 @@ export const Polyglot = (): ReactElement => {
       alignItems="stretch"
     >
       {corpusViewports.length === 0 && (
-        <Typography variant="h6" style={{ margin: 'auto' }}>
-          To begin, add a corpus viewport.
-        </Typography>
+          corporaWithoutViewport.length
+            ? (
+                <Typography variant="h6" style={{ margin: 'auto' }}>
+                    To begin, add a corpus viewport.
+                </Typography>
+            )
+            : (
+                  <Grid container flexDirection="column" alignItems="center">
+                      <Typography variant="h6" style={{ margin: 'auto' }}>
+                          Loading corpora.
+                      </Typography>
+                      <CircularProgress variant="indeterminate" />
+                  </Grid>
+            )
       )}
 
       {corpora.length &&
