@@ -254,19 +254,6 @@ const alignmentSlice = createSlice({
       });
     },
 
-    toggleCorpusView: (state, action: PayloadAction<string>) => {
-      const corpusIndex = state.corpora.findIndex(
-        (corpus) => corpus.id === action.payload
-      );
-      const oldViewType = state.corpora[corpusIndex].viewType;
-      const newViewType =
-        oldViewType === CorpusViewType.Paragraph
-          ? CorpusViewType.Treedown
-          : CorpusViewType.Paragraph;
-
-      state.corpora[corpusIndex].viewType = newViewType;
-    },
-
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
       if (state.inProgressLink?._id === '?') {
         // There is a partial in-progress link.
@@ -515,7 +502,6 @@ const alignmentSlice = createSlice({
 export const {
   loadAlignments,
   loadCorpora,
-  toggleCorpusView,
   toggleTextSegment,
   resetTextSegments,
   createLink,
