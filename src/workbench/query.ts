@@ -9,13 +9,22 @@ let isInitialized: boolean = false;
 
 const availableCorpora: Corpus[] = [];
 
+const wordsByVerse = new Map<number, Word[]>();
+
+let parsedTsv = new Map<string, Word[]>();
+
 const punctuationFilter = [',', '.', '[', ']', ':', '‘', '’', '—', '?', '!', ';', 'FALSE', '(', ')', 'TRUE',];
 
 const parseTsvByFileType = async (
   tsv: RequestInfo,
   refCorpus: Corpus,
-  fileType: CorpusFileFormat
+  fileType: CorpusFileFormat,
+  refetch = false
 ) : Promise<Word[]> => {
+  if(!refetch && !!(parsedTsv.get(refCorpus.id) || []).length) {
+    return parsedTsv.get(refCorpus.id) || [];
+  }
+
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
@@ -24,10 +33,10 @@ const parseTsvByFileType = async (
     headerMap[header] = idx;
   });
 
-  return rows.reduce((accumulator, row) => {
+  const reducedRows = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
-    let id, pos;
+    let id, pos, word;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
@@ -40,13 +49,15 @@ const parseTsvByFileType = async (
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['identifier']];
         pos = +id.substring(8, 11); // grab word position
-
-        accumulator.push({
+        word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           text: values[headerMap['text']],
           position: pos,
-        });
+        } as Word;
+
+        wordsByVerse.set(+id.substring(0, 8), (wordsByVerse.get(+id.substring(0, 8)) || []).concat([word]));
+        accumulator.push(word);
         break;
 
       case CorpusFileFormat.TSV_MACULA:
@@ -54,22 +65,27 @@ const parseTsvByFileType = async (
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['xml:id']].slice(1);
         pos = +id.substring(8, 11); // grab word position
-
-        accumulator.push({
+        word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           text: values[headerMap['text']],
           after: values[headerMap['after']],
           position: pos,
-        });
+        } as Word;
+
+        wordsByVerse.set(+id.substring(0, 8), (wordsByVerse.get(+id.substring(0, 8)) || []).concat([word]));
+        accumulator.push(word);
         break;
     }
-
-    return accumulator;
+    return accumulator.sort((a,b) => a.position + b.position);
   }, [] as Word[]);
+
+  parsedTsv.set(refCorpus.id, reducedRows);
+
+  return reducedRows;
 }
 
-const convertBcvToIdentifier = (
+export const convertBcvToIdentifier = (
   book: number,
   chapter: number,
   verse: number
@@ -123,7 +139,6 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
     isInitialized = true;
   }
-
   return availableCorpora;
 };
 
@@ -133,12 +148,7 @@ export const getAvailableCorporaIds = async (): Promise<string[]> => {
   });
 }
 
-export const queryText = async (
-  corpusId: string,
-  book: number,
-  chapter: number,
-  verse: number
-): Promise<Corpus> => {
+export const getCorpusById = async (corpusId: string) => {
   const corpus = (await getAvailableCorpora()).find((corpus) => {
     return corpus.id === corpusId;
   });
@@ -147,6 +157,18 @@ export const queryText = async (
     throw new Error(`Unable to find requested corpus: ${corpusId}`);
   }
 
+  return corpus;
+}
+
+
+export const queryText = async (
+  corpusId: string,
+  book: number,
+  chapter: number,
+  verse: number
+): Promise<Corpus> => {
+  console.log("querying text...")
+  const corpus = await getCorpusById(corpusId);
   const bcvId = convertBcvToIdentifier(book, chapter, verse);
   const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
 
@@ -158,3 +180,14 @@ export const queryText = async (
     words: queriedData,
   };
 };
+
+export const getVerseByBcvOffset = (bcvId: string, offset: number): Word[] => {
+  const bcvIdx = Array.from(wordsByVerse.keys()).indexOf(+bcvId);
+  const offsetIdx = bcvIdx + offset;
+  if(offsetIdx > Array.from(wordsByVerse.keys()).length || offsetIdx < 0) {
+    return [];
+  }
+  const verseKey = Array.from(wordsByVerse.keys()).find((_, idx) => idx === offsetIdx) || 0;
+  const wordsInVerse = wordsByVerse.get(verseKey);
+  return wordsInVerse || [];
+}

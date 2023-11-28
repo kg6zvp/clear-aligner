@@ -6,7 +6,7 @@ import EditorWrapper from 'features/editor';
 
 import fetchSyntaxData from 'workbench/fetchSyntaxData';
 
-import {getAvailableCorporaIds, queryText} from 'workbench/query';
+import {convertBcvToIdentifier, getAvailableCorporaIds, getVerseByBcvOffset, queryText} from 'workbench/query';
 import books from 'workbench/books';
 
 import placeholderTreedown from 'features/treedown/treedown.json';
@@ -94,7 +94,9 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
     // set the syntax
     retrievedCorpora.forEach((corpus) => {
       corpus['syntax'] = {...syntaxData, _syntaxType: SyntaxType.Source};
-    })
+    });
+
+    console.log("verse by offset 1: ", getVerseByBcvOffset(convertBcvToIdentifier(book, chapter, verse), 1))
 
     setCorpora(retrievedCorpora);
   }, [book, chapter, verse, syntaxData]);
