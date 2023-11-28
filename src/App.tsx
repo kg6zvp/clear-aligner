@@ -6,30 +6,90 @@ import './styles/theme.css';
 import {AppBar, Drawer, IconButton, Toolbar, useMediaQuery} from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
 import Themed from 'features/themed';
-import {useMemo, useState} from "react";
+import React, {useMemo, useState} from "react";
 import BCVNavigation from "./BCVNavigation/BCVNavigation";
 import BCVWP, {parseFromString} from "./BCVWP/BCVWPSupport";
-import {Corpus} from "./structs";
+import {Corpus, SyntaxRoot, SyntaxType} from "./structs";
 import {BCVDisplay} from "./BCVWP/BCVDisplay";
+import {getAvailableCorporaIds, queryText} from "./workbench/query";
+import fetchSyntaxData from "./workbench/fetchSyntaxData";
+import placeholderTreedown from "./features/treedown/treedown.json";
+import books from "./workbench/books";
 
-const corpora = [ // TODO: REMOVE MOCK DATA
-  {
-    id: '45005003001'
-  },
-  {
-    id: '48006002001'
+const getRefParam = (): string | null => {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('ref');
+};
+
+const getRefFromURL = (): BCVWP | null => {
+  const refParam = getRefParam();
+
+  if (refParam) {
+    return parseFromString(refParam);
   }
-] as Corpus[];
+  return null;
+};
+
+const defaultDocumentTitle = '🌲⬇️';
 
 function App() {
+  const [corpora, setCorpora] = useState([] as Corpus[]);
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-
   const theme = useMemo(
       () => prefersDarkMode ? 'night' : 'day',
       [prefersDarkMode]);
 
   const [showMenu, setShowMenu] = useState(false);
-  const [currentPosition, setCurrentPosition] = useState(parseFromString(corpora[0].id));
+
+  const [syntaxData, setSyntaxData] = React.useState(
+    placeholderTreedown as SyntaxRoot
+  );
+
+  document.title = getRefParam()
+    ? `${defaultDocumentTitle} ${getRefParam()}`
+    : defaultDocumentTitle;
+  const [currentPosition, setCurrentPosition] = useState(getRefFromURL() ?? parseFromString(corpora[0].id));
+
+  const bookDoc = React.useMemo(
+    () => books.find((bookItem) => bookItem.BookNumber === currentPosition?.book),
+    [currentPosition?.book]
+  );
+
+  const updateCorpora = React.useCallback(async () => {
+    const corporaIds = await getAvailableCorporaIds();
+    const retrievedCorpora: Corpus[] = [];
+
+    for (const corpusId of corporaIds) {
+      retrievedCorpora.push(await queryText(corpusId, currentPosition));
+    }
+
+    // set the syntax
+    retrievedCorpora.forEach((corpus) => {
+      corpus['syntax'] = {...syntaxData, _syntaxType: SyntaxType.Source};
+    })
+
+    setCorpora(retrievedCorpora);
+  }, [currentPosition?.book, currentPosition?.chapter, currentPosition?.verse, syntaxData]);
+
+  React.useEffect(() => {
+    void updateCorpora();
+    const loadSyntaxData = async () => {
+      try {
+        const syntaxData = await fetchSyntaxData(bookDoc, currentPosition);
+        if (syntaxData) {
+          setSyntaxData(syntaxData as SyntaxRoot);
+          document.title = `${defaultDocumentTitle} ${
+            bookDoc ? bookDoc.OSIS : currentPosition?.book
+          }.${currentPosition?.chapter}.${currentPosition?.verse}`;
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadSyntaxData().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookDoc, currentPosition?.book, currentPosition?.chapter, currentPosition?.verse]);
 
   return <>
     <Themed theme={theme}>

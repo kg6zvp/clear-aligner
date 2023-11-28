@@ -1,4 +1,15 @@
-const books = [
+export interface BookLookupInfo {
+  BookNumber: number,
+  ParaText: string,
+  OSIS: string,
+  ClearBible: string,
+  SBLGNT: string,
+  EnglishBookName: string,
+  ChapterCount?: number,
+  IsBibleBook: string
+}
+
+const books: BookLookupInfo[] = [
   {
     BookNumber: 1,
     ParaText: 'GEN',
@@ -926,7 +937,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra A',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -936,7 +947,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra B',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -946,7 +957,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra C',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -956,7 +967,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra D',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -966,7 +977,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra E',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -976,7 +987,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra F',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -986,7 +997,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra G',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -996,7 +1007,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Front Matter',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1006,7 +1017,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Back Matter',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1016,7 +1027,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Other Matter',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1026,7 +1037,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '3 Ezra *obsolete*',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1046,7 +1057,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '5 Ezra (Latin Prologue)',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1066,7 +1077,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Introduction',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1076,7 +1087,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Concordance',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1086,7 +1097,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Glossary',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1096,7 +1107,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Topical Index',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1106,7 +1117,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Names Index',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1126,7 +1137,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Psalms 152-155',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1136,7 +1147,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '2 Baruch (Apocalypse)',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1146,7 +1157,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Letter of Baruch',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1186,7 +1197,7 @@ const books = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '2 Meqabyan',
-    ChapterCount: '',
+    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {

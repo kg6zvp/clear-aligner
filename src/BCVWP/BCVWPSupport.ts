@@ -1,46 +1,50 @@
 import {BookInfo, findBookByIndex} from "./BookLookup";
 
-class BCVWP {
-    /**
-     * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
-     */
-    book?: number;
-    /**
-     * 1-based index
-     */
-    chapter?: number;
-    /**
-     * 1-based index
-     */
-    verse?: number;
-    /**
-     * 1-based index
-     */
-    word?: number;
-    /**
-     * 1-based index
-     */
-    part?: number;
+export default class BCVWP {
+  /**
+   * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
+   */
+  book?: number;
+  /**
+   * 1-based index
+   */
+  chapter?: number;
+  /**
+   * 1-based index
+   */
+  verse?: number;
+  /**
+   * 1-based index
+   */
+  word?: number;
+  /**
+   * 1-based index
+   */
+  part?: number;
 
-    constructor(book?: number, chapter?: number, verse?: number, word?: number, part?: number) {
-        this.book = book;
-        this.chapter = chapter;
-        this.verse = verse;
-        this.word = word;
-        this.part = part;
-    }
+  constructor(book?: number, chapter?: number, verse?: number, word?: number, part?: number) {
+    this.book = book;
+    this.chapter = chapter;
+    this.verse = verse;
+    this.word = word;
+    this.part = part;
+  }
 
-    toReferenceString(): string {
-        const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
-        const chapterFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
-        const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
-        const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
-        return `${this.book ? bookFormet.format(this.book) : '  '}${this.chapter ? chapterFormat.format(this.chapter) : '   '}${this.verse ? verseFormat.format(this.verse) : '   '}${this.word ? wordFormat.format(this.word) : '   '}${this.part ?? 1}`;
-    }
+  toTruncatedReferenceString(truncation: BCVWPTruncation): string {
+    return this.toReferenceString().substring(0, truncation);
+  }
 
-    getBookInfo(): BookInfo|undefined {
-        return this.book ? findBookByIndex(this.book) : undefined;
-    }
+  toReferenceString(): string {
+    const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
+    const chapterFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
+    const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
+    const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
+    return `${this.book ? bookFormet.format(this.book) : '  '}${this.chapter ? chapterFormat.format(this.chapter) : '   '}${this.verse ? verseFormat.format(this.verse) : '   '}${this.word ? wordFormat.format(this.word) : '   '}${this.part ?? 1}`;
+  }
+
+  getBookInfo(): BookInfo|undefined {
+    return this.book ? findBookByIndex(this.book) : undefined;
+  }
 }
 
 export const parseFromString = (reference: string): BCVWP => {
@@ -62,4 +66,10 @@ export const parseFromString = (reference: string): BCVWP => {
     return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
 };
 
-export default BCVWP;
+export enum BCVWPTruncation {
+  Book = 2,
+  Chapter = 5,
+  Verse = 8,
+  Word = 11,
+  Part = 12
+}

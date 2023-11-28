@@ -11,7 +11,7 @@ import './styles.css';
 interface EditorWrapperProps {
   corpora: Corpus[];
   alignments: Alignment[];
-  alignmentUpdated: Function;
+  alignmentUpdated?: Function;
 }
 
 const EditorWrapper = (props: EditorWrapperProps): any => {

@@ -10,14 +10,12 @@ import {getAvailableCorporaIds, queryText} from 'workbench/query';
 import books from 'workbench/books';
 
 import placeholderTreedown from 'features/treedown/treedown.json';
-import BCVWP from "../BCVWP/BCVWPSupport";
+import BCVWP, {parseFromString} from "../BCVWP/BCVWPSupport";
 
 interface WorkbenchProps {
   corpora?: Corpus[];
   currentPosition: BCVWP;
 }
-
-const documentTitle = '🌲⬇️';
 
 const getBookNumber = (bookName: string) => {
   const bookDoc = books.find(
@@ -27,50 +25,8 @@ const getBookNumber = (bookName: string) => {
     return bookDoc.BookNumber;
   }
 };
-const getRefParam = (): string | null => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('ref');
-};
-
-const getDefaultRef = (): number[] => {
-  let book = 45;
-  let chapter = 5;
-  let verse = 3;
-
-  const refParam = getRefParam();
-
-  if (refParam) {
-    const parsedRegex = /^(\w+)(\.)(\w+)(\.)(\w+)$/.exec(refParam);
-
-    if (parsedRegex) {
-      const parsedBook = getBookNumber(parsedRegex[1]);
-
-      if (parsedBook) {
-        book = parsedBook;
-      }
-      const parsedChapter = Number(parsedRegex[3] ?? undefined);
-
-      if (parsedChapter && Number.isFinite(parsedChapter)) {
-        chapter = parsedChapter;
-      }
-
-      const parsedVerse = Number(parsedRegex[5]);
-      if (parsedVerse && Number.isFinite(parsedVerse)) {
-        verse = parsedVerse;
-      }
-    }
-  }
-
-  return [book, chapter, verse];
-};
 
 const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: WorkbenchProps): ReactElement => {
-  const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
-
-  document.title = getRefParam()
-    ? `${documentTitle} ${getRefParam()}`
-    : documentTitle;
-
   const [showSourceText, setShowSourceText] = React.useState(true);
   const [showTargetText, setShowTargetText] = React.useState(true);
   const [showLwcText, setShowLwcText] = React.useState(true);
