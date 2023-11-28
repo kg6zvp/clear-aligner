@@ -86,6 +86,8 @@ const convertBcvToIdentifier = (
 
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
+    isInitialized = true;
+
     // SBL GNT
     const sblGnt = {
       id: 'sbl-gnt',
@@ -120,8 +122,6 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
     );
 
     availableCorpora.push(na27Ylt);
-
-    isInitialized = true;
   }
 
   return availableCorpora;
