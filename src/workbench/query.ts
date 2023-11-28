@@ -1,127 +1,160 @@
-import { Corpus, CorpusType } from 'structs';
+import {Corpus, CorpusFileFormat, Word} from 'structs';
+
 // @ts-ignore
-import MACULA from 'tsv/source_macula-greek-SBLGNT.tsv'
+import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
+// @ts-ignore
+import NA27_YLT from "tsv/target_NA27-YLT.tsv";
 
-const availableCorpora: Corpus[] = [
-  {
-    id: 'sbl',
-    name: 'SBL GNT',
-    fullName: 'SBL Greek New Testament',
-    language: 'grc',
-    words: [],
-    syntax: undefined,
-  },
+let isInitialized: boolean = false;
 
-  {
-    id: 'leb',
-    name: 'LEB',
-    fullName: 'Lexham English Bible',
-    language: 'eng',
-    words: [],
-  },
-  {
-    id: 'nvi',
-    name: 'NVI',
-    fullName: 'Nueva Versión Internacional',
-    language: 'spa',
-    words: [],
-  },
-  {
-    id: 'backTrans',
-    name: 'BT 1',
-    fullName: 'Back Translation 1',
-    language: 'eng',
-    words: [],
-  },
-];
+const availableCorpora: Corpus[] = [];
 
-const parseTsv = async (tsv: RequestInfo, fieldConversions: Record<string, string> = {}) => {
+const punctuationFilter = [',', '.', '[', ']', ':', '‘', '’', '—', '?', '!', ';', 'FALSE', '(', ')', 'TRUE',];
+
+const parseTsvByFileType = async (
+  tsv: RequestInfo,
+  refCorpus: Corpus,
+  fileType: CorpusFileFormat
+) : Promise<Word[]> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
-  const headerMap: Record<number, string> = {};
+  const headerMap: Record<string, number> = {};
   header.split('\t').forEach((header, idx) => {
-    headerMap[idx] = fieldConversions[header] || header;
+    headerMap[header] = idx;
   });
 
-  return rows.map(row => {
-    const splitRow = row.split('\t');
-    const rowData: Record<string, string> = {};
-    splitRow.forEach((val, idx) => {
-      const header = headerMap[idx];
-      if (!header) return;
-      rowData[header] = val;
-    });
-    return rowData;
+  return rows.reduce((accumulator, row) => {
+    const values = row.split('\t');
+
+    let id, pos;
+
+    switch (fileType) {
+      case CorpusFileFormat.TSV_TARGET:
+        // filter out punctuation in content
+        if (punctuationFilter.includes(values[headerMap['text']])) {
+          // skip punctuation
+          return accumulator;
+        }
+
+        // remove redundant 'o'/'n' qualifier
+        id = values[headerMap['identifier']];
+        pos = +id.substring(8, 11); // grab word position
+
+        accumulator.push({
+          id: id, // standardize n40001001002 to  40001001002
+          corpusId: refCorpus.id,
+          text: values[headerMap['text']],
+          position: pos,
+        });
+        break;
+
+      case CorpusFileFormat.TSV_MACULA:
+      default:
+        // remove redundant 'o'/'n' qualifier
+        id = values[headerMap['xml:id']].slice(1);
+        pos = +id.substring(8, 11); // grab word position
+
+        accumulator.push({
+          id: id, // standardize n40001001002 to  40001001002
+          corpusId: refCorpus.id,
+          text: values[headerMap['text']],
+          after: values[headerMap['after']],
+          position: pos,
+        });
+        break;
+    }
+
+    return accumulator;
+  }, [] as Word[]);
+}
+
+const convertBcvToIdentifier = (
+  book: number,
+  chapter: number,
+  verse: number
+) => {
+  return (
+    `${book}`.padStart(2, '0') +
+    [chapter, verse]
+      .map((section: number) => {
+        return `${section}`.padStart(3, '0');
+      })
+      .join('')
+  );
+};
+
+export const getAvailableCorpora = async (): Promise<Corpus[]> => {
+  if (!isInitialized) {
+    isInitialized = true;
+
+    // SBL GNT
+    const sblGnt = {
+      id: 'sbl-gnt',
+      name: 'SBL GNT',
+      fullName: 'SBL Greek New Testament',
+      language: 'grc',
+      words: []
+    };
+
+    // @ts-ignore
+    sblGnt.words = await parseTsvByFileType(
+      MACULA_SBLGNT,
+      sblGnt,
+      CorpusFileFormat.TSV_MACULA
+    );
+
+    availableCorpora.push(sblGnt);
+
+    const na27Ylt = {
+      id: 'na27-YLT',
+      name: 'NA27 YLT',
+      fullName: 'Nestle-Aland 27th Edition YLT text',
+      language: 'eng',
+      words: []
+    };
+
+    // @ts-ignore
+    na27Ylt.words = await parseTsvByFileType(
+      NA27_YLT,
+      na27Ylt,
+      CorpusFileFormat.TSV_TARGET
+    );
+
+    availableCorpora.push(na27Ylt);
+  }
+
+  return availableCorpora;
+};
+
+export const getAvailableCorporaIds = async (): Promise<string[]> => {
+  return (await getAvailableCorpora()).map((corpus) => {
+    return corpus.id;
   });
-}
-
-const convertBcvToIdentifier = (corpusId: string, book: number, chapter: number, verse: number) => {
-  const convertedSections = book + [chapter, verse].map((section: number) => {
-    const paddedNum = `000${section}`;
-    return paddedNum.slice(paddedNum.length - 3, paddedNum.length)
-  }).join('');
-
-  switch (corpusId) {
-    case CorpusType.SBL:
-      return `n${convertedSections}`;
-    default:
-      return convertedSections;
-  }
-}
-
-const getTsvFromCorpusId = (corpusId: string) => {
-  switch(corpusId) {
-    case CorpusType.SBL:
-    default:
-      return MACULA;
-  }
 }
 
 export const queryText = async (
-    corpusId: string,
-    book: number,
-    chapter: number,
-    verse: number
+  corpusId: string,
+  book: number,
+  chapter: number,
+  verse: number
 ): Promise<Corpus> => {
-  const corpus = availableCorpora.find((corpus) => {
+  const corpus = (await getAvailableCorpora()).find((corpus) => {
     return corpus.id === corpusId;
   });
-
-  const bcvId = convertBcvToIdentifier(corpusId, book, chapter, verse);
-  const maculaData = await parseTsv(getTsvFromCorpusId(corpusId), {"xml:id": "n", "ref": "osisId"});
-  const queriedData = maculaData.filter(m => (m.n || "").includes(bcvId));
 
   if (!corpus) {
     throw new Error(`Unable to find requested corpus: ${corpusId}`);
   }
 
-  const words = queriedData
-      .map((textData, index) => {
-        let id = '';
-        if (corpus.id === CorpusType.SBL) {
-          const bookString = String(book).padStart(2, '0');
-          const chapterString = String(chapter).padStart(3, '0');
-          const verseString = String(verse).padStart(3, '0');
-          const positionString = String(index + 1).padStart(3, '0');
-          id = `${bookString}${chapterString}${verseString}${positionString}0010`;
-        } else {
-          id = `${corpusId}_${index}`;
-        }
-
-        return {
-          id,
-          corpusId: corpusId,
-          position: index,
-          text: textData.text,
-        };
-      });
+  const bcvId = convertBcvToIdentifier(book, chapter, verse);
+  const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
 
   return {
     id: corpus?.id ?? '',
     name: corpus?.name ?? '',
     fullName: corpus?.fullName ?? '',
     language: corpus?.language ?? '',
-    words: words,
+    words: queriedData,
   };
 };
