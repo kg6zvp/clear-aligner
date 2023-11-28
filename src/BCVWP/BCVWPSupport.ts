@@ -45,6 +45,15 @@ export default class BCVWP {
   getBookInfo(): BookInfo|undefined {
     return this.book ? findBookByIndex(this.book) : undefined;
   }
+
+  /**
+   * checks whether the given BCVWP match at the given level of truncation
+   * @param other: BCVWP to check for a match
+   * @param truncation: amount of truncation to match to
+   */
+  matchesTruncated(other: BCVWP, truncation: BCVWPTruncation): boolean {
+    return this.toTruncatedReferenceString(truncation) === other.toTruncatedReferenceString(truncation);
+  }
 }
 
 export const parseFromString = (reference: string): BCVWP => {

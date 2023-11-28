@@ -14,7 +14,7 @@ import BCVWP, {parseFromString} from "../BCVWP/BCVWPSupport";
 
 interface WorkbenchProps {
   corpora?: Corpus[];
-  currentPosition: BCVWP;
+  currentPosition?: BCVWP|null;
 }
 
 const getBookNumber = (bookName: string) => {

@@ -1,41 +1,41 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Autocomplete, TextField} from "@mui/material";
-import {Corpus} from "../structs";
+import {Corpus, Word} from "../structs";
 import BCVWP, {parseFromString} from "../BCVWP/BCVWPSupport";
 import BCVWPSupport from "../BCVWP/BCVWPSupport";
 import {BOOK_LIST, findBookByIndex} from "../BCVWP/BookLookup";
 
 export interface Verse {
-    reference: number;
+  reference: number;
 }
 
 export interface Chapter {
-    reference: number;
-    verses: Verse[];
+  reference: number;
+  verses: Verse[];
 }
 
 export interface Book {
-    title: string;
-    chapters: Chapter[];
+  title: string;
+  chapters: Chapter[];
 }
 
 interface NavigableBook extends Book {
-    /**
-     * 1-based index within the division
-     */
-    index: number;
+  /**
+   * 1-based index within the division
+   */
+  index: number;
 }
 
 export interface BCVNavigationProps {
-    horizontal?: boolean;
-    corpora: Corpus[];
-    currentPosition?: BCVWP;
-    onNavigate?: (selection: BCVWP) => void;
+  horizontal?: boolean;
+  words?: Word[];
+  currentPosition?: BCVWP;
+  onNavigate?: (selection: BCVWP) => void;
 }
 
-const getReferenceListFromCorpora = (corpora: Corpus[]): NavigableBook[] =>
-    corpora
-        .map(corpus => parseFromString(corpus.id))
+const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
+    words
+        .map(word => parseFromString(word.id))
         .map((ref): NavigableBook => ({
             index: ref.book ?? 0,
             title: ref.getBookInfo()?.name ?? '',
@@ -86,113 +86,120 @@ const findBookInNavigableBooksByIndex = (navigableBooks: NavigableBook[], index?
 
 /**
  * BCVNavigation component for use in React
- * @param props.corpora list of references available for navigation
+ * @param props.words list of references available for navigation
  * @param props.currentPosition optional prop to specify current position
  * @param props.onNavigate callback function which will receive division, book, chapter and verse coordinates
  */
-const BCVNavigation = ({ corpora, currentPosition, onNavigate, horizontal } : BCVNavigationProps) => {
-    const booksWithNavigationInfo = useMemo(() =>
-        getReferenceListFromCorpora(corpora), [corpora]);
-    const [selectedBook, setSelectedBook] = useState(findBookInNavigableBooksByIndex(booksWithNavigationInfo, currentPosition?.book));
-    const [selectedChapter, setSelectedChapter] = useState(currentPosition?.chapter ?? NO_VALUE);
-    const [selectedVerse, setSelectedVerse] = useState(currentPosition?.verse ?? NO_VALUE);
+const BCVNavigation = ({ words, currentPosition, onNavigate, horizontal } : BCVNavigationProps) => {
+  const [booksWithNavigationInfo, setBooksWithNavigationInfo] = useState([] as NavigableBook[]);
 
-    console.log('selectedChapter', selectedChapter);
-    console.log('selectedVerse', selectedVerse);
-    const availableChapters = useMemo(() =>
-        selectedBook ? selectedBook?.chapters : undefined,
-        [booksWithNavigationInfo, selectedBook]);
+  const getBooksWithNavigationInfo = async (words: Word[]) => {
+    const referenceList = getReferenceListFromWords(words);
+    setBooksWithNavigationInfo(referenceList ?? []);
+  };
 
-    const availableVerses = useMemo(() =>
-        availableChapters && selectedChapter && selectedChapter !== NO_VALUE ? availableChapters.find(chapter => chapter.reference === selectedChapter)?.verses : undefined,
-        [availableChapters, selectedChapter]);
+  useEffect(() => {
+    void getBooksWithNavigationInfo(words ?? []);
+  }, [words]);
 
-    const handleSetBook = (book?: NavigableBook) => {
-        setSelectedBook(book ?? null);
-        setSelectedChapter(NO_VALUE);
-        setSelectedVerse(NO_VALUE);
-    };
+  const [selectedBook, setSelectedBook] = useState(findBookInNavigableBooksByIndex(booksWithNavigationInfo, currentPosition?.book));
+  const [selectedChapter, setSelectedChapter] = useState(currentPosition?.chapter ?? NO_VALUE);
+  const [selectedVerse, setSelectedVerse] = useState(currentPosition?.verse ?? NO_VALUE);
 
-    const handleSetChapter = (chapterIndex?: number) => {
-        setSelectedChapter(chapterIndex ?? NO_VALUE);
-        setSelectedVerse(NO_VALUE);
-    };
+  const availableChapters = useMemo(() =>
+      selectedBook ? selectedBook?.chapters : undefined,
+      [booksWithNavigationInfo, selectedBook]);
 
-    const handleNavigation = useMemo(() =>
-        () => onNavigate && selectedBook && selectedChapter && selectedVerse && onNavigate(new BCVWP(selectedBook.index, selectedChapter, selectedVerse)), [selectedBook, selectedChapter, selectedVerse]);
+  const availableVerses = useMemo(() =>
+      availableChapters && selectedChapter && selectedChapter !== NO_VALUE ? availableChapters.find(chapter => chapter.reference === selectedChapter)?.verses : undefined,
+      [availableChapters, selectedChapter]);
 
-    return <>
-        <label>
-            {'Book '}
-            <Autocomplete
-                disablePortal
-                id='book-selection'
-                size='small'
-                sx={{
-                    width: '12em',
-                    display: 'inline-flex'
-                }}
-                options={booksWithNavigationInfo}
-                typeof={'select'}
-                groupBy={(book: NavigableBook) => {
-                    if (book.index < 40) return 'Old Testament';
-                    if (book.index > 39 && book.index < 68) return 'New Testament';
-                    return 'Apocrypha';
-                }}
-                getOptionLabel={(option) => option.title}
-                value={selectedBook}
-                onChange={(_, value) => handleSetBook(value ?? undefined)}
-                renderInput={(params) => <TextField {...params} variant={'standard'} />} />
-        </label>
-        {!horizontal && <br/>}
-        <label>
-            {'Chapter '}
-            <select
-                disabled={!selectedBook}
-                value={selectedChapter}
-                onChange={(e) =>
-                    handleSetChapter(e.target.value ? Number(e.target.value) : undefined as number|undefined)} >
+  const handleSetBook = (book?: NavigableBook) => {
+    setSelectedBook(book ?? null);
+    setSelectedChapter(NO_VALUE);
+    setSelectedVerse(NO_VALUE);
+  };
+
+  const handleSetChapter = (chapterIndex?: number) => {
+    setSelectedChapter(chapterIndex ?? NO_VALUE);
+    setSelectedVerse(NO_VALUE);
+  };
+
+  const handleNavigation = useMemo(() =>
+    () => onNavigate && selectedBook && selectedChapter && selectedVerse && onNavigate(new BCVWP(selectedBook.index, selectedChapter, selectedVerse)), [selectedBook, selectedChapter, selectedVerse]);
+
+  return <>
+    <label>
+        {'Book '}
+        <Autocomplete
+            disablePortal
+            id='book-selection'
+            size='small'
+            sx={{
+                width: '12em',
+                display: 'inline-flex'
+            }}
+            options={booksWithNavigationInfo}
+            typeof={'select'}
+            groupBy={(book: NavigableBook) => {
+                if (book.index < 40) return 'Old Testament';
+                if (book.index > 39 && book.index < 68) return 'New Testament';
+                return 'Apocrypha';
+            }}
+            getOptionLabel={(option) => option.title}
+            value={selectedBook}
+            onChange={(_, value) => handleSetBook(value ?? undefined)}
+            renderInput={(params) => <TextField {...params} variant={'standard'} />} />
+    </label>
+    {!horizontal && <br/>}
+    <label>
+        {'Chapter '}
+        <select
+            disabled={!selectedBook}
+            value={selectedChapter}
+            onChange={(e) =>
+                handleSetChapter(e.target.value ? Number(e.target.value) : undefined as number|undefined)} >
+            <option
+                key={NO_VALUE}
+                value={NO_VALUE} >
+                Select a chapter
+            </option>
+            {availableChapters?.map((c) =>
                 <option
-                    key={NO_VALUE}
-                    value={NO_VALUE} >
-                    Select a chapter
+                    key={c.reference}
+                    value={c.reference}>
+                    {c.reference}
                 </option>
-                {availableChapters?.map((c) =>
-                    <option
-                        key={c.reference}
-                        value={c.reference}>
-                        {c.reference}
-                    </option>
-                )}
-            </select>
-        </label>
-        {!horizontal && <br/>}
-        <label>
-            {'Verse '}
-            <select
-                disabled={!selectedChapter}
-                value={selectedVerse}
-                onChange={(e) => setSelectedVerse(e.target.value ? Number(e.target.value) : NO_VALUE as number)} >
-                <option
-                    key={NO_VALUE}
-                    value={NO_VALUE} >
-                    Select a verse
-                </option>
-                {availableVerses?.map((verse) =>
-                        (<option
-                            key={verse.reference}
-                            value={verse.reference} >
-                            {verse.reference}
-                        </option>))}
-            </select>
-        </label>
-        {!horizontal && <br/>}
-        <button
-            disabled={!selectedBook || !selectedChapter || !selectedVerse}
-            onClick={() => handleNavigation()}>
-            Go
-        </button>
-        </>;
+            )}
+        </select>
+    </label>
+    {!horizontal && <br/>}
+    <label>
+        {'Verse '}
+        <select
+            disabled={!selectedChapter}
+            value={selectedVerse}
+            onChange={(e) => setSelectedVerse(e.target.value ? Number(e.target.value) : NO_VALUE as number)} >
+            <option
+                key={NO_VALUE}
+                value={NO_VALUE} >
+                Select a verse
+            </option>
+            {availableVerses?.map((verse) =>
+                    (<option
+                        key={verse.reference}
+                        value={verse.reference} >
+                        {verse.reference}
+                    </option>))}
+        </select>
+    </label>
+    {!horizontal && <br/>}
+    <button
+        disabled={!selectedBook || !selectedChapter || !selectedVerse}
+        onClick={() => handleNavigation()}>
+        Go
+    </button>
+  </>;
 }
 
 export default BCVNavigation;

@@ -1,10 +1,10 @@
 import {Corpus, CorpusFileFormat, Word} from 'structs';
+import BCVWP, {BCVWPTruncation} from "../BCVWP/BCVWPSupport";
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
 import NA27_YLT from "tsv/target_NA27-YLT.tsv";
-import BCVWP, {BCVWPTruncation} from "../BCVWP/BCVWPSupport";
 
 let isInitialized: boolean = false;
 
@@ -121,8 +121,9 @@ export const getAvailableCorporaIds = async (): Promise<string[]> => {
 
 export const queryText = async (
   corpusId: string,
-  position: BCVWP
-): Promise<Corpus> => {
+  position?: BCVWP|null
+): Promise<Corpus|null> => {
+  if (!position) return null;
   const corpus = (await getAvailableCorpora()).find((corpus) => {
     return corpus.id === corpusId;
   });

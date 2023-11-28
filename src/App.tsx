@@ -11,7 +11,7 @@ import BCVNavigation from "./BCVNavigation/BCVNavigation";
 import BCVWP, {parseFromString} from "./BCVWP/BCVWPSupport";
 import {Corpus, SyntaxRoot, SyntaxType} from "./structs";
 import {BCVDisplay} from "./BCVWP/BCVDisplay";
-import {getAvailableCorporaIds, queryText} from "./workbench/query";
+import {getAvailableCorpora, getAvailableCorporaIds, queryText} from "./workbench/query";
 import fetchSyntaxData from "./workbench/fetchSyntaxData";
 import placeholderTreedown from "./features/treedown/treedown.json";
 import books from "./workbench/books";
@@ -48,7 +48,7 @@ function App() {
   document.title = getRefParam()
     ? `${defaultDocumentTitle} ${getRefParam()}`
     : defaultDocumentTitle;
-  const [currentPosition, setCurrentPosition] = useState(getRefFromURL() ?? parseFromString(corpora[0].id));
+  const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
 
   const bookDoc = React.useMemo(
     () => books.find((bookItem) => bookItem.BookNumber === currentPosition?.book),
@@ -60,7 +60,8 @@ function App() {
     const retrievedCorpora: Corpus[] = [];
 
     for (const corpusId of corporaIds) {
-      retrievedCorpora.push(await queryText(corpusId, currentPosition));
+      const corpus = await queryText(corpusId, currentPosition);
+      if (corpus) retrievedCorpora.push(corpus);
     }
 
     // set the syntax
@@ -68,11 +69,16 @@ function App() {
       corpus['syntax'] = {...syntaxData, _syntaxType: SyntaxType.Source};
     })
 
-    setCorpora(retrievedCorpora);
-  }, [currentPosition?.book, currentPosition?.chapter, currentPosition?.verse, syntaxData]);
+    //setCorpora(retrievedCorpora);
+    const availableCorpora = await getAvailableCorpora();
+    setCorpora(availableCorpora);
+  }, [syntaxData]);
 
   React.useEffect(() => {
     void updateCorpora();
+    if (!currentPosition) {
+      return;
+    }
     const loadSyntaxData = async () => {
       try {
         const syntaxData = await fetchSyntaxData(bookDoc, currentPosition);
@@ -89,7 +95,7 @@ function App() {
 
     loadSyntaxData().catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookDoc, currentPosition?.book, currentPosition?.chapter, currentPosition?.verse]);
+  }, [bookDoc, currentPosition]);
 
   return <>
     <Themed theme={theme}>
@@ -104,7 +110,7 @@ function App() {
           anchor={'left'}
           open={showMenu}
           onClose={() => setShowMenu(false)}>
-          <BCVNavigation corpora={corpora} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
+          <BCVNavigation words={corpora?.[0]?.words} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
             setCurrentPosition(selection);
             setShowMenu(false);
           }} />

@@ -11,7 +11,7 @@ export default meta;
 
 export const Default = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
 Default.args = {
-    corpora: [
+    words: [
         {
             id: '45005003001'
         },
@@ -23,7 +23,7 @@ Default.args = {
 
 export const WithCurrentPositionAtGalatians6_2 = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
 WithCurrentPositionAtGalatians6_2.args = {
-    corpora: [
+    words: [
         {
             id: '45005003001'
         },
