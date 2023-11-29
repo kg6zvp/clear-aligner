@@ -9,12 +9,10 @@ import Themed from 'features/themed';
 import React, {useMemo, useState} from "react";
 import BCVNavigation from "./BCVNavigation/BCVNavigation";
 import BCVWP, {parseFromString} from "./BCVWP/BCVWPSupport";
-import {Corpus, SyntaxRoot, SyntaxType} from "./structs";
+import {Corpus, SyntaxRoot, SyntaxType, Word} from "./structs";
 import {BCVDisplay} from "./BCVWP/BCVDisplay";
 import {getAvailableCorpora, getAvailableCorporaIds, queryText} from "./workbench/query";
 import fetchSyntaxData from "./workbench/fetchSyntaxData";
-import placeholderTreedown from "./features/treedown/treedown.json";
-import books from "./workbench/books";
 
 const getRefParam = (): string | null => {
   const params = new URLSearchParams(window.location.search);
@@ -33,7 +31,8 @@ const getRefFromURL = (): BCVWP | null => {
 const defaultDocumentTitle = '🌲⬇️';
 
 function App() {
-  const [availableCorpora, setAvailableCorpora] = useState([] as Corpus[]);
+  const [availableWords, setAvailableWords] = useState([] as Word[]);
+  const [selectedCorpora, setSelectedCorpora] = useState([] as Corpus[]);
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const theme = useMemo(
       () => prefersDarkMode ? 'night' : 'day',
@@ -41,23 +40,21 @@ function App() {
 
   const [showMenu, setShowMenu] = useState(false);
 
-  const [syntaxData, setSyntaxData] = React.useState(
-    placeholderTreedown as SyntaxRoot
-  );
-
-  document.title = getRefParam()
-    ? `${defaultDocumentTitle} ${getRefParam()}`
-    : defaultDocumentTitle;
   const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
+
+  React.useEffect(() => {
+    if (currentPosition) {
+      document.title = `${defaultDocumentTitle} ${currentPosition?.getBookInfo()?.EnglishBookName} ${currentPosition?.chapter}:${currentPosition?.verse}`;
+    } else {
+      document.title = defaultDocumentTitle;
+    }
+  },
+    [currentPosition]);
 
   React.useEffect(() => {
     const loadSyntaxData = async () => {
       try {
         const loadedSyntaxData = await fetchSyntaxData(currentPosition);
-        if (loadedSyntaxData) {
-          document.title = `${defaultDocumentTitle} ${
-            currentPosition ? `${currentPosition?.getBookInfo()?.EnglishBookName} ${currentPosition?.chapter}:${currentPosition?.verse}` : ''}`;
-        }
 
         const corporaIds = await getAvailableCorporaIds();
         const retrievedCorpora: Corpus[] = [];
@@ -72,16 +69,23 @@ function App() {
           corpus.syntax = {...loadedSyntaxData as SyntaxRoot, _syntaxType: SyntaxType.Source};
         })
 
-        setAvailableCorpora(retrievedCorpora);
+        setSelectedCorpora(retrievedCorpora);
       } catch (error) {
         console.error(error);
       }
     };
 
     loadSyntaxData().catch(console.error);
-  }, [currentPosition, currentPosition?.book]);
+  }, [currentPosition, currentPosition?.book, setSelectedCorpora]);
 
-  const corpora: Corpus[] = [];
+  React.useEffect(() => {
+    const loadSourceWords = async () => {
+      const corpus = (await getAvailableCorpora())[0];
+      setAvailableWords(corpus.words ?? []);
+    };
+
+    loadSourceWords().catch(console.error);
+  }, [setAvailableWords]);
 
   return <>
     <Themed theme={theme}>
@@ -90,19 +94,21 @@ function App() {
           <IconButton>
             <MenuIcon {...theme !== 'night' && {htmlColor: 'white'}} />
           </IconButton>
-          <BCVDisplay currentPosition={currentPosition} />
+          <div onClick={() => setShowMenu(true)}>
+            <BCVDisplay currentPosition={currentPosition} />
+          </div>
         </Toolbar>
         <Drawer
           anchor={'left'}
           open={showMenu}
           onClose={() => setShowMenu(false)}>
-          <BCVNavigation words={corpora?.[0]?.words} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
+          <BCVNavigation words={availableWords} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
             setCurrentPosition(selection);
             setShowMenu(false);
           }} />
         </Drawer>
       </AppBar>
-      <Workbench corpora={corpora} currentPosition={currentPosition} />
+      <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
     </Themed>
   </>;
 }

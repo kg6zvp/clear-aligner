@@ -133,9 +133,7 @@ export const queryText = async (
   }
 
   const bcvId = position.toTruncatedReferenceString(BCVWPField.Verse);
-  console.log('bcvId', bcvId);
   const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
-  console.log('queriedData', queriedData);
 
   return {
     id: corpus?.id ?? '',

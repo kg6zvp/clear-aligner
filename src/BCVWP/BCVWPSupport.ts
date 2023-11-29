@@ -1,4 +1,15 @@
-import {BookInfo, findBookByIndex} from "../workbench/books";
+import {BookInfo, findBookByNumber} from "../workbench/books";
+
+/**
+ * BCVWPField references, numbers correspond to length of string at end of those fields
+ */
+export enum BCVWPField {
+  Book = 2,
+  Chapter = 5,
+  Verse = 8,
+  Word = 11,
+  Part = 12
+}
 
 export default class BCVWP {
   /**
@@ -43,7 +54,7 @@ export default class BCVWP {
   }
 
   getBookInfo(): BookInfo|undefined {
-    return this.book ? findBookByIndex(this.book) : undefined;
+    return this.book ? findBookByNumber(this.book) : undefined;
   }
 
   /**
@@ -93,11 +104,3 @@ export const parseFromString = (reference: string): BCVWP => {
 
     return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
 };
-
-export enum BCVWPField {
-  Book = 2,
-  Chapter = 5,
-  Verse = 8,
-  Word = 11,
-  Part = 12
-}

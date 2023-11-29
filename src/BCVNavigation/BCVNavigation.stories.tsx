@@ -1,6 +1,7 @@
 import React from 'react';
 import BCVNavigation, {BCVNavigationProps} from './BCVNavigation';
 import {Meta} from "@storybook/react";
+import BCVWP from "../BCVWP/BCVWPSupport";
 
 const meta: Meta<typeof BCVNavigation> = {
     title: "BCVNavigation",
@@ -31,9 +32,5 @@ WithCurrentPositionAtGalatians6_2.args = {
             id: '48006002001'
         }
     ],
-    currentPosition: {
-        book: 48,
-        chapter: 6,
-        verse: 2
-    }
+    currentPosition: new BCVWP(48, 6, 2)
 } as BCVNavigationProps
