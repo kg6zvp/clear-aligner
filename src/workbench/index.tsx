@@ -32,74 +32,65 @@ const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: Workb
   const [showLwcText, setShowLwcText] = React.useState(true);
   const [showBackText, setShowBackText] = React.useState(true);
 
-  const book = currentPosition.book ?? 0;
-  const chapter = currentPosition.chapter ?? 1;
-  const verse = currentPosition.verse ?? 1;
-
-  const bookDoc = React.useMemo(
-    () => books.find((bookItem) => bookItem.BookNumber === book),
-    [book]
-  );
+  const [displayCorpora, setDisplayCorpora] = React.useState([] as Corpus[]);
 
   React.useEffect(() => {
-    const loadSyntaxData = async () => {
-      try {
-        const loadedSyntaxData = await fetchSyntaxData(bookDoc, chapter, verse);
-        if (loadedSyntaxData) {
-          document.title = `${documentTitle} ${
-            bookDoc ? bookDoc.OSIS : book
-          }.${chapter}.${verse}`;
-        }
+    if (showSourceText) {
+      queryText('sbl', currentPosition)
+        .then(async (corpus) => {
+          if (corpus) {
+            const syntaxData = await fetchSyntaxData(currentPosition);
+            const sourceCorpus: Corpus = {
+              ...corpus,
+              syntax: { ...syntaxData!, _syntaxType: SyntaxType.Source }
+            };
+            setDisplayCorpora([...displayCorpora, sourceCorpus]);
+          }
+        });
+    }
+  }, [showSourceText, displayCorpora, setDisplayCorpora]);
 
-        const corporaIds = await getAvailableCorporaIds();
-        const retrievedCorpora: Corpus[] = [];
+  React.useEffect(() => {
+    if (showTargetText) {
+      queryText('nvi', currentPosition)
+        .then(async (corpus) => {
+          if (corpus) {
+            const syntaxData = await fetchSyntaxData(currentPosition);
+            const targetCorpus: Corpus = {
+              ...corpus,
+              syntax: { ...syntaxData!, _syntaxType: SyntaxType.Mapped },
+            };
+            setDisplayCorpora([...displayCorpora, targetCorpus]);
+          }
+        });
+    }
+  }, [showTargetText, displayCorpora, setDisplayCorpora]);
 
-        for (const corpusId of corporaIds) {
-          retrievedCorpora.push(await queryText(corpusId, book, chapter, verse));
-        }
+  React.useEffect(() => {
+    if (showLwcText) {
+      queryText('leb', currentPosition)
+        .then(async (corpus) => {
+          if (corpus) {
+            const syntaxData = await fetchSyntaxData(currentPosition);
+            const lwcCorpus: Corpus = {
+              ...corpus,
+              syntax: { ...syntaxData!, _syntaxType: SyntaxType.MappedSecondary },
+            }
+          }
+        });
+    }
+  }, [showLwcText, displayCorpora, setDisplayCorpora])
 
-        // set the syntax
-        retrievedCorpora.forEach((corpus) => {
-          corpus['syntax'] = {...loadedSyntaxData as SyntaxRoot, _syntaxType: SyntaxType.Source};
-        })
-
-        setCorpora(retrievedCorpora);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    loadSyntaxData().catch(console.error);
-  }, [bookDoc, book, chapter, verse]);
-
-  const corpora: Corpus[] = [];
-
-  if (showSourceText) {
-    const sourceCorpus = {
-      ...queryText('sbl', book, chapter, verse),
-      syntax: { ...syntaxData, _syntaxType: SyntaxType.Source },
-    };
-
-    corpora.push(sourceCorpus);
-  }
-
-  if (showTargetText) {
-    corpora.push({
-      ...queryText('nvi', book, chapter, verse),
-      syntax: { ...syntaxData, _syntaxType: SyntaxType.Mapped },
-    });
-  }
-
-  if (showLwcText) {
-    corpora.push({
-      ...queryText('leb', book, chapter, verse),
-      syntax: { ...syntaxData, _syntaxType: SyntaxType.MappedSecondary },
-    });
-  }
-
-  if (showBackText) {
-    corpora.push(queryText('backTrans', book, chapter, verse));
-  }
+  React.useEffect(() => {
+    if (showBackText) {
+      queryText('backTrans', currentPosition)
+        .then(async (corpus) => {
+          if (corpus) {
+            setDisplayCorpora([...displayCorpora, corpus]);
+          }
+        });
+    }
+  }, [showBackText, displayCorpora, setDisplayCorpora]);
 
   return (<>
       {corpora &&

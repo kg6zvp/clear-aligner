@@ -1,15 +1,14 @@
-export interface BookLookupInfo {
+export interface BookInfo {
   BookNumber: number,
   ParaText: string,
   OSIS: string,
   ClearBible: string,
   SBLGNT: string,
   EnglishBookName: string,
-  ChapterCount?: number,
   IsBibleBook: string
 }
 
-const books: BookLookupInfo[] = [
+const books: BookInfo[] = [
   {
     BookNumber: 1,
     ParaText: 'GEN',
@@ -17,7 +16,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'gn',
     SBLGNT: '',
     EnglishBookName: 'Genesis',
-    ChapterCount: 50,
     IsBibleBook: 'True',
   },
   {
@@ -27,7 +25,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ex',
     SBLGNT: '',
     EnglishBookName: 'Exodus',
-    ChapterCount: 40,
     IsBibleBook: 'True',
   },
   {
@@ -37,7 +34,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'lv',
     SBLGNT: '',
     EnglishBookName: 'Leviticus',
-    ChapterCount: 27,
     IsBibleBook: 'True',
   },
   {
@@ -47,7 +43,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'nu',
     SBLGNT: '',
     EnglishBookName: 'Numbers',
-    ChapterCount: 36,
     IsBibleBook: 'True',
   },
   {
@@ -57,7 +52,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'dt',
     SBLGNT: '',
     EnglishBookName: 'Deuteronomy',
-    ChapterCount: 34,
     IsBibleBook: 'True',
   },
   {
@@ -67,7 +61,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'js',
     SBLGNT: '',
     EnglishBookName: 'Joshua',
-    ChapterCount: 24,
     IsBibleBook: 'True',
   },
   {
@@ -77,7 +70,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ju',
     SBLGNT: '',
     EnglishBookName: 'Judges',
-    ChapterCount: 21,
     IsBibleBook: 'True',
   },
   {
@@ -87,7 +79,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ru',
     SBLGNT: '',
     EnglishBookName: 'Ruth',
-    ChapterCount: 4,
     IsBibleBook: 'True',
   },
   {
@@ -97,7 +88,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1s',
     SBLGNT: '',
     EnglishBookName: '1 Samuel',
-    ChapterCount: 31,
     IsBibleBook: 'True',
   },
   {
@@ -107,7 +97,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2s',
     SBLGNT: '',
     EnglishBookName: '2 Samuel',
-    ChapterCount: 24,
     IsBibleBook: 'True',
   },
   {
@@ -117,7 +106,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1k',
     SBLGNT: '',
     EnglishBookName: '1 Kings',
-    ChapterCount: 22,
     IsBibleBook: 'True',
   },
   {
@@ -127,7 +115,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2k',
     SBLGNT: '',
     EnglishBookName: '2 Kings',
-    ChapterCount: 25,
     IsBibleBook: 'True',
   },
   {
@@ -137,7 +124,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1c',
     SBLGNT: '',
     EnglishBookName: '1 Chronicles',
-    ChapterCount: 29,
     IsBibleBook: 'True',
   },
   {
@@ -147,7 +133,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2c',
     SBLGNT: '',
     EnglishBookName: '2 Chronicles',
-    ChapterCount: 36,
     IsBibleBook: 'True',
   },
   {
@@ -157,7 +142,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'er',
     SBLGNT: '',
     EnglishBookName: 'Ezra',
-    ChapterCount: 10,
     IsBibleBook: 'True',
   },
   {
@@ -167,7 +151,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ne',
     SBLGNT: '',
     EnglishBookName: 'Nehemiah',
-    ChapterCount: 13,
     IsBibleBook: 'True',
   },
   {
@@ -177,7 +160,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'es',
     SBLGNT: '',
     EnglishBookName: 'Esther (Hebrew)',
-    ChapterCount: 10,
     IsBibleBook: 'True',
   },
   {
@@ -187,7 +169,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'jb',
     SBLGNT: '',
     EnglishBookName: 'Job',
-    ChapterCount: 42,
     IsBibleBook: 'True',
   },
   {
@@ -197,7 +178,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ps',
     SBLGNT: '',
     EnglishBookName: 'Psalms',
-    ChapterCount: 150,
     IsBibleBook: 'True',
   },
   {
@@ -207,7 +187,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'pr',
     SBLGNT: '',
     EnglishBookName: 'Proverbs',
-    ChapterCount: 31,
     IsBibleBook: 'True',
   },
   {
@@ -217,7 +196,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ec',
     SBLGNT: '',
     EnglishBookName: 'Ecclesiastes',
-    ChapterCount: 12,
     IsBibleBook: 'True',
   },
   {
@@ -227,7 +205,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ca',
     SBLGNT: '',
     EnglishBookName: 'Song of Songs',
-    ChapterCount: 8,
     IsBibleBook: 'True',
   },
   {
@@ -237,7 +214,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'is',
     SBLGNT: '',
     EnglishBookName: 'Isaiah',
-    ChapterCount: 66,
     IsBibleBook: 'True',
   },
   {
@@ -247,7 +223,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'je',
     SBLGNT: '',
     EnglishBookName: 'Jeremiah',
-    ChapterCount: 52,
     IsBibleBook: 'True',
   },
   {
@@ -257,7 +232,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'lm',
     SBLGNT: '',
     EnglishBookName: 'Lamentations',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -267,7 +241,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ek',
     SBLGNT: '',
     EnglishBookName: 'Ezekiel',
-    ChapterCount: 48,
     IsBibleBook: 'True',
   },
   {
@@ -277,7 +250,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'da',
     SBLGNT: '',
     EnglishBookName: 'Daniel (Hebrew)',
-    ChapterCount: 12,
     IsBibleBook: 'True',
   },
   {
@@ -287,7 +259,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ho',
     SBLGNT: '',
     EnglishBookName: 'Hosea',
-    ChapterCount: 14,
     IsBibleBook: 'True',
   },
   {
@@ -297,7 +268,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'jl',
     SBLGNT: '',
     EnglishBookName: 'Joel',
-    ChapterCount: 4,
     IsBibleBook: 'True',
   },
   {
@@ -307,7 +277,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'am',
     SBLGNT: '',
     EnglishBookName: 'Amos',
-    ChapterCount: 9,
     IsBibleBook: 'True',
   },
   {
@@ -317,7 +286,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ob',
     SBLGNT: '',
     EnglishBookName: 'Obadiah',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -327,7 +295,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'jn',
     SBLGNT: '',
     EnglishBookName: 'Jonah',
-    ChapterCount: 4,
     IsBibleBook: 'True',
   },
   {
@@ -337,7 +304,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'mi',
     SBLGNT: '',
     EnglishBookName: 'Micah',
-    ChapterCount: 7,
     IsBibleBook: 'True',
   },
   {
@@ -347,7 +313,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'na',
     SBLGNT: '',
     EnglishBookName: 'Nahum',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -357,7 +322,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'hb',
     SBLGNT: '',
     EnglishBookName: 'Habakkuk',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -367,7 +331,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'zp',
     SBLGNT: '',
     EnglishBookName: 'Zephaniah',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -377,7 +340,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'hg',
     SBLGNT: '',
     EnglishBookName: 'Haggai',
-    ChapterCount: 2,
     IsBibleBook: 'True',
   },
   {
@@ -387,7 +349,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'zc',
     SBLGNT: '',
     EnglishBookName: 'Zechariah',
-    ChapterCount: 14,
     IsBibleBook: 'True',
   },
   {
@@ -397,7 +358,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'ma',
     SBLGNT: '',
     EnglishBookName: 'Malachi',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -407,7 +367,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Mat',
     SBLGNT: 'Mt',
     EnglishBookName: 'Matthew',
-    ChapterCount: 28,
     IsBibleBook: 'True',
   },
   {
@@ -417,7 +376,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Mrk',
     SBLGNT: 'Mk',
     EnglishBookName: 'Mark',
-    ChapterCount: 16,
     IsBibleBook: 'True',
   },
   {
@@ -427,7 +385,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Luk',
     SBLGNT: 'Lk',
     EnglishBookName: 'Luke',
-    ChapterCount: 24,
     IsBibleBook: 'True',
   },
   {
@@ -437,7 +394,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Jhn',
     SBLGNT: 'Jn',
     EnglishBookName: 'John',
-    ChapterCount: 21,
     IsBibleBook: 'True',
   },
   {
@@ -447,7 +403,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Act',
     SBLGNT: 'Ac',
     EnglishBookName: 'Acts',
-    ChapterCount: 28,
     IsBibleBook: 'True',
   },
   {
@@ -457,7 +412,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Rom',
     SBLGNT: 'Ro',
     EnglishBookName: 'Romans',
-    ChapterCount: 16,
     IsBibleBook: 'True',
   },
   {
@@ -467,7 +421,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1Co',
     SBLGNT: '1Co',
     EnglishBookName: '1 Corinthians',
-    ChapterCount: 16,
     IsBibleBook: 'True',
   },
   {
@@ -477,7 +430,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2Co',
     SBLGNT: '2Co',
     EnglishBookName: '2 Corinthians',
-    ChapterCount: 13,
     IsBibleBook: 'True',
   },
   {
@@ -487,7 +439,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Gal',
     SBLGNT: 'Ga',
     EnglishBookName: 'Galatians',
-    ChapterCount: 6,
     IsBibleBook: 'True',
   },
   {
@@ -497,7 +448,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Eph',
     SBLGNT: 'Eph',
     EnglishBookName: 'Ephesians',
-    ChapterCount: 6,
     IsBibleBook: 'True',
   },
   {
@@ -507,7 +457,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Php',
     SBLGNT: 'Php',
     EnglishBookName: 'Philippians',
-    ChapterCount: 4,
     IsBibleBook: 'True',
   },
   {
@@ -517,7 +466,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Col',
     SBLGNT: 'Col',
     EnglishBookName: 'Colossians',
-    ChapterCount: 4,
     IsBibleBook: 'True',
   },
   {
@@ -527,7 +475,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1Th',
     SBLGNT: '1Th',
     EnglishBookName: '1 Thessalonians',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -537,7 +484,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2Th',
     SBLGNT: '2Th',
     EnglishBookName: '2 Thessalonians',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -547,7 +493,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1Tm',
     SBLGNT: '1Ti',
     EnglishBookName: '1 Timothy',
-    ChapterCount: 6,
     IsBibleBook: 'True',
   },
   {
@@ -557,7 +502,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2Tm',
     SBLGNT: '2Ti',
     EnglishBookName: '2 Timothy',
-    ChapterCount: 4,
     IsBibleBook: 'True',
   },
   {
@@ -567,7 +511,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Tit',
     SBLGNT: 'Tit',
     EnglishBookName: 'Titus',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -577,7 +520,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Phm',
     SBLGNT: 'Phm',
     EnglishBookName: 'Philemon',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -587,7 +529,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Heb',
     SBLGNT: 'Heb',
     EnglishBookName: 'Hebrews',
-    ChapterCount: 13,
     IsBibleBook: 'True',
   },
   {
@@ -597,7 +538,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Jms',
     SBLGNT: 'Jas',
     EnglishBookName: 'James',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -607,7 +547,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1Pe',
     SBLGNT: '1Pe',
     EnglishBookName: '1 Peter',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -617,7 +556,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2Pe',
     SBLGNT: '2Pe',
     EnglishBookName: '2 Peter',
-    ChapterCount: 3,
     IsBibleBook: 'True',
   },
   {
@@ -627,7 +565,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '1Jn',
     SBLGNT: '1Jn',
     EnglishBookName: '1 John',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -637,7 +574,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '2Jn',
     SBLGNT: '2Jn',
     EnglishBookName: '2 John',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -647,7 +583,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '3Jn',
     SBLGNT: '3Jn',
     EnglishBookName: '3 John',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -657,7 +592,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Jud',
     SBLGNT: 'Jud',
     EnglishBookName: 'Jude',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -667,7 +601,6 @@ const books: BookLookupInfo[] = [
     ClearBible: 'Rev',
     SBLGNT: 'Re',
     EnglishBookName: 'Revelation',
-    ChapterCount: 22,
     IsBibleBook: 'True',
   },
   {
@@ -677,7 +610,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Tobit',
-    ChapterCount: 14,
     IsBibleBook: 'True',
   },
   {
@@ -687,7 +619,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Judith',
-    ChapterCount: 16,
     IsBibleBook: 'True',
   },
   {
@@ -697,7 +628,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Esther Greek',
-    ChapterCount: 10,
     IsBibleBook: 'True',
   },
   {
@@ -707,7 +637,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Wisdom of Solomon',
-    ChapterCount: 19,
     IsBibleBook: 'True',
   },
   {
@@ -717,7 +646,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Sirach (Ecclesiasticus)',
-    ChapterCount: 51,
     IsBibleBook: 'True',
   },
   {
@@ -727,7 +655,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Baruch',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -737,7 +664,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Letter of Jeremiah',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -747,7 +673,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Song of 3 Young Men',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -757,7 +682,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Susanna',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -767,7 +691,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Bel and the Dragon',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -777,7 +700,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '1 Maccabees',
-    ChapterCount: 16,
     IsBibleBook: 'True',
   },
   {
@@ -787,7 +709,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '2 Maccabees',
-    ChapterCount: 15,
     IsBibleBook: 'True',
   },
   {
@@ -797,7 +718,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '3 Maccabees',
-    ChapterCount: 7,
     IsBibleBook: 'True',
   },
   {
@@ -807,7 +727,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '4 Maccabees',
-    ChapterCount: 18,
     IsBibleBook: 'True',
   },
   {
@@ -817,7 +736,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '1 Esdras (Greek)',
-    ChapterCount: 9,
     IsBibleBook: 'True',
   },
   {
@@ -827,7 +745,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '2 Esdras (Latin)',
-    ChapterCount: 16,
     IsBibleBook: 'True',
   },
   {
@@ -837,7 +754,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Prayer of Manasseh',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -847,7 +763,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Psalm 151',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -857,7 +772,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Odes',
-    ChapterCount: 14,
     IsBibleBook: 'True',
   },
   {
@@ -867,7 +781,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Psalms of Solomon',
-    ChapterCount: 18,
     IsBibleBook: 'True',
   },
   {
@@ -877,7 +790,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Joshua A. *obsolete*',
-    ChapterCount: 24,
     IsBibleBook: 'True',
   },
   {
@@ -887,7 +799,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Judges B. *obsolete*',
-    ChapterCount: 21,
     IsBibleBook: 'True',
   },
   {
@@ -897,7 +808,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Tobit S. *obsolete*',
-    ChapterCount: 14,
     IsBibleBook: 'True',
   },
   {
@@ -907,7 +817,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Susanna Th. *obsolete*',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -917,7 +826,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Daniel Th. *obsolete*',
-    ChapterCount: 12,
     IsBibleBook: 'True',
   },
   {
@@ -927,7 +835,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Bel Th. *obsolete*',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
   {
@@ -937,7 +844,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra A',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -947,7 +853,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra B',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -957,7 +862,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra C',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -967,7 +871,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra D',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -977,7 +880,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra E',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -987,7 +889,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra F',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -997,7 +898,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Extra G',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1007,7 +907,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Front Matter',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1017,7 +916,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Back Matter',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1027,7 +925,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Other Matter',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1037,7 +934,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '3 Ezra *obsolete*',
-    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1047,7 +943,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Apocalypse of Ezra',
-    ChapterCount: 12,
     IsBibleBook: 'True',
   },
   {
@@ -1057,7 +952,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '5 Ezra (Latin Prologue)',
-    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1067,7 +961,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '6 Ezra (Latin Epilogue)',
-    ChapterCount: 2,
     IsBibleBook: 'True',
   },
   {
@@ -1077,7 +970,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Introduction',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1087,7 +979,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Concordance',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1097,7 +988,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Glossary',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1107,7 +997,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Topical Index',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1117,7 +1006,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Names Index',
-    ChapterCount: undefined,
     IsBibleBook: 'False',
   },
   {
@@ -1127,7 +1015,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Daniel Greek',
-    ChapterCount: 12,
     IsBibleBook: 'True',
   },
   {
@@ -1137,7 +1024,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Psalms 152-155',
-    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1147,7 +1033,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '2 Baruch (Apocalypse)',
-    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1157,7 +1042,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Letter of Baruch',
-    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1167,7 +1051,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Jubilees',
-    ChapterCount: 34,
     IsBibleBook: 'True',
   },
   {
@@ -1177,7 +1060,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Enoch',
-    ChapterCount: 42,
     IsBibleBook: 'True',
   },
   {
@@ -1187,7 +1069,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '1 Meqabyan',
-    ChapterCount: 36,
     IsBibleBook: 'True',
   },
   {
@@ -1197,7 +1078,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '2 Meqabyan',
-    ChapterCount: undefined,
     IsBibleBook: 'True',
   },
   {
@@ -1207,7 +1087,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '3 Meqabyan',
-    ChapterCount: 10,
     IsBibleBook: 'True',
   },
   {
@@ -1217,7 +1096,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Reproof (Proverbs 25-31)',
-    ChapterCount: 6,
     IsBibleBook: 'True',
   },
   {
@@ -1227,7 +1105,6 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: '4 Baruch (Rest of Baruch)',
-    ChapterCount: 5,
     IsBibleBook: 'True',
   },
   {
@@ -1237,9 +1114,24 @@ const books: BookLookupInfo[] = [
     ClearBible: '',
     SBLGNT: '',
     EnglishBookName: 'Laodiceans',
-    ChapterCount: 1,
     IsBibleBook: 'True',
   },
 ];
 
 export default books;
+
+/**
+ * Retrieve a book by its index (0-based)
+ * @param index 0-based index for the desired book
+ */
+export const findBookByIndex = (index: number): BookInfo => books[index];
+
+/**
+ * Retrieve a book by its number identifier
+ * @param number book number identifier
+ */
+export const findBookByNumber = (number: number): BookInfo|undefined =>
+  books.find(bookInfo => bookInfo.BookNumber === number);
+
+export const findBookByParatext = (paratextId: string): BookInfo|undefined =>
+  books.find(bookInfo => bookInfo.ParaText === paratextId);

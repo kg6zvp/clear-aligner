@@ -14,6 +14,6 @@ export const BCVDisplay = ({ currentPosition } : BCVDisplayProps) => {
     const chapter = currentPosition?.chapter;
     const verse = currentPosition?.verse;
     return (<>{currentPosition &&
-        `${bookInfo?.name}${chapter && chapter > 0 ? ` ${chapter}${verse && verse > 0 ? `:${verse}` : ''}` : ''}`
+        `${bookInfo?.EnglishBookName}${chapter && chapter > 0 ? ` ${chapter}${verse && verse > 0 ? `:${verse}` : ''}` : ''}`
     }</>);
 }

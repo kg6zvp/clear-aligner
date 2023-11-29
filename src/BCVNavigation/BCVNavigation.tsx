@@ -1,9 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {Autocomplete, TextField} from "@mui/material";
-import {Corpus, Word} from "../structs";
+import {Word} from "../structs";
 import BCVWP, {parseFromString} from "../BCVWP/BCVWPSupport";
-import BCVWPSupport from "../BCVWP/BCVWPSupport";
-import {BOOK_LIST, findBookByIndex} from "../BCVWP/BookLookup";
 
 export interface Verse {
   reference: number;
@@ -38,7 +36,7 @@ const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
         .map(word => parseFromString(word.id))
         .map((ref): NavigableBook => ({
             index: ref.book ?? 0,
-            title: ref.getBookInfo()?.name ?? '',
+            title: ref.getBookInfo()?.EnglishBookName ?? '',
             chapters: [{
                 reference: ref.chapter ?? 0,
                 verses: [{

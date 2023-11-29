@@ -1,4 +1,4 @@
-import {BookInfo, findBookByIndex} from "./BookLookup";
+import {BookInfo, findBookByIndex} from "../workbench/books";
 
 export default class BCVWP {
   /**
@@ -30,7 +30,7 @@ export default class BCVWP {
     this.part = part;
   }
 
-  toTruncatedReferenceString(truncation: BCVWPTruncation): string {
+  toTruncatedReferenceString(truncation: BCVWPField): string {
     return this.toReferenceString().substring(0, truncation);
   }
 
@@ -51,8 +51,27 @@ export default class BCVWP {
    * @param other: BCVWP to check for a match
    * @param truncation: amount of truncation to match to
    */
-  matchesTruncated(other: BCVWP, truncation: BCVWPTruncation): boolean {
+  matchesTruncated(other: BCVWP, truncation: BCVWPField): boolean {
     return this.toTruncatedReferenceString(truncation) === other.toTruncatedReferenceString(truncation);
+  }
+
+  hasFields(...fields: BCVWPField[]) {
+    return fields.every((field): boolean => {
+      switch (field) {
+        case BCVWPField.Book:
+          return !!this.book;
+        case BCVWPField.Chapter:
+          return !!this.chapter;
+        case BCVWPField.Verse:
+          return !!this.verse;
+        case BCVWPField.Word:
+          return !!this.word;
+        case BCVWPField.Part:
+          return !!this.part;
+        default:
+          return false;
+      }
+    });
   }
 }
 
@@ -75,7 +94,7 @@ export const parseFromString = (reference: string): BCVWP => {
     return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
 };
 
-export enum BCVWPTruncation {
+export enum BCVWPField {
   Book = 2,
   Chapter = 5,
   Verse = 8,

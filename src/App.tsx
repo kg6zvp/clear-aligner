@@ -33,7 +33,7 @@ const getRefFromURL = (): BCVWP | null => {
 const defaultDocumentTitle = '🌲⬇️';
 
 function App() {
-  const [corpora, setCorpora] = useState([] as Corpus[]);
+  const [availableCorpora, setAvailableCorpora] = useState([] as Corpus[]);
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const theme = useMemo(
       () => prefersDarkMode ? 'night' : 'day',
@@ -50,52 +50,38 @@ function App() {
     : defaultDocumentTitle;
   const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
 
-  const bookDoc = React.useMemo(
-    () => books.find((bookItem) => bookItem.BookNumber === currentPosition?.book),
-    [currentPosition?.book]
-  );
-
-  const updateCorpora = React.useCallback(async () => {
-    const corporaIds = await getAvailableCorporaIds();
-    const retrievedCorpora: Corpus[] = [];
-
-    for (const corpusId of corporaIds) {
-      const corpus = await queryText(corpusId, currentPosition);
-      if (corpus) retrievedCorpora.push(corpus);
-    }
-
-    // set the syntax
-    retrievedCorpora.forEach((corpus) => {
-      corpus['syntax'] = {...syntaxData, _syntaxType: SyntaxType.Source};
-    })
-
-    //setCorpora(retrievedCorpora);
-    const availableCorpora = await getAvailableCorpora();
-    setCorpora(availableCorpora);
-  }, [syntaxData]);
-
   React.useEffect(() => {
-    void updateCorpora();
-    if (!currentPosition) {
-      return;
-    }
     const loadSyntaxData = async () => {
       try {
-        const syntaxData = await fetchSyntaxData(bookDoc, currentPosition);
-        if (syntaxData) {
-          setSyntaxData(syntaxData as SyntaxRoot);
+        const loadedSyntaxData = await fetchSyntaxData(currentPosition);
+        if (loadedSyntaxData) {
           document.title = `${defaultDocumentTitle} ${
-            bookDoc ? bookDoc.OSIS : currentPosition?.book
-          }.${currentPosition?.chapter}.${currentPosition?.verse}`;
+            currentPosition ? `${currentPosition?.getBookInfo()?.EnglishBookName} ${currentPosition?.chapter}:${currentPosition?.verse}` : ''}`;
         }
+
+        const corporaIds = await getAvailableCorporaIds();
+        const retrievedCorpora: Corpus[] = [];
+
+        for (const corpusId of corporaIds) {
+          const corpus = await queryText(corpusId, currentPosition);
+          if (corpus) retrievedCorpora.push(corpus!);
+        }
+
+        // set the syntax
+        retrievedCorpora.forEach((corpus) => {
+          corpus.syntax = {...loadedSyntaxData as SyntaxRoot, _syntaxType: SyntaxType.Source};
+        })
+
+        setAvailableCorpora(retrievedCorpora);
       } catch (error) {
         console.error(error);
       }
     };
 
     loadSyntaxData().catch(console.error);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookDoc, currentPosition]);
+  }, [currentPosition, currentPosition?.book]);
+
+  const corpora: Corpus[] = [];
 
   return <>
     <Themed theme={theme}>

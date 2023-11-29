@@ -1,5 +1,5 @@
 import {Corpus, CorpusFileFormat, Word} from 'structs';
-import BCVWP, {BCVWPTruncation} from "../BCVWP/BCVWPSupport";
+import BCVWP, {BCVWPField} from "../BCVWP/BCVWPSupport";
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
@@ -132,8 +132,10 @@ export const queryText = async (
     throw new Error(`Unable to find requested corpus: ${corpusId}`);
   }
 
-  const bcvId = position.toTruncatedReferenceString(BCVWPTruncation.Verse);
+  const bcvId = position.toTruncatedReferenceString(BCVWPField.Verse);
+  console.log('bcvId', bcvId);
   const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
+  console.log('queriedData', queriedData);
 
   return {
     id: corpus?.id ?? '',
