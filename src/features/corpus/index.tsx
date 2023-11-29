@@ -13,6 +13,7 @@ import { Word, Corpus, CorpusViewType, TreedownType } from 'structs';
 interface CorpusProps {
   corpusId: string | null;
   viewportIndex: number;
+  bcvId: string;
 }
 
 const determineCorpusView = (corpus: Corpus) => {
@@ -43,9 +44,11 @@ const determineCorpusView = (corpus: Corpus) => {
 };
 
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
-  const { corpusId, viewportIndex } = props;
+  const { corpusId, viewportIndex, bcvId } = props;
   useDebug('TextComponent');
-
+  const [visibleBcvIds, setVisibleBcvIds] = useState([
+    props.bcvId
+  ]);
   const [showSettings, setShowSettings] = useState(false);
 
   const corpus = useAppSelector((state) => {
@@ -53,6 +56,8 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       return corpus.id === corpusId;
     });
   });
+
+  console.log("corpus: ", corpus)
 
   if (!corpusId || !corpus) {
     return <Typography>Empty State</Typography>;

@@ -14,6 +14,7 @@ interface EditorWrapperProps {
   alignments: Alignment[];
   theme: 'night' | 'day';
   alignmentUpdated?: Function;
+  bcvId: string;
 }
 
 const EditorWrapper = (props: EditorWrapperProps): any => {
@@ -28,6 +29,7 @@ const EditorWrapper = (props: EditorWrapperProps): any => {
             alignments={props.alignments}
             theme={props.theme}
             alignmentUpdated={() => props.alignmentUpdated?.()}
+            bcvId={props.bcvId}
           />
         </Provider>
       </Fragment>

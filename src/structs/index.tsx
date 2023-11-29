@@ -40,6 +40,7 @@ export interface Corpus {
   language: string;
 
   words: Word[];
+  wordsByVerse: Record<string, Word[]>;
   fullText?: string;
   viewType?: CorpusViewType;
   syntax?: SyntaxRoot;

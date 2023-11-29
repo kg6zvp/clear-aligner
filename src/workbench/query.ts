@@ -9,31 +9,26 @@ let isInitialized: boolean = false;
 
 const availableCorpora: Corpus[] = [];
 
-const wordsByVerse = new Map<number, Word[]>();
-
-let parsedTsv = new Map<string, Word[]>();
+const availableVerses: string[] = [];
 
 const punctuationFilter = [',', '.', '[', ']', ':', '‘', '’', '—', '?', '!', ';', 'FALSE', '(', ')', 'TRUE',];
 
 const parseTsvByFileType = async (
   tsv: RequestInfo,
   refCorpus: Corpus,
-  fileType: CorpusFileFormat,
-  refetch = false
-) : Promise<Word[]> => {
-  if(!refetch && !!(parsedTsv.get(refCorpus.id) || []).length) {
-    return parsedTsv.get(refCorpus.id) || [];
-  }
-
+  fileType: CorpusFileFormat
+) : Promise<Partial<Corpus>> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
+  const wordsByVerse: Record<string, Word[]> = {};
+
   header.split('\t').forEach((header, idx) => {
     headerMap[header] = idx;
   });
 
-  const reducedRows = rows.reduce((accumulator, row) => {
+  const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
     let id, pos, word;
@@ -56,7 +51,7 @@ const parseTsvByFileType = async (
           position: pos,
         } as Word;
 
-        wordsByVerse.set(+id.substring(0, 8), (wordsByVerse.get(+id.substring(0, 8)) || []).concat([word]));
+        wordsByVerse[id.substring(0, 8)] = (wordsByVerse[id.substring(0, 8)] || []).concat([word]);
         accumulator.push(word);
         break;
 
@@ -73,16 +68,17 @@ const parseTsvByFileType = async (
           position: pos,
         } as Word;
 
-        wordsByVerse.set(+id.substring(0, 8), (wordsByVerse.get(+id.substring(0, 8)) || []).concat([word]));
+        wordsByVerse[id.substring(0, 8)] = (wordsByVerse[id.substring(0, 8)] || []).concat([word]);
         accumulator.push(word);
         break;
     }
-    return accumulator.sort((a,b) => a.position + b.position);
+
+    return accumulator;
   }, [] as Word[]);
-
-  parsedTsv.set(refCorpus.id, reducedRows);
-
-  return reducedRows;
+  return {
+    words: reducedWords,
+    wordsByVerse: wordsByVerse
+  }
 }
 
 export const convertBcvToIdentifier = (
@@ -102,43 +98,54 @@ export const convertBcvToIdentifier = (
 
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
+    isInitialized = true;
+
     // SBL GNT
-    const sblGnt = {
+    let sblGnt: Corpus = {
       id: 'sbl-gnt',
       name: 'SBL GNT',
       fullName: 'SBL Greek New Testament',
       language: 'grc',
-      words: []
+      words: [],
+      wordsByVerse: {}
     };
 
     // @ts-ignore
-    sblGnt.words = await parseTsvByFileType(
+    const sblWords = await parseTsvByFileType(
       MACULA_SBLGNT,
       sblGnt,
       CorpusFileFormat.TSV_MACULA
-    );
+    )
+    sblGnt = {
+      ...sblGnt,
+      ...sblWords
+    }
 
     availableCorpora.push(sblGnt);
 
-    const na27Ylt = {
+    let na27Ylt: Corpus = {
       id: 'na27-YLT',
       name: 'NA27 YLT',
       fullName: 'Nestle-Aland 27th Edition YLT text',
       language: 'eng',
-      words: []
+      words: [],
+      wordsByVerse: {}
     };
 
     // @ts-ignore
-    na27Ylt.words = await parseTsvByFileType(
+    const na27Words = await parseTsvByFileType(
       NA27_YLT,
       na27Ylt,
       CorpusFileFormat.TSV_TARGET
     );
+    na27Ylt = {
+      ...na27Ylt,
+      ...na27Words
+    }
 
     availableCorpora.push(na27Ylt);
-
-    isInitialized = true;
   }
+
   return availableCorpora;
 };
 
@@ -148,7 +155,7 @@ export const getAvailableCorporaIds = async (): Promise<string[]> => {
   });
 }
 
-export const getCorpusById = async (corpusId: string) => {
+export const queryText = async (corpusId: string): Promise<Corpus> => {
   const corpus = (await getAvailableCorpora()).find((corpus) => {
     return corpus.id === corpusId;
   });
@@ -157,37 +164,16 @@ export const getCorpusById = async (corpusId: string) => {
     throw new Error(`Unable to find requested corpus: ${corpusId}`);
   }
 
-  return corpus;
-}
-
-
-export const queryText = async (
-  corpusId: string,
-  book: number,
-  chapter: number,
-  verse: number
-): Promise<Corpus> => {
-  console.log("querying text...")
-  const corpus = await getCorpusById(corpusId);
-  const bcvId = convertBcvToIdentifier(book, chapter, verse);
-  const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
-
   return {
     id: corpus?.id ?? '',
     name: corpus?.name ?? '',
     fullName: corpus?.fullName ?? '',
     language: corpus?.language ?? '',
-    words: queriedData,
+    words: corpus.words,
+    wordsByVerse: corpus.wordsByVerse
   };
 };
 
-export const getVerseByBcvOffset = (bcvId: string, offset: number): Word[] => {
-  const bcvIdx = Array.from(wordsByVerse.keys()).indexOf(+bcvId);
-  const offsetIdx = bcvIdx + offset;
-  if(offsetIdx > Array.from(wordsByVerse.keys()).length || offsetIdx < 0) {
-    return [];
-  }
-  const verseKey = Array.from(wordsByVerse.keys()).find((_, idx) => idx === offsetIdx) || 0;
-  const wordsInVerse = wordsByVerse.get(verseKey);
-  return wordsInVerse || [];
+const getBcvIdByOffset = (bcvId: string, offset: number) => {
+
 }

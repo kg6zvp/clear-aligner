@@ -1,4 +1,4 @@
-import { ReactElement, useRef } from 'react';
+import React, { useRef } from 'react';
 import {Card, CircularProgress, Container, Stack, Grid, Typography} from '@mui/material';
 
 import { useAppSelector } from 'app/hooks';
@@ -8,7 +8,11 @@ import { CorpusViewport } from 'structs';
 
 import './styles.css';
 
-export const Polyglot = (): ReactElement => {
+interface PolyglotProps {
+  bcvId: string;
+}
+
+export const Polyglot: React.FC<PolyglotProps> = ({bcvId}) => {
   useDebug('PolyglotComponent');
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
@@ -59,7 +63,6 @@ export const Polyglot = (): ReactElement => {
                 onScroll={(e) => {
                   if (scrollLock) {
                     const newScrollTop = (e.target as HTMLDivElement).scrollTop;
-                    console.log(newScrollTop);
                     corpusViewportRefs.current.forEach((ref) => {
                       ref.scrollTop = newScrollTop;
                     });
@@ -87,6 +90,7 @@ export const Polyglot = (): ReactElement => {
                     key={corpusId}
                     corpusId={corpusId}
                     viewportIndex={index}
+                    bcvId={bcvId}
                   />
                 </Container>
               </Card>

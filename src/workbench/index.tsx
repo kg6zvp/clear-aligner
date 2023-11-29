@@ -6,10 +6,8 @@ import EditorWrapper from 'features/editor';
 
 import fetchSyntaxData from 'workbench/fetchSyntaxData';
 
-import {convertBcvToIdentifier, getAvailableCorporaIds, getVerseByBcvOffset, queryText} from 'workbench/query';
+import {convertBcvToIdentifier, getAvailableCorporaIds, queryText} from 'workbench/query';
 import books from 'workbench/books';
-
-import placeholderTreedown from 'features/treedown/treedown.json';
 
 interface WorkbenchProps {}
 
@@ -74,52 +72,43 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
   const [chapter] = React.useState(defaultChapter);
   const [verse] = React.useState(defaultVerse);
 
-  const [syntaxData, setSyntaxData] = React.useState(
-    placeholderTreedown as SyntaxRoot
-  );
-
   const bookDoc = React.useMemo(
     () => books.find((bookItem) => bookItem.BookNumber === book),
     [book]
   );
 
-  const updateCorpora = React.useCallback(async () => {
-    const corporaIds = await getAvailableCorporaIds();
-    const retrievedCorpora: Corpus[] = [];
-
-    for (const corpusId of corporaIds) {
-      retrievedCorpora.push(await queryText(corpusId, book, chapter, verse));
-    }
-
-    // set the syntax
-    retrievedCorpora.forEach((corpus) => {
-      corpus['syntax'] = {...syntaxData, _syntaxType: SyntaxType.Source};
-    });
-
-    console.log("verse by offset 1: ", getVerseByBcvOffset(convertBcvToIdentifier(book, chapter, verse), 1))
-
-    setCorpora(retrievedCorpora);
-  }, [book, chapter, verse, syntaxData]);
-
   React.useEffect(() => {
-    void updateCorpora();
     const loadSyntaxData = async () => {
       try {
-        const syntaxData = await fetchSyntaxData(bookDoc, chapter, verse);
-        if (syntaxData) {
-          setSyntaxData(syntaxData as SyntaxRoot);
+        const loadedSyntaxData = await fetchSyntaxData(bookDoc, chapter, verse);
+        if (loadedSyntaxData) {
           document.title = `${documentTitle} ${
             bookDoc ? bookDoc.OSIS : book
           }.${chapter}.${verse}`;
         }
+
+        const corporaIds = await getAvailableCorporaIds();
+        const retrievedCorpora: Corpus[] = [];
+
+        for (const corpusId of corporaIds) {
+          retrievedCorpora.push(await queryText(corpusId));
+        }
+
+        // set the syntax
+        retrievedCorpora.forEach((corpus) => {
+          corpus['syntax'] = {...loadedSyntaxData as SyntaxRoot, _syntaxType: SyntaxType.Source};
+        })
+
+        setCorpora(retrievedCorpora);
       } catch (error) {
         console.error(error);
       }
     };
 
     loadSyntaxData().catch(console.error);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookDoc, book, chapter, verse]);
+
+  const bcvId = React.useMemo(() => convertBcvToIdentifier(book, chapter, verse), [book, chapter, verse])
 
   return (
     <div>
@@ -150,6 +139,7 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
               },
             },
           ]}
+          bcvId={bcvId}
         />
       </div>
     </div>

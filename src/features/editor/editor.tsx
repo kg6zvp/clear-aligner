@@ -20,10 +20,11 @@ interface EditorProps {
   alignments: Alignment[];
   theme: 'night' | 'day';
   alignmentUpdated: Function;
+  bcvId: string
 }
 
 export const Editor = (props: EditorProps): ReactElement => {
-  const { corpora, alignments, theme, alignmentUpdated } = props;
+  const { corpora, alignments, theme, alignmentUpdated, bcvId } = props;
   useDebug('Editor');
 
   const dispatch = useAppDispatch();
@@ -44,7 +45,7 @@ export const Editor = (props: EditorProps): ReactElement => {
 
   return (
     <Container maxWidth={false}>
-      <Polyglot />
+      <Polyglot bcvId={bcvId}/>
       <ControlPanel alignmentUpdated={alignmentUpdated} />
       <ContextPanel />
     </Container>
