@@ -1,32 +1,20 @@
 import React, {ReactElement} from 'react';
 
-import {Corpus, SyntaxRoot, SyntaxType} from 'structs';
+import {Corpus, SyntaxType} from 'structs';
 
 import EditorWrapper from 'features/editor';
 
 import fetchSyntaxData from 'workbench/fetchSyntaxData';
 
-import {getAvailableCorporaIds, queryText} from 'workbench/query';
-import books from 'workbench/books';
-
-import placeholderTreedown from 'features/treedown/treedown.json';
-import BCVWP, {parseFromString} from "../BCVWP/BCVWPSupport";
+import {queryText} from 'workbench/query';
+import BCVWP from "../BCVWP/BCVWPSupport";
 
 interface WorkbenchProps {
   corpora?: Corpus[];
-  currentPosition?: BCVWP|null;
+  currentPosition?: BCVWP | null;
 }
 
-const getBookNumber = (bookName: string) => {
-  const bookDoc = books.find(
-    (bookItem) => bookItem.OSIS.toLowerCase() === bookName.toLowerCase()
-  );
-  if (bookDoc) {
-    return bookDoc.BookNumber;
-  }
-};
-
-const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: WorkbenchProps): ReactElement => {
+const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: WorkbenchProps): ReactElement => {
   const [showSourceText, setShowSourceText] = React.useState(true);
   const [showTargetText, setShowTargetText] = React.useState(true);
   const [showLwcText, setShowLwcText] = React.useState(true);
@@ -42,13 +30,13 @@ const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: Workb
             const syntaxData = await fetchSyntaxData(currentPosition);
             const sourceCorpus: Corpus = {
               ...corpus,
-              syntax: { ...syntaxData!, _syntaxType: SyntaxType.Source }
+              syntax: {...syntaxData!, _syntaxType: SyntaxType.Source}
             };
             setDisplayCorpora([...displayCorpora, sourceCorpus]);
           }
         });
     }
-  }, [showSourceText, displayCorpora, setDisplayCorpora]);
+  }, [showSourceText, displayCorpora, setDisplayCorpora, currentPosition]);
 
   React.useEffect(() => {
     if (showTargetText) {
@@ -58,13 +46,13 @@ const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: Workb
             const syntaxData = await fetchSyntaxData(currentPosition);
             const targetCorpus: Corpus = {
               ...corpus,
-              syntax: { ...syntaxData!, _syntaxType: SyntaxType.Mapped },
+              syntax: {...syntaxData!, _syntaxType: SyntaxType.Mapped},
             };
             setDisplayCorpora([...displayCorpora, targetCorpus]);
           }
         });
     }
-  }, [showTargetText, displayCorpora, setDisplayCorpora]);
+  }, [showTargetText, displayCorpora, setDisplayCorpora, currentPosition]);
 
   React.useEffect(() => {
     if (showLwcText) {
@@ -74,12 +62,13 @@ const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: Workb
             const syntaxData = await fetchSyntaxData(currentPosition);
             const lwcCorpus: Corpus = {
               ...corpus,
-              syntax: { ...syntaxData!, _syntaxType: SyntaxType.MappedSecondary },
+              syntax: {...syntaxData!, _syntaxType: SyntaxType.MappedSecondary},
             }
+            setDisplayCorpora([...displayCorpora, lwcCorpus]);
           }
         });
     }
-  }, [showLwcText, displayCorpora, setDisplayCorpora])
+  }, [showLwcText, displayCorpora, setDisplayCorpora, currentPosition])
 
   React.useEffect(() => {
     if (showBackText) {
@@ -90,41 +79,41 @@ const Workbench: React.FC<WorkbenchProps> = ({ corpora, currentPosition }: Workb
           }
         });
     }
-  }, [showBackText, displayCorpora, setDisplayCorpora]);
+  }, [showBackText, displayCorpora, setDisplayCorpora, currentPosition]);
 
   return (<>
-      {corpora &&
-          (<div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '2rem',
-          border: '1px solid',
-          margin: 'auto',
-          marginTop: '1rem',
-          marginBottom: '1rem',
-          maxWidth: '1200px',
-        }}
-      >
-        <EditorWrapper
-          corpora={corpora}
-          alignments={[
-            {
-              source: 'sbl-gnt',
-              target: 'na27-YLT',
-              links: [],
-              polarity: {
-                type: 'primary',
-                syntaxSide: 'sources',
-                nonSyntaxSide: 'targets',
+    {corpora &&
+      (<div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            padding: '2rem',
+            border: '1px solid',
+            margin: 'auto',
+            marginTop: '1rem',
+            marginBottom: '1rem',
+            maxWidth: '1200px',
+          }}
+        >
+          <EditorWrapper
+            corpora={corpora}
+            alignments={[
+              {
+                source: 'sbl-gnt',
+                target: 'na27-YLT',
+                links: [],
+                polarity: {
+                  type: 'primary',
+                  syntaxSide: 'sources',
+                  nonSyntaxSide: 'targets',
+                },
               },
-            },
-          ]}
-        />
-      </div>
-    </div>)}
-      </>);
+            ]}
+          />
+        </div>
+      </div>)}
+  </>);
 };
 
 export default Workbench;

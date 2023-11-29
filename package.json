@@ -30,8 +30,8 @@
     "prepublishOnly": "rm -rf dist/ && rollup -c",
     "dev-electron": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron .",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook dev -p 6006",
+    "build-storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook build"
   },
   "eslintConfig": {
     "extends": [
@@ -92,5 +92,16 @@
   "files": [
     "dist/"
   ],
-  "main": "public/electron.js"
+  "main": "public/electron.js",
+  "babel": {
+    "sourceType": "unambiguous",
+    "presets": [
+      [
+        "@babel/preset-env"
+      ],
+      "@babel/preset-typescript",
+      "@babel/preset-react"
+    ],
+    "plugins": []
+  }
 }

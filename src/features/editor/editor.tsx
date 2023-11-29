@@ -3,7 +3,6 @@ import { Container } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch } from 'app/hooks';
-import { setTheme } from 'state/app.slice';
 import { loadAlignments, loadCorpora } from 'state/alignment.slice';
 
 import Polyglot from 'features/polyglot';
