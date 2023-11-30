@@ -135,6 +135,7 @@ const BCVNavigation = ({words, currentPosition, onNavigate, horizontal}: BCVNavi
     <label>
       {'Book '}
       <Autocomplete
+        key={`${selectedBook}`}
         disablePortal
         id='book-selection'
         size='small'

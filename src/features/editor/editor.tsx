@@ -20,7 +20,7 @@ interface EditorProps {
   alignmentUpdated: Function;
 }
 
-export const Editor = (props: EditorProps): ReactElement => {
+const Editor = (props: EditorProps): ReactElement => {
   const { corpora, alignments, alignmentUpdated } = props;
   useDebug('Editor');
 

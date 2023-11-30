@@ -81,7 +81,7 @@ function App() {
   React.useEffect(() => {
     const loadSourceWords = async () => {
       const corpus = (await getAvailableCorpora())[0];
-      setAvailableWords(corpus.words ?? []);
+      setAvailableWords(corpus?.words ?? []);
     };
 
     loadSourceWords().catch(console.error);
