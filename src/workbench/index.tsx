@@ -15,10 +15,10 @@ interface WorkbenchProps {
 }
 
 const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: WorkbenchProps): ReactElement => {
-  const [showSourceText, setShowSourceText] = React.useState(true);
-  const [showTargetText, setShowTargetText] = React.useState(true);
-  const [showLwcText, setShowLwcText] = React.useState(true);
-  const [showBackText, setShowBackText] = React.useState(true);
+  const [showSourceText] = React.useState(true);
+  const [showTargetText] = React.useState(true);
+  const [showLwcText] = React.useState(true);
+  const [showBackText] = React.useState(true);
 
   const [displayCorpora, setDisplayCorpora] = React.useState([] as Corpus[]);
 
