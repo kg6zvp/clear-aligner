@@ -1,130 +1,173 @@
-import { ReactElement, useState } from 'react';
-import { Tooltip, Typography, IconButton } from '@mui/material';
-import { InfoOutlined, Settings } from '@mui/icons-material';
+import React, {ReactElement, useCallback, useMemo, useRef, useState} from 'react';
+import {Grid, IconButton, Tooltip, Typography} from '@mui/material';
+import {ArrowDropDown, ArrowDropUp, InfoOutlined, Settings} from '@mui/icons-material';
 
 import useDebug from 'hooks/useDebug';
-import { useAppSelector } from 'app/hooks';
 import TextSegment from 'features/textSegment';
-import Treedown from 'features/treedown';
 import CorpusSettings from 'features/corpusSettings';
 
-import { Word, Corpus, CorpusViewType, TreedownType } from 'structs';
+import {Corpus, CorpusViewType, TreedownType, Verse, Word} from 'structs';
+import Treedown from "../treedown";
 
 interface CorpusProps {
-  corpusId: string | null;
+  corpus: Corpus;
   viewportIndex: number;
   bcvId: string;
+  corpora: Corpus[];
 }
 
-const determineCorpusView = (corpus: Corpus) => {
-  if (corpus.viewType === CorpusViewType.Paragraph) {
-    return (
-      <Typography
-        style={{
-          paddingTop: '0.5rem',
-          paddingBottom: '0.5rem',
-          paddingLeft: '0.7rem',
-          paddingRight: '0.7rem',
-        }}
-      >
-        {corpus.words.map((word: Word): ReactElement => {
-          return <TextSegment key={word.id} word={word} />;
-        })}
-      </Typography>
-    );
-  }
-
-  if (corpus.viewType === CorpusViewType.Treedown) {
-    const syntaxCorpora = ['sbl', 'nestle1904'];
-    const treedownType = syntaxCorpora.includes(corpus.id)
-      ? TreedownType.Source
-      : TreedownType.Mapped;
-    return <Treedown corpus={corpus} treedownType={treedownType} />;
+const determineCorpusView = (corpus: Corpus, verses: Verse[], bcvId: string) => {
+  switch (corpus.viewType) {
+    case CorpusViewType.Treedown: {
+      const syntaxCorpora = ['sbl', 'nestle1904'];
+      const treedownType = syntaxCorpora.includes(corpus.id)
+        ? TreedownType.Source
+        : TreedownType.Mapped;
+      return <Treedown corpus={corpus} treedownType={treedownType}/>
+    }
+    default: {
+      return verses.map(verse => (
+        <Grid container>
+          <Grid item xs={1} sx={{p: '1px'}}>
+            <Typography sx={bcvId === verse.bcvId ? {textDecoration: 'underline', fontStyle: 'italic'} : {}}>
+              {verse.citation}.
+            </Typography>
+          </Grid>
+          <Grid item xs={11}>
+            <Typography
+              style={{
+                paddingBottom: '0.5rem',
+                paddingLeft: '0.7rem',
+                paddingRight: '0.7rem',
+              }}
+            >
+              {(verse.words || []).map((word: Word): ReactElement => {
+                return <TextSegment key={word.id} word={word}/>;
+              })}
+            </Typography>
+          </Grid>
+        </Grid>
+      ))
+    }
   }
 };
 
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
-  const { corpusId, viewportIndex, bcvId } = props;
+  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const {corpus, viewportIndex, bcvId, corpora} = props;
   useDebug('TextComponent');
-  const [visibleBcvIds, setVisibleBcvIds] = useState([
-    props.bcvId
-  ]);
+  const [visibleVerses, setVisibleVerses] = useState<Verse[]>([corpus.wordsByVerse[bcvId]].filter(v => v));
   const [showSettings, setShowSettings] = useState(false);
+  const verseKeys = useMemo(() => Object.keys(corpus.wordsByVerse), [corpus.wordsByVerse]);
 
-  const corpus = useAppSelector((state) => {
-    return state.alignment.present.corpora.find((corpus) => {
-      return corpus.id === corpusId;
-    });
-  });
+  const addBcvId = useCallback((start: boolean) => {
+    const updatedVerses = [
+      ...(start ? [corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[0].bcvId) - 1]]] : []),
+      ...visibleVerses,
+      ...(start ? [] : [corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[visibleVerses.length - 1].bcvId) + 1]]])
+    ].filter(v => v) as Verse[];
+    setVisibleVerses(updatedVerses);
+    if (textContainerRef.current) {
+      (textContainerRef.current as HTMLDivElement).scrollTop = start ? 0 : (textContainerRef.current?.scrollHeight || 0);
+    }
+  }, [visibleVerses, corpus.wordsByVerse, verseKeys]);
 
-  console.log("corpus: ", corpus)
+  const removeBcvId = useCallback((start: boolean) => {
+    setVisibleVerses(verses => verses.slice(start ? 0 : 1, start ? -1 : verses.length));
+    if (textContainerRef.current) {
+      (textContainerRef.current as HTMLDivElement).scrollTop = start ? 0 : (textContainerRef.current?.scrollHeight || 0);
+    }
+  }, []);
 
-  if (!corpusId || !corpus) {
+  const upArrowEnableState = useMemo(() => {
+    const firstBcvId = corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[0].bcvId) - 1]]?.bcvId;
+    const showUp = !firstBcvId ? "up" : null
+    return visibleVerses[0]?.bcvId === bcvId ? "down" : showUp;
+  }, [corpus.wordsByVerse, visibleVerses, bcvId, verseKeys]);
+
+  const downArrowEnableState = useMemo(() => {
+    const lastBcvId = corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[visibleVerses.length - 1].bcvId) + 1]]?.bcvId;
+    const showDown = !lastBcvId ? "down" : null
+    return visibleVerses[visibleVerses.length - 1]?.bcvId === bcvId ? "up" : showDown;
+  }, [corpus.wordsByVerse, visibleVerses, bcvId, verseKeys]);
+
+  if (!corpus) {
     return <Typography>Empty State</Typography>;
   }
 
   return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          width: 'fit-content',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          backdropFilter: 'blur(2px)',
-          paddingTop: '0.5rem',
-          paddingRight: '0.5rem',
-          paddingBottom: '0px',
-          marginLeft: 'auto',
-          marginBottom: '0px',
-          borderRadius: '500px',
-          fontWeight: 'regular',
-          position: 'sticky',
-          top: '0',
-        }}
-      >
-        <Typography variant="h6" display="inline-block" style={{}}>
-          {corpus.name}
-        </Typography>
+    <Grid container flexDirection="column" justifyContent="space-between" sx={{height: '100%', flex: 1}}>
+      <Grid container justifyContent="space-between" alignItems="center" sx={{py: 1, px: 2}}>
+        <Grid container sx={{flex: 1}}>
+          <ArrowButton isStart add={addBcvId} remove={removeBcvId} disabled={upArrowEnableState} />
+        </Grid>
+        <Grid container justifyContent="flex-end" alignItems="center" sx={{flex: 1}}>
+          <Typography variant="h6" sx={{mr: 1}}>
+            {corpus.name}
+          </Typography>
 
-        <Tooltip
-          title={
-            <>
-              <Typography variant="h6">{corpus.fullName}</Typography>
-              <Typography>{corpus.name}</Typography>
-              <Typography>Language: {corpus.language}</Typography>
-            </>
-          }
-        >
-          <div style={{ display: 'inline-block' }}>
-            <InfoOutlined
-              style={{ padding: '2px', marginTop: '6px', marginLeft: '4px' }}
-            />
-          </div>
-        </Tooltip>
-        <IconButton
-          style={{
-            marginLeft: '-8px',
-            marginRight: '-24px',
-          }}
-          onClick={() => {
-            setShowSettings(!showSettings);
-          }}
-        >
-          <Settings />
-        </IconButton>
-      </div>
+          <Tooltip
+            title={
+              <>
+                <Typography variant="h6">{corpus.fullName}</Typography>
+                <Typography>{corpus.name}</Typography>
+                <Typography>Language: {corpus.language}</Typography>
+              </>
+            }
+          >
+            <InfoOutlined/>
+          </Tooltip>
+          <IconButton
+            onClick={() => {
+              setShowSettings(!showSettings);
+            }}
+          >
+            <Settings/>
+          </IconButton>
+        </Grid>
+      </Grid>
 
       {showSettings && (
         <CorpusSettings
-          currentCorpusId={corpusId}
+          currentCorpusId={corpus.id}
           viewportIndex={viewportIndex}
+          corpora={corpora}
         />
       )}
-
-      {!showSettings && determineCorpusView(corpus)}
-    </>
+      {!showSettings && (
+        <Grid ref={textContainerRef} container sx={{pl: 4, flex: 8, overflow: 'auto'}}>
+          {determineCorpusView(corpus, visibleVerses, bcvId)}
+        </Grid>
+      )}
+      {!showSettings && (
+        <Grid sx={{py: 1, px: 2, flex: 1}}>
+          <ArrowButton add={addBcvId} remove={removeBcvId} disabled={downArrowEnableState}/>
+        </Grid>
+      )}
+    </Grid>
   );
 };
+
+
+interface ArrowButtonProps {
+  add: (start: boolean) => void;
+  remove: (start: boolean) => void;
+  isStart?: boolean;
+  disabled?: "up" | "down" | null
+}
+
+const ArrowButton: React.FC<ArrowButtonProps> = ({add, remove, disabled, isStart = false}) => {
+
+  return (
+    <Grid container>
+      <IconButton onClick={() => isStart ? add(true) : remove(true)} disabled={disabled === "up"}>
+        <ArrowDropUp/>
+      </IconButton>
+      <IconButton onClick={() => isStart ? remove(false) : add(false)} disabled={disabled === "down"}>
+        <ArrowDropDown/>
+      </IconButton>
+    </Grid>
+  );
+}
 
 export default CorpusComponent;

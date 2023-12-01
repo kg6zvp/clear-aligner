@@ -1,12 +1,8 @@
 import React, {ReactElement} from 'react';
 
-import {Corpus, SyntaxRoot, SyntaxType} from 'structs';
-
 import EditorWrapper from 'features/editor';
 
-import fetchSyntaxData from 'workbench/fetchSyntaxData';
-
-import {convertBcvToIdentifier, getAvailableCorporaIds, queryText} from 'workbench/query';
+import {convertBcvToIdentifier} from 'workbench/query';
 import books from 'workbench/books';
 
 interface WorkbenchProps {}
@@ -59,56 +55,16 @@ const getDefaultRef = (): number[] => {
 };
 
 const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
-  const [defaultBook, defaultChapter, defaultVerse] = getDefaultRef();
-
+  const [defaultBook, defaultChapter, defaultVerse] = React.useMemo(() => getDefaultRef(), []);
   document.title = getRefParam()
     ? `${documentTitle} ${getRefParam()}`
     : documentTitle;
 
   const [theme] = React.useState('night');
-  const [corpora, setCorpora] = React.useState<Corpus[]>([]);
-
   const [book] = React.useState(defaultBook);
   const [chapter] = React.useState(defaultChapter);
   const [verse] = React.useState(defaultVerse);
-
-  const bookDoc = React.useMemo(
-    () => books.find((bookItem) => bookItem.BookNumber === book),
-    [book]
-  );
-
-  React.useEffect(() => {
-    const loadSyntaxData = async () => {
-      try {
-        const loadedSyntaxData = await fetchSyntaxData(bookDoc, chapter, verse);
-        if (loadedSyntaxData) {
-          document.title = `${documentTitle} ${
-            bookDoc ? bookDoc.OSIS : book
-          }.${chapter}.${verse}`;
-        }
-
-        const corporaIds = await getAvailableCorporaIds();
-        const retrievedCorpora: Corpus[] = [];
-
-        for (const corpusId of corporaIds) {
-          retrievedCorpora.push(await queryText(corpusId));
-        }
-
-        // set the syntax
-        retrievedCorpora.forEach((corpus) => {
-          corpus['syntax'] = {...loadedSyntaxData as SyntaxRoot, _syntaxType: SyntaxType.Source};
-        })
-
-        setCorpora(retrievedCorpora);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    loadSyntaxData().catch(console.error);
-  }, [bookDoc, book, chapter, verse]);
-
-  const bcvId = React.useMemo(() => convertBcvToIdentifier(book, chapter, verse), [book, chapter, verse])
+  const bcvId = React.useMemo(() => convertBcvToIdentifier(book, chapter, verse), [book, chapter, verse]);
 
   return (
     <div>
@@ -126,7 +82,6 @@ const Workbench: React.FC<WorkbenchProps> = (): ReactElement => {
       >
         <EditorWrapper
           theme={theme as 'night' | 'day'}
-          corpora={corpora}
           alignments={[
             {
               source: 'sbl-gnt',

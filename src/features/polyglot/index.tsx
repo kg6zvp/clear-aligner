@@ -1,32 +1,32 @@
-import React, { useRef } from 'react';
-import {Card, CircularProgress, Container, Stack, Grid, Typography} from '@mui/material';
+import React, {useMemo, useRef} from 'react';
+import {Card, CircularProgress, Stack, Grid, Typography} from '@mui/material';
 
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import { CorpusViewport } from 'structs';
+import {Corpus, CorpusViewport} from 'structs';
 
 import './styles.css';
 
 interface PolyglotProps {
   bcvId: string;
+  corpora: Corpus[];
 }
 
-export const Polyglot: React.FC<PolyglotProps> = ({bcvId}) => {
+export const Polyglot: React.FC<PolyglotProps> = ({bcvId, corpora}) => {
   useDebug('PolyglotComponent');
+  const corpusViewportRefs = useRef<HTMLDivElement[]>([]);
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const corpora = useAppSelector((state) => state.alignment.present.corpora);
   const corpusViewports = useAppSelector((state) => {
     return state.app.corpusViewports;
   });
 
-  const corporaWithoutViewport = corpora.filter((corpus) => (
+  const corporaWithoutViewport = useMemo(() => {
+    return corpora.filter((corpus) => (
       !corpusViewports.map(viewport => viewport.corpusId).includes(corpus.id)
-  ));
-
-  const initialArray: HTMLDivElement[] = [];
-  const corpusViewportRefs = useRef(initialArray);
+    ));
+  }, [corpora, corpusViewports]);
 
   return (
     <Stack
@@ -55,9 +55,11 @@ export const Polyglot: React.FC<PolyglotProps> = ({bcvId}) => {
 
       {corpora.length &&
         corpusViewports.map(
-          (corpusViewport: CorpusViewport, index: number): ReactElement => {
+          (corpusViewport: CorpusViewport, index: number) => {
             const corpusId = corpusViewport.corpusId;
             const key = `text_${index}`;
+            const corpus = corpora.find(c => c.id === corpusViewport.corpusId);
+            if(!corpus) return <Grid />;
             return (
               <Card
                 onScroll={(e) => {
@@ -80,19 +82,16 @@ export const Polyglot: React.FC<PolyglotProps> = ({bcvId}) => {
                   flexGrow: '1',
                   flexBasis: '0',
                   minWidth: '16rem',
-                  overflowY: 'scroll',
-                  overflowX: 'scroll',
-                  msOverflowStyle: 'none',
+                  position: 'relative'
                 }}
               >
-                <Container>
-                  <CorpusComponent
-                    key={corpusId}
-                    corpusId={corpusId}
-                    viewportIndex={index}
-                    bcvId={bcvId}
-                  />
-                </Container>
+                <CorpusComponent
+                  key={corpusId}
+                  corpus={corpus}
+                  viewportIndex={index}
+                  bcvId={bcvId}
+                  corpora={corpora}
+                />
               </Card>
             );
           }

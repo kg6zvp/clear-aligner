@@ -32,6 +32,12 @@ export interface CorpusViewport {
   corpusId: string | null;
 }
 
+export interface Verse {
+  bcvId: string;
+  citation: string;
+  words: Word[];
+}
+
 // A body of text.
 export interface Corpus {
   id: string;
@@ -40,7 +46,7 @@ export interface Corpus {
   language: string;
 
   words: Word[];
-  wordsByVerse: Record<string, Word[]>;
+  wordsByVerse: Record<string, Verse>;
   fullText?: string;
   viewType?: CorpusViewType;
   syntax?: SyntaxRoot;

@@ -1,4 +1,4 @@
-import {Corpus, CorpusFileFormat, Word} from 'structs';
+import {Corpus, CorpusFileFormat, Verse, Word} from 'structs';
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
@@ -9,20 +9,18 @@ let isInitialized: boolean = false;
 
 const availableCorpora: Corpus[] = [];
 
-const availableVerses: string[] = [];
-
 const punctuationFilter = [',', '.', '[', ']', ':', '‘', '’', '—', '?', '!', ';', 'FALSE', '(', ')', 'TRUE',];
 
 const parseTsvByFileType = async (
   tsv: RequestInfo,
   refCorpus: Corpus,
   fileType: CorpusFileFormat
-) : Promise<Partial<Corpus>> => {
+): Promise<Partial<Corpus>> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
-  const wordsByVerse: Record<string, Word[]> = {};
+  const wordsByVerse: Record<string, Verse> = {};
 
   header.split('\t').forEach((header, idx) => {
     headerMap[header] = idx;
@@ -31,7 +29,7 @@ const parseTsvByFileType = async (
   const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
-    let id, pos, word;
+    let id, pos, word, verse;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
@@ -51,7 +49,13 @@ const parseTsvByFileType = async (
           position: pos,
         } as Word;
 
-        wordsByVerse[id.substring(0, 8)] = (wordsByVerse[id.substring(0, 8)] || []).concat([word]);
+        verse = wordsByVerse[id.substring(0, 8)] || {}
+        wordsByVerse[id.substring(0, 8)] = {
+          ...verse,
+          bcvId: id.substring(0, 8),
+          citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
+          words: (verse.words || []).concat([word])
+        };
         accumulator.push(word);
         break;
 
@@ -68,13 +72,22 @@ const parseTsvByFileType = async (
           position: pos,
         } as Word;
 
-        wordsByVerse[id.substring(0, 8)] = (wordsByVerse[id.substring(0, 8)] || []).concat([word]);
+        verse = wordsByVerse[id.substring(0, 8)] || {}
+        wordsByVerse[id.substring(0, 8)] = {
+          ...verse,
+          bcvId: id.substring(0, 8),
+          citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
+          words: (verse.words || []).concat([word])
+        };
         accumulator.push(word);
         break;
     }
 
     return accumulator;
   }, [] as Word[]);
+
+  const bcvIds = Object.keys(wordsByVerse);
+
   return {
     words: reducedWords,
     wordsByVerse: wordsByVerse
@@ -150,30 +163,20 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 };
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (await getAvailableCorpora()).map((corpus) => {
+  return (availableCorpora.length ? availableCorpora : (await getAvailableCorpora())).map((corpus) => {
     return corpus.id;
   });
 }
 
-export const queryText = async (corpusId: string): Promise<Corpus> => {
-  const corpus = (await getAvailableCorpora()).find((corpus) => {
-    return corpus.id === corpusId;
-  });
-
-  if (!corpus) {
-    throw new Error(`Unable to find requested corpus: ${corpusId}`);
-  }
-
-  return {
-    id: corpus?.id ?? '',
-    name: corpus?.name ?? '',
-    fullName: corpus?.fullName ?? '',
-    language: corpus?.language ?? '',
-    words: corpus.words,
-    wordsByVerse: corpus.wordsByVerse
-  };
+export const queryText = async (): Promise<Corpus[]> => {
+  return (availableCorpora.length ? availableCorpora : (await getAvailableCorpora())).map((corpus) => (
+    {
+      id: corpus?.id ?? '',
+      name: corpus?.name ?? '',
+      fullName: corpus?.fullName ?? '',
+      language: corpus?.language ?? '',
+      words: corpus.words,
+      wordsByVerse: corpus.wordsByVerse
+    }
+  ));
 };
-
-const getBcvIdByOffset = (bcvId: string, offset: number) => {
-
-}

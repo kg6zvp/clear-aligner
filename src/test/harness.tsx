@@ -19,7 +19,6 @@ export const renderWithProvider = (
   } else {
     store = configureStore(storeConfig);
   }
-  //console.log(store.getState());
 
   return render(<Provider store={store}>{componentToRender}</Provider>);
 };

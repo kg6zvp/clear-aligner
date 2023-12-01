@@ -36,9 +36,11 @@ import {
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
+import {Corpus} from "../../structs";
 
 interface ControlPanelProps {
   alignmentUpdated: Function;
+  corpora: Corpus[];
 }
 
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
@@ -64,15 +66,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     );
   });
 
-  const corpora = useAppSelector((state) => {
-    return state.alignment.present.corpora;
-  });
-
   const currentCorpusViewports = useAppSelector((state) => {
     return state.app.corpusViewports;
   });
 
-  const corporaWithoutViewport = corpora.filter((corpus) => {
+  const corporaWithoutViewport = props.corpora.filter((corpus) => {
     const currentViewportIds = currentCorpusViewports.map(
       (viewport) => viewport.corpusId
     );
