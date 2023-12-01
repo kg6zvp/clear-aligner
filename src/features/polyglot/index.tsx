@@ -35,7 +35,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ corpora}) => {
       justifyContent="stretch"
       alignItems="stretch"
     >
-      {corpusViewports.length === 0 && (
+      {!corpusViewports.length ? (
           corporaWithoutViewport.length
             ? (
                 <Typography variant="h6" style={{ margin: 'auto' }}>
@@ -50,9 +50,9 @@ export const Polyglot: React.FC<PolyglotProps> = ({ corpora}) => {
                       <CircularProgress variant="indeterminate" />
                   </Grid>
             )
-      )}
+      ) : ""}
 
-      {corpora.length &&
+      {corpora.length ? (
         corpusViewports.map(
           (corpusViewport: CorpusViewport, index: number) => {
             const corpusId = corpusViewport.corpusId;
@@ -93,7 +93,8 @@ export const Polyglot: React.FC<PolyglotProps> = ({ corpora}) => {
               </Card>
             );
           }
-        )}
+        )
+      ) : ""}
     </Stack>
   );
 };

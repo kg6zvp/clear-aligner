@@ -86,7 +86,7 @@ const parseTsvByFileType = async (
 
     return accumulator;
   }, [] as Word[]);
-  
+
   return {
     words: reducedWords,
     wordsByVerse: wordsByVerse
