@@ -168,10 +168,6 @@ const alignmentSlice = createSlice({
       });
     },
 
-    loadCorpora: (state, action: PayloadAction<Corpus[]>) => {
-      state.corpora = action.payload
-    },
-
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
       if (state.inProgressLink?._id === '?') {
         // There is a partial in-progress link.
@@ -330,15 +326,6 @@ const alignmentSlice = createSlice({
           throw new Error(
             'DISAMBIGUATE POTENTIAL ALIGNMENTS? Not implemented yet.'
           );
-          // state.inProgressLink = {
-          //   _id: '?',
-          //   source: '',
-          //   target: '',
-          //   sources: [],
-          //   targets: [],
-          // };
-          // state.mode = AlignmentMode.PartialEdit;
-          // return;
         }
       }
     },
@@ -419,7 +406,6 @@ const alignmentSlice = createSlice({
 
 export const {
   loadAlignments,
-  loadCorpora,
   toggleTextSegment,
   resetTextSegments,
   createLink,

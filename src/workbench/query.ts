@@ -1,4 +1,5 @@
 import {Corpus, CorpusFileFormat, Verse, Word} from 'structs';
+import BCVWP, {BCVWPField} from "../BCVWP/BCVWPSupport";
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
@@ -94,14 +95,12 @@ const parseTsvByFileType = async (
   }
 }
 
-export const convertBcvToIdentifier = (
-  book: number,
-  chapter: number,
-  verse: number
-) => {
+export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
+  if(!bcvwp) return "";
   return (
-    `${book}`.padStart(2, '0') +
-    [chapter, verse]
+    `${bcvwp.book}`.padStart(2, '0') +
+    [bcvwp.chapter as number, bcvwp.verse as number]
+      .filter(v => v)
       .map((section: number) => {
         return `${section}`.padStart(3, '0');
       })
@@ -120,6 +119,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       fullName: 'SBL Greek New Testament',
       language: 'grc',
       words: [],
+      primaryVerse: "",
       wordsByVerse: {}
     };
 
@@ -142,6 +142,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       fullName: 'Nestle-Aland 27th Edition YLT text',
       language: 'eng',
       words: [],
+      primaryVerse: "",
       wordsByVerse: {}
     };
 
@@ -168,15 +169,29 @@ export const getAvailableCorporaIds = async (): Promise<string[]> => {
   });
 }
 
-export const queryText = async (): Promise<Corpus[]> => {
-  return (availableCorpora.length ? availableCorpora : (await getAvailableCorpora())).map((corpus) => (
-    {
-      id: corpus?.id ?? '',
-      name: corpus?.name ?? '',
-      fullName: corpus?.fullName ?? '',
-      language: corpus?.language ?? '',
-      words: corpus.words,
-      wordsByVerse: corpus.wordsByVerse
-    }
-  ));
-};
+export const queryText = async (
+  corpusId: string,
+  position?: BCVWP|null
+): Promise<Corpus|null> => {
+  if (!position) return null;
+  const corpus = (await getAvailableCorpora()).find((corpus) => {
+    return corpus.id === corpusId;
+  });
+
+  if (!corpus) {
+    throw new Error(`Unable to find requested corpus: ${corpusId}`);
+  }
+
+  const bcvId = position.toTruncatedReferenceString(BCVWPField.Verse);
+  const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
+
+  return {
+    id: corpus?.id ?? '',
+    name: corpus?.name ?? '',
+    fullName: corpus?.fullName ?? '',
+    language: corpus?.language ?? '',
+    words: queriedData,
+    primaryVerse: bcvId,
+    wordsByVerse: corpus.wordsByVerse
+  };
+}

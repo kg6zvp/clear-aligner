@@ -44,7 +44,7 @@ export interface Corpus {
   name: string;
   fullName: string;
   language: string;
-
+  primaryVerse: string;
   words: Word[];
   wordsByVerse: Record<string, Verse>;
   fullText?: string;

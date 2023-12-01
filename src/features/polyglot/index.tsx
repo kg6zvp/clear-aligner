@@ -9,11 +9,10 @@ import {Corpus, CorpusViewport} from 'structs';
 import './styles.css';
 
 interface PolyglotProps {
-  bcvId: string;
   corpora: Corpus[];
 }
 
-export const Polyglot: React.FC<PolyglotProps> = ({bcvId, corpora}) => {
+export const Polyglot: React.FC<PolyglotProps> = ({ corpora}) => {
   useDebug('PolyglotComponent');
   const corpusViewportRefs = useRef<HTMLDivElement[]>([]);
 
@@ -89,7 +88,6 @@ export const Polyglot: React.FC<PolyglotProps> = ({bcvId, corpora}) => {
                   key={corpusId}
                   corpus={corpus}
                   viewportIndex={index}
-                  bcvId={bcvId}
                   corpora={corpora}
                 />
               </Card>

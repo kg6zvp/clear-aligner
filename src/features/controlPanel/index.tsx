@@ -119,77 +119,89 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
       <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
-          <Button
-            variant="contained"
-            disabled={mode !== AlignmentMode.Edit || !linkHasBothSides}
-            onClick={() => {
-              dispatch(createLink());
-            }}
-          >
-            <AddLink />
-          </Button>
+          <span>
+            <Button
+              variant="contained"
+              disabled={mode !== AlignmentMode.Edit || !linkHasBothSides}
+              onClick={() => {
+                dispatch(createLink());
+              }}
+            >
+              <AddLink />
+            </Button>
+          </span>
         </Tooltip>
         <Tooltip title="Delete Link" arrow describeChild>
-          <Button
-            variant="contained"
-            disabled={!(mode === AlignmentMode.Select)}
-            onClick={() => {
-              dispatch(deleteLink());
-            }}
-          >
-            <LinkOff />
-          </Button>
+          <span>
+            <Button
+              variant="contained"
+              disabled={!(mode === AlignmentMode.Select)}
+              onClick={() => {
+                dispatch(deleteLink());
+              }}
+            >
+              <LinkOff />
+            </Button>
+          </span>
         </Tooltip>
         <Tooltip title="Reset" arrow describeChild>
-          <Button
-            variant="contained"
-            disabled={!anySegmentsSelected}
-            onClick={() => {
-              dispatch(resetTextSegments());
-            }}
-          >
-            <RestartAlt />
-          </Button>
+          <span>
+            <Button
+              variant="contained"
+              disabled={!anySegmentsSelected}
+              onClick={() => {
+                dispatch(resetTextSegments());
+              }}
+            >
+              <RestartAlt />
+            </Button>
+          </span>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup>
         <Tooltip title="Undo" arrow describeChild>
-          <Button
-            disabled={currentCorpusViewports.length === 0}
-            variant="contained"
-            onClick={() => {
-              dispatch(ActionCreators.undo());
-            }}
-          >
-            <Undo />
-          </Button>
+          <span>
+            <Button
+              disabled={currentCorpusViewports.length === 0}
+              variant="contained"
+              onClick={() => {
+                dispatch(ActionCreators.undo());
+              }}
+            >
+              <Undo />
+            </Button>
+          </span>
         </Tooltip>
 
         <Tooltip title="Redo" arrow describeChild>
-          <Button
-            disabled={currentCorpusViewports.length === 0}
-            variant="contained"
-            onClick={() => {
-              dispatch(ActionCreators.redo());
-            }}
-          >
-            <Redo />
-          </Button>
+          <span>
+            <Button
+              disabled={currentCorpusViewports.length === 0}
+              variant="contained"
+              onClick={() => {
+                dispatch(ActionCreators.redo());
+              }}
+            >
+              <Redo />
+            </Button>
+          </span>
         </Tooltip>
       </ButtonGroup>
 
       <Tooltip title="Save" arrow describeChild>
-        <Button
-          disabled={currentCorpusViewports.length === 0}
-          variant="contained"
-          onClick={() => {
-            if (props.alignmentUpdated) {
-              props.alignmentUpdated(alignmentState);
-            }
-          }}
-        >
-          <Save />
-        </Button>
+        <span>
+          <Button
+            disabled={currentCorpusViewports.length === 0}
+            variant="contained"
+            onClick={() => {
+              if (props.alignmentUpdated) {
+                props.alignmentUpdated(alignmentState);
+              }
+            }}
+          >
+            <Save />
+          </Button>
+        </span>
       </Tooltip>
 
       <ButtonGroup>
@@ -204,39 +216,44 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             </>
           }
         >
+          <>
           <Tooltip
             title="Add corpus viewport"
             arrow
             describeChild
             disableHoverListener={currentCorpusViewports.length === 0}
           >
-            <Button
-              variant="contained"
-              disabled={!corporaWithoutViewport.length}
-              onClick={() => {
-                dispatch(
-                  addCorpusViewport({
-                    availableCorpora: corporaWithoutViewport.map(
-                      (corpus) => corpus.id
-                    ),
-                  })
-                );
-              }}
-            >
-              <Add />
-            </Button>
+            <span>
+              <Button
+                variant="contained"
+                disabled={!corporaWithoutViewport.length}
+                onClick={() => {
+                  dispatch(
+                    addCorpusViewport({
+                      availableCorpora: corporaWithoutViewport.map(
+                        (corpus) => corpus.id
+                      ),
+                    })
+                  );
+                }} >
+                <Add />
+              </Button>
+            </span>
           </Tooltip>
+          </>
         </Tooltip>
         <Tooltip title="Remove a corpus viewport" arrow describeChild>
-          <Button
-            variant="contained"
-            disabled={currentCorpusViewports.length === 0}
-            onClick={() => {
-              dispatch(removeCorpusViewport());
-            }}
-          >
-            <Remove />
-          </Button>
+          <span>
+            <Button
+              variant="contained"
+              disabled={currentCorpusViewports.length === 0}
+              onClick={() => {
+                dispatch(removeCorpusViewport());
+              }}
+            >
+              <Remove />
+            </Button>
+          </span>
         </Tooltip>
       </ButtonGroup>
     </Stack>

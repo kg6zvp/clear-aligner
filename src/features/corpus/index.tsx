@@ -1,4 +1,4 @@
-import React, {ReactElement, useCallback, useMemo, useRef, useState} from 'react';
+import React, {ReactElement, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Grid, IconButton, Tooltip, Typography} from '@mui/material';
 import {ArrowDropDown, ArrowDropUp, InfoOutlined, Settings} from '@mui/icons-material';
 
@@ -12,7 +12,6 @@ import Treedown from "../treedown";
 interface CorpusProps {
   corpus: Corpus;
   viewportIndex: number;
-  bcvId: string;
   corpora: Corpus[];
 }
 
@@ -27,7 +26,7 @@ const determineCorpusView = (corpus: Corpus, verses: Verse[], bcvId: string) => 
     }
     default: {
       return verses.map(verse => (
-        <Grid container>
+        <Grid container key={verse.bcvId}>
           <Grid item xs={1} sx={{p: '1px'}}>
             <Typography sx={bcvId === verse.bcvId ? {textDecoration: 'underline', fontStyle: 'italic'} : {}}>
               {verse.citation}.
@@ -54,11 +53,18 @@ const determineCorpusView = (corpus: Corpus, verses: Verse[], bcvId: string) => 
 
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const {corpus, viewportIndex, bcvId, corpora} = props;
+  const {corpus, viewportIndex, corpora} = props;
   useDebug('TextComponent');
-  const [visibleVerses, setVisibleVerses] = useState<Verse[]>([corpus.wordsByVerse[bcvId]].filter(v => v));
+
+  const initialVerses = useMemo(() => [corpus.wordsByVerse[corpus.primaryVerse]].filter(v => v), [corpus]);
+
+  const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
   const [showSettings, setShowSettings] = useState(false);
   const verseKeys = useMemo(() => Object.keys(corpus.wordsByVerse), [corpus.wordsByVerse]);
+
+  useEffect(() => {
+    setVisibleVerses(initialVerses);
+  }, [corpus.primaryVerse]);
 
   const addBcvId = useCallback((start: boolean) => {
     const updatedVerses = [
@@ -82,14 +88,14 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const upArrowEnableState = useMemo(() => {
     const firstBcvId = corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[0].bcvId) - 1]]?.bcvId;
     const showUp = !firstBcvId ? "up" : null
-    return visibleVerses[0]?.bcvId === bcvId ? "down" : showUp;
-  }, [corpus.wordsByVerse, visibleVerses, bcvId, verseKeys]);
+    return visibleVerses[0]?.bcvId === corpus.primaryVerse ? "down" : showUp;
+  }, [corpus.wordsByVerse, visibleVerses, corpus.primaryVerse, verseKeys]);
 
   const downArrowEnableState = useMemo(() => {
     const lastBcvId = corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[visibleVerses.length - 1].bcvId) + 1]]?.bcvId;
     const showDown = !lastBcvId ? "down" : null
-    return visibleVerses[visibleVerses.length - 1]?.bcvId === bcvId ? "up" : showDown;
-  }, [corpus.wordsByVerse, visibleVerses, bcvId, verseKeys]);
+    return visibleVerses[visibleVerses.length - 1]?.bcvId === corpus.primaryVerse ? "up" : showDown;
+  }, [corpus.wordsByVerse, visibleVerses, corpus.primaryVerse, verseKeys]);
 
   if (!corpus) {
     return <Typography>Empty State</Typography>;
@@ -99,7 +105,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     <Grid container flexDirection="column" justifyContent="space-between" sx={{height: '100%', flex: 1}}>
       <Grid container justifyContent="space-between" alignItems="center" sx={{py: 1, px: 2}}>
         <Grid container sx={{flex: 1}}>
-          <ArrowButton isStart add={addBcvId} remove={removeBcvId} disabled={upArrowEnableState} />
+          {
+            !showSettings && (
+              <ArrowButton isStart add={addBcvId} remove={removeBcvId} disabled={upArrowEnableState} />
+            )
+          }
         </Grid>
         <Grid container justifyContent="flex-end" alignItems="center" sx={{flex: 1}}>
           <Typography variant="h6" sx={{mr: 1}}>
@@ -136,7 +146,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       )}
       {!showSettings && (
         <Grid ref={textContainerRef} container sx={{pl: 4, flex: 8, overflow: 'auto'}}>
-          {determineCorpusView(corpus, visibleVerses, bcvId)}
+          {determineCorpusView(corpus, visibleVerses, corpus.primaryVerse)}
         </Grid>
       )}
       {!showSettings && (

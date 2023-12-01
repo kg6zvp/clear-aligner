@@ -19,10 +19,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
     const inProgressLink = state.alignment.present.inProgressLink;
 
     if (inProgressLink) {
+      console.log("sources: ", inProgressLink.sources)
       const sourceWords: Word[] = inProgressLink.sources
-        .map((sourceId) =>
-          findWordById(corpora, sourceId)
-        )
+        .map((sourceId) => {
+          return findWordById(corpora, sourceId)
+        })
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
@@ -31,14 +32,17 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
         )
         .filter((x): x is Word => x !== null);
 
+      console.log("targetWords: ", targetWords)
+
       return {
         [inProgressLink.source]: sourceWords,
         [inProgressLink.target]: targetWords,
       };
     }
-
     return {};
   });
+
+  console.log("selectedWords: ", selectedWords)
 
   const theme = useAppSelector((state) => {
     return state.app.theme;
@@ -83,6 +87,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
         const corpus = corpora.find((corpus: Corpus) => {
           return corpus.id === textId;
         });
+        if(!corpus) return <div />
 
         const selectedWordsForText = selectedWords[textId];
         const sortedSelectedWordsForText = selectedWordsForText.sort(
@@ -114,9 +119,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
               <span>&nbsp;</span>
               {sortedSelectedWordsForText.map(
                 (selectedWord, index: number): ReactElement => {
-                  const word = corpus?.words.find((word: Word): boolean => {
-                    return word.id === selectedWord.id;
-                  });
+                  const word = (corpus?.wordsByVerse[(selectedWord?.id || "").substring(0,8)]?.words || [])
+                    .filter(w => w).find((word: Word): boolean => word.id === selectedWord.id);
 
                   let nextIsSequential: boolean = true;
                   const next = sortedSelectedWordsForText[index + 1];

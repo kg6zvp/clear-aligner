@@ -3,7 +3,6 @@ import { Container } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
 import {useAppDispatch} from 'app/hooks';
-import { setTheme } from 'state/app.slice';
 
 import Polyglot from 'features/polyglot';
 import ControlPanel from 'features/controlPanel';
@@ -14,32 +13,31 @@ import {Alignment, Corpus} from 'structs';
 import '../../styles/theme.css';
 import {loadAlignments} from "../../state/alignment.slice";
 import {queryText} from "../../workbench/query";
+import BCVWP from "../../BCVWP/BCVWPSupport";
 
 interface EditorProps {
+  corpora: Corpus[];
+  currentPosition: BCVWP;
   alignments: Alignment[];
-  theme: 'night' | 'day';
   alignmentUpdated: Function;
-  bcvId: string
 }
 
-export const Editor = (props: EditorProps): ReactElement => {
-  const [corpora, setCorpora] = useState<Corpus[]>([]);
-  const { alignments, theme, alignmentUpdated, bcvId } = props;
+
+const Editor = (props: EditorProps): ReactElement => {
+  const { alignments,  alignmentUpdated } = props;
   useDebug('Editor');
 
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    queryText().then(setCorpora);
     dispatch(loadAlignments(alignments));
-    dispatch(setTheme(theme));
-  }, [dispatch, theme, alignments]);
+  }, [dispatch, alignments]);
 
   return (
     <Container maxWidth={false}>
-      <Polyglot bcvId={bcvId} corpora={corpora}/>
-      <ControlPanel alignmentUpdated={alignmentUpdated} corpora={corpora} />
-      <ContextPanel corpora={corpora} />
+      <Polyglot corpora={props.corpora} />
+      <ControlPanel alignmentUpdated={alignmentUpdated} corpora={props.corpora} />
+      <ContextPanel corpora={props.corpora} />
     </Container>
   );
 };

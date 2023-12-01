@@ -6,6 +6,7 @@ import {
   Select,
   MenuItem,
   Button,
+  Grid,
 } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
@@ -30,7 +31,7 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
 
 
   return (
-    <>
+    <Grid container flexDirection="column" sx={{flex: 1, p: 2}}>
       <Typography variant="h6">Settings</Typography>
       <FormControl fullWidth style={{ marginTop: '12px' }}>
         <InputLabel id="select-corpus-input">Corpus</InputLabel>
@@ -62,7 +63,7 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
           Update
         </Button>
       </FormControl>
-    </>
+    </Grid>
   );
 };
 

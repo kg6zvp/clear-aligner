@@ -1,32 +1,33 @@
 import {  Fragment } from 'react';
 
+import { Provider } from 'react-redux';
+import { store } from 'app/store';
+
 import Editor from './editor';
-import Themed from 'features/themed';
-import { Alignment } from 'structs';
+import {Alignment, Corpus} from 'structs';
 
 import './styles.css';
+import BCVWP from "../../BCVWP/BCVWPSupport";
 
 interface EditorWrapperProps {
+  corpora: Corpus[];
+  currentPosition: BCVWP;
   alignments: Alignment[];
-  theme: 'night' | 'day';
   alignmentUpdated?: Function;
-  bcvId: string;
 }
 
 const EditorWrapper = (props: EditorWrapperProps): any => {
-  const { theme } = props;
-
   return (
-    <Themed theme={theme}>
       <Fragment>
+        <Provider store={store}>
           <Editor
+            corpora={props.corpora}
             alignments={props.alignments}
-            theme={props.theme}
+            currentPosition={props.currentPosition}
             alignmentUpdated={() => props.alignmentUpdated?.()}
-            bcvId={props.bcvId}
           />
+        </Provider>
       </Fragment>
-    </Themed>
   );
 };
 
