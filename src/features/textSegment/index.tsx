@@ -253,21 +253,11 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
           dispatch(relatedAlignments([]));
         }}
         onClick={() => {
-          if (
-            (mode === AlignmentMode.Edit || mode === AlignmentMode.Select) &&
-            (!isLinked || isCurrentLinkMember) &&
-            isInvolved
-          ) {
-            dispatch(toggleTextSegment(word));
-          } else if (mode === AlignmentMode.PartialEdit && !isLinked) {
-            dispatch(toggleTextSegment(word));
-            // } else if (word.role === 'source' && isLinked) {
-            // ...do nothing...
-            // we can't enter edit mode this way.
-            // need a way to disambiguate between alignment data.
-          } else if (isMemberOfMultipleAlignments) {
-            // do nothing
-          } else if (mode === AlignmentMode.CleanSlate) {
+          const editOrSelect = [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) && (!isLinked || isCurrentLinkMember) && isInvolved;
+          const unLinkedEdit = mode === AlignmentMode.PartialEdit && !isLinked;
+          const cleanSlate = mode === AlignmentMode.CleanSlate;
+
+          if(editOrSelect || unLinkedEdit || cleanSlate) {
             dispatch(toggleTextSegment(word));
           }
         }}
