@@ -82,6 +82,7 @@ function App() {
     const loadSourceWords = async () => {
       const corpus = (await getAvailableCorpora())[0];
       setAvailableWords(corpus?.words ?? []);
+      setCurrentPosition(new BCVWP(45, 5, 3));
     };
 
     loadSourceWords().catch(console.error);
@@ -102,7 +103,7 @@ function App() {
           anchor={'left'}
           open={showMenu}
           onClose={() => setShowMenu(false)}>
-          <BCVNavigation words={availableWords} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
+          <BCVNavigation disabled={!availableWords || availableWords.length < 1} words={availableWords} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
             setCurrentPosition(selection);
             setShowMenu(false);
           }} />

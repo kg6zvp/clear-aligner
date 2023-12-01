@@ -22,6 +22,20 @@ Default.args = {
     ]
 } as BCVNavigationProps
 
+
+export const Disabled = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
+Disabled.args = {
+  disabled: true,
+  words: [
+    {
+      id: '45005003001'
+    },
+    {
+      id: '48006002001'
+    }
+  ]
+} as BCVNavigationProps
+
 export const WithCurrentPositionAtGalatians6_2 = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
 WithCurrentPositionAtGalatians6_2.args = {
     words: [

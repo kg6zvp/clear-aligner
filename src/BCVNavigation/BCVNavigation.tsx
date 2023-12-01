@@ -71,6 +71,7 @@ const findBookInNavigableBooksByBookNumber = (navigableBooks: NavigableBook[], b
   bookNumber ? navigableBooks.find(book => book.BookNumber === bookNumber) : null;
 
 export interface BCVNavigationProps {
+  disabled?: boolean;
   horizontal?: boolean;
   words?: Word[];
   currentPosition?: BCVWP;
@@ -83,7 +84,7 @@ export interface BCVNavigationProps {
  * @param props.currentPosition optional prop to specify current position
  * @param props.onNavigate callback function which will receive division, book, chapter and verse coordinates
  */
-const BCVNavigation = ({words, currentPosition, onNavigate, horizontal}: BCVNavigationProps) => {
+const BCVNavigation = ({disabled, words, currentPosition, onNavigate, horizontal}: BCVNavigationProps) => {
   const [booksWithNavigationInfo, setBooksWithNavigationInfo] = useState([] as NavigableBook[]);
   const [selectedBook, setSelectedBook] = useState(null as NavigableBook|null|undefined);
   const [selectedChapter, setSelectedChapter] = useState(currentPosition?.chapter ?? NO_VALUE);
@@ -132,9 +133,10 @@ const BCVNavigation = ({words, currentPosition, onNavigate, horizontal}: BCVNavi
     [selectedBook, selectedChapter, selectedVerse, onNavigate]);
 
   return <>
-    <label>
+    <label aria-disabled={disabled}>
       {'Book '}
       <Autocomplete
+        disabled={disabled}
         key={`${selectedBook}`}
         disablePortal
         id='book-selection'
@@ -156,10 +158,10 @@ const BCVNavigation = ({words, currentPosition, onNavigate, horizontal}: BCVNavi
         renderInput={(params) => <TextField {...params} variant={'standard'}/>}/>
     </label>
     {!horizontal && <br/>}
-    <label>
+    <label aria-disabled={disabled}>
       {'Chapter '}
       <select
-        disabled={!selectedBook}
+        disabled={disabled || !selectedBook}
         value={selectedChapter}
         onChange={(e) =>
           handleSetChapter(e.target.value ? Number(e.target.value) : undefined as number | undefined)}>
@@ -178,10 +180,10 @@ const BCVNavigation = ({words, currentPosition, onNavigate, horizontal}: BCVNavi
       </select>
     </label>
     {!horizontal && <br/>}
-    <label>
+    <label aria-disabled={disabled}>
       {'Verse '}
       <select
-        disabled={!selectedChapter}
+        disabled={disabled || !selectedChapter}
         value={selectedVerse}
         onChange={(e) => setSelectedVerse(e.target.value ? Number(e.target.value) : NO_VALUE as number)}>
         <option
@@ -199,7 +201,7 @@ const BCVNavigation = ({words, currentPosition, onNavigate, horizontal}: BCVNavi
     </label>
     {!horizontal && <br/>}
     <button
-      disabled={!selectedBook || !selectedChapter || !selectedVerse}
+      disabled={disabled || !selectedBook || !selectedChapter || !selectedVerse}
       onClick={() => handleNavigation()}>
       Go
     </button>
