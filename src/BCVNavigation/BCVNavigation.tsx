@@ -32,7 +32,6 @@ const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
         }]
       }]
     }))
-    //.filter(ref => ref.index !== 0 && ref.title !== '' && ref.chapters.length > 0 && ref.chapters[0].reference !== 0 && ref.chapters[0].verses.length > 0 && ref.chapters[0].verses[0].reference !== 0)
     /**
      * merge the individual verse references into books with lists of available chapters and verses
      */
