@@ -6,7 +6,7 @@ import EditorWrapper from 'features/editor';
 
 import fetchSyntaxData from 'workbench/fetchSyntaxData';
 
-import {convertBcvToIdentifier, queryText} from 'workbench/query';
+import {queryText} from 'workbench/query';
 import BCVWP from "../BCVWP/BCVWPSupport";
 
 interface WorkbenchProps {}

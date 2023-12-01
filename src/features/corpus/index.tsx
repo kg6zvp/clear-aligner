@@ -64,7 +64,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
 
   useEffect(() => {
     setVisibleVerses(initialVerses);
-  }, [corpus.primaryVerse]);
+  }, [corpus.primaryVerse, initialVerses]);
 
   const addBcvId = useCallback((start: boolean) => {
     const updatedVerses = [

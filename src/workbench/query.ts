@@ -86,9 +86,7 @@ const parseTsvByFileType = async (
 
     return accumulator;
   }, [] as Word[]);
-
-  const bcvIds = Object.keys(wordsByVerse);
-
+  
   return {
     words: reducedWords,
     wordsByVerse: wordsByVerse

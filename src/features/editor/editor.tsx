@@ -1,4 +1,4 @@
-import {ReactElement, useEffect, useState} from 'react';
+import {ReactElement, useEffect} from 'react';
 import { Container } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
@@ -12,7 +12,6 @@ import {Alignment, Corpus} from 'structs';
 
 import '../../styles/theme.css';
 import {loadAlignments} from "../../state/alignment.slice";
-import {queryText} from "../../workbench/query";
 import BCVWP from "../../BCVWP/BCVWPSupport";
 
 interface EditorProps {
