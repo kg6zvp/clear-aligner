@@ -170,12 +170,16 @@ const ArrowButton: React.FC<ArrowButtonProps> = ({add, remove, disabled, isStart
 
   return (
     <Grid container>
-      <IconButton onClick={() => isStart ? add(true) : remove(true)} disabled={disabled === "up"}>
-        <ArrowDropUp/>
-      </IconButton>
-      <IconButton onClick={() => isStart ? remove(false) : add(false)} disabled={disabled === "down"}>
-        <ArrowDropDown/>
-      </IconButton>
+      <Tooltip title={isStart ? "Show the previous verse" : "Remove the final verse"}>
+        <IconButton onClick={() => isStart ? add(true) : remove(true)} disabled={disabled === "up"}>
+          <ArrowDropUp/>
+        </IconButton>
+      </Tooltip>
+      <Tooltip title={isStart ? "Remove the first verse" : "Show the next verse"}>
+        <IconButton onClick={() => isStart ? remove(false) : add(false)} disabled={disabled === "down"}>
+          <ArrowDropDown/>
+        </IconButton>
+      </Tooltip>
     </Grid>
   );
 }
