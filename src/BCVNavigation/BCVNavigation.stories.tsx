@@ -22,7 +22,6 @@ Default.args = {
     ]
 } as BCVNavigationProps
 
-
 export const Disabled = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
 Disabled.args = {
   disabled: true,

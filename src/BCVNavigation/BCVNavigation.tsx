@@ -66,6 +66,11 @@ const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
  */
 const NO_VALUE = 0;
 
+/**
+ * use -1 as an initial load state
+ */
+const LOAD_STATE = -1;
+
 const findBookInNavigableBooksByBookNumber = (navigableBooks: NavigableBook[], bookNumber?: number): NavigableBook | null | undefined =>
   bookNumber ? navigableBooks.find(book => book.BookNumber === bookNumber) : null;
 
@@ -86,8 +91,8 @@ export interface BCVNavigationProps {
 const BCVNavigation = ({disabled, words, currentPosition, onNavigate, horizontal}: BCVNavigationProps) => {
   const [booksWithNavigationInfo, setBooksWithNavigationInfo] = useState([] as NavigableBook[]);
   const [selectedBook, setSelectedBook] = useState(null as NavigableBook|null|undefined);
-  const [selectedChapter, setSelectedChapter] = useState(currentPosition?.chapter ?? NO_VALUE);
-  const [selectedVerse, setSelectedVerse] = useState(currentPosition?.verse ?? NO_VALUE);
+  const [selectedChapter, setSelectedChapter] = useState(LOAD_STATE);
+  const [selectedVerse, setSelectedVerse] = useState(LOAD_STATE);
 
   const getBooksWithNavigationInfo = async (words: Word[]) => {
     const referenceList = getReferenceListFromWords(words);
@@ -112,9 +117,27 @@ const BCVNavigation = ({disabled, words, currentPosition, onNavigate, horizontal
       selectedBook ? selectedBook?.chapters : undefined,
     [selectedBook]);
 
+  /**
+   * this is to ensure that the chapter selection is properly set after the available words have been loaded into navigable books
+   */
+  useEffect(() => {
+    if (currentPosition?.chapter && selectedChapter === LOAD_STATE) {
+      setSelectedChapter(currentPosition?.chapter ?? NO_VALUE);
+    }
+  }, [booksWithNavigationInfo, currentPosition, selectedChapter, setSelectedChapter]);
+
   const availableVerses = useMemo(() =>
       availableChapters && selectedChapter && selectedChapter !== NO_VALUE ? availableChapters.find(chapter => chapter.reference === selectedChapter)?.verses : undefined,
     [availableChapters, selectedChapter]);
+
+  /**
+   * this is to ensure that the verse selection is properly set after the available words have been loaded into navigable books
+   */
+  useEffect(() => {
+    if (currentPosition?.verse && selectedVerse === LOAD_STATE) {
+      setSelectedVerse(currentPosition?.verse ?? NO_VALUE);
+    }
+  }, [booksWithNavigationInfo, selectedChapter, currentPosition, selectedVerse, setSelectedVerse]);
 
   const handleSetBook = (book?: NavigableBook) => {
     setSelectedBook(book ?? null);
