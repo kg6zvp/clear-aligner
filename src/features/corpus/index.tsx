@@ -1,6 +1,6 @@
 import React, {ReactElement, useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {Grid, IconButton, Tooltip, Typography} from '@mui/material';
-import {ArrowDropDown, ArrowDropUp, InfoOutlined, Settings} from '@mui/icons-material';
+import {Add, Remove, InfoOutlined, Settings} from '@mui/icons-material';
 
 import useDebug from 'hooks/useDebug';
 import TextSegment from 'features/textSegment';
@@ -66,36 +66,28 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     setVisibleVerses(initialVerses);
   }, [corpus.primaryVerse, initialVerses]);
 
-  const addBcvId = useCallback((start: boolean) => {
+  const addBcvId = useCallback(() => {
     const updatedVerses = [
-      ...(start ? [corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[0].bcvId) - 1]]] : []),
+      corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[0].bcvId) - 1]],
       ...visibleVerses,
-      ...(start ? [] : [corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[visibleVerses.length - 1].bcvId) + 1]]])
+      corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[visibleVerses.length - 1].bcvId) + 1]]
     ].filter(v => v) as Verse[];
     setVisibleVerses(updatedVerses);
-    if (textContainerRef.current) {
-      (textContainerRef.current as HTMLDivElement).scrollTop = start ? 0 : (textContainerRef.current?.scrollHeight || 0);
-    }
   }, [visibleVerses, corpus.wordsByVerse, verseKeys]);
 
-  const removeBcvId = useCallback((start: boolean) => {
-    setVisibleVerses(verses => verses.slice(start ? 0 : 1, start ? -1 : verses.length));
-    if (textContainerRef.current) {
-      (textContainerRef.current as HTMLDivElement).scrollTop = start ? 0 : (textContainerRef.current?.scrollHeight || 0);
-    }
-  }, []);
+  const removeBcvId = useCallback(() => {
+    setVisibleVerses(verses => verses.slice(
+      verses[0]?.bcvId === corpus.primaryVerse ? 0 : 1,
+      verses.length === 1 ? verses.length : -1
+    ));
+  }, [corpus.primaryVerse]);
 
-  const upArrowEnableState = useMemo(() => {
+  const corpusActionEnableState = useMemo(() => {
     const firstBcvId = corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[0].bcvId) - 1]]?.bcvId;
-    const showUp = !firstBcvId ? "up" : null
-    return visibleVerses[0]?.bcvId === corpus.primaryVerse ? "down" : showUp;
-  }, [corpus.wordsByVerse, visibleVerses, corpus.primaryVerse, verseKeys]);
-
-  const downArrowEnableState = useMemo(() => {
     const lastBcvId = corpus.wordsByVerse[verseKeys[verseKeys.indexOf(visibleVerses[visibleVerses.length - 1].bcvId) + 1]]?.bcvId;
-    const showDown = !lastBcvId ? "down" : null
-    return visibleVerses[visibleVerses.length - 1]?.bcvId === corpus.primaryVerse ? "up" : showDown;
-  }, [corpus.wordsByVerse, visibleVerses, corpus.primaryVerse, verseKeys]);
+    const showAdd = !firstBcvId && !lastBcvId ? "add" : null
+    return visibleVerses.length <= 1 ? "remove" : showAdd;
+  }, [corpus.wordsByVerse, visibleVerses, verseKeys]);
 
   if (!corpus) {
     return <Typography>Empty State</Typography>;
@@ -107,7 +99,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         <Grid container sx={{flex: 1}}>
           {
             !showSettings && (
-              <ArrowButton isStart add={addBcvId} remove={removeBcvId} disabled={upArrowEnableState} />
+              <CorpusAction add={addBcvId} remove={removeBcvId} disabled={corpusActionEnableState} />
             )
           }
         </Grid>
@@ -149,35 +141,29 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           {determineCorpusView(corpus, visibleVerses, corpus.primaryVerse)}
         </Grid>
       )}
-      {!showSettings && (
-        <Grid sx={{py: 1, px: 2, flex: 1}}>
-          <ArrowButton add={addBcvId} remove={removeBcvId} disabled={downArrowEnableState}/>
-        </Grid>
-      )}
     </Grid>
   );
 };
 
 
-interface ArrowButtonProps {
-  add: (start: boolean) => void;
-  remove: (start: boolean) => void;
-  isStart?: boolean;
-  disabled?: "up" | "down" | null
+interface CorpusActionProps {
+  add: () => void;
+  remove: () => void;
+  disabled?: "add" | "remove" | null
 }
 
-const ArrowButton: React.FC<ArrowButtonProps> = ({add, remove, disabled, isStart = false}) => {
+const CorpusAction: React.FC<CorpusActionProps> = ({add, remove, disabled}) => {
 
   return (
     <Grid container>
-      <Tooltip title={isStart ? "Show the previous verse" : "Remove the final verse"}>
-        <IconButton onClick={() => isStart ? add(true) : remove(true)} disabled={disabled === "up"}>
-          <ArrowDropUp/>
+      <Tooltip title="Show the next verses">
+        <IconButton onClick={add} disabled={disabled === "add"}>
+          <Add sx={{fontSize: 18}} />
         </IconButton>
       </Tooltip>
-      <Tooltip title={isStart ? "Remove the first verse" : "Show the next verse"}>
-        <IconButton onClick={() => isStart ? remove(false) : add(false)} disabled={disabled === "down"}>
-          <ArrowDropDown/>
+      <Tooltip title="Remove the outer verses">
+        <IconButton onClick={remove} disabled={disabled === "remove"}>
+          <Remove sx={{fontSize: 18}} />
         </IconButton>
       </Tooltip>
     </Grid>
