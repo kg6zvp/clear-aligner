@@ -1,6 +1,7 @@
 import xmlToJson from 'workbench/xmlToJson';
 import cachedSyntaxData from 'workbench/cachedSyntaxData';
 import { SyntaxRoot } from 'structs';
+import BCVWP, {BCVWPField} from "../BCVWP/BCVWPSupport";
 
 const MACULA_ENV = 'http://labs.clear.bible/symphony-dev';
 
@@ -39,12 +40,11 @@ const jsonizeXml = async (xmlString: string): Promise<object | null> => {
   }
 };
 const fetchSyntaxData = async (
-  bookDoc: any,
-  chapterNum: number,
-  verseNum: number
+  position?: BCVWP|null
 ): Promise<SyntaxRoot | null> => {
-  if (bookDoc) {
-    const osisRef = `${bookDoc.OSIS}.${chapterNum}.${verseNum}`;
+  if (position && position.hasFields(BCVWPField.Book)) {
+    const bookDoc = position.getBookInfo()!;
+    const osisRef = `${bookDoc.OSIS}.${position?.chapter}.${position?.verse}`;
 
     if (Object.keys(cachedSyntaxData).includes(osisRef)) {
       const cachedSyntaxDatum = cachedSyntaxData[osisRef];

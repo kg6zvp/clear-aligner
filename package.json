@@ -29,12 +29,15 @@
     "prettier": "prettier --write .",
     "prepublishOnly": "rm -rf dist/ && rollup -c",
     "dev-electron": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
-    "electron": "wait-on tcp:3000 && electron ."
+    "electron": "wait-on tcp:3000 && electron .",
+    "storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook dev -p 6006",
+    "build-storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook build"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
-      "react-app/jest"
+      "react-app/jest",
+      "plugin:storybook/recommended"
     ]
   },
   "browserslist": {
@@ -50,7 +53,19 @@
     ]
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.23.3",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
     "@rollup/plugin-typescript": "^8.3.1",
+    "@storybook/addon-essentials": "^7.5.3",
+    "@storybook/addon-interactions": "^7.5.3",
+    "@storybook/addon-links": "^7.5.3",
+    "@storybook/addon-onboarding": "^1.0.8",
+    "@storybook/blocks": "^7.5.3",
+    "@storybook/preset-create-react-app": "^7.5.3",
+    "@storybook/react": "^7.5.3",
+    "@storybook/react-webpack5": "^7.5.3",
+    "@storybook/testing-library": "^0.2.2",
     "@testing-library/jest-dom": "^5.16.3",
     "@testing-library/react": "^13.0.1",
     "@testing-library/user-event": "^13.5.0",
@@ -61,12 +76,14 @@
     "concurrently": "^8.2.1",
     "electron": "^27.0.0",
     "electron-is-dev": "^2.0.0",
+    "eslint-plugin-storybook": "^0.6.15",
     "prettier": "^2.6.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "rollup": "^2.70.1",
     "rollup-plugin-postcss": "^4.0.2",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "storybook": "^7.5.3"
   },
   "resolutions": {
     "@types/react": "^18",
@@ -75,5 +92,16 @@
   "files": [
     "dist/"
   ],
-  "main": "public/electron.js"
+  "main": "public/electron.js",
+  "babel": {
+    "sourceType": "unambiguous",
+    "presets": [
+      [
+        "@babel/preset-env"
+      ],
+      "@babel/preset-typescript",
+      "@babel/preset-react"
+    ],
+    "plugins": []
+  }
 }

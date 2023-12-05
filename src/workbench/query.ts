@@ -1,4 +1,5 @@
 import {Corpus, CorpusFileFormat, Word} from 'structs';
+import BCVWP, {BCVWPField} from "../BCVWP/BCVWPSupport";
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
@@ -69,21 +70,6 @@ const parseTsvByFileType = async (
   }, [] as Word[]);
 }
 
-const convertBcvToIdentifier = (
-  book: number,
-  chapter: number,
-  verse: number
-) => {
-  return (
-    `${book}`.padStart(2, '0') +
-    [chapter, verse]
-      .map((section: number) => {
-        return `${section}`.padStart(3, '0');
-      })
-      .join('')
-  );
-};
-
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
     isInitialized = true;
@@ -135,10 +121,9 @@ export const getAvailableCorporaIds = async (): Promise<string[]> => {
 
 export const queryText = async (
   corpusId: string,
-  book: number,
-  chapter: number,
-  verse: number
-): Promise<Corpus> => {
+  position?: BCVWP|null
+): Promise<Corpus|null> => {
+  if (!position) return null;
   const corpus = (await getAvailableCorpora()).find((corpus) => {
     return corpus.id === corpusId;
   });
@@ -147,7 +132,7 @@ export const queryText = async (
     throw new Error(`Unable to find requested corpus: ${corpusId}`);
   }
 
-  const bcvId = convertBcvToIdentifier(book, chapter, verse);
+  const bcvId = position.toTruncatedReferenceString(BCVWPField.Verse);
   const queriedData = corpus.words.filter((m) => m.id.startsWith(bcvId));
 
   return {

@@ -3,7 +3,6 @@ import { Container } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch } from 'app/hooks';
-import { setTheme } from 'state/app.slice';
 import { loadAlignments, loadCorpora } from 'state/alignment.slice';
 
 import Polyglot from 'features/polyglot';
@@ -18,19 +17,14 @@ import '../../styles/theme.css';
 interface EditorProps {
   corpora: Corpus[];
   alignments: Alignment[];
-  theme: 'night' | 'day';
   alignmentUpdated: Function;
 }
 
-export const Editor = (props: EditorProps): ReactElement => {
-  const { corpora, alignments, theme, alignmentUpdated } = props;
+const Editor = (props: EditorProps): ReactElement => {
+  const { corpora, alignments, alignmentUpdated } = props;
   useDebug('Editor');
 
   const dispatch = useAppDispatch();
-
-  useEffect(() => {
-    dispatch(setTheme(theme));
-  }, [dispatch, theme]);
 
   useEffect(() => {
     if (alignments) {
