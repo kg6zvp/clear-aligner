@@ -97,6 +97,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       <ToggleButtonGroup
         size="small"
         value={formats}
+        sx={{
+          display: 'unset'
+        }}
         // For later.
         // onChange={(
         //   event: React.MouseEvent<HTMLElement>,
@@ -105,6 +108,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       >
         <ToggleButton
           value="scroll-lock"
+          sx={{
+            height: '36px'
+          }}
           onClick={() => {
             if (formats.includes('scroll-lock')) {
               setFormats(formats.filter((item) => item !== 'scroll-lock'));

@@ -1,12 +1,9 @@
 import React, {ReactElement} from 'react';
 
-import {Corpus, SyntaxType} from 'structs';
+import {Corpus} from 'structs';
 
 import EditorWrapper from 'features/editor';
 
-import fetchSyntaxData from 'workbench/fetchSyntaxData';
-
-import {queryText} from 'workbench/query';
 import BCVWP from "../BCVWP/BCVWPSupport";
 
 interface WorkbenchProps {
@@ -15,8 +12,6 @@ interface WorkbenchProps {
 }
 
 const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: WorkbenchProps): ReactElement => {
-  const [displayCorpora, setDisplayCorpora] = React.useState([] as Corpus[]);
-
   return (<>
     {corpora &&
       (<div>
