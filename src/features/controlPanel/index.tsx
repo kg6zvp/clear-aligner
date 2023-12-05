@@ -6,6 +6,8 @@ import {
   Tooltip,
   Typography,
   Stack,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
 
 import {
@@ -87,12 +89,26 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       direction="row"
       spacing={2}
       justifyContent="center"
-      alignItems="center"
+      alignItems="baseline"
       style={{ marginTop: '16px', marginBottom: '16px' }}
     >
-      <ButtonGroup>
-        <Button
-          variant="contained"
+      <ToggleButtonGroup
+        size="small"
+        value={formats}
+        sx={{
+          display: 'unset'
+        }}
+        // For later.
+        // onChange={(
+        //   event: React.MouseEvent<HTMLElement>,
+        //   newFormats: string[]
+        // ) => {}}
+      >
+        <ToggleButton
+          value="scroll-lock"
+          sx={{
+            height: '36px'
+          }}
           onClick={() => {
             if (formats.includes('scroll-lock')) {
               setFormats(formats.filter((item) => item !== 'scroll-lock'));
@@ -104,7 +120,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           }}
         >
           <SyncLock />
-        </Button>
+        </ToggleButton>
+      </ToggleButtonGroup>
+
+      <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
