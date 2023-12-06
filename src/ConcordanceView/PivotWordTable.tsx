@@ -55,6 +55,21 @@ export const SortedHeaderCell = ({ sort, columnDefinition, onChangeSort }: Sorte
   </TableCell>
 }
 
+export interface PivotWordRowProps {
+  row: PivotWord;
+  onChooseWord: (word: PivotWord) => void;
+}
+
+export const PivotWordRow = React.memo(({ row, onChooseWord }: PivotWordRowProps) =>
+    <TableRow hover onClick={() => onChooseWord(row)} role={"link"} key={row.pivotWord}>
+      <TableCell key={'frequency'}>
+        {row.frequency ?? ''}
+      </TableCell>
+      <TableCell key={'pivotWord'}>
+        {row.pivotWord ?? ''}
+      </TableCell>
+    </TableRow>)
+
 export interface PivotWordTableProps {
   loading?: boolean;
   sort: SortData;
@@ -88,15 +103,7 @@ export const PivotWordTable = ({ loading, sort, onChangeSort, pivotWords, onChoo
         </TableRow>
       </TableHead>
       <TableBody>
-        {pivotWords.map((row) =>
-          <TableRow hover onClick={() => onChooseWord(row)} role={"link"} key={row.pivotWord}>
-              <TableCell key={'frequency'}>
-                {row.frequency ?? ''}
-              </TableCell>
-              <TableCell key={'pivotWord'}>
-                {row.pivotWord ?? ''}
-              </TableCell>
-          </TableRow>)}
+        {pivotWords.map(row => <PivotWordRow row={row} onChooseWord={onChooseWord}/>)}
       </TableBody>
     </Table>
   </TableContainer>
