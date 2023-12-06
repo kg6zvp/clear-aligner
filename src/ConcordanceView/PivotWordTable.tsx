@@ -8,9 +8,10 @@ import {
   TableRow,
   TableSortLabel
 } from "@mui/material";
-import React from "react";
+import React, {useMemo} from "react";
 import {PivotWord, SortData} from "./Structs";
 import {Box} from "@mui/system";
+import {DataGrid, GridRow} from "@mui/x-data-grid";
 
 interface ColumnDefinition {
   field: string;
@@ -74,11 +75,17 @@ export interface PivotWordTableProps {
   loading?: boolean;
   sort: SortData;
   pivotWords: PivotWord[];
+  chosenWord?: PivotWord;
   onChooseWord: (word: PivotWord) => void;
   onChangeSort: (sortData: SortData) => void;
 }
 
-export const PivotWordTable = ({ loading, sort, onChangeSort, pivotWords, onChooseWord }: PivotWordTableProps) => {
+export const PivotWordTable = ({ loading, sort, onChangeSort, pivotWords, chosenWord, onChooseWord }: PivotWordTableProps) => {
+  const rows = useMemo(() =>
+    pivotWords.reduce((pivotWordObj, currentValue) => {
+      pivotWordObj[currentValue.pivotWord] = currentValue;
+      return pivotWordObj;
+    }, {} as { [key: string]: PivotWord }), [pivotWords]);
   if (loading) {
     console.log('loading is true');
     return <Box sx={{ display: 'flex', margin: 'auto' }}>
@@ -87,24 +94,26 @@ export const PivotWordTable = ({ loading, sort, onChangeSort, pivotWords, onChoo
   }
   return <TableContainer sx={{
     width: '100%',
-    maxWidth: '100%',
     height: '100%',
-    maxHeight: '100%'
   }} >
-    <Table stickyHeader>
-      <TableHead>
-        <TableRow>
-          {columns.map((column) =>
-            <SortedHeaderCell
-              key={column.field}
-              sort={sort}
-              columnDefinition={column}
-              onChangeSort={onChangeSort} />)}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {pivotWords.map(row => <PivotWordRow row={row} onChooseWord={onChooseWord}/>)}
-      </TableBody>
-    </Table>
+    <DataGrid
+        sx={{
+          overflowY: 'scroll'
+        }}
+        rowSelection={true}
+        rowSelectionModel={chosenWord?.pivotWord}
+        rows={pivotWords}
+        columns={columns}
+        getRowId={(row) => row.pivotWord}
+        slotProps={{
+        }}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 20 },
+          },
+        }}
+        pageSizeOptions={[20, 50]}
+        onRowClick={(row) => onChooseWord(rows[row.id])}
+    />
   </TableContainer>
 }

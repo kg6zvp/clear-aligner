@@ -1,6 +1,6 @@
 import {useContext, useEffect, useMemo, useRef, useState} from "react";
 import {Corpus} from "../structs";
-import {CircularProgress, Grid, Paper} from "@mui/material";
+import {CircularProgress, Grid, Paper, TextField, Typography} from "@mui/material";
 import { Box } from '@mui/system';
 import {PivotWord, SortData} from "./Structs";
 import {getAvailableCorpora} from "../workbench/query";
@@ -13,7 +13,7 @@ type WordFilter = 'content'|'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
-  layoutCtx.setMenuBarDelegate('Concordance View');
+  layoutCtx.setMenuBarDelegate(<Typography sx={{textAlign: 'center', translate: '-20px'}}>Alignments :: Batch-review Mode</Typography>);
   const [loading, setLoading] = useState(true);
   const [sourceCorpus, setSourceCorpus] = useState(null as Corpus|null);
   const [targetCorpus, setTargetCorpus] = useState(null as Corpus|null);
@@ -36,7 +36,6 @@ export const ConcordanceView = () => {
   } as SortData);
 
   const pivotWordsLoading = useMemo(() => {
-    console.log('pivotWordsLoading', !!pivotWordsPromise);
     return !!pivotWordsPromise;
   }, [pivotWordsPromise]);
 
@@ -58,8 +57,6 @@ export const ConcordanceView = () => {
       const corpora : Corpus[] = await getAvailableCorpora();
 
       corpora.forEach(corpus => {
-        console.log('corpus.id', corpus.id);
-        console.log('corpus.name', corpus.name);
         if (corpus.id === 'sbl-gnt') {
           setSourceCorpus(corpus);
         } else if (corpus.id === 'na27-YLT') {
@@ -112,14 +109,12 @@ export const ConcordanceView = () => {
 
   useEffect(() => {
     const performSort = async () => {
-      console.log('performSort()');
       return [ ...srcPivotWords ].sort((a, b) => {
         const aValue = (a as any)[pivotWordSortData.field];
         const bValue = (b as any)[pivotWordSortData.field];
         return pivotWordSortData.direction === 'asc' ? aValue - bValue : bValue - aValue;
       });
     }
-    console.log('trigger sort...');
     setPivotWordsPromise(performSort());
   }, [srcPivotWords, pivotWordSortData, setPivotWordsPromise]);
 
@@ -129,48 +124,77 @@ export const ConcordanceView = () => {
     </Box>
   }
 
-  return <Box sx={{ display: 'flex', margin: 'auto' }}>
-    {/**
-      * Pivot Words
-      */}
-    <Box width={'auto'} margin={'4em'} marginBottom={'auto'} maxHeight={'80vh !important'}>
-      <Grid item margin={'.5em'}>
+  return <div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        width: '100%',
+        marginTop: '4em'
+      }}>
+        <table style={{
+          alignSelf: 'center',
+          minWidth: '15%'
+        }}>
+          <tbody>
+            <tr>
+              <td>Source:</td>
+              <td><Typography sx={{ textAlign: 'right' }}>{sourceCorpus?.name}</Typography></td>
+            </tr>
+            <tr>
+              <td>Target:</td>
+              <td><Typography sx={{ textAlign: 'right' }}>{targetCorpus?.name}</Typography></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexWrap: 'wrap',
+        }}>
+      {/**
+       * Pivot Words
+       */}
+      <Box sx={{
+        display: 'flex',
+        flexFlow: 'column',
+        gap: '1em',
+        margin: '2em',
+      }} >
         <SingleSelectButtonGroup
-          value={wordSource}
-          items={[
-            {
-              value: 'source',
-              label: "Source"
-            },
-            {
-              value: 'target',
-              label: "Target"
-            }]}
-          onSelect={(value) => setWordSource(value as WordSource)} />
-      </Grid>
-      <Grid item margin={'.5em'}>
+            value={wordSource}
+            items={[
+              {
+                value: 'source',
+                label: "Source"
+              },
+              {
+                value: 'target',
+                label: "Target"
+              }]}
+            onSelect={(value) => setWordSource(value as WordSource)} />
         <SingleSelectButtonGroup
-          value={contentFilter}
-          items={[
-            {
-              value: 'content',
-              label: 'Content'
-            },
-            {
-              value: 'all',
-              label: 'All'
-            }
-          ]}
-          onSelect={(value) => setContentFilter(value as WordFilter)} />
-      </Grid>
-      <Grid item margin={'.5em'} flexDirection={'column'} flexGrow={'1'} >
+            value={contentFilter}
+            items={[
+              {
+                value: 'content',
+                label: 'Content'
+              },
+              {
+                value: 'all',
+                label: 'All'
+              }
+            ]}
+            onSelect={(value) => setContentFilter(value as WordFilter)} />
         <Paper sx={{
+          display: 'flex',
           width: '100%',
-          height: '100%',
+          height: 'calc(100vh - 64px - 18.5em)'
         }}>
           <PivotWordTable { ...pivotWordsLoading ? { loading: true } : {} } sort={pivotWordSortData} pivotWords={pivotWords} onChooseWord={(word) => console.log(word)} onChangeSort={setPivotWordSortData} />
         </Paper>
-      </Grid>
+      </Box>
     </Box>
-  </Box>
+  </div>
 }

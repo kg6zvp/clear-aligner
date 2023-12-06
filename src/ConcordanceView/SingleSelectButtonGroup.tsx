@@ -1,6 +1,7 @@
-import {Button, ButtonGroup} from "@mui/material";
+import {Button, ButtonGroup, SxProps, Theme} from "@mui/material";
 
 export interface SingleSelectButtonGroupProps {
+  sx?: SxProps<Theme>;
   value?: string;
   items: {
     value: string;
@@ -9,8 +10,8 @@ export interface SingleSelectButtonGroupProps {
   onSelect: (value: string) => void;
 }
 
-export const SingleSelectButtonGroup = ({value, items, onSelect}: SingleSelectButtonGroupProps) => {
-  return <ButtonGroup fullWidth={true}>
+export const SingleSelectButtonGroup = ({value, items, onSelect, sx}: SingleSelectButtonGroupProps) => {
+  return <ButtonGroup fullWidth={true} sx={sx}>
     {items.map(item =>
       <Button
         key={item.value}

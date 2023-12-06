@@ -43,7 +43,7 @@ export const AppLayout = () => {
           <IconButton>
             <MenuIcon {...theme !== 'night' && {htmlColor: 'white'}} />
           </IconButton>
-          <div onClick={() => setShowMenu(true)}>
+          <div style={{ 'width': '100%' }} onClick={() => setShowMenu(true)}>
             {menuBarDelegate ?? <></>}
           </div>
         </Toolbar>

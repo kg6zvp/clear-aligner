@@ -136,7 +136,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
-      name: 'NA27 YLT',
+      name: 'YLT',
       fullName: 'Nestle-Aland 27th Edition YLT text',
       language: 'eng',
       words: [],

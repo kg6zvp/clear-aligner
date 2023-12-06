@@ -22,6 +22,19 @@ Default.args = {
     ]
 } as BCVNavigationProps
 
+export const Horizontal = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
+Horizontal.args = {
+    horizontal: true,
+    words: [
+        {
+            id: '45005003001'
+        },
+        {
+            id: '48006002001'
+        }
+    ]
+} as BCVNavigationProps
+
 export const Disabled = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
 Disabled.args = {
   disabled: true,
