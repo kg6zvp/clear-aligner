@@ -78,7 +78,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const removeBcvId = useCallback(() => {
     setVisibleVerses(verses => verses.slice(
       verses[0]?.bcvId === corpus.primaryVerse ? 0 : 1,
-      verses.length === 1 ? verses.length : -1
+      verses.length === 1 || verses[verses.length - 1]?.bcvId === corpus.primaryVerse ? verses.length : -1
     ));
   }, [corpus.primaryVerse]);
 
