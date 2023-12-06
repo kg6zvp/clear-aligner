@@ -1,4 +1,4 @@
-import {Corpus, CorpusFileFormat, Word} from 'structs';
+import {Corpus, CorpusFileFormat, Verse, Word} from 'structs';
 import BCVWP, {BCVWPField} from "../BCVWP/BCVWPSupport";
 
 // @ts-ignore
@@ -16,19 +16,21 @@ const parseTsvByFileType = async (
   tsv: RequestInfo,
   refCorpus: Corpus,
   fileType: CorpusFileFormat
-) : Promise<Word[]> => {
+): Promise<Partial<Corpus>> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
+  const wordsByVerse: Record<string, Verse> = {};
+
   header.split('\t').forEach((header, idx) => {
     headerMap[header] = idx;
   });
 
-  return rows.reduce((accumulator, row) => {
+  const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
-    let id, pos;
+    let id, pos, word, verse;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
@@ -41,13 +43,21 @@ const parseTsvByFileType = async (
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['identifier']];
         pos = +id.substring(8, 11); // grab word position
-
-        accumulator.push({
+        word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           text: values[headerMap['text']],
           position: pos,
-        });
+        } as Word;
+
+        verse = wordsByVerse[id.substring(0, 8)] || {}
+        wordsByVerse[id.substring(0, 8)] = {
+          ...verse,
+          bcvId: id.substring(0, 8),
+          citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
+          words: (verse.words || []).concat([word])
+        };
+        accumulator.push(word);
         break;
 
       case CorpusFileFormat.TSV_MACULA:
@@ -55,57 +65,95 @@ const parseTsvByFileType = async (
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['xml:id']].slice(1);
         pos = +id.substring(8, 11); // grab word position
-
-        accumulator.push({
+        word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           text: values[headerMap['text']],
           after: values[headerMap['after']],
           position: pos,
-        });
+        } as Word;
+
+        verse = wordsByVerse[id.substring(0, 8)] || {}
+        wordsByVerse[id.substring(0, 8)] = {
+          ...verse,
+          bcvId: id.substring(0, 8),
+          citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
+          words: (verse.words || []).concat([word])
+        };
+        accumulator.push(word);
         break;
     }
 
     return accumulator;
   }, [] as Word[]);
+
+  return {
+    words: reducedWords,
+    wordsByVerse: wordsByVerse
+  }
 }
+
+export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
+  if(!bcvwp) return "";
+  return (
+    `${bcvwp.book}`.padStart(2, '0') +
+    [bcvwp.chapter as number, bcvwp.verse as number]
+      .filter(v => v)
+      .map((section: number) => {
+        return `${section}`.padStart(3, '0');
+      })
+      .join('')
+  );
+};
 
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
     isInitialized = true;
 
     // SBL GNT
-    const sblGnt = {
+    let sblGnt: Corpus = {
       id: 'sbl-gnt',
       name: 'SBL GNT',
       fullName: 'SBL Greek New Testament',
       language: 'grc',
-      words: []
+      words: [],
+      primaryVerse: "",
+      wordsByVerse: {}
     };
 
     // @ts-ignore
-    sblGnt.words = await parseTsvByFileType(
+    const sblWords = await parseTsvByFileType(
       MACULA_SBLGNT,
       sblGnt,
       CorpusFileFormat.TSV_MACULA
-    );
+    )
+    sblGnt = {
+      ...sblGnt,
+      ...sblWords
+    }
 
     availableCorpora.push(sblGnt);
 
-    const na27Ylt = {
+    let na27Ylt: Corpus = {
       id: 'na27-YLT',
       name: 'NA27 YLT',
       fullName: 'Nestle-Aland 27th Edition YLT text',
       language: 'eng',
-      words: []
+      words: [],
+      primaryVerse: "",
+      wordsByVerse: {}
     };
 
     // @ts-ignore
-    na27Ylt.words = await parseTsvByFileType(
+    const na27Words = await parseTsvByFileType(
       NA27_YLT,
       na27Ylt,
       CorpusFileFormat.TSV_TARGET
     );
+    na27Ylt = {
+      ...na27Ylt,
+      ...na27Words
+    }
 
     availableCorpora.push(na27Ylt);
   }
@@ -114,7 +162,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 };
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (await getAvailableCorpora()).map((corpus) => {
+  return (availableCorpora.length ? availableCorpora : (await getAvailableCorpora())).map((corpus) => {
     return corpus.id;
   });
 }
@@ -141,5 +189,7 @@ export const queryText = async (
     fullName: corpus?.fullName ?? '',
     language: corpus?.language ?? '',
     words: queriedData,
+    primaryVerse: bcvId,
+    wordsByVerse: corpus.wordsByVerse
   };
-};
+}

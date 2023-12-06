@@ -6,7 +6,6 @@ import {
   Link,
   InProgressLink,
   Corpus,
-  CorpusViewType,
   SyntaxType,
 } from 'structs';
 
@@ -169,92 +168,8 @@ const alignmentSlice = createSlice({
       });
     },
 
-    loadCorpora: (state, action: PayloadAction<Corpus[]>) => {
-      state.corpora = action.payload.map((corpus: Corpus) => {
-        const viewType = corpus.viewType
-          ? corpus.viewType
-          : CorpusViewType.Paragraph;
-
-        let syntax = corpus.syntax;
-        if (syntax && syntax._syntaxType === SyntaxType.Mapped) {
-          const alignment = state.alignments.find((alignment: Alignment) => {
-            if (alignment.polarity.type === 'primary') {
-              const nonSyntaxSide = singularizeAlignmentPolarityField(
-                alignment.polarity,
-                'nonSyntaxSide'
-              );
-              return alignment[nonSyntaxSide] === corpus.id;
-            }
-            return false;
-          });
-          if (alignment) {
-            syntax = syntaxMapper(syntax, alignment);
-          }
-        } else if (
-          syntax &&
-          syntax._syntaxType === SyntaxType.MappedSecondary
-        ) {
-          const secondaryAlignment = state.alignments.find((alignment) => {
-            const sourceCorpus = action.payload.find((corpus) => {
-              return corpus.id === alignment.source;
-            });
-            const targetCorpus = action.payload.find((corpus) => {
-              return corpus.id === alignment.target;
-            });
-
-            if (alignment.source === corpus.id) {
-              return targetCorpus?.syntax?._syntaxType === SyntaxType.Mapped;
-            }
-
-            if (alignment.target === corpus.id) {
-              return sourceCorpus?.syntax?._syntaxType === SyntaxType.Mapped;
-            }
-
-            return false;
-          });
-
-          if (!secondaryAlignment) {
-            throw new Error(
-              `Error determining the secondary alignment data for Corpus: ${corpus.id}`
-            );
-          }
-
-          if (
-            secondaryAlignment &&
-            secondaryAlignment.polarity.type === 'secondary'
-          ) {
-            const mappedSide = singularizeAlignmentPolarityField(
-              secondaryAlignment.polarity,
-              'mappedSide'
-            );
-            const primaryAlignment = state.alignments.find((alignment) => {
-              if (alignment.polarity.type === 'primary') {
-                const nonSyntaxSide = singularizeAlignmentPolarityField(
-                  alignment.polarity,
-                  'nonSyntaxSide'
-                );
-                return (
-                  alignment[nonSyntaxSide] === secondaryAlignment[mappedSide]
-                );
-              }
-              return false;
-            });
-
-            if (!primaryAlignment) {
-              throw new Error(
-                `Error determining the primary alignment data for Corpus: ${corpus.id}`
-              );
-            }
-
-            syntax = syntaxMapper(syntax, primaryAlignment, secondaryAlignment);
-          }
-        }
-
-        return { ...corpus, viewType };
-      });
-    },
-
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
+      console.log(state.inProgressLink?._id === '?')
       if (state.inProgressLink?._id === '?') {
         // There is a partial in-progress link.
 
@@ -412,15 +327,6 @@ const alignmentSlice = createSlice({
           throw new Error(
             'DISAMBIGUATE POTENTIAL ALIGNMENTS? Not implemented yet.'
           );
-          // state.inProgressLink = {
-          //   _id: '?',
-          //   source: '',
-          //   target: '',
-          //   sources: [],
-          //   targets: [],
-          // };
-          // state.mode = AlignmentMode.PartialEdit;
-          // return;
         }
       }
     },
@@ -501,7 +407,6 @@ const alignmentSlice = createSlice({
 
 export const {
   loadAlignments,
-  loadCorpora,
   toggleTextSegment,
   resetTextSegments,
   createLink,

@@ -1125,7 +1125,6 @@ export default books;
  * @param index 0-based index for the desired book
  */
 export const findBookByIndex = (index: number): BookInfo => {
-  console.log('findBookByIndex', index, books[index]);
   return books[index];
 };
 

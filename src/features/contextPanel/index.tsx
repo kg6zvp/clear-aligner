@@ -1,10 +1,15 @@
-import { ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
 import LinkBuilderComponent from 'features/linkBuilder';
+import { Corpus } from 'structs';
 
-export const ContextPanel = (): ReactElement => {
+interface ContextPanelProps {
+  corpora: Corpus[];
+}
+
+export const ContextPanel: React.FC<ContextPanelProps> = ({corpora}): ReactElement => {
   useDebug('ContextPanel');
 
   return (
@@ -23,7 +28,7 @@ export const ContextPanel = (): ReactElement => {
           flexBasis: '0',
         }}
       >
-        <LinkBuilderComponent />
+        <LinkBuilderComponent corpora={corpora} />
       </Card>
     </Stack>
   );

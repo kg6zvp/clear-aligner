@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
@@ -8,9 +8,11 @@ import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
 
-interface LinkBuilderProps {}
+interface LinkBuilderProps {
+  corpora: Corpus[];
+}
 
-export const LinkBuilderComponent = (props: LinkBuilderProps): ReactElement => {
+export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): ReactElement => {
   useDebug('LinkBuilderComponent');
 
   const selectedWords: Record<string, Word[]> = useAppSelector((state) => {
@@ -18,14 +20,14 @@ export const LinkBuilderComponent = (props: LinkBuilderProps): ReactElement => {
 
     if (inProgressLink) {
       const sourceWords: Word[] = inProgressLink.sources
-        .map((sourceId) =>
-          findWordById(state.alignment.present.corpora, sourceId)
-        )
+        .map((sourceId) => {
+          return findWordById(corpora, sourceId)
+        })
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
         .map((targetId) =>
-          findWordById(state.alignment.present.corpora, targetId)
+          findWordById(corpora, targetId)
         )
         .filter((x): x is Word => x !== null);
 
@@ -34,11 +36,8 @@ export const LinkBuilderComponent = (props: LinkBuilderProps): ReactElement => {
         [inProgressLink.target]: targetWords,
       };
     }
-
     return {};
   });
-
-  const corpora = useAppSelector((state) => state.alignment.present.corpora);
 
   const theme = useAppSelector((state) => {
     return state.app.theme;
@@ -83,6 +82,7 @@ export const LinkBuilderComponent = (props: LinkBuilderProps): ReactElement => {
         const corpus = corpora.find((corpus: Corpus) => {
           return corpus.id === textId;
         });
+        if(!corpus) return <div />
 
         const selectedWordsForText = selectedWords[textId];
         const sortedSelectedWordsForText = selectedWordsForText.sort(
@@ -114,9 +114,8 @@ export const LinkBuilderComponent = (props: LinkBuilderProps): ReactElement => {
               <span>&nbsp;</span>
               {sortedSelectedWordsForText.map(
                 (selectedWord, index: number): ReactElement => {
-                  const word = corpus?.words.find((word: Word): boolean => {
-                    return word.id === selectedWord.id;
-                  });
+                  const word = (corpus?.wordsByVerse[(selectedWord?.id || "").substring(0,8)]?.words || [])
+                    .filter(w => w).find((word: Word): boolean => word.id === selectedWord.id);
 
                   let nextIsSequential: boolean = true;
                   const next = sortedSelectedWordsForText[index + 1];

@@ -6,32 +6,32 @@ import {
   Select,
   MenuItem,
   Button,
+  Grid,
 } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import { useAppDispatch } from 'app/hooks';
 import { changeCorpusViewport } from 'state/app.slice';
+import {Corpus} from "../../structs";
 
 interface CorpusSettingsProps {
   currentCorpusId: string | null;
   viewportIndex: number;
+  corpora: Corpus[];
 }
 
 const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
   useDebug('CorpusSettings');
 
-  const { currentCorpusId, viewportIndex } = props;
+  const { corpora, currentCorpusId, viewportIndex } = props;
 
   const [selectedCorpusId, setSelectedCorpusId] = useState(currentCorpusId);
 
   const dispatch = useAppDispatch();
 
-  const corpora = useAppSelector((state) => {
-    return state.alignment.present.corpora;
-  });
 
   return (
-    <>
+    <Grid container flexDirection="column" sx={{flex: 1, p: 2}}>
       <Typography variant="h6">Settings</Typography>
       <FormControl fullWidth style={{ marginTop: '12px' }}>
         <InputLabel id="select-corpus-input">Corpus</InputLabel>
@@ -42,7 +42,6 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
           value={selectedCorpusId}
           label="Corpus"
           onChange={(event) => {
-            console.log('onChange', event.target.value);
             setSelectedCorpusId(event.target.value);
           }}
         >
@@ -64,7 +63,7 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
           Update
         </Button>
       </FormControl>
-    </>
+    </Grid>
   );
 };
 

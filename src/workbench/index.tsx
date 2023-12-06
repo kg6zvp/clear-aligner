@@ -6,6 +6,8 @@ import EditorWrapper from 'features/editor';
 
 import BCVWP from "../BCVWP/BCVWPSupport";
 
+interface WorkbenchProps {}
+
 interface WorkbenchProps {
   corpora?: Corpus[];
   currentPosition?: BCVWP | null;
@@ -14,7 +16,8 @@ interface WorkbenchProps {
 const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: WorkbenchProps): ReactElement => {
   return (<>
     {corpora &&
-      (<div>
+      (
+        <div>
         <div
           style={{
             display: 'flex',
@@ -29,6 +32,7 @@ const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: Workben
         >
           <EditorWrapper
             corpora={corpora}
+            currentPosition={currentPosition as BCVWP}
             alignments={[
               {
                 source: 'sbl-gnt',
@@ -43,8 +47,10 @@ const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: Workben
             ]}
           />
         </div>
-      </div>)}
-  </>);
+      </div>
+      )}
+  </>
+  );
 };
 
 export default Workbench;
