@@ -1,12 +1,13 @@
 import {useContext, useEffect, useMemo, useRef, useState} from "react";
 import {Corpus} from "../structs";
-import {CircularProgress, Grid, Paper, TextField, Typography} from "@mui/material";
+import {CircularProgress, Paper, Typography} from "@mui/material";
 import { Box } from '@mui/system';
-import {PivotWord, SortData} from "./Structs";
+import {PivotWord} from "./Structs";
 import {getAvailableCorpora} from "../workbench/query";
 import {SingleSelectButtonGroup} from "./SingleSelectButtonGroup";
 import {PivotWordTable} from "./PivotWordTable";
 import {LayoutContext} from "../AppLayout";
+import {GridSortItem} from "@mui/x-data-grid";
 
 type WordSource = 'source'|'target';
 type WordFilter = 'content'|'all';
@@ -23,6 +24,7 @@ export const ConcordanceView = () => {
    */
   const [pivotWordsPromise, setPivotWordsPromise] = useState(null as Promise<PivotWord[]>|null);
   const pivotWordsPromiseHandler = useRef((pivotWords: PivotWord[]) => {
+    setPivotWords([]);
     setPivotWords(pivotWords);
     setPivotWordsPromise(null);
   });
@@ -32,8 +34,8 @@ export const ConcordanceView = () => {
   const [pivotWords, setPivotWords] = useState([] as PivotWord[]);
   const [pivotWordSortData, setPivotWordSortData] = useState({
     field: 'frequency',
-    direction: 'desc'
-  } as SortData);
+    sort: 'desc'
+  } as GridSortItem|null);
 
   const pivotWordsLoading = useMemo(() => {
     return !!pivotWordsPromise;
@@ -47,6 +49,7 @@ export const ConcordanceView = () => {
 
   useEffect(() => {
     pivotWordsPromiseHandler.current = (pivotWords: PivotWord[]) => {
+      setPivotWords([]);
       setPivotWords(pivotWords);
       setPivotWordsPromise(null);
     };
@@ -109,10 +112,13 @@ export const ConcordanceView = () => {
 
   useEffect(() => {
     const performSort = async () => {
+      if (!pivotWordSortData) {
+        return [ ...srcPivotWords ];
+      }
       return [ ...srcPivotWords ].sort((a, b) => {
         const aValue = (a as any)[pivotWordSortData.field];
         const bValue = (b as any)[pivotWordSortData.field];
-        return pivotWordSortData.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        return pivotWordSortData.sort === 'asc' ? aValue - bValue : bValue - aValue;
       });
     }
     setPivotWordsPromise(performSort());
@@ -125,29 +131,29 @@ export const ConcordanceView = () => {
   }
 
   return <div>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%',
-        marginTop: '4em'
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      width: '100%',
+      marginTop: '1em'
+    }}>
+      <table style={{
+        alignSelf: 'center',
+        minWidth: '15%'
       }}>
-        <table style={{
-          alignSelf: 'center',
-          minWidth: '15%'
-        }}>
-          <tbody>
-            <tr>
-              <td>Source:</td>
-              <td><Typography sx={{ textAlign: 'right' }}>{sourceCorpus?.name}</Typography></td>
-            </tr>
-            <tr>
-              <td>Target:</td>
-              <td><Typography sx={{ textAlign: 'right' }}>{targetCorpus?.name}</Typography></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <Box
+        <tbody>
+        <tr>
+          <td>Source:</td>
+          <td><Typography sx={{ textAlign: 'right' }}>{sourceCorpus?.name}</Typography></td>
+        </tr>
+        <tr>
+          <td>Target:</td>
+          <td><Typography sx={{ textAlign: 'right' }}>{targetCorpus?.name}</Typography></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <Box
         sx={{
           flex: 1,
           display: 'flex',
@@ -161,6 +167,7 @@ export const ConcordanceView = () => {
         flexFlow: 'column',
         gap: '1em',
         margin: '2em',
+        marginTop: '1em'
       }} >
         <SingleSelectButtonGroup
             value={wordSource}
@@ -190,9 +197,9 @@ export const ConcordanceView = () => {
         <Paper sx={{
           display: 'flex',
           width: '100%',
-          height: 'calc(100vh - 64px - 18.5em)'
+          height: 'calc(100vh - 64px - 14.5em)'
         }}>
-          <PivotWordTable { ...pivotWordsLoading ? { loading: true } : {} } sort={pivotWordSortData} pivotWords={pivotWords} onChooseWord={(word) => console.log(word)} onChangeSort={setPivotWordSortData} />
+          <PivotWordTable sort={pivotWordSortData} pivotWords={pivotWords} onChooseWord={(word) => console.log(word)} onChangeSort={setPivotWordSortData} />
         </Paper>
       </Box>
     </Box>
