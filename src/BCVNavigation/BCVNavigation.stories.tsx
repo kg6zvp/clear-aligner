@@ -1,7 +1,7 @@
 import React from 'react';
 import BCVNavigation, { BCVNavigationProps } from './BCVNavigation';
 import { Meta } from '@storybook/react';
-import BCVWP from '../BCVWP/BCVWPSupport';
+import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 const meta: Meta<typeof BCVNavigation> = {
   title: 'BCVNavigation',

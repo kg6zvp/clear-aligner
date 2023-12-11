@@ -1,4 +1,4 @@
-import { BookInfo, findBookByNumber } from '../workbench/books';
+import { BookInfo, findBookByNumber } from '../../workbench/books';
 
 /**
  * BCVWPField references, numbers correspond to length of string at end of those fields

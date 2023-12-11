@@ -5,7 +5,7 @@ import {
   TableRow,
 } from '@mui/material';
 import React, { useMemo } from 'react';
-import { PivotWord } from './Structs';
+import { PivotWord } from './structs';
 import { Box } from '@mui/system';
 import { DataGrid, GridColDef, GridSortItem } from '@mui/x-data-grid';
 

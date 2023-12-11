@@ -1,14 +1,14 @@
 import Workbench from '../../workbench';
 import React, { useContext, useEffect, useState } from 'react';
 import { Corpus, SyntaxRoot, SyntaxType, Word } from '../../structs';
-import BCVWP, { parseFromString } from '../../BCVWP/BCVWPSupport';
+import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
 import fetchSyntaxData from '../../workbench/fetchSyntaxData';
 import {
   getAvailableCorpora,
   getAvailableCorporaIds,
   queryText,
 } from '../../workbench/query';
-import { BCVDisplay } from '../../BCVWP/BCVDisplay';
+import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import BCVNavigation from '../../BCVNavigation/BCVNavigation';
 import { LayoutContext } from '../../AppLayout';
 

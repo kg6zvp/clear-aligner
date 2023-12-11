@@ -2,10 +2,10 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { Corpus } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { PivotWord } from './Structs';
+import { PivotWord } from './structs';
 import { getAvailableCorpora } from '../../workbench/query';
-import { SingleSelectButtonGroup } from './SingleSelectButtonGroup';
-import { PivotWordTable } from './PivotWordTable';
+import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
+import { PivotWordTable } from './pivotWordTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 

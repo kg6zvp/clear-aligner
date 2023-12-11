@@ -1,7 +1,7 @@
 import xmlToJson from 'workbench/xmlToJson';
 import cachedSyntaxData from 'workbench/cachedSyntaxData';
 import { SyntaxRoot } from 'structs';
-import BCVWP, { BCVWPField } from '../BCVWP/BCVWPSupport';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 const MACULA_ENV = 'http://labs.clear.bible/symphony-dev';
 

@@ -2,7 +2,7 @@ import { Meta } from '@storybook/react';
 import {
   SingleSelectButtonGroup,
   SingleSelectButtonGroupProps,
-} from './SingleSelectButtonGroup';
+} from './singleSelectButtonGroup';
 import { useState } from 'react';
 
 const meta: Meta<typeof SingleSelectButtonGroup> = {

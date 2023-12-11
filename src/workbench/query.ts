@@ -1,5 +1,5 @@
 import { Corpus, CorpusFileFormat, Verse, Word } from 'structs';
-import BCVWP, { BCVWPField } from '../BCVWP/BCVWPSupport';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';

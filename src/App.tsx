@@ -3,8 +3,8 @@ import './styles/theme.css';
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
-import { AlignmentEditor } from './features/alignmentEditor/AlignmentEditor';
-import { ConcordanceView } from './features/concordanceView/ConcordanceView';
+import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
+import { ConcordanceView } from './features/concordanceView/concordanceView';
 
 function App() {
   return (

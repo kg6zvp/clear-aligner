@@ -12,7 +12,7 @@ import { Alignment, Corpus } from 'structs';
 
 import '../../styles/theme.css';
 import { loadAlignments } from '../../state/alignment.slice';
-import BCVWP from '../../BCVWP/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface EditorProps {
   corpora: Corpus[];

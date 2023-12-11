@@ -1,7 +1,7 @@
 import { Meta } from '@storybook/react';
-import { PivotWordTable, PivotWordTableProps } from './PivotWordTable';
+import { PivotWordTable, PivotWordTableProps } from './pivotWordTable';
 import { useState } from 'react';
-import { PivotWord } from './Structs';
+import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
 

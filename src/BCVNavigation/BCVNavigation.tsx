@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Autocomplete, TextField } from '@mui/material';
 import { Word } from '../structs';
-import BCVWP, { BCVWPField, parseFromString } from '../BCVWP/BCVWPSupport';
+import BCVWP, { BCVWPField, parseFromString } from '../features/bcvwp/BCVWPSupport';
 import { BookInfo } from '../workbench/books';
 
 export interface Verse {

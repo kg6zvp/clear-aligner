@@ -4,7 +4,7 @@ import { Corpus } from 'structs';
 
 import EditorWrapper from 'features/editor';
 
-import BCVWP from '../BCVWP/BCVWPSupport';
+import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 interface WorkbenchProps {}
 

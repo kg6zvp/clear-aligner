@@ -7,7 +7,7 @@ import Editor from './editor';
 import { Alignment, Corpus } from 'structs';
 
 import './styles.css';
-import BCVWP from '../../BCVWP/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface EditorWrapperProps {
   corpora: Corpus[];
