@@ -1,16 +1,12 @@
-import Workbench from '../../workbench';
 import React, { useContext, useEffect, useState } from 'react';
-import { Corpus, SyntaxRoot, SyntaxType, Word } from '../../structs';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
-import fetchSyntaxData from '../../workbench/fetchSyntaxData';
-import {
-  getAvailableCorpora,
-  getAvailableCorporaIds,
-  queryText,
-} from '../../workbench/query';
-import { BCVDisplay } from '../bcvwp/BCVDisplay';
-import BCVNavigation from '../../BCVNavigation/BCVNavigation';
-import { LayoutContext } from '../../AppLayout';
+import BCVWP, {parseFromString} from "../bcvwp/BCVWPSupport";
+import {LayoutContext} from "../../AppLayout";
+import {Corpus, SyntaxRoot, SyntaxType, Word} from "../../structs";
+import fetchSyntaxData from "../../workbench/fetchSyntaxData";
+import {getAvailableCorpora, getAvailableCorporaIds, queryText} from "../../workbench/query";
+import {BCVDisplay} from "../bcvwp/BCVDisplay";
+import Workbench from "../../workbench";
+import BCVNavigation from "../bcvNavigation/BCVNavigation";
 
 const getRefParam = (): string | null => {
   const params = new URLSearchParams(window.location.search);
@@ -95,16 +91,14 @@ export const AlignmentEditor = () => {
 
   return (
     <>
-      <div style={{ textAlign: 'center' }}>
+      <div style={{ display: 'grid', justifyContent: 'center' }}>
         <br />
         <BCVNavigation
           horizontal
           disabled={!availableWords || availableWords.length < 1}
           words={availableWords}
           currentPosition={currentPosition ?? undefined}
-          onNavigate={(selection) => {
-            setCurrentPosition(selection);
-          }}
+          onNavigate={setCurrentPosition}
         />
       </div>
       <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
