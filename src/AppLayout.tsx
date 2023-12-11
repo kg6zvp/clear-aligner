@@ -16,7 +16,7 @@ import {AddLink, ManageSearch} from "@mui/icons-material";
 export interface LayoutContextProps {
   windowTitle: string;
   setWindowTitle: (title: string) => void;
-  setMenuBarDelegate: React.Dispatch<React.SetStateAction<any>>;
+  setMenuBarDelegate: React.Dispatch<React.SetStateAction<JSX.Element|string|null>>;
 }
 export const LayoutContext = createContext({} as LayoutContextProps);
 
@@ -29,7 +29,7 @@ export const AppLayout = () => {
   const [ theme, setTheme ] = useState(themeDefault as 'night'|'day');
 
   const [showMenu, setShowMenu] = useState(false);
-  const [menuBarDelegate, setMenuBarDelegate] = useState(null);
+  const [menuBarDelegate, setMenuBarDelegate] = useState(null as JSX.Element|string|null);
   const layoutContext: LayoutContextProps = useMemo(() => ({
     windowTitle: document.title,
     setWindowTitle: (title) => document.title = title,

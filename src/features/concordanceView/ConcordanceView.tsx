@@ -1,35 +1,34 @@
-import {useContext, useEffect, useMemo, useRef, useState} from "react";
-import {Corpus} from "../structs";
-import {CircularProgress, Paper, Typography} from "@mui/material";
+import {useContext, useEffect, useMemo, useState} from "react";
+import {Corpus} from "../../structs";
+import {Backdrop, CircularProgress, Paper, Typography} from "@mui/material";
 import { Box } from '@mui/system';
 import {PivotWord} from "./Structs";
-import {getAvailableCorpora} from "../workbench/query";
+import {getAvailableCorpora} from "../../workbench/query";
 import {SingleSelectButtonGroup} from "./SingleSelectButtonGroup";
 import {PivotWordTable} from "./PivotWordTable";
-import {LayoutContext} from "../AppLayout";
+import {LayoutContext} from "../../AppLayout";
 import {GridSortItem} from "@mui/x-data-grid";
 
 type WordSource = 'source'|'target';
-type WordFilter = 'content'|'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
-  layoutCtx.setMenuBarDelegate(<Typography sx={{textAlign: 'center', translate: '-20px'}}>Alignments :: Batch-review Mode</Typography>);
   const [loading, setLoading] = useState(true);
   const [sourceCorpus, setSourceCorpus] = useState(null as Corpus|null);
   const [targetCorpus, setTargetCorpus] = useState(null as Corpus|null);
+
+  useEffect(() => {
+    if (!loading) {
+      layoutCtx.setMenuBarDelegate(<Typography sx={{textAlign: 'center', translate: '-20px'}}>Alignments :: Batch-review
+        Mode</Typography>);
+    }
+  }, [layoutCtx, loading]);
 
   /**
    * pivot words
    */
   const [pivotWordsPromise, setPivotWordsPromise] = useState(null as Promise<PivotWord[]>|null);
-  const pivotWordsPromiseHandler = useRef((pivotWords: PivotWord[]) => {
-    setPivotWords([]);
-    setPivotWords(pivotWords);
-    setPivotWordsPromise(null);
-  });
   const [wordSource, setWordSource] = useState('target' as WordSource);
-  const [contentFilter, setContentFilter] = useState('all' as WordFilter);
   const [srcPivotWords, setSrcPivotWords] = useState([] as PivotWord[]);
   const [pivotWords, setPivotWords] = useState([] as PivotWord[]);
   const [pivotWordSortData, setPivotWordSortData] = useState({
@@ -43,17 +42,12 @@ export const ConcordanceView = () => {
 
   useEffect(() => {
     if (!!pivotWordsPromise) {
-      pivotWordsPromise.then(pivotWordsPromiseHandler.current);
+      pivotWordsPromise.then((pivotWords) => {
+        setPivotWords(pivotWords);
+        setPivotWordsPromise(null);
+      });
     }
-  }, [pivotWordsPromise, pivotWordsPromiseHandler]);
-
-  useEffect(() => {
-    pivotWordsPromiseHandler.current = (pivotWords: PivotWord[]) => {
-      setPivotWords([]);
-      setPivotWords(pivotWords);
-      setPivotWordsPromise(null);
-    };
-  }, [setPivotWords, setPivotWordsPromise]);
+  }, [pivotWordsPromise, setPivotWords, setPivotWordsPromise]);
 
   useEffect(() => {
     const loadCorpora = async () => {
@@ -85,10 +79,15 @@ export const ConcordanceView = () => {
 
       if (!wordsAndFrequencies) throw new Error("Could not load corpora, ", wordsAndFrequencies);
 
-      const pivotWords = Object.keys(wordsAndFrequencies).map(key => ({
-        pivotWord: key,
-        frequency: wordsAndFrequencies[key]
-      } as PivotWord));
+      const pivotWords: PivotWord[] = Object.keys(wordsAndFrequencies).map(key => {
+        if (!wordsAndFrequencies[key])
+          return null;
+        return ({
+          pivotWord: key,
+          frequency: wordsAndFrequencies[key]
+        } as PivotWord)
+      })
+        .filter((pivotWord): pivotWord is PivotWord => !!pivotWord);
 
       setSrcPivotWords(pivotWords);
 
@@ -99,19 +98,19 @@ export const ConcordanceView = () => {
     switch (wordSource) {
       case "source":
         if (sourceCorpus) {
-          loadCorpus(sourceCorpus).then(() => console.log('finished loading pivot words for source'));
+          void loadCorpus(sourceCorpus);
         }
         break;
       case "target":
         if (targetCorpus) {
-          loadCorpus(targetCorpus).then(() => console.log('finished loading pivot words for target'));
+          void loadCorpus(targetCorpus);
         }
         break;
     }
   }, [sourceCorpus, targetCorpus, wordSource, setSrcPivotWords, setLoading]);
 
   useEffect(() => {
-    const performSort = async () => {
+    const performSort = async (srcPivotWords: PivotWord[]) => {
       if (!pivotWordSortData) {
         return [ ...srcPivotWords ];
       }
@@ -121,16 +120,24 @@ export const ConcordanceView = () => {
         return pivotWordSortData.sort === 'asc' ? aValue - bValue : bValue - aValue;
       });
     }
-    setPivotWordsPromise(performSort());
+
+    if (srcPivotWords.length < 1) { // don't sort on nothing
+      return;
+    }
+    setPivotWordsPromise(performSort(srcPivotWords));
   }, [srcPivotWords, pivotWordSortData, setPivotWordsPromise]);
 
-  if (loading) {
-    return <Box sx={{ display: 'flex', margin: 'auto' }}>
-      <CircularProgress sx={{ transform: 'translateY(-50%)', margin: 'auto', marginTop: '50vh' }}/>
-    </Box>
-  }
-
-  return <div>
+  return <div style={{ position: 'relative' }}>
+    <Backdrop open={loading}
+              sx={{
+                position: 'absolute',
+                marginTop: '-1em',
+                marginBottom: '-1em',
+                zIndex: (theme) => theme.zIndex.drawer-1
+              }}
+      >
+      <CircularProgress color={"inherit"}/>
+    </Backdrop>
     <div style={{
       display: 'flex',
       justifyContent: 'center',
@@ -156,8 +163,10 @@ export const ConcordanceView = () => {
     <Box
         sx={{
           flex: 1,
-          display: 'flex',
-          flexWrap: 'wrap',
+          display: 'grid',
+          gridGap: '.5em',
+          gridTemplateColumns: 'repeat(18, 1fr)',
+          width: '100vw !important'
         }}>
       {/**
        * Pivot Words
@@ -165,6 +174,8 @@ export const ConcordanceView = () => {
       <Box sx={{
         display: 'flex',
         flexFlow: 'column',
+        gridColumn: '1/span 4',
+        width: '100%',
         gap: '1em',
         margin: '2em',
         marginTop: '1em'
@@ -181,25 +192,15 @@ export const ConcordanceView = () => {
                 label: "Target"
               }]}
             onSelect={(value) => setWordSource(value as WordSource)} />
-        <SingleSelectButtonGroup
-            value={contentFilter}
-            items={[
-              {
-                value: 'content',
-                label: 'Content'
-              },
-              {
-                value: 'all',
-                label: 'All'
-              }
-            ]}
-            onSelect={(value) => setContentFilter(value as WordFilter)} />
         <Paper sx={{
           display: 'flex',
           width: '100%',
-          height: 'calc(100vh - 64px - 14.5em)'
+          height: 'calc(100vh - 64px - 10.5em)',
+          '.MuiTableContainer-root::-webkit-scrollbar': {
+            width: 0
+          }
         }}>
-          <PivotWordTable sort={pivotWordSortData} pivotWords={pivotWords} onChooseWord={(word) => console.log(word)} onChangeSort={setPivotWordSortData} />
+          <PivotWordTable loading={pivotWordsLoading} sort={pivotWordSortData} pivotWords={pivotWords} onChooseWord={(word) => console.log(word)} onChangeSort={setPivotWordSortData} />
         </Paper>
       </Box>
     </Box>
