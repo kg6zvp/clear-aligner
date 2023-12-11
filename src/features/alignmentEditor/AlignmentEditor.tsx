@@ -1,12 +1,16 @@
-import Workbench from "../../workbench";
-import React, {useContext, useEffect, useState} from "react";
-import {Corpus, SyntaxRoot, SyntaxType, Word} from "../../structs";
-import BCVWP, {parseFromString} from "../../BCVWP/BCVWPSupport";
-import fetchSyntaxData from "../../workbench/fetchSyntaxData";
-import {getAvailableCorpora, getAvailableCorporaIds, queryText} from "../../workbench/query";
-import {BCVDisplay} from "../../BCVWP/BCVDisplay";
-import BCVNavigation from "../../BCVNavigation/BCVNavigation";
-import {LayoutContext} from "../../AppLayout";
+import Workbench from '../../workbench';
+import React, { useContext, useEffect, useState } from 'react';
+import { Corpus, SyntaxRoot, SyntaxType, Word } from '../../structs';
+import BCVWP, { parseFromString } from '../../BCVWP/BCVWPSupport';
+import fetchSyntaxData from '../../workbench/fetchSyntaxData';
+import {
+  getAvailableCorpora,
+  getAvailableCorporaIds,
+  queryText,
+} from '../../workbench/query';
+import { BCVDisplay } from '../../BCVWP/BCVDisplay';
+import BCVNavigation from '../../BCVNavigation/BCVNavigation';
+import { LayoutContext } from '../../AppLayout';
 
 const getRefParam = (): string | null => {
   const params = new URLSearchParams(window.location.search);
@@ -32,13 +36,16 @@ export const AlignmentEditor = () => {
   const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
 
   React.useEffect(() => {
-      if (currentPosition) {
-        layoutCtx.setWindowTitle(`${defaultDocumentTitle} ${currentPosition?.getBookInfo()?.EnglishBookName} ${currentPosition?.chapter}:${currentPosition?.verse}`);
-      } else {
-        layoutCtx.setWindowTitle(defaultDocumentTitle);
-      }
-    },
-    [currentPosition, layoutCtx]);
+    if (currentPosition) {
+      layoutCtx.setWindowTitle(
+        `${defaultDocumentTitle} ${
+          currentPosition?.getBookInfo()?.EnglishBookName
+        } ${currentPosition?.chapter}:${currentPosition?.verse}`
+      );
+    } else {
+      layoutCtx.setWindowTitle(defaultDocumentTitle);
+    }
+  }, [currentPosition, layoutCtx]);
 
   React.useEffect(() => {
     const loadSyntaxData = async () => {
@@ -55,8 +62,11 @@ export const AlignmentEditor = () => {
 
         // set the syntax
         retrievedCorpora.forEach((corpus) => {
-          corpus.syntax = {...loadedSyntaxData as SyntaxRoot, _syntaxType: SyntaxType.Source};
-        })
+          corpus.syntax = {
+            ...(loadedSyntaxData as SyntaxRoot),
+            _syntaxType: SyntaxType.Source,
+          };
+        });
 
         setSelectedCorpora(retrievedCorpora);
       } catch (error) {
@@ -78,16 +88,26 @@ export const AlignmentEditor = () => {
   }, [setAvailableWords, setCurrentPosition]);
 
   useEffect(() => {
-    layoutCtx?.setMenuBarDelegate(<BCVDisplay currentPosition={currentPosition} />);
+    layoutCtx?.setMenuBarDelegate(
+      <BCVDisplay currentPosition={currentPosition} />
+    );
   }, [layoutCtx, currentPosition]);
 
-  return <>
-    <div style={{ textAlign: 'center' }}>
-      <br/>
-      <BCVNavigation horizontal disabled={!availableWords || availableWords.length < 1} words={availableWords} currentPosition={currentPosition ?? undefined} onNavigate={(selection) => {
-        setCurrentPosition(selection);
-      }} />
-    </div>
-    <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
-  </>;
-}
+  return (
+    <>
+      <div style={{ textAlign: 'center' }}>
+        <br />
+        <BCVNavigation
+          horizontal
+          disabled={!availableWords || availableWords.length < 1}
+          words={availableWords}
+          currentPosition={currentPosition ?? undefined}
+          onNavigate={(selection) => {
+            setCurrentPosition(selection);
+          }}
+        />
+      </div>
+      <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
+    </>
+  );
+};

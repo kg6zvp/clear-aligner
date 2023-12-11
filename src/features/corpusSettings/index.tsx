@@ -12,7 +12,7 @@ import {
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch } from 'app/hooks';
 import { changeCorpusViewport } from 'state/app.slice';
-import {Corpus} from "../../structs";
+import { Corpus } from '../../structs';
 
 interface CorpusSettingsProps {
   currentCorpusId: string | null;
@@ -29,9 +29,8 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
 
   const dispatch = useAppDispatch();
 
-
   return (
-    <Grid container flexDirection="column" sx={{flex: 1, p: 2}}>
+    <Grid container flexDirection="column" sx={{ flex: 1, p: 2 }}>
       <Typography variant="h6">Settings</Typography>
       <FormControl fullWidth style={{ marginTop: '12px' }}>
         <InputLabel id="select-corpus-input">Corpus</InputLabel>
@@ -46,7 +45,11 @@ const CorpusSettingsComponent = (props: CorpusSettingsProps) => {
           }}
         >
           {corpora.map((corpus) => {
-            return <MenuItem key={corpus.id} value={corpus.id}>{corpus.name}</MenuItem>;
+            return (
+              <MenuItem key={corpus.id} value={corpus.id}>
+                {corpus.name}
+              </MenuItem>
+            );
           })}
         </Select>
         <Button

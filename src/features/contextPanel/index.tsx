@@ -9,7 +9,9 @@ interface ContextPanelProps {
   corpora: Corpus[];
 }
 
-export const ContextPanel: React.FC<ContextPanelProps> = ({corpora}): ReactElement => {
+export const ContextPanel: React.FC<ContextPanelProps> = ({
+  corpora,
+}): ReactElement => {
   useDebug('ContextPanel');
 
   return (

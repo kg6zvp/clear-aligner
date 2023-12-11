@@ -1,62 +1,70 @@
 import React from 'react';
-import BCVNavigation, {BCVNavigationProps} from './BCVNavigation';
-import {Meta} from "@storybook/react";
-import BCVWP from "../BCVWP/BCVWPSupport";
+import BCVNavigation, { BCVNavigationProps } from './BCVNavigation';
+import { Meta } from '@storybook/react';
+import BCVWP from '../BCVWP/BCVWPSupport';
 
 const meta: Meta<typeof BCVNavigation> = {
-    title: "BCVNavigation",
-    component: BCVNavigation
+  title: 'BCVNavigation',
+  component: BCVNavigation,
 };
 
 export default meta;
 
-export const Default = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
+export const Default = (props: BCVNavigationProps) => (
+  <BCVNavigation {...props} />
+);
 Default.args = {
-    words: [
-        {
-            id: '45005003001'
-        },
-        {
-            id: '48006002001'
-        }
-    ]
-} as BCVNavigationProps
+  words: [
+    {
+      id: '45005003001',
+    },
+    {
+      id: '48006002001',
+    },
+  ],
+} as BCVNavigationProps;
 
-export const Horizontal = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
+export const Horizontal = (props: BCVNavigationProps) => (
+  <BCVNavigation {...props} />
+);
 Horizontal.args = {
-    horizontal: true,
-    words: [
-        {
-            id: '45005003001'
-        },
-        {
-            id: '48006002001'
-        }
-    ]
-} as BCVNavigationProps
+  horizontal: true,
+  words: [
+    {
+      id: '45005003001',
+    },
+    {
+      id: '48006002001',
+    },
+  ],
+} as BCVNavigationProps;
 
-export const Disabled = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
+export const Disabled = (props: BCVNavigationProps) => (
+  <BCVNavigation {...props} />
+);
 Disabled.args = {
   disabled: true,
   words: [
     {
-      id: '45005003001'
+      id: '45005003001',
     },
     {
-      id: '48006002001'
-    }
-  ]
-} as BCVNavigationProps
+      id: '48006002001',
+    },
+  ],
+} as BCVNavigationProps;
 
-export const WithCurrentPositionAtGalatians6_2 = (props: BCVNavigationProps) => <BCVNavigation {...props} />;
+export const WithCurrentPositionAtGalatians6_2 = (
+  props: BCVNavigationProps
+) => <BCVNavigation {...props} />;
 WithCurrentPositionAtGalatians6_2.args = {
-    words: [
-        {
-            id: '45005003001'
-        },
-        {
-            id: '48006002001'
-        }
-    ],
-    currentPosition: new BCVWP(48, 6, 2)
-} as BCVNavigationProps
+  words: [
+    {
+      id: '45005003001',
+    },
+    {
+      id: '48006002001',
+    },
+  ],
+  currentPosition: new BCVWP(48, 6, 2),
+} as BCVNavigationProps;

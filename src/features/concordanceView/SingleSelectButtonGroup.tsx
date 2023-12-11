@@ -1,4 +1,4 @@
-import {Button, ButtonGroup, SxProps, Theme} from "@mui/material";
+import { Button, ButtonGroup, SxProps, Theme } from '@mui/material';
 
 export interface SingleSelectButtonGroupProps {
   sx?: SxProps<Theme>;
@@ -10,12 +10,23 @@ export interface SingleSelectButtonGroupProps {
   onSelect: (value: string) => void;
 }
 
-export const SingleSelectButtonGroup = ({value, items, onSelect, sx}: SingleSelectButtonGroupProps) => {
-  return <ButtonGroup fullWidth={true} sx={sx}>
-    {items.map(item =>
-      <Button
-        key={item.value}
-        onClick={() => onSelect(item.value)}
-        variant={value && value === item.value ? 'contained' : undefined}>{item.label}</Button>)}
-  </ButtonGroup>
-}
+export const SingleSelectButtonGroup = ({
+  value,
+  items,
+  onSelect,
+  sx,
+}: SingleSelectButtonGroupProps) => {
+  return (
+    <ButtonGroup fullWidth={true} sx={sx}>
+      {items.map((item) => (
+        <Button
+          key={item.value}
+          onClick={() => onSelect(item.value)}
+          variant={value && value === item.value ? 'contained' : undefined}
+        >
+          {item.label}
+        </Button>
+      ))}
+    </ButtonGroup>
+  );
+};

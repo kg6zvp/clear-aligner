@@ -1,18 +1,18 @@
-import {ReactElement, useEffect} from 'react';
+import { ReactElement, useEffect } from 'react';
 import { Container } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import {useAppDispatch} from 'app/hooks';
+import { useAppDispatch } from 'app/hooks';
 
 import Polyglot from 'features/polyglot';
 import ControlPanel from 'features/controlPanel';
 import ContextPanel from 'features/contextPanel';
 
-import {Alignment, Corpus} from 'structs';
+import { Alignment, Corpus } from 'structs';
 
 import '../../styles/theme.css';
-import {loadAlignments} from "../../state/alignment.slice";
-import BCVWP from "../../BCVWP/BCVWPSupport";
+import { loadAlignments } from '../../state/alignment.slice';
+import BCVWP from '../../BCVWP/BCVWPSupport';
 
 interface EditorProps {
   corpora: Corpus[];
@@ -21,9 +21,8 @@ interface EditorProps {
   alignmentUpdated: Function;
 }
 
-
 const Editor = (props: EditorProps): ReactElement => {
-  const { alignments,  alignmentUpdated } = props;
+  const { alignments, alignmentUpdated } = props;
   useDebug('Editor');
 
   const dispatch = useAppDispatch();
@@ -35,7 +34,10 @@ const Editor = (props: EditorProps): ReactElement => {
   return (
     <Container maxWidth={false}>
       <Polyglot corpora={props.corpora} />
-      <ControlPanel alignmentUpdated={alignmentUpdated} corpora={props.corpora} />
+      <ControlPanel
+        alignmentUpdated={alignmentUpdated}
+        corpora={props.corpora}
+      />
       <ContextPanel corpora={props.corpora} />
     </Container>
   );

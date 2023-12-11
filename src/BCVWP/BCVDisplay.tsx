@@ -1,7 +1,7 @@
-import BCVWP from "./BCVWPSupport";
+import BCVWP from './BCVWPSupport';
 
 export interface BCVDisplayProps {
-    currentPosition?: BCVWP|null;
+  currentPosition?: BCVWP | null;
 }
 
 /**
@@ -9,11 +9,18 @@ export interface BCVDisplayProps {
  * @param currentPosition the current position, optional, will return empty JSX if not given
  * @constructor
  */
-export const BCVDisplay = ({ currentPosition } : BCVDisplayProps) => {
-    const bookInfo = currentPosition?.getBookInfo()
-    const chapter = currentPosition?.chapter;
-    const verse = currentPosition?.verse;
-    return (<>{currentPosition &&
-        `${bookInfo?.EnglishBookName}${chapter && chapter > 0 ? ` ${chapter}${verse && verse > 0 ? `:${verse}` : ''}` : ''}`
-    }</>);
-}
+export const BCVDisplay = ({ currentPosition }: BCVDisplayProps) => {
+  const bookInfo = currentPosition?.getBookInfo();
+  const chapter = currentPosition?.chapter;
+  const verse = currentPosition?.verse;
+  return (
+    <>
+      {currentPosition &&
+        `${bookInfo?.EnglishBookName}${
+          chapter && chapter > 0
+            ? ` ${chapter}${verse && verse > 0 ? `:${verse}` : ''}`
+            : ''
+        }`}
+    </>
+  );
+};

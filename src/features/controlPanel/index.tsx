@@ -36,7 +36,7 @@ import {
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import {Corpus} from "../../structs";
+import { Corpus } from '../../structs';
 
 interface ControlPanelProps {
   alignmentUpdated: Function;
@@ -96,7 +96,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         size="small"
         value={formats}
         sx={{
-          display: 'unset'
+          display: 'unset',
         }}
         // For later.
         // onChange={(
@@ -107,7 +107,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         <ToggleButton
           value="scroll-lock"
           sx={{
-            height: '36px'
+            height: '36px',
           }}
           onClick={() => {
             if (formats.includes('scroll-lock')) {
@@ -214,7 +214,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         <Tooltip
           placement="top"
           arrow
-          open={Boolean(!currentCorpusViewports.length && corporaWithoutViewport.length)}
+          open={Boolean(
+            !currentCorpusViewports.length && corporaWithoutViewport.length
+          )}
           title={
             <>
               <Typography color="info.light">Click here</Typography>
@@ -223,29 +225,30 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           }
         >
           <>
-          <Tooltip
-            title="Add corpus viewport"
-            arrow
-            describeChild
-            disableHoverListener={currentCorpusViewports.length === 0}
-          >
-            <span>
-              <Button
-                variant="contained"
-                disabled={!corporaWithoutViewport.length}
-                onClick={() => {
-                  dispatch(
-                    addCorpusViewport({
-                      availableCorpora: corporaWithoutViewport.map(
-                        (corpus) => corpus.id
-                      ),
-                    })
-                  );
-                }} >
-                <Add />
-              </Button>
-            </span>
-          </Tooltip>
+            <Tooltip
+              title="Add corpus viewport"
+              arrow
+              describeChild
+              disableHoverListener={currentCorpusViewports.length === 0}
+            >
+              <span>
+                <Button
+                  variant="contained"
+                  disabled={!corporaWithoutViewport.length}
+                  onClick={() => {
+                    dispatch(
+                      addCorpusViewport({
+                        availableCorpora: corporaWithoutViewport.map(
+                          (corpus) => corpus.id
+                        ),
+                      })
+                    );
+                  }}
+                >
+                  <Add />
+                </Button>
+              </span>
+            </Tooltip>
           </>
         </Tooltip>
         <Tooltip title="Remove a corpus viewport" arrow describeChild>
