@@ -1,7 +1,7 @@
 import xmlToJson from 'workbench/xmlToJson';
 import cachedSyntaxData from 'workbench/cachedSyntaxData';
 import { SyntaxRoot } from 'structs';
-import BCVWP, {BCVWPField} from "../BCVWP/BCVWPSupport";
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 const MACULA_ENV = 'http://labs.clear.bible/symphony-dev';
 
@@ -40,7 +40,7 @@ const jsonizeXml = async (xmlString: string): Promise<object | null> => {
   }
 };
 const fetchSyntaxData = async (
-  position?: BCVWP|null
+  position?: BCVWP | null
 ): Promise<SyntaxRoot | null> => {
   if (position && position.hasFields(BCVWPField.Book)) {
     const bookDoc = position.getBookInfo()!;

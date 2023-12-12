@@ -12,7 +12,9 @@ interface LinkBuilderProps {
   corpora: Corpus[];
 }
 
-export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): ReactElement => {
+export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
+  corpora,
+}): ReactElement => {
   useDebug('LinkBuilderComponent');
 
   const selectedWords: Record<string, Word[]> = useAppSelector((state) => {
@@ -21,14 +23,12 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
     if (inProgressLink) {
       const sourceWords: Word[] = inProgressLink.sources
         .map((sourceId) => {
-          return findWordById(corpora, sourceId)
+          return findWordById(corpora, sourceId);
         })
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
-        .map((targetId) =>
-          findWordById(corpora, targetId)
-        )
+        .map((targetId) => findWordById(corpora, targetId))
         .filter((x): x is Word => x !== null);
 
       return {
@@ -82,7 +82,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
         const corpus = corpora.find((corpus: Corpus) => {
           return corpus.id === textId;
         });
-        if(!corpus) return <div />
+        if (!corpus) return <div />;
 
         const selectedWordsForText = selectedWords[textId];
         const sortedSelectedWordsForText = selectedWordsForText.sort(
@@ -114,8 +114,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({corpora}): Rea
               <span>&nbsp;</span>
               {sortedSelectedWordsForText.map(
                 (selectedWord, index: number): ReactElement => {
-                  const word = (corpus?.wordsByVerse[(selectedWord?.id || "").substring(0,8)]?.words || [])
-                    .filter(w => w).find((word: Word): boolean => word.id === selectedWord.id);
+                  const word = (
+                    corpus?.wordsByVerse[
+                      (selectedWord?.id || '').substring(0, 8)
+                    ]?.words || []
+                  )
+                    .filter((w) => w)
+                    .find((word: Word): boolean => word.id === selectedWord.id);
 
                   let nextIsSequential: boolean = true;
                   const next = sortedSelectedWordsForText[index + 1];

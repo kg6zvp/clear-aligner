@@ -1,9 +1,10 @@
 html {
-  font-family: "Roboto";
+  font-family: 'Roboto';
 }
 
 body {
   margin: 0;
+  overflow-y: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

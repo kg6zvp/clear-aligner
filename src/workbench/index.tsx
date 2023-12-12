@@ -1,10 +1,10 @@
-import React, {ReactElement} from 'react';
+import React, { ReactElement } from 'react';
 
-import {Corpus} from 'structs';
+import { Corpus } from 'structs';
 
 import EditorWrapper from 'features/editor';
 
-import BCVWP from "../BCVWP/BCVWPSupport";
+import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 interface WorkbenchProps {}
 
@@ -13,43 +13,46 @@ interface WorkbenchProps {
   currentPosition?: BCVWP | null;
 }
 
-const Workbench: React.FC<WorkbenchProps> = ({corpora, currentPosition}: WorkbenchProps): ReactElement => {
-  return (<>
-    {corpora &&
-      (
+const Workbench: React.FC<WorkbenchProps> = ({
+  corpora,
+  currentPosition,
+}: WorkbenchProps): ReactElement => {
+  return (
+    <>
+      {corpora && (
         <div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            padding: '2rem',
-            border: '1px solid',
-            margin: 'auto',
-            marginTop: '1rem',
-            marginBottom: '1rem',
-            maxWidth: '1200px',
-          }}
-        >
-          <EditorWrapper
-            corpora={corpora}
-            currentPosition={currentPosition as BCVWP}
-            alignments={[
-              {
-                source: 'sbl-gnt',
-                target: 'na27-YLT',
-                links: [],
-                polarity: {
-                  type: 'primary',
-                  syntaxSide: 'sources',
-                  nonSyntaxSide: 'targets',
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              padding: '2rem',
+              border: '1px solid',
+              margin: 'auto',
+              marginTop: '1rem',
+              marginBottom: '1rem',
+              maxWidth: '1200px',
+            }}
+          >
+            <EditorWrapper
+              corpora={corpora}
+              currentPosition={currentPosition as BCVWP}
+              alignments={[
+                {
+                  source: 'sbl-gnt',
+                  target: 'na27-YLT',
+                  links: [],
+                  polarity: {
+                    type: 'primary',
+                    syntaxSide: 'sources',
+                    nonSyntaxSide: 'targets',
+                  },
                 },
-              },
-            ]}
-          />
+              ]}
+            />
+          </div>
         </div>
-      </div>
       )}
-  </>
+    </>
   );
 };
 

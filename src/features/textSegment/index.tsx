@@ -253,11 +253,14 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
           dispatch(relatedAlignments([]));
         }}
         onClick={() => {
-          const editOrSelect = [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) && (!isLinked || isCurrentLinkMember) && isInvolved;
+          const editOrSelect =
+            [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
+            (!isLinked || isCurrentLinkMember) &&
+            isInvolved;
           const unLinkedEdit = mode === AlignmentMode.PartialEdit && !isLinked;
           const cleanSlate = mode === AlignmentMode.CleanSlate;
 
-          if(editOrSelect || unLinkedEdit || cleanSlate) {
+          if (editOrSelect || unLinkedEdit || cleanSlate) {
             dispatch(toggleTextSegment(word));
           }
         }}

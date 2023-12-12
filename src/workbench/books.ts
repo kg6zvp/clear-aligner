@@ -1,11 +1,11 @@
 export interface BookInfo {
-  BookNumber: number,
-  ParaText: string,
-  OSIS: string,
-  ClearBible: string,
-  SBLGNT: string,
-  EnglishBookName: string,
-  IsBibleBook: string
+  BookNumber: number;
+  ParaText: string;
+  OSIS: string;
+  ClearBible: string;
+  SBLGNT: string;
+  EnglishBookName: string;
+  IsBibleBook: string;
 }
 
 const books: BookInfo[] = [
@@ -1132,8 +1132,8 @@ export const findBookByIndex = (index: number): BookInfo => {
  * Retrieve a book by its number identifier
  * @param number book number identifier
  */
-export const findBookByNumber = (number: number): BookInfo|undefined =>
-  books.find(bookInfo => bookInfo.BookNumber === number);
+export const findBookByNumber = (number: number): BookInfo | undefined =>
+  books.find((bookInfo) => bookInfo.BookNumber === number);
 
-export const findBookByParatext = (paratextId: string): BookInfo|undefined =>
-  books.find(bookInfo => bookInfo.ParaText === paratextId);
+export const findBookByParatext = (paratextId: string): BookInfo | undefined =>
+  books.find((bookInfo) => bookInfo.ParaText === paratextId);

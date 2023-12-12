@@ -7,7 +7,7 @@ const config: StorybookConfig = {
     '@storybook/addon-essentials',
     '@storybook/addon-onboarding',
     '@storybook/addon-interactions',
-    '@storybook/preset-create-react-app'
+    '@storybook/preset-create-react-app',
   ],
   framework: {
     name: '@storybook/react-webpack5',
@@ -17,7 +17,7 @@ const config: StorybookConfig = {
     autodocs: 'tag',
   },
   core: {
-    disableTelemetry: true
-  }
+    disableTelemetry: true,
+  },
 };
 export default config;

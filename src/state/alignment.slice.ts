@@ -169,7 +169,7 @@ const alignmentSlice = createSlice({
     },
 
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
-      console.log(state.inProgressLink?._id === '?')
+      console.log(state.inProgressLink?._id === '?');
       if (state.inProgressLink?._id === '?') {
         // There is a partial in-progress link.
 
