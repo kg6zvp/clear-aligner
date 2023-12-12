@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import BCVNavigation, { BCVNavigationProps } from './BCVNavigation';
 import { Meta } from '@storybook/react';
-import BCVWP from '../features/bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 const meta: Meta<typeof BCVNavigation> = {
   title: 'BCVNavigation',
@@ -56,11 +56,42 @@ Disabled.args = {
 
 export const WithCurrentPositionAtGalatians6_2 = (
   props: BCVNavigationProps
-) => <BCVNavigation {...props} />;
+) => {
+  const [currentPosition, setCurrentPosition] = useState(props.currentPosition);
+  const currentPositionDelegate = useMemo(
+    () => (currentPosition: BCVWP) => {
+      setCurrentPosition(currentPosition);
+      props?.onNavigate?.(currentPosition);
+    },
+    [props?.onNavigate, setCurrentPosition]
+  );
+  return (
+    <BCVNavigation
+      words={props.words}
+      currentPosition={currentPosition}
+      onNavigate={currentPositionDelegate}
+    />
+  );
+};
 WithCurrentPositionAtGalatians6_2.args = {
   words: [
     {
+      id: '45005001001',
+    },
+    {
+      id: '45005002001',
+    },
+    {
       id: '45005003001',
+    },
+    {
+      id: '45005004001',
+    },
+    {
+      id: '45005005001',
+    },
+    {
+      id: '45005006001',
     },
     {
       id: '48006002001',
