@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import BCVNavigation, { BCVNavigationProps } from './BCVNavigation';
 import { Meta } from '@storybook/react';
-import BCVWP from "../bcvwp/BCVWPSupport";
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 const meta: Meta<typeof BCVNavigation> = {
   title: 'BCVNavigation',

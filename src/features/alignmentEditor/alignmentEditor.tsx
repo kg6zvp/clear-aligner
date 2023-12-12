@@ -1,12 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
-import BCVWP, {parseFromString} from "../bcvwp/BCVWPSupport";
-import {LayoutContext} from "../../AppLayout";
-import {Corpus, SyntaxRoot, SyntaxType, Word} from "../../structs";
-import fetchSyntaxData from "../../workbench/fetchSyntaxData";
-import {getAvailableCorpora, getAvailableCorporaIds, queryText} from "../../workbench/query";
-import {BCVDisplay} from "../bcvwp/BCVDisplay";
-import Workbench from "../../workbench";
-import BCVNavigation from "../bcvNavigation/BCVNavigation";
+import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import { LayoutContext } from '../../AppLayout';
+import { Corpus, SyntaxRoot, SyntaxType, Word } from '../../structs';
+import fetchSyntaxData from '../../workbench/fetchSyntaxData';
+import {
+  getAvailableCorpora,
+  getAvailableCorporaIds,
+  queryText,
+} from '../../workbench/query';
+import { BCVDisplay } from '../bcvwp/BCVDisplay';
+import Workbench from '../../workbench';
+import BCVNavigation from '../bcvNavigation/BCVNavigation';
 
 const getRefParam = (): string | null => {
   const params = new URLSearchParams(window.location.search);
