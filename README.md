@@ -1,11 +1,10 @@
-# TreedownAligner
+# ClearAligner
 
-TreedownAligner is a react component library. Its components enable users to view and modify alignments between texts with the aid source language syntax via Treedown.
+ClearAligner is a tool for working with Biblical alignment data.
 
-[View Demo](https://treedown-aligner.netlify.app).
+[View Demo](https://clear-aligner.netlify.app/).
 
-TreedownAligner is a react component written in Typesript using Redux for state management.
-Included is a `<Workbench />` component that wraps TreedownAligner for local development and testing.
+Note: documentation below will need updating.
 
 ## Consuming Application Quickstart
 
