@@ -1,4 +1,4 @@
-import { ReactElement, useState } from 'react';
+import { ReactElement, useRef, useState } from 'react';
 import { ActionCreators } from 'redux-undo';
 import {
   Button,
@@ -16,10 +16,11 @@ import {
   RestartAlt,
   Redo,
   Undo,
-  Save,
   Add,
   Remove,
   SyncLock,
+  FileDownload,
+  FileUpload,
 } from '@mui/icons-material';
 
 import { useAppDispatch, useAppSelector } from 'app/hooks';
@@ -37,6 +38,7 @@ import {
   toggleScrollLock,
 } from 'state/app.slice';
 import { Corpus } from '../../structs';
+import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 
 interface ControlPanelProps {
   alignmentUpdated: Function;
@@ -46,6 +48,12 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
+
+  // File input reference to support file loading via a button click
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // hide the undo/redo buttons until they can be assessed in CA-32
+  const [isRedoEnabled] = useState(false);
 
   const [formats, setFormats] = useState([] as string[]);
 
@@ -164,51 +172,148 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           </span>
         </Tooltip>
       </ButtonGroup>
+
+      {
+        /* Undo/Redo  */
+        isRedoEnabled && (
+          <ButtonGroup>
+            <Tooltip title="Undo" arrow describeChild>
+              <span>
+                <Button
+                  disabled={currentCorpusViewports.length === 0}
+                  variant="contained"
+                  onClick={() => {
+                    dispatch(ActionCreators.undo());
+                  }}
+                >
+                  <Undo />
+                </Button>
+              </span>
+            </Tooltip>
+
+            <Tooltip title="Redo" arrow describeChild>
+              <span>
+                <Button
+                  disabled={currentCorpusViewports.length === 0}
+                  variant="contained"
+                  onClick={() => {
+                    dispatch(ActionCreators.redo());
+                  }}
+                >
+                  <Redo />
+                </Button>
+              </span>
+            </Tooltip>
+          </ButtonGroup>
+        )
+      }
+
       <ButtonGroup>
-        <Tooltip title="Undo" arrow describeChild>
+        <Tooltip title="Load Alignment Data" arrow describeChild>
           <span>
+            <input
+              type="file"
+              hidden
+              ref={fileInputRef}
+              multiple={false}
+              onChange={async (event) => {
+                const file = event!.target!.files![0];
+
+                const content = await file.text();
+
+                console.log('content raw', content);
+                console.log('content JSON', JSON.parse(content));
+
+                // TODO
+                // if (props.alignmentUpdated) {
+                //   props.alignmentUpdated(alignmentState);
+                // }
+              }}
+            />
             <Button
               disabled={currentCorpusViewports.length === 0}
               variant="contained"
               onClick={() => {
-                dispatch(ActionCreators.undo());
+                // delegate file loading to regular file input
+                fileInputRef?.current?.click();
               }}
             >
-              <Undo />
+              <FileUpload />
             </Button>
           </span>
         </Tooltip>
 
-        <Tooltip title="Redo" arrow describeChild>
+        <Tooltip title="Save Alignment Data" arrow describeChild>
           <span>
             <Button
               disabled={currentCorpusViewports.length === 0}
               variant="contained"
               onClick={() => {
-                dispatch(ActionCreators.redo());
+                if (props.alignmentUpdated) {
+                  props.alignmentUpdated(alignmentState);
+                }
+
+                const alignmentExport: AlignmentFile = {
+                  type: 'translation',
+                  meta: {
+                    creator: 'ClearAligner',
+                  },
+                  records: [],
+                };
+
+                // TODO integrate with export ETL capability
+                alignmentExport.records = alignmentState[0].links.map(
+                  (link) => {
+                    return {
+                      id: link._id,
+                      source: link.sources,
+                      target: link.targets,
+                    } as AlignmentRecord;
+                  }
+                );
+
+                // Generate some sample data
+                const fileContent = JSON.stringify(
+                  alignmentExport,
+                  undefined,
+                  2
+                );
+
+                // Create a Blob from the data
+                const blob = new Blob([fileContent], {
+                  type: 'application/json',
+                });
+
+                // Create a URL for the Blob
+                const url = URL.createObjectURL(blob);
+
+                // Create a link element
+                const link = document.createElement('a');
+
+                // Set the download attribute and file name
+                link.download = 'alignment-data.json';
+
+                // Set the href attribute to the generated URL
+                link.href = url;
+
+                // Append the link to the document
+                document.body.appendChild(link);
+
+                // Trigger a click event on the link
+                link.click();
+
+                // Remove the link from the document
+                document.body.removeChild(link);
+
+                // Revoke the URL to free up resources
+                URL.revokeObjectURL(url);
               }}
             >
-              <Redo />
+              <FileDownload />
             </Button>
           </span>
         </Tooltip>
       </ButtonGroup>
-
-      <Tooltip title="Save" arrow describeChild>
-        <span>
-          <Button
-            disabled={currentCorpusViewports.length === 0}
-            variant="contained"
-            onClick={() => {
-              if (props.alignmentUpdated) {
-                props.alignmentUpdated(alignmentState);
-              }
-            }}
-          >
-            <Save />
-          </Button>
-        </span>
-      </Tooltip>
 
       <ButtonGroup>
         <Tooltip

@@ -37,10 +37,28 @@ const Workbench: React.FC<WorkbenchProps> = ({
               corpora={corpora}
               currentPosition={currentPosition as BCVWP}
               alignments={[
+                // TODO revert to default
                 {
                   source: 'sbl-gnt',
                   target: 'na27-YLT',
-                  links: [],
+                  links: [
+                    {
+                      _id: 'sbl-gnt-na27-YLT-0',
+                      sources: ['45005003002'],
+                      targets: [
+                        '45005003001',
+                        '45005003003',
+                        '45005003008',
+                        '45005003009',
+                        '45005003010',
+                      ],
+                    },
+                    {
+                      _id: 'sbl-gnt-na27-YLT-1',
+                      sources: ['45005003013', '45005003014'],
+                      targets: ['45005003019'],
+                    },
+                  ],
                   polarity: {
                     type: 'primary',
                     syntaxSide: 'sources',
