@@ -46,7 +46,7 @@ const determineCorpusView = (
                   : {}
               }
             >
-              {verse.citation}.
+              {verse.citation}
             </Typography>
           </Grid>
           <Grid item xs={11}>
