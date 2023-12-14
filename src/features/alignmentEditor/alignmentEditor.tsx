@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
-import { Corpus, SyntaxRoot, SyntaxType, Word } from '../../structs';
-import fetchSyntaxData from '../../workbench/fetchSyntaxData';
+import { Corpus, Word } from '../../structs';
 import {
   getAvailableCorpora,
   getAvailableCorporaIds,
@@ -50,8 +49,6 @@ export const AlignmentEditor = () => {
   React.useEffect(() => {
     const loadSyntaxData = async () => {
       try {
-        const loadedSyntaxData = await fetchSyntaxData(currentPosition);
-
         const corporaIds = await getAvailableCorporaIds();
         const retrievedCorpora: Corpus[] = [];
 
@@ -59,14 +56,6 @@ export const AlignmentEditor = () => {
           const corpus = await queryText(corpusId, currentPosition);
           if (corpus) retrievedCorpora.push(corpus!);
         }
-
-        // set the syntax
-        retrievedCorpora.forEach((corpus) => {
-          corpus.syntax = {
-            ...(loadedSyntaxData as SyntaxRoot),
-            _syntaxType: SyntaxType.Source,
-          };
-        });
 
         setSelectedCorpora(retrievedCorpora);
       } catch (error) {
