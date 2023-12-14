@@ -167,9 +167,6 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       ...na27Words,
     };
 
-    while (availableCorpora.length > 0) {
-      availableCorpora.pop();
-    }
     availableCorpora.push(sblGnt);
     availableCorpora.push(na27Ylt);
 
