@@ -1,18 +1,16 @@
 import React, { ReactElement } from 'react';
 import { Typography } from '@mui/material';
-
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
-
 import { toggleTextSegment, AlignmentMode } from 'state/alignment.slice';
 import { hover, relatedAlignments } from 'state/textSegmentHover.slice';
-
-import { Alignment, Word, Link } from 'structs';
+import {Alignment, Word, Link, Corpus} from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
 
 interface TextSegmentProps {
+  corpus: Corpus;
   word: Word;
 }
 
@@ -68,7 +66,7 @@ const computeDecoration = (
 };
 
 export const TextSegment = (props: TextSegmentProps): ReactElement => {
-  const { word } = props;
+  const { corpus, word } = props;
 
   useDebug('TextSegmentComponent');
 
@@ -83,7 +81,7 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
   });
 
   const isHovered = useAppSelector(
-    (state) => state.textSegmentHover.hovered?.id === word.id
+    (state) => state.textSegmentHover.hovered?.id === word.id && state.textSegmentHover.hovered?.corpusId === word.corpusId
   );
 
   const isMemberOfMultipleAlignments = useAppSelector((state) => {
@@ -100,9 +98,13 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
 
   const isSelected = Boolean(
     useAppSelector((state) => {
+      const alignment = state.alignment.present.alignments.find(_ => true);
+      if (!alignment) {
+        return false;
+      }
       return (
-        state.alignment.present.inProgressLink?.sources.includes(word.id) ||
-        state.alignment.present.inProgressLink?.targets.includes(word.id)
+        (alignment.source === word.corpusId && state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
+        (alignment.target === word.corpusId && state.alignment.present.inProgressLink?.targets.includes(word.id))
       );
     })
   );
@@ -110,8 +112,9 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
       return (
-        state.alignment.present.inProgressLink?.sources.includes(word.id) ||
-        state.alignment.present.inProgressLink?.targets.includes(word.id)
+        corpus.id === word.corpusId &&
+          (state.alignment.present.inProgressLink?.sources.includes(word.id) ||
+          state.alignment.present.inProgressLink?.targets.includes(word.id))
       );
     })
   );

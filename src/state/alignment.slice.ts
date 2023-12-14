@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction, Draft, current } from '@reduxjs/toolkit';
-
 import {
   Word,
   Alignment,
@@ -8,7 +7,6 @@ import {
   Corpus,
   SyntaxType,
 } from 'structs';
-
 import removeSegmentFromLink from 'helpers/removeSegmentFromLink';
 import singularizeAlignmentPolarityField from 'helpers/singularizeAlignmentPolarityField';
 import generateLinkId from 'helpers/generateLinkId';
@@ -171,13 +169,10 @@ const alignmentSlice = createSlice({
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
       if (state.inProgressLink?._id === '?') {
         // There is a partial in-progress link.
-
         if (state.inProgressLink.source === action.payload.corpusId) {
           state.inProgressLink.source = action.payload.corpusId;
           state.inProgressLink.sources.push(action.payload.id);
-        }
-
-        if (state.inProgressLink.target === action.payload.corpusId) {
+        } else if (state.inProgressLink.target === action.payload.corpusId) {
           state.inProgressLink.target = action.payload.corpusId;
           state.inProgressLink.targets.push(action.payload.id);
         }
@@ -211,6 +206,7 @@ const alignmentSlice = createSlice({
         return;
       }
 
+      console.log('state.inProgressLink', state.inProgressLink);
       if (state.inProgressLink) {
         // There is already an in progress link.
         state.mode = AlignmentMode.Edit;
@@ -302,10 +298,10 @@ const alignmentSlice = createSlice({
             newInProgressLink.target = alignment.target;
 
             if (action.payload.corpusId === alignment.source) {
+              console.log('action.payload.corpusId === alignment.source', action.payload.corpusId === alignment.source);
               newInProgressLink.sources.push(action.payload.id);
-            }
-
-            if (action.payload.corpusId === alignment.target) {
+            } else if (action.payload.corpusId === alignment.target) {
+              console.log('action.payload.corpusId === alignment.target', action.payload.corpusId === alignment.target);
               newInProgressLink.targets.push(action.payload.id);
             }
             state.inProgressLink = newInProgressLink;

@@ -1,16 +1,11 @@
 import { ReactElement } from 'react';
 import { Typography, Chip, Tooltip } from '@mui/material';
-
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
-
 import cssVar from 'styles/cssVar';
-
 import { Corpus, SyntaxNode, TreedownType, Word } from 'structs';
 import TextSegment from 'features/textSegment';
-
 import { findWordById } from 'helpers/findWord';
-
 import './styles.css';
 
 interface TreedownProps {
@@ -45,6 +40,7 @@ const renderMappedTextSegment = (syntaxNode: SyntaxNode, corpus: Corpus) => {
     return syntaxNode.content.alignedWordIds.map((alignedWordId) => {
       return (
         <TextSegment
+          corpus={corpus}
           key={alignedWordId}
           word={findWordById([corpus], alignedWordId) ?? ({} as Word)}
         />
@@ -197,6 +193,7 @@ const recurseSyntax = (
 
                 {treedownType === TreedownType.Source && (
                   <TextSegment
+                    corpus={corpus}
                     word={{
                       id: syntaxNode.content.n,
                       corpusId: corpus.id,
@@ -236,6 +233,7 @@ const recurseSyntax = (
       }
       return (
         <TextSegment
+          corpus={corpus}
           word={{
             id: syntaxNode.content.n,
             corpusId: corpus.id,

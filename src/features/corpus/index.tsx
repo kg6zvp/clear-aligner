@@ -52,7 +52,7 @@ const determineCorpusView = (
           >
             {(verse.words || []).map((word: Word): ReactElement => {
               return (
-                <TextSegment key={`${corpus.id}/${word.id}`} word={word} />
+                <TextSegment corpus={corpus} key={`${corpus.id}/${word.id}`} word={word} />
               );
             })}
           </Typography>
