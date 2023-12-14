@@ -206,14 +206,13 @@ const alignmentSlice = createSlice({
         return;
       }
 
-      console.log('state.inProgressLink', state.inProgressLink);
       if (state.inProgressLink) {
         // There is already an in progress link.
         state.mode = AlignmentMode.Edit;
 
         const alreadyToggled =
-          state.inProgressLink.sources.includes(action.payload.id) ||
-          state.inProgressLink.targets.includes(action.payload.id);
+          (state.inProgressLink.source === action.payload.corpusId && state.inProgressLink.sources.includes(action.payload.id)) ||
+          (state.inProgressLink.target === action.payload.corpusId && state.inProgressLink.targets.includes(action.payload.id));
 
         if (alreadyToggled) {
           // remove segment from link
@@ -298,10 +297,8 @@ const alignmentSlice = createSlice({
             newInProgressLink.target = alignment.target;
 
             if (action.payload.corpusId === alignment.source) {
-              console.log('action.payload.corpusId === alignment.source', action.payload.corpusId === alignment.source);
               newInProgressLink.sources.push(action.payload.id);
             } else if (action.payload.corpusId === alignment.target) {
-              console.log('action.payload.corpusId === alignment.target', action.payload.corpusId === alignment.target);
               newInProgressLink.targets.push(action.payload.id);
             }
             state.inProgressLink = newInProgressLink;

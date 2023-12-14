@@ -163,8 +163,8 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
       if (word) {
         for (const link of contextualAlignment.links) {
           if (
-            link.sources.includes(word.id) ||
-            link.targets.includes(word.id)
+            (contextualAlignment.source === word.corpusId && link.sources.includes(word.id)) ||
+            (contextualAlignment.target === word.corpusId && link.targets.includes(word.id))
           ) {
             foundLink = link;
           }
@@ -183,8 +183,8 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
         for (const alignment of possibleAlignments) {
           for (const link of alignment.links) {
             if (
-              link.sources.includes(word.id) ||
-              link.targets.includes(word.id)
+              (alignment.source === word.corpusId && link.sources.includes(word.id)) ||
+              (alignment.target === word.corpusId && link.targets.includes(word.id))
             ) {
               foundLink = link;
             }
