@@ -221,13 +221,21 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 const content = await file.text();
 
+                // TODO remove
                 console.log('content raw', content);
-                console.log('content JSON', JSON.parse(content));
 
-                // TODO
-                // if (props.alignmentUpdated) {
-                //   props.alignmentUpdated(alignmentState);
-                // }
+                const alignmentFile = JSON.parse(content) as AlignmentFile;
+
+                // TODO integrate with export ETL capability
+                alignmentState[0].links = alignmentFile.records.map(record => {
+                  return {
+                    _id: record.id,
+                    sources: record.source,
+                    targets: record.target
+                  }
+                });
+
+                props?.alignmentUpdated(alignmentState);
               }}
             />
             <Button
@@ -249,9 +257,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               disabled={currentCorpusViewports.length === 0}
               variant="contained"
               onClick={() => {
-                if (props.alignmentUpdated) {
-                  props.alignmentUpdated(alignmentState);
-                }
+                props?.alignmentUpdated(alignmentState);
 
                 const alignmentExport: AlignmentFile = {
                   type: 'translation',
