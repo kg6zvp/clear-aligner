@@ -223,14 +223,18 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
   return (
     <Grid container>
       <Tooltip title="Show the next verses">
-        <IconButton onClick={add} disabled={disabled === 'add'}>
-          <Add sx={{ fontSize: 18 }} />
-        </IconButton>
+        <span>
+          <IconButton onClick={add} disabled={disabled === 'add'}>
+            <Add sx={{ fontSize: 18 }} />
+          </IconButton>
+        </span>
       </Tooltip>
       <Tooltip title="Remove the outer verses">
-        <IconButton onClick={remove} disabled={disabled === 'remove'}>
-          <Remove sx={{ fontSize: 18 }} />
-        </IconButton>
+        <span>
+          <IconButton onClick={remove} disabled={disabled === 'remove'}>
+            <Remove sx={{fontSize: 18}}/>
+          </IconButton>
+        </span>
       </Tooltip>
     </Grid>
   );
