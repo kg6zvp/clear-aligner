@@ -23,6 +23,8 @@ import {
   FileUpload,
 } from '@mui/icons-material';
 
+import cloneDeep from 'lodash/cloneDeep';
+
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import {
@@ -30,6 +32,7 @@ import {
   createLink,
   deleteLink,
   AlignmentMode,
+  loadAlignments,
 } from 'state/alignment.slice';
 
 import {
@@ -41,7 +44,6 @@ import { Corpus } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 
 interface ControlPanelProps {
-  alignmentUpdated: Function;
   corpora: Corpus[];
 }
 
@@ -217,25 +219,29 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               ref={fileInputRef}
               multiple={false}
               onChange={async (event) => {
+                // grab file content
                 const file = event!.target!.files![0];
-
                 const content = await file.text();
 
-                // TODO remove
-                console.log('content raw', content);
-
+                // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
 
-                // TODO integrate with export ETL capability
-                alignmentState[0].links = alignmentFile.records.map(record => {
-                  return {
-                    _id: record.id,
-                    sources: record.source,
-                    targets: record.target
-                  }
-                });
+                // clone alignment state so that we can mutate
+                const newAlignmentState = cloneDeep(alignmentState);
 
-                props?.alignmentUpdated(alignmentState);
+                // override the alignments from alignment file
+                newAlignmentState![0].links = alignmentFile.records.map(
+                  (record) => {
+                    return {
+                      _id: record.id,
+                      sources: record.source,
+                      targets: record.target,
+                    };
+                  }
+                );
+
+                // dispatch the updated alignment
+                dispatch(loadAlignments(newAlignmentState));
               }}
             />
             <Button
@@ -257,8 +263,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               disabled={currentCorpusViewports.length === 0}
               variant="contained"
               onClick={() => {
-                props?.alignmentUpdated(alignmentState);
+                dispatch(loadAlignments(alignmentState));
 
+                // create starting instance
                 const alignmentExport: AlignmentFile = {
                   type: 'translation',
                   meta: {
@@ -267,18 +274,18 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   records: [],
                 };
 
-                // TODO integrate with export ETL capability
-                alignmentExport.records = alignmentState[0].links.map(
-                  (link) => {
-                    return {
-                      id: link._id,
-                      source: link.sources,
-                      target: link.targets,
-                    } as AlignmentRecord;
-                  }
-                );
+                const currentAlignment = alignmentState[0];
 
-                // Generate some sample data
+                // ETL alignment links
+                alignmentExport.records = currentAlignment.links.map((link) => {
+                  return {
+                    id: link._id,
+                    source: link.sources,
+                    target: link.targets,
+                  } as AlignmentRecord;
+                });
+
+                // Create alignment file content
                 const fileContent = JSON.stringify(
                   alignmentExport,
                   undefined,
@@ -297,7 +304,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const link = document.createElement('a');
 
                 // Set the download attribute and file name
-                link.download = 'alignment-data.json';
+                link.download = `${currentAlignment.source}-${currentAlignment.target}_alignment-data.json`;
 
                 // Set the href attribute to the generated URL
                 link.href = url;

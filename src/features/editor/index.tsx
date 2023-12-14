@@ -13,7 +13,6 @@ interface EditorWrapperProps {
   corpora: Corpus[];
   currentPosition: BCVWP;
   alignments: Alignment[];
-  alignmentUpdated?: Function;
 }
 
 const EditorWrapper = (props: EditorWrapperProps): any => {
@@ -24,7 +23,6 @@ const EditorWrapper = (props: EditorWrapperProps): any => {
           corpora={props.corpora}
           alignments={props.alignments}
           currentPosition={props.currentPosition}
-          alignmentUpdated={() => props.alignmentUpdated?.()}
         />
       </Provider>
     </Fragment>

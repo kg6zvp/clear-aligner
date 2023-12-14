@@ -18,11 +18,10 @@ interface EditorProps {
   corpora: Corpus[];
   currentPosition: BCVWP;
   alignments: Alignment[];
-  alignmentUpdated: Function;
 }
 
 const Editor = (props: EditorProps): ReactElement => {
-  const { alignments, alignmentUpdated } = props;
+  const { alignments } = props;
   useDebug('Editor');
 
   const dispatch = useAppDispatch();
@@ -34,10 +33,7 @@ const Editor = (props: EditorProps): ReactElement => {
   return (
     <Container maxWidth={false}>
       <Polyglot corpora={props.corpora} />
-      <ControlPanel
-        alignmentUpdated={alignmentUpdated}
-        corpora={props.corpora}
-      />
+      <ControlPanel corpora={props.corpora} />
       <ContextPanel corpora={props.corpora} />
     </Container>
   );
