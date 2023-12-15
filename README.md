@@ -28,6 +28,21 @@ The component currently supports react v18.x.
 - Build: `yarn build`
 - Electron: `yarn dev-electron`
 
+### install electron build dependencies on Ubuntu
+
+```bash
+sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
+                       libnotify-dev libasound2-dev libcap-dev \
+                       libcups2-dev libxtst-dev \
+                       libxss1 libnss3-dev gcc-multilib g++-multilib curl \
+                       gperf bison python3-dbusmock openjdk-8-jre \
+		       libfuse2
+```
+
+### Run Electron AppImage on Ubuntu 20.04+
+
+- requires `libfuse2` package
+
 ## Basic Usage
 
 After install, import the react component:
