@@ -1,3 +1,5 @@
+import BCVWP from '../features/bcvwp/BCVWPSupport';
+
 export enum SyntaxType {
   // Has syntax data.
   Source = 'source',
@@ -44,7 +46,7 @@ export interface Corpus {
   name: string;
   fullName: string;
   language: string;
-  primaryVerse: string;
+  primaryVerse: BCVWP | null;
   words: Word[];
   wordsByVerse: Record<string, Verse>;
   fullText?: string;

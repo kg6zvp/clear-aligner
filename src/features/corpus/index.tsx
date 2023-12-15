@@ -7,14 +7,14 @@ import React, {
   useState,
 } from 'react';
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
-import { Add, Remove, InfoOutlined, Settings } from '@mui/icons-material';
+import { Add, InfoOutlined, Remove, Settings } from '@mui/icons-material';
 
 import useDebug from 'hooks/useDebug';
 import TextSegment from 'features/textSegment';
 import CorpusSettings from 'features/corpusSettings';
 
-import { Corpus, CorpusViewType, TreedownType, Verse, Word } from 'structs';
-import Treedown from '../treedown';
+import { Corpus, Verse, Word } from 'structs';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 
 interface CorpusProps {
   corpus: Corpus;
@@ -25,58 +25,55 @@ interface CorpusProps {
 const determineCorpusView = (
   corpus: Corpus,
   verses: Verse[],
-  bcvId: string
-) => {
-  switch (corpus.viewType) {
-    case CorpusViewType.Treedown: {
-      const syntaxCorpora = ['sbl', 'nestle1904'];
-      const treedownType = syntaxCorpora.includes(corpus.id)
-        ? TreedownType.Source
-        : TreedownType.Mapped;
-      return <Treedown corpus={corpus} treedownType={treedownType} />;
-    }
-    default: {
-      return verses.map((verse) => (
-        <Grid container key={verse.bcvId}>
-          <Grid item xs={1} sx={{ p: '1px' }}>
-            <Typography
-              sx={
-                bcvId === verse.bcvId
-                  ? { textDecoration: 'underline', fontStyle: 'italic' }
-                  : {}
-              }
-            >
-              {verse.citation}
-            </Typography>
-          </Grid>
-          <Grid item xs={11}>
-            <Typography
-              style={{
-                paddingBottom: '0.5rem',
-                paddingLeft: '0.7rem',
-                paddingRight: '0.7rem',
-              }}
-            >
-              {(verse.words || []).map((word: Word): ReactElement => {
-                return <TextSegment key={word.id} word={word} />;
-              })}
-            </Typography>
-          </Grid>
+  bcvId: BCVWP | null
+) =>
+  verses.map((verse) => {
+    return (
+      <Grid container key={`${corpus.id}/${verse.bcvId}`}>
+        <Grid item xs={1} sx={{ p: '1px' }}>
+          <Typography
+            sx={
+              bcvId?.toTruncatedReferenceString(BCVWPField.Verse) ===
+              verse.bcvId
+                ? { textDecoration: 'underline', fontStyle: 'italic' }
+                : {}
+            }
+          >
+            {verse.citation}.
+          </Typography>
         </Grid>
-      ));
-    }
-  }
-};
+        <Grid item xs={11}>
+          <Typography
+            style={{
+              paddingBottom: '0.5rem',
+              paddingLeft: '0.7rem',
+              paddingRight: '0.7rem',
+            }}
+          >
+            {(verse.words || []).map((word: Word): ReactElement => {
+              return (
+                <TextSegment key={`${corpus.id}/${word.id}`} word={word} />
+              );
+            })}
+          </Typography>
+        </Grid>
+      </Grid>
+    );
+  });
 
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const { corpus, viewportIndex, corpora } = props;
   useDebug('TextComponent');
 
-  const initialVerses = useMemo(
-    () => [corpus.wordsByVerse[corpus.primaryVerse]].filter((v) => v),
-    [corpus]
-  );
+  const initialVerses = useMemo(() => {
+    if (!corpus.primaryVerse) return [];
+    return [
+      corpus.wordsByVerse[
+        corpus.primaryVerse!.toTruncatedReferenceString(BCVWPField.Verse)
+      ],
+    ].filter((v) => v);
+  }, [corpus]);
 
   const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
   const [showSettings, setShowSettings] = useState(false);
@@ -107,9 +104,13 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const removeBcvId = useCallback(() => {
     setVisibleVerses((verses) =>
       verses.slice(
-        verses[0]?.bcvId === corpus.primaryVerse ? 0 : 1,
+        verses[0]?.bcvId ===
+          corpus.primaryVerse?.toTruncatedReferenceString(BCVWPField.Verse)
+          ? 0
+          : 1,
         verses.length === 1 ||
-          verses[verses.length - 1]?.bcvId === corpus.primaryVerse
+          verses[verses.length - 1]?.bcvId ===
+            corpus.primaryVerse?.toTruncatedReferenceString(BCVWPField.Verse)
           ? verses.length
           : -1
       )
@@ -222,14 +223,18 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
   return (
     <Grid container>
       <Tooltip title="Show the next verses">
-        <IconButton onClick={add} disabled={disabled === 'add'}>
-          <Add sx={{ fontSize: 18 }} />
-        </IconButton>
+        <span>
+          <IconButton onClick={add} disabled={disabled === 'add'}>
+            <Add sx={{ fontSize: 18 }} />
+          </IconButton>
+        </span>
       </Tooltip>
       <Tooltip title="Remove the outer verses">
-        <IconButton onClick={remove} disabled={disabled === 'remove'}>
-          <Remove sx={{ fontSize: 18 }} />
-        </IconButton>
+        <span>
+          <IconButton onClick={remove} disabled={disabled === 'remove'}>
+            <Remove sx={{fontSize: 18}}/>
+          </IconButton>
+        </span>
       </Tooltip>
     </Grid>
   );
