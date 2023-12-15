@@ -47,34 +47,43 @@ export const AlignmentEditor = () => {
   }, [currentPosition, layoutCtx]);
 
   React.useEffect(() => {
-    const loadSyntaxData = async () => {
-      try {
-        const corporaIds = await getAvailableCorporaIds();
-        const retrievedCorpora: Corpus[] = [];
-
-        for (const corpusId of corporaIds) {
-          const corpus = await queryText(corpusId, currentPosition);
-          if (corpus) retrievedCorpora.push(corpus!);
-        }
-
-        setSelectedCorpora(retrievedCorpora);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    loadSyntaxData().catch(console.error);
-  }, [currentPosition, currentPosition?.book, setSelectedCorpora]);
-
-  React.useEffect(() => {
     const loadSourceWords = async () => {
-      const corpus = (await getAvailableCorpora())[0];
+      const corpora = await getAvailableCorpora();
+      const corpus = corpora.find((v: Corpus) => v.id === 'sbl-gnt');
+      const currentPosition = new BCVWP(45, 5, 3);
+
+      const retrievedCorpora: Corpus[] = [];
+
+      for (const corpusId of corpora.map(c => c.id)) {
+        const corpus = await queryText(corpusId, currentPosition);
+        if (corpus) retrievedCorpora.push(corpus!);
+      }
+
+      setSelectedCorpora(retrievedCorpora);
       setAvailableWords(corpus?.words ?? []);
-      setCurrentPosition(new BCVWP(45, 5, 3));
+      setCurrentPosition(currentPosition);
     };
 
     loadSourceWords().catch(console.error);
-  }, [setAvailableWords, setCurrentPosition]);
+  }, [setAvailableWords, setCurrentPosition, setSelectedCorpora]);
+
+  React.useEffect(() => {
+    if (!currentPosition) {
+      return;
+    }
+    const loadCorporaAtPosition = async () => {
+      const corpusIds = await getAvailableCorporaIds();
+
+      const retrievedCorpora: Corpus[] = [];
+      for (const corpusId of corpusIds) {
+        const corpus = await queryText(corpusId, currentPosition);
+        if (corpus) retrievedCorpora.push(corpus);
+      }
+      setSelectedCorpora(retrievedCorpora);
+    };
+
+    void loadCorporaAtPosition();
+  }, [currentPosition, setSelectedCorpora]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(

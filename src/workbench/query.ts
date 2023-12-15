@@ -124,6 +124,7 @@ export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
 
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
+    isInitialized = true;
     // SBL GNT
     let sblGnt: Corpus = {
       id: 'sbl-gnt',
@@ -169,8 +170,6 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
     availableCorpora.push(sblGnt);
     availableCorpora.push(na27Ylt);
-
-    isInitialized = true;
   }
 
   return availableCorpora;
@@ -178,7 +177,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
   return (
-    availableCorpora.length ? availableCorpora : await getAvailableCorpora()
+    isInitialized ? availableCorpora : await getAvailableCorpora()
   ).map((corpus) => {
     return corpus.id;
   });
