@@ -232,7 +232,7 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
       <Tooltip title="Remove the outer verses">
         <span>
           <IconButton onClick={remove} disabled={disabled === 'remove'}>
-            <Remove sx={{fontSize: 18}}/>
+            <Remove sx={{ fontSize: 18 }} />
           </IconButton>
         </span>
       </Tooltip>

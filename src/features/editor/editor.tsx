@@ -2,13 +2,13 @@ import { ReactElement, useEffect } from 'react';
 import { Container } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
-import { useAppDispatch } from 'app/hooks';
+import { useAppDispatch, useAppSelector } from 'app/hooks';
 
 import Polyglot from 'features/polyglot';
 import ControlPanel from 'features/controlPanel';
 import ContextPanel from 'features/contextPanel';
 
-import { Alignment, Corpus } from 'structs';
+import { Corpus } from 'structs';
 
 import '../../styles/theme.css';
 import { loadAlignments } from '../../state/alignment.slice';
@@ -17,27 +17,40 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 interface EditorProps {
   corpora: Corpus[];
   currentPosition: BCVWP;
-  alignments: Alignment[];
-  alignmentUpdated: Function;
 }
 
 const Editor = (props: EditorProps): ReactElement => {
-  const { alignments, alignmentUpdated } = props;
   useDebug('Editor');
-
   const dispatch = useAppDispatch();
 
+  // handle the initialization of alignment data if it hasn't been set yet
+  const alignmentState = useAppSelector((state) => {
+    return state.alignment.present.alignments;
+  });
+
   useEffect(() => {
-    dispatch(loadAlignments(alignments));
-  }, [dispatch, alignments]);
+    if (alignmentState == null || alignmentState.length <= 0) {
+      dispatch(
+        loadAlignments([
+          {
+            source: 'sbl-gnt',
+            target: 'na27-YLT',
+            links: [],
+            polarity: {
+              type: 'primary',
+              syntaxSide: 'sources',
+              nonSyntaxSide: 'targets',
+            },
+          },
+        ])
+      );
+    }
+  }, [dispatch, alignmentState]);
 
   return (
     <Container maxWidth={false}>
       <Polyglot corpora={props.corpora} />
-      <ControlPanel
-        alignmentUpdated={alignmentUpdated}
-        corpora={props.corpora}
-      />
+      <ControlPanel corpora={props.corpora} />
       <ContextPanel corpora={props.corpora} />
     </Container>
   );

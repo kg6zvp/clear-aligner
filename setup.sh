@@ -5,4 +5,4 @@ nvm install
 npm install -g yarn
 
 # Install the node dependencies
-npm install
+yarn install

@@ -11,6 +11,9 @@
 # production
 /build
 
+# We use yarn, prevent the npm package lock file
+package-lock.json
+
 # misc
 .DS_Store
 .env.local

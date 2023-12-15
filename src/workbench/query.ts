@@ -150,7 +150,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
       name: 'YLT',
-      fullName: 'Nestle-Aland 27th Edition YLT text',
+      fullName: "Young's Literal Translation text",
       language: 'eng',
       words: [],
       primaryVerse: null,
@@ -176,11 +176,11 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 };
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (
-    isInitialized ? availableCorpora : await getAvailableCorpora()
-  ).map((corpus) => {
-    return corpus.id;
-  });
+  return (isInitialized ? availableCorpora : await getAvailableCorpora()).map(
+    (corpus) => {
+      return corpus.id;
+    }
+  );
 };
 
 export const queryText = async (

@@ -31,18 +31,6 @@ const Workbench: React.FC<WorkbenchProps> = ({
             <EditorWrapper
               corpora={corpora}
               currentPosition={currentPosition as BCVWP}
-              alignments={[
-                {
-                  source: 'sbl-gnt',
-                  target: 'na27-YLT',
-                  links: [],
-                  polarity: {
-                    type: 'primary',
-                    syntaxSide: 'sources',
-                    nonSyntaxSide: 'targets',
-                  },
-                },
-              ]}
             />
           </div>
         </div>

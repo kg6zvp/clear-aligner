@@ -54,7 +54,7 @@ export const AlignmentEditor = () => {
 
       const retrievedCorpora: Corpus[] = [];
 
-      for (const corpusId of corpora.map(c => c.id)) {
+      for (const corpusId of corpora.map((c) => c.id)) {
         const corpus = await queryText(corpusId, currentPosition);
         if (corpus) retrievedCorpora.push(corpus!);
       }
