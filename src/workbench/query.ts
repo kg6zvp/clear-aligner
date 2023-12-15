@@ -125,7 +125,6 @@ export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
 export const getAvailableCorpora = async (): Promise<Corpus[]> => {
   if (!isInitialized) {
     isInitialized = true;
-
     // SBL GNT
     let sblGnt: Corpus = {
       id: 'sbl-gnt',
@@ -133,7 +132,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       fullName: 'SBL Greek New Testament',
       language: 'grc',
       words: [],
-      primaryVerse: '',
+      primaryVerse: null,
       wordsByVerse: {},
     };
 
@@ -148,15 +147,13 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       ...sblWords,
     };
 
-    availableCorpora.push(sblGnt);
-
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
       name: 'YLT',
       fullName: 'Nestle-Aland 27th Edition YLT text',
       language: 'eng',
       words: [],
-      primaryVerse: '',
+      primaryVerse: null,
       wordsByVerse: {},
     };
 
@@ -171,6 +168,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       ...na27Words,
     };
 
+    availableCorpora.push(sblGnt);
     availableCorpora.push(na27Ylt);
   }
 
@@ -179,7 +177,7 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
   return (
-    availableCorpora.length ? availableCorpora : await getAvailableCorpora()
+    isInitialized ? availableCorpora : await getAvailableCorpora()
   ).map((corpus) => {
     return corpus.id;
   });
@@ -207,7 +205,7 @@ export const queryText = async (
     fullName: corpus?.fullName ?? '',
     language: corpus?.language ?? '',
     words: queriedData,
-    primaryVerse: bcvId,
+    primaryVerse: position,
     wordsByVerse: corpus.wordsByVerse,
   };
 };
