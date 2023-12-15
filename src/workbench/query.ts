@@ -176,11 +176,11 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 };
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (
-    isInitialized ? availableCorpora : await getAvailableCorpora()
-  ).map((corpus) => {
-    return corpus.id;
-  });
+  return (isInitialized ? availableCorpora : await getAvailableCorpora()).map(
+    (corpus) => {
+      return corpus.id;
+    }
+  );
 };
 
 export const queryText = async (
