@@ -2,7 +2,7 @@ import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
 import { AlignmentMode } from 'state/alignment.slice';
 import TextSegment from 'features/textSegment';
-import {Corpus} from "../../structs";
+import { Corpus } from '../../structs';
 
 const testState: RootState = {
   ...preloadedState,

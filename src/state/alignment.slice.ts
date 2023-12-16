@@ -211,8 +211,10 @@ const alignmentSlice = createSlice({
         state.mode = AlignmentMode.Edit;
 
         const alreadyToggled =
-          (state.inProgressLink.source === action.payload.corpusId && state.inProgressLink.sources.includes(action.payload.id)) ||
-          (state.inProgressLink.target === action.payload.corpusId && state.inProgressLink.targets.includes(action.payload.id));
+          (state.inProgressLink.source === action.payload.corpusId &&
+            state.inProgressLink.sources.includes(action.payload.id)) ||
+          (state.inProgressLink.target === action.payload.corpusId &&
+            state.inProgressLink.targets.includes(action.payload.id));
 
         if (alreadyToggled) {
           // remove segment from link
