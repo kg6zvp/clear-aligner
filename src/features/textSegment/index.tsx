@@ -137,7 +137,10 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
 
         const relatedLink = relatedAlignment?.links.filter((link: Link) => {
           return (
-            link.sources.includes(word.id) || link.targets.includes(word.id)
+            (relatedAlignment.source === word.corpusId &&
+              link.sources.includes(word.id)) ||
+            (relatedAlignment.target === word.corpusId &&
+              link.targets.includes(word.id))
           );
         });
 
