@@ -1,13 +1,16 @@
 const path = require('path');
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, nativeTheme } = require('electron');
 const isDev = require('electron-is-dev');
 
 function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
+    ...nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {},
+    show: false,
     width: 800,
     height: 600,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
     },
@@ -17,12 +20,24 @@ function createWindow() {
   if (isDev) {
     win.loadURL('http://localhost:3000');
   } else {
-    win.loadFile("index.html");
+    win.loadFile(path.join(__dirname, "index.html"));
   }
   // Open the DevTools.
   if (isDev) {
     win.webContents.openDevTools({ mode: 'detach' });
   }
+
+  win.once('ready-to-show', () => {
+    win.show();
+  });
+
+  win.on('focus', () => {
+    win.webContents.send('focus');
+  });
+
+  win.on('blur', () => {
+    win.webContents.send('blur');
+  });
 }
 
 // This method will be called when Electron has finished

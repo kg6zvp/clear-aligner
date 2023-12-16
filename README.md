@@ -26,9 +26,10 @@ The component currently supports react v18.x.
 - Install dependencies: `source ./setup.sh`
 - Run local server: `yarn start` (starts local CRA server with component wrapper in a UI workbench)
 - Build: `yarn build`
+	- build for Windows: `docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c "yarn install && yarn build -w"`
 - Electron: `yarn dev-electron`
 
-### install electron build dependencies on Ubuntu
+### install electron build dependencies on Ubuntu 22.04
 
 ```bash
 sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
@@ -39,7 +40,7 @@ sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
 		       libfuse2
 ```
 
-### Run Electron AppImage on Ubuntu 20.04+
+### Run Electron AppImage on Ubuntu 20.04+ - requires fuse
 
 - requires `libfuse2` package
 
