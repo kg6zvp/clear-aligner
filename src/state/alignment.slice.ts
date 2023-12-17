@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction, Draft, current } from '@reduxjs/toolkit';
-
 import {
   Word,
   Alignment,
@@ -8,7 +7,6 @@ import {
   Corpus,
   SyntaxType,
 } from 'structs';
-
 import removeSegmentFromLink from 'helpers/removeSegmentFromLink';
 import singularizeAlignmentPolarityField from 'helpers/singularizeAlignmentPolarityField';
 import generateLinkId from 'helpers/generateLinkId';
@@ -171,13 +169,10 @@ const alignmentSlice = createSlice({
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
       if (state.inProgressLink?._id === '?') {
         // There is a partial in-progress link.
-
         if (state.inProgressLink.source === action.payload.corpusId) {
           state.inProgressLink.source = action.payload.corpusId;
           state.inProgressLink.sources.push(action.payload.id);
-        }
-
-        if (state.inProgressLink.target === action.payload.corpusId) {
+        } else if (state.inProgressLink.target === action.payload.corpusId) {
           state.inProgressLink.target = action.payload.corpusId;
           state.inProgressLink.targets.push(action.payload.id);
         }
@@ -216,8 +211,10 @@ const alignmentSlice = createSlice({
         state.mode = AlignmentMode.Edit;
 
         const alreadyToggled =
-          state.inProgressLink.sources.includes(action.payload.id) ||
-          state.inProgressLink.targets.includes(action.payload.id);
+          (state.inProgressLink.source === action.payload.corpusId &&
+            state.inProgressLink.sources.includes(action.payload.id)) ||
+          (state.inProgressLink.target === action.payload.corpusId &&
+            state.inProgressLink.targets.includes(action.payload.id));
 
         if (alreadyToggled) {
           // remove segment from link
@@ -303,9 +300,7 @@ const alignmentSlice = createSlice({
 
             if (action.payload.corpusId === alignment.source) {
               newInProgressLink.sources.push(action.payload.id);
-            }
-
-            if (action.payload.corpusId === alignment.target) {
+            } else if (action.payload.corpusId === alignment.target) {
               newInProgressLink.targets.push(action.payload.id);
             }
             state.inProgressLink = newInProgressLink;

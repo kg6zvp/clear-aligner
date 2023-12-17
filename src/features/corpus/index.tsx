@@ -39,7 +39,7 @@ const determineCorpusView = (
                 : {}
             }
           >
-            {verse.citation}.
+            {verse.citation}
           </Typography>
         </Grid>
         <Grid item xs={11}>
@@ -52,7 +52,11 @@ const determineCorpusView = (
           >
             {(verse.words || []).map((word: Word): ReactElement => {
               return (
-                <TextSegment key={`${corpus.id}/${word.id}`} word={word} />
+                <TextSegment
+                  corpus={corpus}
+                  key={`${corpus.id}/${word.id}`}
+                  word={word}
+                />
               );
             })}
           </Typography>
