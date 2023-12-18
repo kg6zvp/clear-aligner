@@ -8,8 +8,8 @@ function createWindow() {
   const win = new BrowserWindow({
     ...nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {},
     show: false,
-    width: 800,
-    height: 600,
+    width: 1450,
+    height: 900,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,

@@ -1,5 +1,5 @@
 {
-  "name": "treedown-aligner",
+  "name": "clear-aligner",
   "version": "0.0.24",
   "license": "MIT",
   "private": false,
@@ -99,7 +99,8 @@
   ],
   "main": "public/electron.js",
   "build": {
-    "appId": "com.example.clearaligner",
+    "appId": "com.biblica.clearaligner",
+    "productName": "ClearAligner",
     "directories": {
       "buildResources": "build/",
       "app": "."
