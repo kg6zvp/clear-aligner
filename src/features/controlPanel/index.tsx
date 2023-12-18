@@ -218,6 +218,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               hidden
               ref={fileInputRef}
               multiple={false}
+              onClick={(event)=> {
+                // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
+                // event isn't thrown.
+
+                // @ts-ignore
+                event.currentTarget.value = null
+              }}
               onChange={async (event) => {
                 // grab file content
                 const file = event!.target!.files![0];
