@@ -17,6 +17,7 @@ const findRelatedAlignments = (
         } else if (curAlignment.target === word.corpusId) {
           return link.targets.includes(word.id);
         }
+        return false;
       });
 
       if (filteredLinks.length) {
