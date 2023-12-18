@@ -273,8 +273,8 @@ const alignmentSlice = createSlice({
 
           const existingLink = alignment.links.find((link: Link) => {
             return (
-              link.sources.includes(action.payload.id) ||
-              link.targets.includes(action.payload.id)
+              (alignment.source === action.payload.corpusId && link.sources.includes(action.payload.id)) ||
+              (alignment.target === action.payload.corpusId && link.targets.includes(action.payload.id))
             );
           });
 
