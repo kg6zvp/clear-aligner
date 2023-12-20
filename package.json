@@ -28,6 +28,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build && electron-builder",
+    "build:mac": "yarn build -m",
+    "build:linux": "docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"yarn install && yarn build -l\"",
+    "build:win": "docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"yarn install && yarn build -w\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "prettier": "prettier --write .",
