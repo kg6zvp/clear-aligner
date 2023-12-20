@@ -1,14 +1,16 @@
 import {
   AppBar,
-  Checkbox,
-  Drawer, FormControl,
-  FormControlLabel,
-  IconButton, InputLabel,
+  Drawer,
+  FormControl,
+  IconButton,
+  InputLabel,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
-  ListItemText, MenuItem, Select,
+  ListItemText,
+  MenuItem,
+  Select,
   Toolbar,
   useMediaQuery,
 } from '@mui/material';
@@ -18,8 +20,8 @@ import Themed from './features/themed';
 import { Link, Outlet } from 'react-router-dom';
 import { AddLink, ManageSearch } from '@mui/icons-material';
 
-type THEME = 'night'|'day';
-type THEME_PREFERENCE = THEME|'auto';
+type THEME = 'night' | 'day';
+type THEME_PREFERENCE = THEME | 'auto';
 
 export interface LayoutContextProps {
   windowTitle: string;
@@ -28,6 +30,7 @@ export interface LayoutContextProps {
     React.SetStateAction<JSX.Element | string | null>
   >;
 }
+
 export const LayoutContext = createContext({} as LayoutContextProps);
 
 export const AppLayout = () => {
@@ -37,11 +40,13 @@ export const AppLayout = () => {
     [prefersDarkMode]
   );
 
-  const [ preferredTheme, setPreferredTheme ] = useState('auto' as THEME_PREFERENCE);
+  const [preferredTheme, setPreferredTheme] = useState(
+    'auto' as THEME_PREFERENCE
+  );
 
   const theme = useMemo(() => {
-    switch(preferredTheme) {
-      case "auto":
+    switch (preferredTheme) {
+      case 'auto':
         return themeDefault;
       default:
         return preferredTheme;
@@ -111,12 +116,17 @@ export const AppLayout = () => {
               <FormControl fullWidth>
                 <InputLabel id={'theme-label'}>Theme</InputLabel>
                 <Select
-                labelId={'theme-label'}
-                id={'theme-select'}
-                value={preferredTheme}
-                label={'Theme'}
-                onChange={({ target: { value } }) => setPreferredTheme(value as THEME_PREFERENCE)}>
-                  <MenuItem value={'auto' as THEME_PREFERENCE}>Follow System</MenuItem>
+                  labelId={'theme-label'}
+                  id={'theme-select'}
+                  value={preferredTheme}
+                  label={'Theme'}
+                  onChange={({ target: { value } }) =>
+                    setPreferredTheme(value as THEME_PREFERENCE)
+                  }
+                >
+                  <MenuItem value={'auto' as THEME_PREFERENCE}>
+                    Follow System
+                  </MenuItem>
                   <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
                   <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
                 </Select>

@@ -26,8 +26,8 @@ The component currently supports react v18.x.
 - Install dependencies: `source ./setup.sh`
 - Run local server: `yarn start` (starts local CRA server with component wrapper in a UI workbench)
 - Build: `yarn build`
-	- build for Windows: `yarn build:win`
-	- build for Mac: `yarn build:mac`
+  - build for Windows: `yarn build:win`
+  - build for Mac: `yarn build:mac`
 - Electron: `yarn dev-electron`
 
 ### install electron build dependencies on Ubuntu 22.04

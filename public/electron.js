@@ -6,7 +6,7 @@ const isDev = require('electron-is-dev');
 function createWindow() {
   // Create the browser window.
   const win = new BrowserWindow({
-    ...nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {},
+    ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
     show: false,
     width: 1450,
     height: 900,
@@ -20,7 +20,7 @@ function createWindow() {
   if (isDev) {
     win.loadURL('http://localhost:3000');
   } else {
-    win.loadFile(path.join(__dirname, "index.html"));
+    win.loadFile(path.join(__dirname, 'index.html'));
   }
   // Open the DevTools.
   if (isDev) {
