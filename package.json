@@ -1,8 +1,9 @@
 {
-  "name": "treedown-aligner",
+  "name": "clear-aligner",
   "version": "0.0.24",
   "license": "MIT",
   "private": false,
+  "homepage": ".",
   "dependencies": {
     "@emotion/react": "^11.9.0",
     "@emotion/styled": "^11.8.1",
@@ -12,6 +13,7 @@
     "@mui/x-data-grid": "^6.18.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@rgrove/parse-xml": "^3.0.0",
+    "electron-is-dev": "^2.0.0",
     "react-redux": "^7.2.8",
     "react-router-dom": "^6.20.0",
     "react-scripts": "5.0.0",
@@ -25,7 +27,10 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && electron-builder",
+    "build:mac": "yarn build -m",
+    "build:linux": "docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"yarn install && yarn build -l\"",
+    "build:win": "docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"yarn install && yarn build -w\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "prettier": "prettier --write .",
@@ -77,15 +82,16 @@
     "@types/react-dom": "^18",
     "concurrently": "^8.2.1",
     "electron": "^27.0.0",
-    "electron-is-dev": "^2.0.0",
+    "electron-build": "^0.0.3",
+    "electron-builder": "^24.9.1",
     "eslint-plugin-storybook": "^0.6.15",
     "prettier": "^2.6.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "rollup": "^2.70.1",
     "rollup-plugin-postcss": "^4.0.2",
-    "wait-on": "^7.0.1",
-    "storybook": "^7.5.3"
+    "storybook": "^7.5.3",
+    "wait-on": "^7.0.1"
   },
   "resolutions": {
     "@types/react": "^18",
@@ -95,6 +101,14 @@
     "dist/"
   ],
   "main": "public/electron.js",
+  "build": {
+    "appId": "com.biblica.clearaligner",
+    "productName": "ClearAligner",
+    "directories": {
+      "buildResources": "build/",
+      "app": "."
+    }
+  },
   "babel": {
     "sourceType": "unambiguous",
     "presets": [

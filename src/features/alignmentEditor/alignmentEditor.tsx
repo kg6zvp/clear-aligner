@@ -25,7 +25,7 @@ const getRefFromURL = (): BCVWP | null => {
   return null;
 };
 
-const defaultDocumentTitle = '🌲⬇️';
+const defaultDocumentTitle = 'ClearAligner';
 
 export const AlignmentEditor = () => {
   const layoutCtx = useContext(LayoutContext);
@@ -37,7 +37,7 @@ export const AlignmentEditor = () => {
   React.useEffect(() => {
     if (currentPosition) {
       layoutCtx.setWindowTitle(
-        `${defaultDocumentTitle} ${
+        `${defaultDocumentTitle}: ${
           currentPosition?.getBookInfo()?.EnglishBookName
         } ${currentPosition?.chapter}:${currentPosition?.verse}`
       );

@@ -1,14 +1,16 @@
 import {
   AppBar,
-  Checkbox,
   Drawer,
-  FormControlLabel,
+  FormControl,
   IconButton,
+  InputLabel,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  MenuItem,
+  Select,
   Toolbar,
   useMediaQuery,
 } from '@mui/material';
@@ -18,6 +20,9 @@ import Themed from './features/themed';
 import { Link, Outlet } from 'react-router-dom';
 import { AddLink, ManageSearch } from '@mui/icons-material';
 
+type THEME = 'night' | 'day';
+type THEME_PREFERENCE = THEME | 'auto';
+
 export interface LayoutContextProps {
   windowTitle: string;
   setWindowTitle: (title: string) => void;
@@ -25,16 +30,28 @@ export interface LayoutContextProps {
     React.SetStateAction<JSX.Element | string | null>
   >;
 }
+
 export const LayoutContext = createContext({} as LayoutContextProps);
 
 export const AppLayout = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-  const themeDefault = useMemo(
+  const themeDefault: THEME = useMemo(
     () => (prefersDarkMode ? 'night' : 'day'),
     [prefersDarkMode]
   );
 
-  const [theme, setTheme] = useState(themeDefault as 'night' | 'day');
+  const [preferredTheme, setPreferredTheme] = useState(
+    'auto' as THEME_PREFERENCE
+  );
+
+  const theme = useMemo(() => {
+    switch (preferredTheme) {
+      case 'auto':
+        return themeDefault;
+      default:
+        return preferredTheme;
+    }
+  }, [themeDefault, preferredTheme]);
 
   const [showMenu, setShowMenu] = useState(false);
   const [menuBarDelegate, setMenuBarDelegate] = useState(
@@ -96,17 +113,24 @@ export const AppLayout = () => {
             </nav>
             <br />
             <div id={'footer'} style={{ marginTop: 'auto' }}>
-              <FormControlLabel
-                label={'Dark Mode'}
-                control={
-                  <Checkbox
-                    checked={theme === 'night'}
-                    onChange={(e) =>
-                      setTheme(e.target.checked ? 'night' : 'day')
-                    }
-                  />
-                }
-              />
+              <FormControl fullWidth>
+                <InputLabel id={'theme-label'}>Theme</InputLabel>
+                <Select
+                  labelId={'theme-label'}
+                  id={'theme-select'}
+                  value={preferredTheme}
+                  label={'Theme'}
+                  onChange={({ target: { value } }) =>
+                    setPreferredTheme(value as THEME_PREFERENCE)
+                  }
+                >
+                  <MenuItem value={'auto' as THEME_PREFERENCE}>
+                    Follow System
+                  </MenuItem>
+                  <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
+                  <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </Drawer>
         </AppBar>
