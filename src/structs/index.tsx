@@ -61,7 +61,7 @@ export enum CorpusFileFormat {
 
 // An instance of alignment
 export interface Link {
-  _id?: string;
+  id?: string;
   sources: string[];
   targets: string[];
 }

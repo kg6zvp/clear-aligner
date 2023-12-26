@@ -1,13 +1,19 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { Corpus } from '../../structs';
+import { Alignment, Corpus, Link } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { PivotWord } from './structs';
+import { AlignedWord, PivotWord } from './structs';
 import { getAvailableCorpora } from '../../workbench/query';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { PivotWordTable } from './pivotWordTable';
+import { AlignedWordTable } from './alignedWordTable';
+import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
+import { useAppSelector } from '../../app';
+import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import findWord from '../../helpers/findWord';
+import _ from 'lodash';
 
 type WordSource = 'source' | 'target';
 
@@ -16,6 +22,20 @@ export const ConcordanceView = () => {
   const [loading, setLoading] = useState(true);
   const [sourceCorpus, setSourceCorpus] = useState(null as Corpus | null);
   const [targetCorpus, setTargetCorpus] = useState(null as Corpus | null);
+  const [selectedPivotWord, setSelectedPivotWord] = useState(
+    null as PivotWord | null
+  );
+  const [alignedWordSortData, setAlignedWordSortData] = useState({
+    field: 'frequency',
+    sort: 'desc',
+  } as GridSortItem | null);
+  const [selectedAlignedWord, setSelectedAlignedWord] = useState(
+    null as AlignedWord | null
+  );
+  const [alignmentSortData, setAlignmentSortData] = useState({
+    field: 'id',
+    sort: 'desc',
+  } as GridSortItem | null);
 
   useEffect(() => {
     if (!loading) {
@@ -70,22 +90,39 @@ export const ConcordanceView = () => {
     void loadCorpora();
   }, [setSourceCorpus, setTargetCorpus]);
 
+  const alignmentState = useAppSelector((state) => {
+    return state.alignment.present.alignments;
+  });
+
   useEffect(() => {
-    const loadCorpus = async (src: Corpus) => {
-      const wordsAndFrequencies = src?.words
+    const loadPivotWordData = async () => {
+      if (!sourceCorpus || !targetCorpus) {
+        return;
+      }
+
+      /**
+       * old code
+       */
+      const wordsAndFrequencies = (
+        wordSource === 'source' ? sourceCorpus : targetCorpus
+      )?.words
         .map((word) => word.text)
+        .filter((value) => !!value)
         .reduce((accumulator, currentValue) => {
-          if (!accumulator[currentValue]) {
-            accumulator[currentValue] = 0;
+          const key = currentValue.toLowerCase();
+          if (!accumulator[key]) {
+            accumulator[key] = 0;
           }
-          ++accumulator[currentValue];
+          ++accumulator[key];
           return accumulator;
         }, {} as { [key: string]: number });
 
       if (!wordsAndFrequencies)
         throw new Error('Could not load corpora, ', wordsAndFrequencies);
 
-      const pivotWords: PivotWord[] = Object.keys(wordsAndFrequencies)
+      const pivotWordsMap: { [text: string]: PivotWord } = Object.keys(
+        wordsAndFrequencies
+      )
         .map((key) => {
           if (!wordsAndFrequencies[key]) return null;
           return {
@@ -93,27 +130,154 @@ export const ConcordanceView = () => {
             frequency: wordsAndFrequencies[key],
           } as PivotWord;
         })
-        .filter((pivotWord): pivotWord is PivotWord => !!pivotWord);
+        .filter((pivotWord): pivotWord is PivotWord => !!pivotWord)
+        .reduce((accumulator, currentValue) => {
+          accumulator[currentValue.pivotWord] = currentValue;
+          return accumulator;
+        }, {} as { [key: string]: PivotWord });
 
-      setSrcPivotWords(pivotWords);
+      /**
+       * new code
+       */
+      const alignedWordsAndFrequencies = alignmentState
+        ?.map((alignmentData: Alignment) => {
+          if (alignmentData.source !== sourceCorpus.id) {
+            throw new Error(
+              `${alignmentData.source} is not equal to ${sourceCorpus.id}`
+            );
+          }
+          if (alignmentData.target !== targetCorpus.id) {
+            throw new Error(
+              `${alignmentData.target} is not equal to ${targetCorpus.id}`
+            );
+          }
+          const src = wordSource === 'source' ? sourceCorpus : targetCorpus;
+          return alignmentData.links.reduce((accumulator, singleAlignment) => {
+            const uniqueAlignedWords = _.uniqWith(
+              singleAlignment[wordSource === 'source' ? 'sources' : 'targets']
+                .map(parseFromString) // get references to all words on selected side of the alignment
+                .map((wordReference: BCVWP) => findWord([src], wordReference))
+                .filter((word) => !!word)
+                .map((word) => word!.text.toLowerCase()),
+              _.isEqual
+            );
 
+            const alignedWordsString = uniqueAlignedWords.sort().join(',');
+
+            if (!accumulator[alignedWordsString]) {
+              accumulator[alignedWordsString] = [];
+            }
+
+            accumulator[alignedWordsString].push(singleAlignment);
+            return accumulator;
+          }, {} as { [key: string]: Link[] });
+        })
+        ?.reduce((accumulator, linkMap) => {
+          Object.keys(linkMap)
+            .filter((key) => !!linkMap[key] && Array.isArray(linkMap[key]))
+            .forEach((key) => {
+              if (!accumulator[key]) {
+                accumulator[key] = linkMap[key];
+              } else {
+                linkMap[key].forEach((link) => accumulator[key].push(link));
+              }
+            });
+          return accumulator;
+        }, {} as { [key: string]: Link[] });
+
+      const sourceTextId = sourceCorpus.id;
+      const targetTextId = targetCorpus.id;
+
+      Object.keys(alignedWordsAndFrequencies)
+        .filter((key) => !!alignedWordsAndFrequencies[key])
+        .map((key: string): AlignedWord => {
+          const frequency = alignedWordsAndFrequencies[key].length;
+
+          const sourceAndTargetWords = alignedWordsAndFrequencies[key]
+            .map((value: Link) => {
+              const sourceWords = value.sources
+                .map(parseFromString)
+                .map((ref: BCVWP) => findWord([sourceCorpus], ref))
+                .map((word) => word?.text)
+                .filter((text) => !!text)
+                .map((text) => (text as string).toLowerCase());
+              const targetWords = value.targets
+                .map(parseFromString)
+                .map((ref: BCVWP) => findWord([targetCorpus], ref))
+                .map((word) => word?.text)
+                .filter((text) => !!text)
+                .map((text) => (text as string).toLowerCase());
+              return {
+                sourceWords,
+                targetWords,
+              } as {
+                sourceWords: string[];
+                targetWords: string[];
+              };
+            })
+            .reduce(
+              (accumulator, currentValue) => {
+                currentValue.sourceWords.forEach((current) =>
+                  accumulator.sourceWords.push(current)
+                );
+                currentValue.targetWords.forEach((current) =>
+                  accumulator.targetWords.push(current)
+                );
+                return accumulator;
+              },
+              { sourceWords: [], targetWords: [] }
+            );
+
+          return {
+            id: key,
+            frequency,
+            sourceTextId,
+            targetTextId,
+            sourceWordTexts: _.uniqWith(
+              sourceAndTargetWords.sourceWords,
+              _.isEqual
+            ),
+            targetWordTexts: _.uniqWith(
+              sourceAndTargetWords.targetWords,
+              _.isEqual
+            ),
+            alignments: alignedWordsAndFrequencies[key],
+          };
+        })
+        .forEach((alignedWord: AlignedWord) => {
+          (wordSource === 'source'
+            ? alignedWord.sourceWordTexts
+            : alignedWord.targetWordTexts
+          ).forEach((wordText: string) => {
+            if (!pivotWordsMap[wordText]) {
+              return;
+            }
+            if (!pivotWordsMap[wordText].alignedWords) {
+              pivotWordsMap[wordText].alignedWords = [];
+            }
+            pivotWordsMap[wordText].alignedWords!.push(alignedWord);
+          });
+        });
+
+      setSrcPivotWords(Object.values(pivotWordsMap));
       setLoading(false);
     };
 
-    setLoading(true);
-    switch (wordSource) {
-      case 'source':
-        if (sourceCorpus) {
-          void loadCorpus(sourceCorpus);
-        }
-        break;
-      case 'target':
-        if (targetCorpus) {
-          void loadCorpus(targetCorpus);
-        }
-        break;
+    if (!alignmentState || alignmentState.length < 1) {
+      return;
     }
-  }, [sourceCorpus, targetCorpus, wordSource, setSrcPivotWords, setLoading]);
+    if (sourceCorpus && targetCorpus && wordSource) {
+      setLoading(true);
+      void loadPivotWordData();
+    }
+  }, [
+    alignmentState,
+    wordSource,
+    sourceCorpus,
+    targetCorpus,
+    setLoading,
+    setSrcPivotWords,
+  ]);
 
   useEffect(() => {
     const performSort = async (srcPivotWords: PivotWord[]) => {
@@ -186,7 +350,7 @@ export const ConcordanceView = () => {
       <Box
         sx={{
           flex: 1,
-          display: 'grid',
+          display: 'flex',
           gridGap: '.5em',
           gridTemplateColumns: 'repeat(18, 1fr)',
           width: '100vw !important',
@@ -234,8 +398,77 @@ export const ConcordanceView = () => {
               loading={pivotWordsLoading}
               sort={pivotWordSortData}
               pivotWords={pivotWords}
-              onChooseWord={(word) => console.log(word)}
+              onChooseWord={(word) =>
+                setSelectedPivotWord(
+                  word.alignedWords && word.alignedWords.length > 0
+                    ? word
+                    : null
+                )
+              }
               onChangeSort={setPivotWordSortData}
+            />
+          </Paper>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexFlow: 'column',
+            gridColumn: '1/span 4',
+            width: '100%',
+            gap: '1em',
+            margin: '2em',
+            marginTop: '1em',
+          }}
+        >
+          <Paper
+            sx={{
+              display: 'flex',
+              width: '100%',
+              height: 'calc(100vh - 64px - 7em)',
+              '.MuiTableContainer-root::-webkit-scrollbar': {
+                width: 0,
+              },
+            }}
+          >
+            <AlignedWordTable
+              sort={alignedWordSortData}
+              alignedWords={selectedPivotWord?.alignedWords ?? []}
+              onChooseAlignedWord={(alignedWord) =>
+                setSelectedAlignedWord(
+                  alignedWord.alignments && alignedWord.alignments.length > 0
+                    ? alignedWord
+                    : null
+                )
+              }
+              onChangeSort={setAlignedWordSortData}
+            />
+          </Paper>
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexFlow: 'column',
+            gridColumn: '1/span 4',
+            width: '100%',
+            gap: '1em',
+            margin: '2em',
+            marginTop: '1em',
+          }}
+        >
+          <Paper
+            sx={{
+              display: 'flex',
+              width: '100%',
+              height: 'calc(100vh - 64px - 7em)',
+              '.MuiTableContainer-root::-webkit-scrollbar': {
+                width: 0,
+              },
+            }}
+          >
+            <AlignmentTable
+              sort={alignmentSortData}
+              alignments={selectedAlignedWord?.alignments ?? []}
+              onChangeSort={setAlignmentSortData}
             />
           </Paper>
         </Box>

@@ -7,6 +7,7 @@ import { Corpus, SyntaxNode, TreedownType, Word } from 'structs';
 import TextSegment from 'features/textSegment';
 import { findWordById } from 'helpers/findWord';
 import './styles.css';
+import { parseFromString } from '../bcvwp/BCVWPSupport';
 
 interface TreedownProps {
   corpus: Corpus;
@@ -42,7 +43,10 @@ const renderMappedTextSegment = (syntaxNode: SyntaxNode, corpus: Corpus) => {
         <TextSegment
           corpus={corpus}
           key={alignedWordId}
-          word={findWordById([corpus], alignedWordId) ?? ({} as Word)}
+          word={
+            findWordById([corpus], parseFromString(alignedWordId)) ??
+            ({} as Word)
+          }
         />
       );
     });

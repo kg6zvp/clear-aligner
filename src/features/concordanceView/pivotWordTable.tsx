@@ -7,7 +7,12 @@ import {
 import React, { useMemo } from 'react';
 import { PivotWord } from './structs';
 import { Box } from '@mui/system';
-import { DataGrid, GridColDef, GridSortItem } from '@mui/x-data-grid';
+import {
+  DataGrid,
+  GridColDef,
+  GridRowParams,
+  GridSortItem,
+} from '@mui/x-data-grid';
 
 const columns: GridColDef[] = [
   {
@@ -108,7 +113,14 @@ export const PivotWordTable = ({
           },
         }}
         pageSizeOptions={[20, 50]}
-        onRowClick={(row) => onChooseWord(rows[row.id])}
+        onRowClick={(row: GridRowParams<PivotWord>) =>
+          onChooseWord(rows[row.id])
+        }
+        isRowSelectable={({
+          row: { alignedWords },
+        }: GridRowParams<PivotWord>) =>
+          !!alignedWords && (alignedWords?.length || 0) > 0
+        }
       />
     </TableContainer>
   );

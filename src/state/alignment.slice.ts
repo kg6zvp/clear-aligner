@@ -159,7 +159,7 @@ const alignmentSlice = createSlice({
           links: alignment.links.map((link, index) => {
             return {
               ...link,
-              _id: `${alignment.source}-${alignment.target}-${index}`,
+              id: `${alignment.source}-${alignment.target}-${index}`,
             };
           }),
         };
@@ -167,7 +167,7 @@ const alignmentSlice = createSlice({
     },
 
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
-      if (state.inProgressLink?._id === '?') {
+      if (state.inProgressLink?.id === '?') {
         // There is a partial in-progress link.
         if (state.inProgressLink.source === action.payload.corpusId) {
           state.inProgressLink.source = action.payload.corpusId;
@@ -196,7 +196,7 @@ const alignmentSlice = createSlice({
               )}`
             );
           }
-          state.inProgressLink._id = createNextLinkId(relatedAlignment);
+          state.inProgressLink.id = createNextLinkId(relatedAlignment);
         } else if (
           state.inProgressLink.sources.length === 0 ||
           state.inProgressLink.targets.length === 0
@@ -247,7 +247,7 @@ const alignmentSlice = createSlice({
         // No in progress link.
         // Either create, or load existing link to edit.
         const newInProgressLink = {
-          _id: '?',
+          id: '?',
           source: '?',
           target: '?',
           sources: [] as string[],
@@ -283,7 +283,7 @@ const alignmentSlice = createSlice({
           if (existingLink) {
             // Load the existing link
             state.inProgressLink = {
-              _id: existingLink._id,
+              id: existingLink.id,
               source: alignment.source,
               target: alignment.target,
               sources: existingLink.sources,
@@ -296,7 +296,7 @@ const alignmentSlice = createSlice({
           if (!existingLink) {
             // Initialize partial edit mode.
 
-            newInProgressLink._id = createNextLinkId(alignment);
+            newInProgressLink.id = createNextLinkId(alignment);
             newInProgressLink.source = alignment.source;
             newInProgressLink.target = alignment.target;
 
@@ -349,7 +349,7 @@ const alignmentSlice = createSlice({
 
         let updated = false;
         for (const link of alignment.links) {
-          if (link._id === state.inProgressLink._id) {
+          if (link.id === state.inProgressLink.id) {
             link.sources = state.inProgressLink.sources;
             link.targets = state.inProgressLink.targets;
             updated = true;
@@ -358,7 +358,7 @@ const alignmentSlice = createSlice({
 
         if (!updated) {
           alignment.links.push({
-            _id: state.inProgressLink._id,
+            id: state.inProgressLink.id,
             sources: state.inProgressLink.sources,
             targets: state.inProgressLink.targets,
           });
@@ -386,7 +386,7 @@ const alignmentSlice = createSlice({
           const linkToDeleteIndex = state.alignments[
             alignmentIndex
           ].links.findIndex((link: Link) => {
-            return link._id === inProgressLink._id;
+            return link.id === inProgressLink.id;
           });
 
           if (Number.isFinite(linkToDeleteIndex)) {
