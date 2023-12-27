@@ -16,6 +16,7 @@ import findWord from '../../helpers/findWord';
 import _ from 'lodash';
 
 type WordSource = 'source' | 'target';
+type WordFilter = 'aligned'|'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
@@ -38,6 +39,10 @@ export const ConcordanceView = () => {
   } as GridSortItem | null);
 
   useEffect(() => {
+    setSelectedAlignedWord(null);
+  }, [selectedPivotWord, setSelectedAlignedWord]);
+
+  useEffect(() => {
     if (!loading) {
       layoutCtx.setMenuBarDelegate(
         <Typography sx={{ textAlign: 'center', translate: '-20px' }}>
@@ -54,6 +59,7 @@ export const ConcordanceView = () => {
     null as Promise<PivotWord[]> | null
   );
   const [wordSource, setWordSource] = useState('target' as WordSource);
+  const [wordFilter, setWordFilter] = useState('all' as WordFilter);
   const [srcPivotWords, setSrcPivotWords] = useState([] as PivotWord[]);
   const [pivotWords, setPivotWords] = useState([] as PivotWord[]);
   const [pivotWordSortData, setPivotWordSortData] = useState({
@@ -97,13 +103,11 @@ export const ConcordanceView = () => {
   useEffect(() => {
     const loadPivotWordData = async () => {
       if (!sourceCorpus || !targetCorpus) {
+        setLoading(false);
         return;
       }
 
-      /**
-       * old code
-       */
-      const wordsAndFrequencies = (
+      const allWordsAndFrequencies = (
         wordSource === 'source' ? sourceCorpus : targetCorpus
       )?.words
         .map((word) => word.text)
@@ -117,17 +121,20 @@ export const ConcordanceView = () => {
           return accumulator;
         }, {} as { [key: string]: number });
 
-      if (!wordsAndFrequencies)
-        throw new Error('Could not load corpora, ', wordsAndFrequencies);
+      if (!allWordsAndFrequencies) {
+        setLoading(false);
+        return;
+        //throw new Error('Could not load corpora, ', allWordsAndFrequencies);
+      }
 
       const pivotWordsMap: { [text: string]: PivotWord } = Object.keys(
-        wordsAndFrequencies
+        allWordsAndFrequencies
       )
         .map((key) => {
-          if (!wordsAndFrequencies[key]) return null;
+          if (!allWordsAndFrequencies[key]) return null;
           return {
             pivotWord: key,
-            frequency: wordsAndFrequencies[key],
+            frequency: allWordsAndFrequencies[key],
           } as PivotWord;
         })
         .filter((pivotWord): pivotWord is PivotWord => !!pivotWord)
@@ -136,9 +143,6 @@ export const ConcordanceView = () => {
           return accumulator;
         }, {} as { [key: string]: PivotWord });
 
-      /**
-       * new code
-       */
       const alignedWordsAndFrequencies = alignmentState
         ?.map((alignmentData: Alignment) => {
           if (alignmentData.source !== sourceCorpus.id) {
@@ -264,6 +268,7 @@ export const ConcordanceView = () => {
     };
 
     if (!alignmentState || alignmentState.length < 1) {
+      setLoading(false);
       return;
     }
     if (sourceCorpus && targetCorpus && wordSource) {
@@ -363,7 +368,9 @@ export const ConcordanceView = () => {
           sx={{
             display: 'flex',
             flexFlow: 'column',
-            gridColumn: '1/span 4',
+            flexGrow: '0',
+            flexShrink: '1',
+            gridColumn: '1',
             width: '100%',
             gap: '1em',
             margin: '2em',
@@ -384,11 +391,25 @@ export const ConcordanceView = () => {
             ]}
             onSelect={(value) => setWordSource(value as WordSource)}
           />
+          <SingleSelectButtonGroup
+            value={wordFilter}
+            items={[
+              {
+                value: 'aligned',
+                label: 'Aligned Words',
+              },
+              {
+                value: 'all',
+                label: 'All words',
+              },
+            ]}
+            onSelect={(value) => setWordFilter(value as WordFilter)}
+          />
           <Paper
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 10.5em)',
+              height: 'calc(100vh - 64px - 14em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0,
               },
@@ -397,7 +418,7 @@ export const ConcordanceView = () => {
             <PivotWordTable
               loading={pivotWordsLoading}
               sort={pivotWordSortData}
-              pivotWords={pivotWords}
+              pivotWords={wordFilter === 'all' ? pivotWords : pivotWords.filter(w => w.alignedWords)}
               onChooseWord={(word) =>
                 setSelectedPivotWord(
                   word.alignedWords && word.alignedWords.length > 0
@@ -409,11 +430,15 @@ export const ConcordanceView = () => {
             />
           </Paper>
         </Box>
+        {/**
+         * Aligned Words
+         */}
         <Box
           sx={{
             display: 'flex',
             flexFlow: 'column',
-            gridColumn: '1/span 4',
+            flexShrink: '1',
+            gridColumn: '1',
             width: '100%',
             gap: '1em',
             margin: '2em',
@@ -424,7 +449,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 7em)',
+              height: 'calc(100vh - 64px - 7.5em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0,
               },
@@ -444,11 +469,15 @@ export const ConcordanceView = () => {
             />
           </Paper>
         </Box>
+        {/**
+         * Alignment Links
+         */}
         <Box
           sx={{
             display: 'flex',
             flexFlow: 'column',
-            gridColumn: '1/span 4',
+            flexShrink: '1',
+            gridColumn: '1',
             width: '100%',
             gap: '1em',
             margin: '2em',
@@ -459,7 +488,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 7em)',
+              height: 'calc(100vh - 64px - 7.5em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0,
               },
