@@ -40,12 +40,19 @@ export interface Verse {
   words: Word[];
 }
 
+export type TextDirection = 'ltr'|'rtl';
+
+export interface LanguageInfo {
+  code: string;
+  textDirection: TextDirection;
+}
+
 // A body of text.
 export interface Corpus {
   id: string;
   name: string;
   fullName: string;
-  language: string;
+  language: LanguageInfo;
   primaryVerse: BCVWP | null;
   words: Word[];
   wordsByVerse: Record<string, Verse>;

@@ -132,7 +132,10 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       id: 'sbl-gnt',
       name: 'SBL GNT',
       fullName: 'SBL Greek New Testament',
-      language: 'grc',
+      language: {
+        code: 'grc',
+        textDirection: 'ltr'
+      },
       words: [],
       primaryVerse: null,
       wordsByVerse: {},
@@ -153,7 +156,10 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       id: 'na27-YLT',
       name: 'YLT',
       fullName: "Young's Literal Translation text",
-      language: 'eng',
+      language: {
+        code: 'eng',
+        textDirection: 'ltr'
+      },
       words: [],
       primaryVerse: null,
       wordsByVerse: {},

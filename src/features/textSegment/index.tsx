@@ -11,7 +11,6 @@ import './textSegment.style.css';
 
 export interface TextSegmentProps {
   readonly?: boolean;
-  corpus?: Corpus;
   word: Word;
 }
 
@@ -69,7 +68,6 @@ const computeDecoration = (
 
 export const TextSegment = ({
   readonly,
-  corpus,
   word,
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
@@ -120,7 +118,6 @@ export const TextSegment = ({
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
       return (
-        //corpus.id === word.corpusId &&
         state.alignment.present.inProgressLink?.sources.includes(word.id) ||
         state.alignment.present.inProgressLink?.targets.includes(word.id)
       );

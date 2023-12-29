@@ -41,7 +41,6 @@ const renderMappedTextSegment = (syntaxNode: SyntaxNode, corpus: Corpus) => {
     return syntaxNode.content.alignedWordIds.map((alignedWordId) => {
       return (
         <TextSegment
-          corpus={corpus}
           key={alignedWordId}
           word={
             findWordById([corpus], BCVWP.parseFromString(alignedWordId)) ??
@@ -197,7 +196,6 @@ const recurseSyntax = (
 
                 {treedownType === TreedownType.Source && (
                   <TextSegment
-                    corpus={corpus}
                     word={{
                       id: syntaxNode.content.n,
                       corpusId: corpus.id,
@@ -237,7 +235,6 @@ const recurseSyntax = (
       }
       return (
         <TextSegment
-          corpus={corpus}
           word={{
             id: syntaxNode.content.n,
             corpusId: corpus.id,

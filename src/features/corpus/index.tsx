@@ -9,10 +9,10 @@ import React, {
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove, Settings } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import TextSegment from 'features/textSegment';
 import CorpusSettings from 'features/corpusSettings';
-import { Corpus, Verse, Word } from 'structs';
+import { Corpus, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import {VerseDisplay} from "./verseDisplay";
 
 export interface CorpusProps {
   corpus: Corpus;
@@ -40,23 +40,7 @@ const determineCorpusView = (
           </Typography>
         </Grid>
         <Grid item xs={11}>
-          <Typography
-            style={{
-              paddingBottom: '0.5rem',
-              paddingLeft: '0.7rem',
-              paddingRight: '0.7rem',
-            }}
-          >
-            {(verse.words || []).map(
-              (word: Word): ReactElement => (
-                <TextSegment
-                  corpus={corpus}
-                  key={`${corpus.id}/${word.id}`}
-                  word={word}
-                />
-              )
-            )}
-          </Typography>
+          <VerseDisplay languageInfo={corpus.language} verse={verse} />
         </Grid>
       </Grid>
     );
@@ -186,7 +170,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
               <>
                 <Typography variant="h6">{corpus.fullName}</Typography>
                 <Typography>{corpus.name}</Typography>
-                <Typography>Language: {corpus.language}</Typography>
+                <Typography>Language: {corpus.language.code}</Typography>
               </>
             }
           >
