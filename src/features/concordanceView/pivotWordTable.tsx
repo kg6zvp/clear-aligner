@@ -13,6 +13,7 @@ import {
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
+import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
 
 const columns: GridColDef[] = [
   {
@@ -89,9 +90,8 @@ export const PivotWordTable = ({
       <DataGrid
         sx={{
           width: '100%',
-          '.MuiTablePagination-root::-webkit-scrollbar': {
-            width: 0,
-          },
+          ...DataGridScrollbarDisplayFix,
+          ...DataGridResizeAnimationFixes,
         }}
         rowSelection={true}
         rowSelectionModel={

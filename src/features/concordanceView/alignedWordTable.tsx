@@ -7,6 +7,7 @@ import {
 import { AlignedWord } from './structs';
 import { TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
+import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
 
 const columns: GridColDef[] = [
   {
@@ -74,9 +75,8 @@ export const AlignedWordTable = ({
       <DataGrid
         sx={{
           width: '100%',
-          '.MuiTablePagination-root::-webkit-scrollbar': {
-            width: 0,
-          },
+          ...DataGridScrollbarDisplayFix,
+          ...DataGridResizeAnimationFixes,
         }}
         rowSelection={true}
         rowSelectionModel={

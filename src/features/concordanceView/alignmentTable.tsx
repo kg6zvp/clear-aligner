@@ -18,6 +18,7 @@ import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import findWord from '../../helpers/findWord';
+import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
 
 export interface AlignmentTableContextProps {
   wordSource: WordSource;
@@ -186,9 +187,8 @@ export const AlignmentTable = ({
         <DataGrid
           sx={{
             width: '100%',
-            '.MuiTablePagination-root::-webkit-scrollbar': {
-              width: 0,
-            },
+            ...DataGridScrollbarDisplayFix,
+            ...DataGridResizeAnimationFixes,
           }}
           rowSelection={true}
           rowSelectionModel={
