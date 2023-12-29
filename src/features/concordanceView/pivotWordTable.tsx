@@ -50,7 +50,7 @@ export interface PivotWordTableProps {
   loading?: boolean;
   sort: GridSortItem | null;
   pivotWords: PivotWord[];
-  chosenWord?: PivotWord;
+  chosenWord?: PivotWord | null;
   onChooseWord: (word: PivotWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
 }
@@ -63,14 +63,12 @@ export const PivotWordTable = ({
   chosenWord,
   onChooseWord,
 }: PivotWordTableProps) => {
-  const rows = useMemo(
-    () =>
-      pivotWords.reduce((pivotWordObj, currentValue) => {
-        pivotWordObj[currentValue.pivotWord] = currentValue;
-        return pivotWordObj;
-      }, {} as { [key: string]: PivotWord }),
-    [pivotWords]
-  );
+  const initialPage = useMemo(() => {
+    if (chosenWord && pivotWords) {
+      return pivotWords.indexOf(chosenWord) / 20;
+    }
+    return 0;
+  }, [chosenWord, pivotWords]);
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
@@ -96,7 +94,9 @@ export const PivotWordTable = ({
           },
         }}
         rowSelection={true}
-        rowSelectionModel={chosenWord?.pivotWord}
+        rowSelectionModel={
+          chosenWord?.pivotWord ? [chosenWord.pivotWord] : undefined
+        }
         rows={pivotWords}
         columns={columns}
         getRowId={(row) => row.pivotWord}
@@ -109,13 +109,16 @@ export const PivotWordTable = ({
         }}
         initialState={{
           pagination: {
-            paginationModel: { page: 0, pageSize: 20 },
+            paginationModel: { page: initialPage, pageSize: 20 },
           },
         }}
+        pagination={true}
         pageSizeOptions={[20, 50]}
-        onRowClick={(row: GridRowParams<PivotWord>) =>
-          onChooseWord(rows[row.id])
-        }
+        onRowClick={(clickEvent: GridRowParams<PivotWord>) => {
+          if (onChooseWord) {
+            onChooseWord(clickEvent.row);
+          }
+        }}
         isRowSelectable={({
           row: { alignedWords },
         }: GridRowParams<PivotWord>) =>

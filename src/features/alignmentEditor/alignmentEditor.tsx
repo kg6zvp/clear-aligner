@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { Corpus, Word } from '../../structs';
 import {
@@ -10,6 +10,7 @@ import {
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
+import { useSearchParams } from 'react-router-dom';
 
 const getRefParam = (): string | null => {
   const params = new URLSearchParams(window.location.search);
@@ -20,7 +21,7 @@ const getRefFromURL = (): BCVWP | null => {
   const refParam = getRefParam();
 
   if (refParam) {
-    return parseFromString(refParam);
+    return BCVWP.parseFromString(refParam);
   }
   return null;
 };
@@ -32,7 +33,9 @@ export const AlignmentEditor = () => {
   const [availableWords, setAvailableWords] = useState([] as Word[]);
   const [selectedCorpora, setSelectedCorpora] = useState([] as Corpus[]);
 
-  const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
+  const [currentPosition, setCurrentPosition] = useState(
+    getRefFromURL() ?? (new BCVWP(45, 5, 3) as BCVWP | null)
+  );
 
   React.useEffect(() => {
     if (currentPosition) {
@@ -50,7 +53,6 @@ export const AlignmentEditor = () => {
     const loadSourceWords = async () => {
       const corpora = await getAvailableCorpora();
       const corpus = corpora.find((v: Corpus) => v.id === 'sbl-gnt');
-      const currentPosition = new BCVWP(45, 5, 3);
 
       const retrievedCorpora: Corpus[] = [];
 
@@ -61,11 +63,15 @@ export const AlignmentEditor = () => {
 
       setSelectedCorpora(retrievedCorpora);
       setAvailableWords(corpus?.words ?? []);
-      setCurrentPosition(currentPosition);
     };
 
     loadSourceWords().catch(console.error);
-  }, [setAvailableWords, setCurrentPosition, setSelectedCorpora]);
+  }, [
+    setAvailableWords,
+    setCurrentPosition,
+    setSelectedCorpora,
+    currentPosition,
+  ]);
 
   React.useEffect(() => {
     if (!currentPosition) {
@@ -90,6 +96,17 @@ export const AlignmentEditor = () => {
       <BCVDisplay currentPosition={currentPosition} />
     );
   }, [layoutCtx, currentPosition]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.has('ref')) {
+      const newPosition = BCVWP.parseFromString(searchParams.get('ref')!);
+      setCurrentPosition(newPosition);
+      searchParams.delete('ref');
+    }
+    setSearchParams(searchParams);
+  }, [searchParams, setCurrentPosition, setSearchParams]);
 
   return (
     <>

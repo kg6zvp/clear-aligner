@@ -58,6 +58,9 @@ const parseTsvByFileType = async (
 
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['identifier']];
+        if (!BCVWP.isValidString(id)) {
+          return accumulator;
+        }
         pos = +id.substring(8, 11); // grab word position
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -69,7 +72,7 @@ const parseTsvByFileType = async (
         verse = wordsByVerse[id.substring(0, 8)] || {};
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
-          bcvId: id.substring(0, 8),
+          bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
         };
@@ -92,7 +95,7 @@ const parseTsvByFileType = async (
         verse = wordsByVerse[id.substring(0, 8)] || {};
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
-          bcvId: id.substring(0, 8),
+          bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
         };
@@ -102,7 +105,6 @@ const parseTsvByFileType = async (
 
     return accumulator;
   }, [] as Word[]);
-
   return {
     words: reducedWords,
     wordsByVerse: wordsByVerse,

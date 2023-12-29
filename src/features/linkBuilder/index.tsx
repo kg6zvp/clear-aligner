@@ -7,7 +7,7 @@ import { Corpus, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
-import { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface LinkBuilderProps {
   corpora: Corpus[];
@@ -24,12 +24,14 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     if (inProgressLink) {
       const sourceWords: Word[] = inProgressLink.sources
         .map((sourceId) => {
-          return findWordById(corpora, parseFromString(sourceId));
+          return findWordById(corpora, BCVWP.parseFromString(sourceId));
         })
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
-        .map((targetId) => findWordById(corpora, parseFromString(targetId)))
+        .map((targetId) =>
+          findWordById(corpora, BCVWP.parseFromString(targetId))
+        )
         .filter((x): x is Word => x !== null);
 
       return {

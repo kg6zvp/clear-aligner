@@ -38,7 +38,7 @@ const columnsWithGloss: GridColDef[] = [
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
   alignedWords: AlignedWord[];
-  chosenAlignedWord?: AlignedWord;
+  chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
 }
@@ -50,18 +50,16 @@ export const AlignedWordTable = ({
   onChooseAlignedWord,
   onChangeSort,
 }: AlignedWordTableProps) => {
-  const rows = useMemo(
-    () =>
-      alignedWords.reduce((accumulator, row) => {
-        accumulator[row.id] = row;
-        return accumulator;
-      }, {} as { [key: string]: AlignedWord }),
+  const hasGlossData = useMemo(
+    () => alignedWords.some((alignedWord: AlignedWord) => !!alignedWord.gloss),
     [alignedWords]
   );
-
-  const hasGlossData = alignedWords.some(
-    (alignedWord: AlignedWord) => !!alignedWord.gloss
-  );
+  const initialPage = useMemo(() => {
+    if (chosenAlignedWord && alignedWords) {
+      return alignedWords.indexOf(chosenAlignedWord) / 20;
+    }
+    return 0;
+  }, [chosenAlignedWord, alignedWords]);
 
   return (
     <TableContainer
@@ -81,7 +79,9 @@ export const AlignedWordTable = ({
           },
         }}
         rowSelection={true}
-        rowSelectionModel={chosenAlignedWord?.id}
+        rowSelectionModel={
+          chosenAlignedWord?.id ? [chosenAlignedWord.id] : undefined
+        }
         rows={alignedWords}
         columns={hasGlossData ? columnsWithGloss : columns}
         getRowId={(row) => row.id}
@@ -94,14 +94,15 @@ export const AlignedWordTable = ({
         }}
         initialState={{
           pagination: {
-            paginationModel: { page: 0, pageSize: 20 },
+            paginationModel: { page: initialPage, pageSize: 20 },
           },
         }}
         pageSizeOptions={[20, 50]}
-        onRowClick={(row: GridRowParams<AlignedWord>) =>
-          onChooseAlignedWord(rows[row.id])
-        }
-        //onRowSelectionModelChange={(rowSelectionModel, details) => { }}
+        onRowClick={(clickEvent: GridRowParams<AlignedWord>) => {
+          if (onChooseAlignedWord) {
+            onChooseAlignedWord(clickEvent.row);
+          }
+        }}
         isRowSelectable={({
           row: { alignments },
         }: GridRowParams<AlignedWord>) =>

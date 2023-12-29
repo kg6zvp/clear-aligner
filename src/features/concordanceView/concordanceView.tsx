@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { Alignment, Corpus, Link } from '../../structs';
+import { Alignment, Corpus, DisplayableLink, Link } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
@@ -11,12 +11,13 @@ import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useAppSelector } from '../../app';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import findWord from '../../helpers/findWord';
 import _ from 'lodash';
+import { useSearchParams } from 'react-router-dom';
 
-type WordSource = 'source' | 'target';
-type WordFilter = 'aligned'|'all';
+export type WordSource = 'source' | 'target';
+export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
@@ -37,10 +38,24 @@ export const ConcordanceView = () => {
     field: 'id',
     sort: 'desc',
   } as GridSortItem | null);
+  const [selectedAlignmentLink, setSelectedAlignmentLink] = useState(
+    null as Link | null
+  );
 
-  useEffect(() => {
-    setSelectedAlignedWord(null);
-  }, [selectedPivotWord, setSelectedAlignedWord]);
+  const handleUpdateSelectedAlignedWord = useMemo(
+    () => (alignedWord: AlignedWord | null) => {
+      setSelectedAlignedWord(alignedWord);
+      setSelectedAlignmentLink(null);
+    },
+    [setSelectedAlignedWord, setSelectedAlignmentLink]
+  );
+  const handleUpdateSelectedPivotWord = useMemo(
+    () => (pivotWord: PivotWord | null) => {
+      setSelectedPivotWord(pivotWord);
+      handleUpdateSelectedAlignedWord(null);
+    },
+    [setSelectedPivotWord, handleUpdateSelectedAlignedWord]
+  );
 
   useEffect(() => {
     if (!loading) {
@@ -100,6 +115,9 @@ export const ConcordanceView = () => {
     return state.alignment.present.alignments;
   });
 
+  /**
+   * create navigable tree structure of pivot words with alignment links as the leaf nodes
+   */
   useEffect(() => {
     const loadPivotWordData = async () => {
       if (!sourceCorpus || !targetCorpus) {
@@ -159,7 +177,7 @@ export const ConcordanceView = () => {
           return alignmentData.links.reduce((accumulator, singleAlignment) => {
             const uniqueAlignedWords = _.uniqWith(
               singleAlignment[wordSource === 'source' ? 'sources' : 'targets']
-                .map(parseFromString) // get references to all words on selected side of the alignment
+                .map(BCVWP.parseFromString) // get references to all words on selected side of the alignment
                 .map((wordReference: BCVWP) => findWord([src], wordReference))
                 .filter((word) => !!word)
                 .map((word) => word!.text.toLowerCase()),
@@ -200,13 +218,13 @@ export const ConcordanceView = () => {
           const sourceAndTargetWords = alignedWordsAndFrequencies[key]
             .map((value: Link) => {
               const sourceWords = value.sources
-                .map(parseFromString)
+                .map(BCVWP.parseFromString)
                 .map((ref: BCVWP) => findWord([sourceCorpus], ref))
                 .map((word) => word?.text)
                 .filter((text) => !!text)
                 .map((text) => (text as string).toLowerCase());
               const targetWords = value.targets
-                .map(parseFromString)
+                .map(BCVWP.parseFromString)
                 .map((ref: BCVWP) => findWord([targetCorpus], ref))
                 .map((word) => word?.text)
                 .filter((text) => !!text)
@@ -240,11 +258,11 @@ export const ConcordanceView = () => {
             sourceWordTexts: _.uniqWith(
               sourceAndTargetWords.sourceWords,
               _.isEqual
-            ),
+            ).sort(),
             targetWordTexts: _.uniqWith(
               sourceAndTargetWords.targetWords,
               _.isEqual
-            ),
+            ).sort(),
             alignments: alignedWordsAndFrequencies[key],
           };
         })
@@ -282,6 +300,63 @@ export const ConcordanceView = () => {
     targetCorpus,
     setLoading,
     setSrcPivotWords,
+  ]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (loading || !srcPivotWords || srcPivotWords.length < 1) {
+      return;
+    }
+    if (searchParams.has('pivotWord')) {
+      const pivotWordId = searchParams.get('pivotWord')!;
+      const pivotWord = srcPivotWords.find(
+        (pivotWord) => pivotWord.pivotWord === pivotWordId
+      );
+
+      if (pivotWord) {
+        setSelectedPivotWord(pivotWord);
+      }
+      if (searchParams.has('alignedWord') && (pivotWord || selectedPivotWord)) {
+        const alignedWordId = searchParams.get('alignedWord')!;
+        const alignedWord = (pivotWord ??
+          selectedPivotWord)!.alignedWords?.find(
+          (alignedWord) => alignedWord.id === alignedWordId
+        );
+
+        if (alignedWord) {
+          setSelectedAlignedWord(alignedWord);
+        }
+        if (
+          searchParams.has('alignmentLink') &&
+          (alignedWord || selectedAlignedWord)
+        ) {
+          const alignmentLinkId = searchParams.get('alignmentLink');
+          const alignmentLink = (
+            alignedWord ?? selectedAlignedWord
+          )?.alignments?.find((link) => link.id === alignmentLinkId);
+
+          if (alignmentLink) {
+            setSelectedAlignmentLink(alignmentLink);
+          }
+          searchParams.delete('alignmentLink');
+        }
+        searchParams.delete('alignedWord');
+      }
+      searchParams.delete('pivotWord');
+    }
+    setSearchParams(searchParams);
+  }, [
+    loading,
+    srcPivotWords,
+    searchParams,
+    setSearchParams,
+    setSelectedPivotWord,
+    selectedPivotWord,
+    setSelectedAlignedWord,
+    selectedAlignedWord,
+    setSelectedAlignmentLink,
+    selectedAlignmentLink,
   ]);
 
   useEffect(() => {
@@ -396,11 +471,11 @@ export const ConcordanceView = () => {
             items={[
               {
                 value: 'aligned',
-                label: 'Aligned Words',
+                label: 'Aligned',
               },
               {
                 value: 'all',
-                label: 'All words',
+                label: 'All',
               },
             ]}
             onSelect={(value) => setWordFilter(value as WordFilter)}
@@ -418,9 +493,14 @@ export const ConcordanceView = () => {
             <PivotWordTable
               loading={pivotWordsLoading}
               sort={pivotWordSortData}
-              pivotWords={wordFilter === 'all' ? pivotWords : pivotWords.filter(w => w.alignedWords)}
+              pivotWords={
+                wordFilter === 'all'
+                  ? pivotWords
+                  : pivotWords.filter((w) => w.alignedWords)
+              }
+              chosenWord={selectedPivotWord}
               onChooseWord={(word) =>
-                setSelectedPivotWord(
+                handleUpdateSelectedPivotWord(
                   word.alignedWords && word.alignedWords.length > 0
                     ? word
                     : null
@@ -458,8 +538,9 @@ export const ConcordanceView = () => {
             <AlignedWordTable
               sort={alignedWordSortData}
               alignedWords={selectedPivotWord?.alignedWords ?? []}
+              chosenAlignedWord={selectedAlignedWord}
               onChooseAlignedWord={(alignedWord) =>
-                setSelectedAlignedWord(
+                handleUpdateSelectedAlignedWord(
                   alignedWord.alignments && alignedWord.alignments.length > 0
                     ? alignedWord
                     : null
@@ -496,8 +577,17 @@ export const ConcordanceView = () => {
           >
             <AlignmentTable
               sort={alignmentSortData}
+              wordSource={wordSource}
+              pivotWord={selectedPivotWord}
+              alignedWord={selectedAlignedWord}
+              sourceCorpus={sourceCorpus}
+              targetCorpus={targetCorpus}
               alignments={selectedAlignedWord?.alignments ?? []}
               onChangeSort={setAlignmentSortData}
+              chosenAlignmentLink={selectedAlignmentLink}
+              onChooseAlignmentLink={(alignmentLink: DisplayableLink) =>
+                setSelectedAlignmentLink(alignmentLink)
+              }
             />
           </Paper>
         </Box>

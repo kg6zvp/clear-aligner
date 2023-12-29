@@ -13,7 +13,7 @@ import { BookInfo } from '../../workbench/books';
 import { Box } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
 import { BCVWPField } from 'features/bcvwp/BCVWPSupport';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 
 export interface Verse {
@@ -32,7 +32,8 @@ export interface NavigableBook extends BookInfo {
 
 const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
   words
-    .map((word) => parseFromString(word.id))
+    .map((word) => word.id)
+    .map(BCVWP.parseFromString)
     .filter((ref) =>
       ref.hasFields(
         BCVWPField.Book,

@@ -9,8 +9,9 @@ import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
 
-interface TextSegmentProps {
-  corpus: Corpus;
+export interface TextSegmentProps {
+  readonly?: boolean;
+  corpus?: Corpus;
   word: Word;
 }
 
@@ -28,6 +29,7 @@ const computeVariant = (
 };
 
 const computeDecoration = (
+  readonly: boolean,
   isHovered: boolean,
   isRelated: boolean,
   mode: AlignmentMode,
@@ -50,7 +52,7 @@ const computeDecoration = (
     return decoration;
   }
 
-  if (isHovered) {
+  if (isHovered && !readonly) {
     decoration += ' focused';
   }
 
@@ -65,9 +67,11 @@ const computeDecoration = (
   return decoration;
 };
 
-export const TextSegment = (props: TextSegmentProps): ReactElement => {
-  const { corpus, word } = props;
-
+export const TextSegment = ({
+  readonly,
+  corpus,
+  word,
+}: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
@@ -116,9 +120,9 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
       return (
-        corpus.id === word.corpusId &&
-        (state.alignment.present.inProgressLink?.sources.includes(word.id) ||
-          state.alignment.present.inProgressLink?.targets.includes(word.id))
+        //corpus.id === word.corpusId &&
+        state.alignment.present.inProgressLink?.sources.includes(word.id) ||
+        state.alignment.present.inProgressLink?.targets.includes(word.id)
       );
     })
   );
@@ -249,7 +253,10 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
         paragraph={false}
         component="span"
         variant={computeVariant(isSelected, isLinked)}
-        className={`text-segment ${computeDecoration(
+        className={`text-segment${
+          readonly ? '.readonly' : ''
+        } ${computeDecoration(
+          !!readonly,
           isHovered,
           isRelated,
           mode,
@@ -258,28 +265,43 @@ export const TextSegment = (props: TextSegmentProps): ReactElement => {
           isMemberOfMultipleAlignments
         )}`}
         style={{ padding: '1px' }}
-        onMouseEnter={() => {
-          dispatch(hover(word));
-          dispatch(relatedAlignments(findRelatedAlignments(alignments, word)));
-        }}
-        onMouseLeave={() => {
-          dispatch(hover(null));
-          dispatch(relatedAlignments([]));
-        }}
-        onClick={() => {
-          const editOrSelect =
-            [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
-            (!isLinked || isCurrentLinkMember) &&
-            isInvolved;
-          const unLinkedEdit = mode === AlignmentMode.PartialEdit && !isLinked;
-          const cleanSlate = mode === AlignmentMode.CleanSlate;
+        onMouseEnter={
+          readonly
+            ? undefined
+            : () => {
+                dispatch(hover(word));
+                dispatch(
+                  relatedAlignments(findRelatedAlignments(alignments, word))
+                );
+              }
+        }
+        onMouseLeave={
+          readonly
+            ? undefined
+            : () => {
+                dispatch(hover(null));
+                dispatch(relatedAlignments([]));
+              }
+        }
+        onClick={
+          readonly
+            ? undefined
+            : () => {
+                const editOrSelect =
+                  [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
+                  (!isLinked || isCurrentLinkMember) &&
+                  isInvolved;
+                const unLinkedEdit =
+                  mode === AlignmentMode.PartialEdit && !isLinked;
+                const cleanSlate = mode === AlignmentMode.CleanSlate;
 
-          if (editOrSelect || unLinkedEdit || cleanSlate) {
-            dispatch(toggleTextSegment(word));
-          }
-        }}
+                if (editOrSelect || unLinkedEdit || cleanSlate) {
+                  dispatch(toggleTextSegment(word));
+                }
+              }
+        }
       >
-        {props.word.text}
+        {word.text}
       </Typography>
     </React.Fragment>
   );

@@ -6,8 +6,8 @@ export const findWordById = (corpora: Corpus[], word: BCVWP) => {
     const found = (
       corpus.wordsByVerse[word.toTruncatedReferenceString(BCVWPField.Verse)]
         ?.words || []
-    ).find(
-      (w: Word) => w.id === word.toTruncatedReferenceString(BCVWPField.Word)
+    ).find((w: Word) =>
+      word.matchesTruncated(BCVWP.parseFromString(w.id), BCVWPField.Word)
     );
 
     if (Boolean(found)) {

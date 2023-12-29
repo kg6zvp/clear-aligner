@@ -35,8 +35,8 @@ export interface CorpusViewport {
 }
 
 export interface Verse {
-  bcvId: string;
-  citation: string;
+  bcvId: BCVWP;
+  citation: string; // ${chapter}:${verse}
   words: Word[];
 }
 
@@ -64,6 +64,13 @@ export interface Link {
   id?: string;
   sources: string[];
   targets: string[];
+}
+
+export interface DisplayableLink extends Link {
+  sourceCorpus: Corpus;
+  targetCorpus: Corpus;
+  sourceWords: string[]; // as text
+  targetWords: string[]; // as text
 }
 
 // Extension of Link, use in tracking

@@ -1,9 +1,4 @@
-import {
-  Word,
-  Alignment,
-  AlignmentSide,
-  PrimaryAlignmentPolarity,
-} from 'structs';
+import { Word, Alignment, PrimaryAlignmentPolarity } from 'structs';
 
 import alignmentSliceReducer, {
   createLink,

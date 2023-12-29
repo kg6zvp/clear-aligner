@@ -25,7 +25,8 @@ const Editor = (props: EditorProps): ReactElement => {
 
   // handle the initialization of alignment data if it hasn't been set yet
   const alignmentState = useAppSelector((state) => {
-    return state.alignment.present.alignments;
+    const alignments = state.alignment.present.alignments;
+    return alignments;
   });
 
   useEffect(() => {
