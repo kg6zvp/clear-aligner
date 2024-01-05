@@ -240,7 +240,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 newAlignmentState![0].links = alignmentFile.records.map(
                   (record) => {
                     return {
-                      _id: record.id,
+                      id: record.id,
                       sources: record.source,
                       targets: record.target,
                     };
@@ -286,7 +286,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // ETL alignment links
                 alignmentExport.records = currentAlignment.links.map((link) => {
                   return {
-                    id: link._id,
+                    id: link.id,
                     source: link.sources,
                     target: link.targets,
                   } as AlignmentRecord;

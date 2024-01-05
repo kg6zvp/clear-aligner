@@ -6,7 +6,7 @@ import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
 
 const meta: Meta<typeof PivotWordTable> = {
-  title: 'PivotWordTable',
+  title: 'Concordance View/PivotWordTable',
   component: PivotWordTable,
 };
 
@@ -16,30 +16,57 @@ const pivotWords: PivotWord[] = [
   {
     frequency: 73_611,
     pivotWord: 'the',
+    alignedWords: [
+      {
+        id: 'the',
+        frequency: 73_611,
+        sourceTextId: 'srcId',
+        targetTextId: 'tgtId',
+        sourceWordTexts: ['the'],
+        targetWordTexts: ['der'],
+        alignments: [],
+      },
+    ],
   },
   {
     frequency: 60_382,
     pivotWord: 'and',
+    alignedWords: [
+      {
+        id: 'and',
+        frequency: 60_382,
+        sourceTextId: 'srcId',
+        targetTextId: 'tgtId',
+        sourceWordTexts: ['and'],
+        targetWordTexts: ['und'],
+        alignments: [],
+      },
+    ],
   },
   {
     frequency: 40_029,
     pivotWord: 'of',
+    alignedWords: [],
   },
   {
     frequency: 16_372,
     pivotWord: 'to',
+    alignedWords: [],
   },
   {
     frequency: 5_000,
     pivotWord: 'thus',
+    alignedWords: [],
   },
   {
     frequency: 4_999,
     pivotWord: 'so',
+    alignedWords: [],
   },
   {
     frequency: 4_998,
     pivotWord: 'as',
+    alignedWords: [],
   },
 ];
 

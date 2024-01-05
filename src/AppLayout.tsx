@@ -69,7 +69,7 @@ export const AppLayout = () => {
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
-        <AppBar position={'static'} enableColorOnDark={theme !== 'night'}>
+        <AppBar position={'fixed'} enableColorOnDark={theme !== 'night'}>
           <Toolbar aria-label={'Menu'} onClick={() => setShowMenu(!showMenu)}>
             <IconButton>
               <MenuIcon {...(theme !== 'night' && { htmlColor: 'white' })} />
@@ -134,7 +134,9 @@ export const AppLayout = () => {
             </div>
           </Drawer>
         </AppBar>
-        <Outlet />
+        <div id={'outlet'} style={{ marginTop: '64px' }}>
+          <Outlet />
+        </div>
       </Themed>
     </LayoutContext.Provider>
   );
