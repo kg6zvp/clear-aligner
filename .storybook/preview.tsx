@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/react';
 import { store } from '../src/app';
 import { Provider } from 'react-redux';
+import 'styles/theme.css';
 
 const preview: Preview = {
   decorators: [

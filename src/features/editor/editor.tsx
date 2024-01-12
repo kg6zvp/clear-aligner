@@ -8,15 +8,15 @@ import Polyglot from 'features/polyglot';
 import ControlPanel from 'features/controlPanel';
 import ContextPanel from 'features/contextPanel';
 
-import { Corpus } from 'structs';
+import {CorpusContainer} from 'structs';
 
 import '../../styles/theme.css';
 import { loadAlignments } from '../../state/alignment.slice';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface EditorProps {
-  corpora: Corpus[];
-  currentPosition: BCVWP;
+  containers: CorpusContainer[];
+  position: BCVWP;
 }
 
 const Editor = (props: EditorProps): ReactElement => {
@@ -43,6 +43,16 @@ const Editor = (props: EditorProps): ReactElement => {
               nonSyntaxSide: 'targets',
             },
           },
+          {
+            source: 'wlc-hebot',
+            target: 'wlc-ylt',
+            links: [],
+            polarity: {
+              type: 'primary',
+              syntaxSide: 'sources',
+              nonSyntaxSide: 'targets',
+            },
+          },
         ])
       );
     }
@@ -50,9 +60,9 @@ const Editor = (props: EditorProps): ReactElement => {
 
   return (
     <Container maxWidth={false}>
-      <Polyglot corpora={props.corpora} />
-      <ControlPanel corpora={props.corpora} />
-      <ContextPanel corpora={props.corpora} />
+      <Polyglot containers={props.containers} position={props.position} />
+      <ControlPanel containers={props.containers} />
+      <ContextPanel containers={props.containers} />
     </Container>
   );
 };

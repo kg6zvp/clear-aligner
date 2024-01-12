@@ -1,19 +1,18 @@
 import {
   CircularProgress,
-  TableCell,
   TableContainer,
-  TableRow,
 } from '@mui/material';
 import React, { useMemo } from 'react';
 import { PivotWord } from './structs';
 import { Box } from '@mui/system';
 import {
   DataGrid,
-  GridColDef,
+  GridColDef, GridRenderCellParams,
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
 import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
+import {LocalizedTextDisplay} from "../localizedTextDisplay";
 
 const columns: GridColDef[] = [
   {
@@ -25,27 +24,11 @@ const columns: GridColDef[] = [
     field: 'pivotWord',
     headerName: 'Pivot Word',
     flex: 1,
+    renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
+      <LocalizedTextDisplay children={row.pivotWord} languageInfo={row.languageInfo} />
+    )
   },
 ];
-
-export interface PivotWordRowProps {
-  row: PivotWord;
-  onChooseWord: (word: PivotWord) => void;
-}
-
-export const PivotWordRow = React.memo(
-  ({ row, onChooseWord }: PivotWordRowProps) => (
-    <TableRow
-      hover
-      onClick={() => onChooseWord(row)}
-      role={'link'}
-      key={row.pivotWord}
-    >
-      <TableCell key={'frequency'}>{row.frequency ?? ''}</TableCell>
-      <TableCell key={'pivotWord'}>{row.pivotWord ?? ''}</TableCell>
-    </TableRow>
-  )
-);
 
 export interface PivotWordTableProps {
   loading?: boolean;

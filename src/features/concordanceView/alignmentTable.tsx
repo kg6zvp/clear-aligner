@@ -1,4 +1,4 @@
-import { Corpus, Link, DisplayableLink, Verse } from '../../structs';
+import {Link, DisplayableLink, Verse, CorpusContainer} from '../../structs';
 import {
   DataGrid,
   GridColDef,
@@ -32,17 +32,17 @@ export const VerseCell = (
   row: GridRenderCellParams<DisplayableLink, any, any>
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
-  const corpus =
+  const container =
     tableCtx.wordSource === 'source'
-      ? row.row?.sourceCorpus
-      : row.row?.targetCorpus;
+      ? row.row?.sourceContainer
+      : row.row?.targetContainer;
   const verses: Verse[] = _.uniqWith(
     (tableCtx.wordSource === 'source' ? row.row?.sources : row.row?.targets)
       ?.filter(BCVWP.isValidString)
       .map(BCVWP.parseFromString)
       .map((ref) => ref.toTruncatedReferenceString(BCVWPField.Verse)),
     _.isEqual
-  ).map((ref) => corpus?.wordsByVerse[ref]);
+  ).flatMap((ref) => container?.corpora.flatMap(({ wordsByVerse }) => wordsByVerse[ref]));
   return (
     <>
       {verses.map((verse: Verse) => (
@@ -115,8 +115,8 @@ const columns: GridColDef[] = [
 export interface AlignmentTableProps {
   sort: GridSortItem | null;
   wordSource: WordSource;
-  sourceCorpus: Corpus | null;
-  targetCorpus: Corpus | null;
+  sourceContainer: CorpusContainer | null;
+  targetContainer: CorpusContainer | null;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord | null;
   alignments: Link[];
@@ -128,8 +128,8 @@ export interface AlignmentTableProps {
 export const AlignmentTable = ({
   sort,
   wordSource,
-  sourceCorpus,
-  targetCorpus,
+  sourceContainer,
+  targetContainer,
   pivotWord,
   alignedWord,
   alignments,
@@ -138,23 +138,23 @@ export const AlignmentTable = ({
   onChooseAlignmentLink,
 }: AlignmentTableProps) => {
   const displayableLinks: DisplayableLink[] = useMemo(() => {
-    return alignments && sourceCorpus && targetCorpus
+    return alignments && sourceContainer && targetContainer
       ? alignments.map(
           (link) =>
             ({
               ...link,
-              sourceCorpus,
-              targetCorpus,
+              sourceContainer,
+              targetContainer,
               sourceWords: link.sources
                 .map(BCVWP.parseFromString)
-                .map((ref) => findWord([sourceCorpus!], ref)?.text),
+                .map((ref) => findWord(sourceContainer!.corpora, ref)?.text),
               targetWords: link.targets
                 .map(BCVWP.parseFromString)
-                .map((ref) => findWord([targetCorpus!], ref)?.text),
+                .map((ref) => findWord(targetContainer!.corpora, ref)?.text),
             } as DisplayableLink)
         )
       : [];
-  }, [alignments, sourceCorpus, targetCorpus]);
+  }, [alignments, sourceContainer, targetContainer]);
 
   const initialPage = useMemo(() => {
     if (chosenAlignmentLink && displayableLinks) {

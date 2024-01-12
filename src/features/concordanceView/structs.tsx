@@ -1,10 +1,16 @@
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { Link } from '../../structs';
+import {LanguageInfo, Link} from '../../structs';
 
 export interface PivotWord {
   frequency: number;
   pivotWord: string;
+  languageInfo?: LanguageInfo;
   alignedWords?: AlignedWord[];
+}
+
+export interface LocalizedWordEntry {
+  text: string;
+  languageInfo?: LanguageInfo;
 }
 
 export interface AlignedWord {
@@ -12,8 +18,8 @@ export interface AlignedWord {
   frequency: number;
   sourceTextId: string;
   targetTextId: string;
-  sourceWordTexts: string[];
-  targetWordTexts: string[];
+  sourceWordTexts: LocalizedWordEntry[];
+  targetWordTexts: LocalizedWordEntry[];
   gloss?: string[] | null;
   alignments?: Link[];
 }

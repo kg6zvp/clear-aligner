@@ -1,10 +1,10 @@
 import React, { ReactElement } from 'react';
-import { Corpus } from 'structs';
+import {CorpusContainer} from 'structs';
 import EditorWrapper from 'features/editor';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 interface WorkbenchProps {
-  corpora?: Corpus[];
+  corpora?: CorpusContainer[];
   currentPosition?: BCVWP | null;
 }
 

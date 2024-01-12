@@ -1,14 +1,18 @@
-import { Corpus, CorpusFileFormat, Verse, Word } from 'structs';
-import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
+import {Corpus, CorpusContainer, CorpusFileFormat, Verse, Word} from 'structs';
+import BCVWP, {BCVWPField} from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
 import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
+// @ts-ignore
+import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv'
+// @ts-ignore
+import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
 
 let isInitialized: boolean = false;
 
-const availableCorpora: Corpus[] = [];
+const availableCorpora: CorpusContainer[] = [];
 
 const punctuationFilter = [
   ',',
@@ -124,20 +128,65 @@ export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
   );
 };
 
-export const getAvailableCorpora = async (): Promise<Corpus[]> => {
+export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]> => {
   if (!isInitialized) {
     isInitialized = true;
+    // Macula Hebrew OT
+    let maculaHebOT: Corpus = {
+      id: 'wlc-hebot',
+      name: 'WLC',
+      fullName: 'Macula Hebrew Old Testament',
+      language: {
+        code: 'heb',
+        textDirection: 'rtl',
+        fontFamily: 'sbl-hebrew'
+      },
+      words: [],
+      wordsByVerse: {},
+    };
+    // @ts-ignore
+    const maculaHebOTWords = await parseTsvByFileType(
+      MACULA_HEBOT_TSV,
+      maculaHebOT,
+      CorpusFileFormat.TSV_MACULA
+    );
+    maculaHebOT = {
+      ...maculaHebOT,
+      ...maculaHebOTWords
+    };
+
+    // YLT Old Testament
+    let wlcYltOt: Corpus = {
+      id: 'wlc-ylt',
+      name: 'WLC YLT OT',
+      fullName: 'WLC YLT Old Testament',
+      language: {
+        code: 'en',
+        textDirection: 'ltr'
+      },
+      words: [],
+      wordsByVerse: {}
+    };
+    const wlcYltOtWords = await parseTsvByFileType(
+      WLC_OT_YLT_TSV,
+      wlcYltOt,
+      CorpusFileFormat.TSV_TARGET
+    );
+    wlcYltOt = {
+      ...wlcYltOt,
+      ...wlcYltOtWords
+    };
+
     // SBL GNT
     let sblGnt: Corpus = {
       id: 'sbl-gnt',
-      name: 'SBL GNT',
+      name: 'SBLGNT',
       fullName: 'SBL Greek New Testament',
       language: {
         code: 'grc',
         textDirection: 'ltr'
       },
       words: [],
-      primaryVerse: null,
       wordsByVerse: {},
     };
 
@@ -154,14 +203,13 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
 
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
-      name: 'YLT',
-      fullName: "Young's Literal Translation text",
+      name: 'YLT NT',
+      fullName: "Young's Literal Translation text New Testament",
       language: {
         code: 'eng',
         textDirection: 'ltr'
       },
       words: [],
-      primaryVerse: null,
       wordsByVerse: {},
     };
 
@@ -176,15 +224,18 @@ export const getAvailableCorpora = async (): Promise<Corpus[]> => {
       ...na27Words,
     };
 
-    availableCorpora.push(sblGnt);
-    availableCorpora.push(na27Ylt);
+    const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [ maculaHebOT, sblGnt ]);
+    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [ wlcYltOt, na27Ylt ]);
+
+    availableCorpora.push(sourceContainer);
+    availableCorpora.push(targetContainer);
   }
 
   return availableCorpora;
 };
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (isInitialized ? availableCorpora : await getAvailableCorpora()).map(
+  return (isInitialized ? availableCorpora : await getAvailableCorporaContainers()).map(
     (corpus) => {
       return corpus.id;
     }
@@ -192,16 +243,22 @@ export const getAvailableCorporaIds = async (): Promise<string[]> => {
 };
 
 export const queryText = async (
-  corpusId: string,
+  containerId: string,
   position?: BCVWP | null
 ): Promise<Corpus | null> => {
   if (!position) return null;
-  const corpus = (await getAvailableCorpora()).find((corpus) => {
-    return corpus.id === corpusId;
+  const container = (await getAvailableCorporaContainers()).find((container) => {
+    return container.id === containerId;
   });
 
+  if (!container) {
+    throw new Error(`Unable to find requested: ${containerId}`);
+  }
+
+  const corpus = container.corpusAtReference(position);
+
   if (!corpus) {
-    throw new Error(`Unable to find requested corpus: ${corpusId}`);
+    throw new Error(`Unable to find corpus for reference: ${position}`);
   }
 
   const bcvId = position.toTruncatedReferenceString(BCVWPField.Verse);
@@ -213,7 +270,6 @@ export const queryText = async (
     fullName: corpus?.fullName ?? '',
     language: corpus?.language ?? '',
     words: queriedData,
-    primaryVerse: position,
     wordsByVerse: corpus.wordsByVerse,
   };
 };

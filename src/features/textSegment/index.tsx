@@ -4,14 +4,16 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { toggleTextSegment, AlignmentMode } from 'state/alignment.slice';
 import { hover, relatedAlignments } from 'state/textSegmentHover.slice';
-import { Alignment, Word, Link, Corpus } from 'structs';
+import {Alignment, Word, Link, LanguageInfo} from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
+import {LocalizedTextDisplay} from "../localizedTextDisplay";
 
 export interface TextSegmentProps {
   readonly?: boolean;
   word: Word;
+  languageInfo?: LanguageInfo;
 }
 
 const computeVariant = (
@@ -69,6 +71,7 @@ const computeDecoration = (
 export const TextSegment = ({
   readonly,
   word,
+  languageInfo
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -245,7 +248,6 @@ export const TextSegment = ({
   }
   return (
     <React.Fragment>
-      <span> </span>
       <Typography
         paragraph={false}
         component="span"
@@ -261,7 +263,9 @@ export const TextSegment = ({
           isInvolved,
           isMemberOfMultipleAlignments
         )}`}
-        style={{ padding: '1px' }}
+        style={{
+          ...languageInfo?.fontFamily ? { fontFamily: languageInfo.fontFamily } : {}
+      }}
         onMouseEnter={
           readonly
             ? undefined
@@ -298,7 +302,9 @@ export const TextSegment = ({
               }
         }
       >
-        {word.text}
+        <LocalizedTextDisplay languageInfo={languageInfo}>
+          {word.text}
+        </LocalizedTextDisplay>
       </Typography>
     </React.Fragment>
   );

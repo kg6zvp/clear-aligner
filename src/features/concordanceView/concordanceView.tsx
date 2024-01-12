@@ -1,9 +1,9 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { Alignment, Corpus, DisplayableLink, Link } from '../../structs';
+import {Alignment, CorpusContainer, DisplayableLink, LanguageInfo, Link} from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { AlignedWord, PivotWord } from './structs';
-import { getAvailableCorpora } from '../../workbench/query';
+import {AlignedWord, LocalizedWordEntry, PivotWord} from './structs';
+import { getAvailableCorporaContainers } from '../../workbench/query';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { PivotWordTable } from './pivotWordTable';
 import { AlignedWordTable } from './alignedWordTable';
@@ -22,8 +22,8 @@ export type WordFilter = 'aligned' | 'all';
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const [loading, setLoading] = useState(true);
-  const [sourceCorpus, setSourceCorpus] = useState(null as Corpus | null);
-  const [targetCorpus, setTargetCorpus] = useState(null as Corpus | null);
+  const [sourceContainer, setSourceContainer] = useState(null as CorpusContainer | null);
+  const [targetContainer, setTargetContainer] = useState(null as CorpusContainer | null);
   const [selectedPivotWord, setSelectedPivotWord] = useState(
     null as PivotWord | null
   );
@@ -97,19 +97,19 @@ export const ConcordanceView = () => {
 
   useEffect(() => {
     const loadCorpora = async () => {
-      const corpora: Corpus[] = await getAvailableCorpora();
+      const containers: CorpusContainer[] = await getAvailableCorporaContainers();
 
-      corpora.forEach((corpus) => {
-        if (corpus.id === 'sbl-gnt') {
-          setSourceCorpus(corpus);
-        } else if (corpus.id === 'na27-YLT') {
-          setTargetCorpus(corpus);
+      containers.forEach((container) => {
+        if (container.id === 'source') {
+          setSourceContainer(container);
+        } else if (container.id === 'target') {
+          setTargetContainer(container);
         }
       });
     };
 
     void loadCorpora();
-  }, [setSourceCorpus, setTargetCorpus]);
+  }, [setSourceContainer, setTargetContainer]);
 
   const alignmentState = useAppSelector((state) => {
     return state.alignment.present.alignments;
@@ -120,24 +120,30 @@ export const ConcordanceView = () => {
    */
   useEffect(() => {
     const loadPivotWordData = async () => {
-      if (!sourceCorpus || !targetCorpus) {
+      if (!sourceContainer || !targetContainer) {
         setLoading(false);
         return;
       }
 
       const allWordsAndFrequencies = (
-        wordSource === 'source' ? sourceCorpus : targetCorpus
-      )?.words
-        .map((word) => word.text)
-        .filter((value) => !!value)
-        .reduce((accumulator, currentValue) => {
-          const key = currentValue.toLowerCase();
-          if (!accumulator[key]) {
-            accumulator[key] = 0;
-          }
-          ++accumulator[key];
-          return accumulator;
-        }, {} as { [key: string]: number });
+        wordSource === 'source' ? sourceContainer : targetContainer
+      )?.corpora?.flatMap((corpus) => {
+        return corpus.words
+          .map((word) => word.text)
+          .filter((value) => !!value)
+          .map((text) => ({
+            text,
+            languageInfo: corpus.language
+          }));
+      })
+      .reduce((accumulator, currentValue) => {
+        const key = currentValue.text.toLowerCase();
+        if (!accumulator[key]) {
+          accumulator[key] = { count: 0, languageInfo: currentValue.languageInfo };
+        }
+        ++(accumulator[key].count);
+        return accumulator;
+      }, {} as { [key: string]: { count: number, languageInfo: LanguageInfo } });
 
       if (!allWordsAndFrequencies) {
         setLoading(false);
@@ -148,14 +154,14 @@ export const ConcordanceView = () => {
       const pivotWordsMap: { [text: string]: PivotWord } = Object.keys(
         allWordsAndFrequencies
       )
+        .filter(key => !!allWordsAndFrequencies[key])
         .map((key) => {
-          if (!allWordsAndFrequencies[key]) return null;
           return {
             pivotWord: key,
-            frequency: allWordsAndFrequencies[key],
+            frequency: allWordsAndFrequencies[key].count,
+            languageInfo: allWordsAndFrequencies[key].languageInfo
           } as PivotWord;
         })
-        .filter((pivotWord): pivotWord is PivotWord => !!pivotWord)
         .reduce((accumulator, currentValue) => {
           accumulator[currentValue.pivotWord] = currentValue;
           return accumulator;
@@ -163,22 +169,22 @@ export const ConcordanceView = () => {
 
       const alignedWordsAndFrequencies = alignmentState
         ?.map((alignmentData: Alignment) => {
-          if (alignmentData.source !== sourceCorpus.id) {
+          if (!sourceContainer.containsCorpus(alignmentData.source)) {
             throw new Error(
-              `${alignmentData.source} is not equal to ${sourceCorpus.id}`
+              `${alignmentData.source} is not equal to ${sourceContainer.id}`
             );
           }
-          if (alignmentData.target !== targetCorpus.id) {
+          if (!targetContainer.containsCorpus(alignmentData.target)) {
             throw new Error(
-              `${alignmentData.target} is not equal to ${targetCorpus.id}`
+              `${alignmentData.target} is not equal to ${targetContainer.id}`
             );
           }
-          const src = wordSource === 'source' ? sourceCorpus : targetCorpus;
+          const src = wordSource === 'source' ? sourceContainer : targetContainer;
           return alignmentData.links.reduce((accumulator, singleAlignment) => {
             const uniqueAlignedWords = _.uniqWith(
               singleAlignment[wordSource === 'source' ? 'sources' : 'targets']
                 .map(BCVWP.parseFromString) // get references to all words on selected side of the alignment
-                .map((wordReference: BCVWP) => findWord([src], wordReference))
+                .map((wordReference: BCVWP) => findWord(src.corpora, wordReference))
                 .filter((word) => !!word)
                 .map((word) => word!.text.toLowerCase()),
               _.isEqual
@@ -207,8 +213,8 @@ export const ConcordanceView = () => {
           return accumulator;
         }, {} as { [key: string]: Link[] });
 
-      const sourceTextId = sourceCorpus.id;
-      const targetTextId = targetCorpus.id;
+      const sourceTextId = sourceContainer.id;
+      const targetTextId = targetContainer.id;
 
       Object.keys(alignedWordsAndFrequencies)
         .filter((key) => !!alignedWordsAndFrequencies[key])
@@ -219,22 +225,34 @@ export const ConcordanceView = () => {
             .map((value: Link) => {
               const sourceWords = value.sources
                 .map(BCVWP.parseFromString)
-                .map((ref: BCVWP) => findWord([sourceCorpus], ref))
-                .map((word) => word?.text)
-                .filter((text) => !!text)
-                .map((text) => (text as string).toLowerCase());
+                .map((ref: BCVWP) => {
+                  const wort = findWord(sourceContainer.corpora, ref);
+                  const languageInfo = sourceContainer.corpusAtReference(ref)?.language;
+                  if (!wort) return undefined;
+                  return {
+                    text: wort.text.toLowerCase(),
+                    languageInfo
+                  };
+                })
+                .filter((v) => !!v)
               const targetWords = value.targets
                 .map(BCVWP.parseFromString)
-                .map((ref: BCVWP) => findWord([targetCorpus], ref))
-                .map((word) => word?.text)
-                .filter((text) => !!text)
-                .map((text) => (text as string).toLowerCase());
+                .map((ref: BCVWP) => {
+                  const wort = findWord(targetContainer.corpora, ref);
+                  const languageInfo = targetContainer.corpusAtReference(ref)?.language;
+                  if (!wort) return undefined;
+                  return {
+                    text: wort.text.toLowerCase(),
+                    languageInfo
+                  };
+                })
+                .filter((v) => !!v)
               return {
                 sourceWords,
                 targetWords,
               } as {
-                sourceWords: string[];
-                targetWords: string[];
+                sourceWords: LocalizedWordEntry[];
+                targetWords: LocalizedWordEntry[];
               };
             })
             .reduce(
@@ -247,7 +265,10 @@ export const ConcordanceView = () => {
                 );
                 return accumulator;
               },
-              { sourceWords: [], targetWords: [] }
+              {
+                sourceWords: [] as LocalizedWordEntry[],
+                targetWords: [] as LocalizedWordEntry[]
+              }
             );
 
           return {
@@ -270,14 +291,14 @@ export const ConcordanceView = () => {
           (wordSource === 'source'
             ? alignedWord.sourceWordTexts
             : alignedWord.targetWordTexts
-          ).forEach((wordText: string) => {
-            if (!pivotWordsMap[wordText]) {
+          ).forEach((wordEntry: LocalizedWordEntry) => {
+            if (!pivotWordsMap[wordEntry.text]) {
               return;
             }
-            if (!pivotWordsMap[wordText].alignedWords) {
-              pivotWordsMap[wordText].alignedWords = [];
+            if (!pivotWordsMap[wordEntry.text].alignedWords) {
+              pivotWordsMap[wordEntry.text].alignedWords = [];
             }
-            pivotWordsMap[wordText].alignedWords!.push(alignedWord);
+            pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
           });
         });
 
@@ -289,15 +310,15 @@ export const ConcordanceView = () => {
       setLoading(false);
       return;
     }
-    if (sourceCorpus && targetCorpus && wordSource) {
+    if (sourceContainer && targetContainer && wordSource) {
       setLoading(true);
       void loadPivotWordData();
     }
   }, [
     alignmentState,
     wordSource,
-    sourceCorpus,
-    targetCorpus,
+    sourceContainer,
+    targetContainer,
     setLoading,
     setSrcPivotWords,
   ]);
@@ -393,40 +414,6 @@ export const ConcordanceView = () => {
       >
         <CircularProgress color={'inherit'} />
       </Backdrop>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          width: '100%',
-          marginTop: '1em',
-        }}
-      >
-        <table
-          style={{
-            alignSelf: 'center',
-            minWidth: '15%',
-          }}
-        >
-          <tbody>
-            <tr>
-              <td>Source:</td>
-              <td>
-                <Typography sx={{ textAlign: 'right' }}>
-                  {sourceCorpus?.name}
-                </Typography>
-              </td>
-            </tr>
-            <tr>
-              <td>Target:</td>
-              <td>
-                <Typography sx={{ textAlign: 'right' }}>
-                  {targetCorpus?.name}
-                </Typography>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
       <Box
         sx={{
           flex: 1,
@@ -448,7 +435,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '100%',
             gap: '1em',
-            margin: '2em',
+            marginLeft: '2em',
             marginTop: '1em',
           }}
         >
@@ -484,7 +471,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 14em)',
+              height: 'calc(100vh - 64px - 10.5em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0,
               },
@@ -521,7 +508,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '100%',
             gap: '1em',
-            margin: '2em',
+            marginLeft: '2em',
             marginTop: '1em',
           }}
         >
@@ -529,7 +516,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 7.5em)',
+              height: 'calc(100vh - 64px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0,
               },
@@ -569,7 +556,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 7.5em)',
+              height: 'calc(100vh - 64px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0,
               },
@@ -580,8 +567,8 @@ export const ConcordanceView = () => {
               wordSource={wordSource}
               pivotWord={selectedPivotWord}
               alignedWord={selectedAlignedWord}
-              sourceCorpus={sourceCorpus}
-              targetCorpus={targetCorpus}
+              sourceContainer={sourceContainer}
+              targetContainer={targetContainer}
               alignments={selectedAlignedWord?.alignments ?? []}
               onChangeSort={setAlignmentSortData}
               chosenAlignmentLink={selectedAlignmentLink}

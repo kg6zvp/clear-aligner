@@ -145,5 +145,105 @@ RTLVerse.args = {
         position: 13
       }
     ]
+  },
+  languageInfo: {
+    code: 'arb',
+    textDirection: 'rtl'
+  }
+} as VerseDisplayProps;
+
+export const Hebrew = (props: VerseDisplayProps) => (<VerseDisplay {...props} />);
+Hebrew.args = {
+  verse: {
+    bcvId: {
+      "book": 1,
+      "chapter": 1,
+      "verse": 1
+    },
+    citation: "1:1",
+    words: [
+      {
+        id: "010010010011",
+        corpusId: "wlc-hebot",
+        text: "בְּ",
+        after: "",
+        position: 1
+      },
+      {
+        id: "010010010012",
+        corpusId: "wlc-hebot",
+        text: "רֵאשִׁ֖ית",
+        after: " ",
+        position: 1
+      },
+      {
+        id: "010010010021",
+        corpusId: "wlc-hebot",
+        text: "בָּרָ֣א",
+        after: " ",
+        position: 2
+      },
+      {
+        id: "010010010031",
+        corpusId: "wlc-hebot",
+        text: "אֱלֹהִ֑ים",
+        after: " ",
+        position: 3
+      },
+      {
+        id: "010010010041",
+        corpusId: "wlc-hebot",
+        text: "אֵ֥ת",
+        after: " ",
+        position: 4
+      },
+      {
+        id: "010010010051",
+        corpusId: "wlc-hebot",
+        text: "הַ",
+        after: "",
+        position: 5
+      },
+      {
+        id: "010010010052",
+        corpusId: "wlc-hebot",
+        text: "שָּׁמַ֖יִם",
+        after: " ",
+        position: 5
+      },
+      {
+        id: "010010010061",
+        corpusId: "wlc-hebot",
+        text: "וְ",
+        after: "",
+        position: 6
+      },
+      {
+        id: "010010010062",
+        corpusId: "wlc-hebot",
+        text: "אֵ֥ת",
+        after: " ",
+        position: 6
+      },
+      {
+        id: "010010010071",
+        corpusId: "wlc-hebot",
+        text: "הָ",
+        after: "",
+        position: 7
+      },
+      {
+        id: "010010010072",
+        corpusId: "wlc-hebot",
+        text: "אָֽרֶץ",
+        after: "׃",
+        position: 7
+      }
+    ]
+  },
+  languageInfo: {
+    code: 'heb',
+    textDirection: 'rtl',
+    fontFamily: 'sbl-hebrew'
   }
 } as VerseDisplayProps;

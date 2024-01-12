@@ -40,11 +40,11 @@ import {
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { Corpus } from '../../structs';
+import {Corpus, CorpusContainer} from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 
 interface ControlPanelProps {
-  corpora: Corpus[];
+  containers: CorpusContainer[];
 }
 
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
@@ -80,11 +80,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     return state.app.corpusViewports;
   });
 
-  const corporaWithoutViewport = props.corpora.filter((corpus) => {
+  const corporaWithoutViewport = props.containers.filter((container) => {
     const currentViewportIds = currentCorpusViewports.map(
-      (viewport) => viewport.corpusId
+      (viewport) => viewport.containerId
     );
-    return !currentViewportIds.includes(corpus.id);
+    return !currentViewportIds.includes(container.id);
   });
 
   const alignmentState = useAppSelector((state) => {

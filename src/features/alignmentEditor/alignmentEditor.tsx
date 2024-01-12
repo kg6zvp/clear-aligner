@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
-import { Corpus, Word } from '../../structs';
+import {CorpusContainer, Word} from '../../structs';
 import {
-  getAvailableCorpora,
+  getAvailableCorporaContainers,
   getAvailableCorporaIds,
   queryText,
 } from '../../workbench/query';
@@ -31,7 +31,7 @@ const defaultDocumentTitle = 'ClearAligner';
 export const AlignmentEditor = () => {
   const layoutCtx = useContext(LayoutContext);
   const [availableWords, setAvailableWords] = useState([] as Word[]);
-  const [selectedCorpora, setSelectedCorpora] = useState([] as Corpus[]);
+  const [selectedCorporaContainers, setSelectedCorporaContainers] = useState([] as CorpusContainer[]);
 
   const [currentPosition, setCurrentPosition] = useState(
     getRefFromURL() ?? (new BCVWP(45, 5, 3) as BCVWP | null)
@@ -51,45 +51,19 @@ export const AlignmentEditor = () => {
 
   React.useEffect(() => {
     const loadSourceWords = async () => {
-      const corpora = await getAvailableCorpora();
-      const corpus = corpora.find((v: Corpus) => v.id === 'sbl-gnt');
+      const containers = await getAvailableCorporaContainers();
+      const targetCorpora = containers.find((v: CorpusContainer) => v.id === 'target');
 
-      const retrievedCorpora: Corpus[] = [];
-
-      for (const corpusId of corpora.map((c) => c.id)) {
-        const corpus = await queryText(corpusId, currentPosition);
-        if (corpus) retrievedCorpora.push(corpus!);
-      }
-
-      setSelectedCorpora(retrievedCorpora);
-      setAvailableWords(corpus?.words ?? []);
+      setSelectedCorporaContainers(containers);
+      setAvailableWords(targetCorpora?.corpora.flatMap(({ words }) => words) ?? []);
     };
 
     loadSourceWords().catch(console.error);
   }, [
     setAvailableWords,
     setCurrentPosition,
-    setSelectedCorpora,
-    currentPosition,
+    setSelectedCorporaContainers,
   ]);
-
-  React.useEffect(() => {
-    if (!currentPosition) {
-      return;
-    }
-    const loadCorporaAtPosition = async () => {
-      const corpusIds = await getAvailableCorporaIds();
-
-      const retrievedCorpora: Corpus[] = [];
-      for (const corpusId of corpusIds) {
-        const corpus = await queryText(corpusId, currentPosition);
-        if (corpus) retrievedCorpora.push(corpus);
-      }
-      setSelectedCorpora(retrievedCorpora);
-    };
-
-    void loadCorporaAtPosition();
-  }, [currentPosition, setSelectedCorpora]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
@@ -120,7 +94,7 @@ export const AlignmentEditor = () => {
           onNavigate={setCurrentPosition}
         />
       </div>
-      <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
+      <Workbench corpora={selectedCorporaContainers} currentPosition={currentPosition} />
     </>
   );
 };

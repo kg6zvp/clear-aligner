@@ -100,7 +100,7 @@ export default class BCVWP {
     });
   }
   static isValidString(reference: string): boolean {
-    if (!reference || reference.match(/\D/) || reference.length < 2) {
+    if (!reference || !reference.match(/^[on]?\d/) || reference.length < 2) {
       return false;
     }
     return true;
@@ -110,15 +110,16 @@ export default class BCVWP {
     if (!BCVWP.isValidString(reference)) {
       throw new Error(`Illegal reference string given to parser: ${reference}`);
     }
-    const bookString = reference.substring(0, 2);
+    const sanitized = reference.match(/^\D/) ? reference.substring(1) : reference;
+    const bookString = sanitized.substring(0, 2);
     const chapterString =
-      reference.length >= 5 ? reference.substring(2, 5) : undefined;
+      sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;
     const verseString =
-      reference.length >= 8 ? reference.substring(5, 8) : undefined;
+      sanitized.length >= 8 ? sanitized.substring(5, 8) : undefined;
     const wordString =
-      reference.length >= 11 ? reference.substring(8, 11) : undefined;
+      sanitized.length >= 11 ? sanitized.substring(8, 11) : undefined;
     const partString =
-      reference.length >= 12 ? reference.substring(11, 12) : undefined;
+      sanitized.length >= 12 ? sanitized.substring(11, 12) : undefined;
 
     const bookNum = bookString ? Number(bookString) : undefined;
     const chapterNum = chapterString ? Number(chapterString) : undefined;
