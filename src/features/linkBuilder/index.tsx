@@ -1,9 +1,9 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { Corpus, Word } from 'structs';
+import { CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
@@ -11,13 +11,21 @@ import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {
-  corpora: Corpus[];
+  containers: CorpusContainer[];
 }
 
 export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
-  corpora,
+  containers,
 }): ReactElement => {
   useDebug('LinkBuilderComponent');
+  const sourceContainer = useMemo(
+    () => containers.find(({ id }) => id === 'source')!,
+    [containers, containers.length]
+  );
+  const targetContainer = useMemo(
+    () => containers.find(({ id }) => id === 'target')!,
+    [containers, containers.length]
+  );
 
   const selectedWords: Record<string, Word[]> = useAppSelector((state) => {
     const inProgressLink = state.alignment.present.inProgressLink;
@@ -25,13 +33,19 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     if (inProgressLink) {
       const sourceWords: Word[] = inProgressLink.sources
         .map((sourceId) => {
-          return findWordById(corpora, BCVWP.parseFromString(sourceId));
+          return findWordById(
+            sourceContainer?.corpora,
+            BCVWP.parseFromString(sourceId)
+          );
         })
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
         .map((targetId) =>
-          findWordById(corpora, BCVWP.parseFromString(targetId))
+          findWordById(
+            targetContainer?.corpora,
+            BCVWP.parseFromString(targetId)
+          )
         )
         .filter((x): x is Word => x !== null);
 
@@ -83,10 +97,12 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
       }}
     >
       {Object.keys(selectedWords).map((textId: string): ReactElement => {
-        const corpus = corpora.find((corpus: Corpus) => {
-          return corpus.id === textId;
-        });
-        if (!corpus) return <div />;
+        const container = containers.find(
+          (corpusContainer: CorpusContainer) => {
+            return !!corpusContainer.getCorpusById(textId);
+          }
+        );
+        if (!container) return <div />;
 
         const selectedPartsForText = selectedWords[textId];
         const sortedSelectedPartsForText = selectedPartsForText.sort(
@@ -117,9 +133,19 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           }
         });
 
+        const wordInDisplayGroup = partsAsWords
+          .find(({ length }) => length > 0)
+          ?.find((word) => word.id);
+        const refInWords = wordInDisplayGroup
+          ? BCVWP.parseFromString(wordInDisplayGroup.id)
+          : undefined;
+        const corpusAtRef = refInWords
+          ? container?.corpusAtReference(refInWords)
+          : undefined;
+
         return (
           <div
-            key={`linkBuilder_${corpus?.name}`}
+            key={`linkBuilder_${corpusAtRef?.name}`}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -131,7 +157,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             }}
           >
             <Typography variant="h6" style={{ textAlign: 'right' }}>
-              {corpus?.name}
+              {corpusAtRef?.name}
             </Typography>
             <div style={{ marginBottom: '8px' }}>
               <Divider />
@@ -159,7 +185,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                         readonly={true}
                         key={wordId}
                         parts={selectedWord}
-                        languageInfo={corpus.language}
+                        languageInfo={corpusAtRef?.language}
                       />
 
                       {!nextIsSequential ? (

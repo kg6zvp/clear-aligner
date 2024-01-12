@@ -34,8 +34,8 @@ const Editor = (props: EditorProps): ReactElement => {
       dispatch(
         loadAlignments([
           {
-            source: 'sbl-gnt',
-            target: 'na27-YLT',
+            source: 'wlc-hebot',
+            target: 'wlc-ylt',
             links: [],
             polarity: {
               type: 'primary',
@@ -44,8 +44,8 @@ const Editor = (props: EditorProps): ReactElement => {
             },
           },
           {
-            source: 'wlc-hebot',
-            target: 'wlc-ylt',
+            source: 'sbl-gnt',
+            target: 'na27-YLT',
             links: [],
             polarity: {
               type: 'primary',

@@ -30,9 +30,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           flexBasis: '0',
         }}
       >
-        <LinkBuilderComponent
-          corpora={containers.flatMap(({ corpora }) => corpora)}
-        />
+        <LinkBuilderComponent containers={containers} />
       </Card>
     </Stack>
   );
