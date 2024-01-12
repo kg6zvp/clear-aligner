@@ -4,14 +4,14 @@ import { Card, CircularProgress, Stack, Grid, Typography } from '@mui/material';
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import {CorpusContainer, CorpusViewport} from 'structs';
+import { CorpusContainer, CorpusViewport } from 'structs';
 
 import './styles.css';
-import BCVWP from "../bcvwp/BCVWPSupport";
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface PolyglotProps {
   containers: CorpusContainer[];
-  position: BCVWP|null;
+  position: BCVWP | null;
 }
 
 export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
@@ -30,9 +30,11 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
           .map((viewport) => viewport.containerId)
           .includes(container.id)
     );
-  }, [containers,
+  }, [
+    containers,
     containers.length, // necessary in spite of warning
-    corpusViewports]);
+    corpusViewports,
+  ]);
 
   return (
     <Stack
@@ -98,7 +100,9 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                     key={corpusId}
                     viewCorpora={container}
                     viewportIndex={index}
-                    corpora={containers.flatMap(container => container.corpora) ?? []}
+                    corpora={
+                      containers.flatMap((container) => container.corpora) ?? []
+                    }
                     position={position}
                   />
                 </Card>

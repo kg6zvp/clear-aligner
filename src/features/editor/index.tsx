@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 
 import Editor from './editor';
-import {CorpusContainer} from 'structs';
+import { CorpusContainer } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';

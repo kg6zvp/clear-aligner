@@ -58,8 +58,8 @@ Disabled.args = {
 } as VerseDisplayProps;
 
 export const RTLVerse = (props: VerseDisplayProps) => {
-  return (<VerseDisplay { ...props } />);
-}
+  return <VerseDisplay {...props} />;
+};
 RTLVerse.args = {
   readonly: true,
   verse: {
@@ -67,183 +67,183 @@ RTLVerse.args = {
     citation: '5:3',
     words: [
       {
-        id: "450050030011",
-        corpusId: "na27-YLT",
-        text: "وَلَيْسَ",
-        position: 1
+        id: '450050030011',
+        corpusId: 'na27-YLT',
+        text: 'وَلَيْسَ',
+        position: 1,
       },
       {
-        id: "450050030021",
-        corpusId: "na27-YLT",
-        text: "ذَلِكَ",
-        position: 2
+        id: '450050030021',
+        corpusId: 'na27-YLT',
+        text: 'ذَلِكَ',
+        position: 2,
       },
       {
-        id: "450050030031",
-        corpusId: "na27-YLT",
-        text: "فَقَطْ،",
-        position: 3
+        id: '450050030031',
+        corpusId: 'na27-YLT',
+        text: 'فَقَطْ،',
+        position: 3,
       },
       {
-        id: "450050030041",
-        corpusId: "na27-YLT",
-        text: "بَلْ",
-        position: 4
+        id: '450050030041',
+        corpusId: 'na27-YLT',
+        text: 'بَلْ',
+        position: 4,
       },
       {
-        id: "450050030051",
-        corpusId: "na27-YLT",
-        text: "نَفْتَخِرُ",
-        position: 5
+        id: '450050030051',
+        corpusId: 'na27-YLT',
+        text: 'نَفْتَخِرُ',
+        position: 5,
       },
       {
-        id: "450050030061",
-        corpusId: "na27-YLT",
-        text: "أَيْضًا",
-        position: 6
+        id: '450050030061',
+        corpusId: 'na27-YLT',
+        text: 'أَيْضًا',
+        position: 6,
       },
       {
-        id: "450050030071",
-        corpusId: "na27-YLT",
-        text: "فِي",
-        position: 7
+        id: '450050030071',
+        corpusId: 'na27-YLT',
+        text: 'فِي',
+        position: 7,
       },
       {
-        id: "450050030081",
-        corpusId: "na27-YLT",
-        text: "ٱلضِّيقَاتِ،",
-        position: 8
+        id: '450050030081',
+        corpusId: 'na27-YLT',
+        text: 'ٱلضِّيقَاتِ،',
+        position: 8,
       },
       {
-        id: "450050030091",
-        corpusId: "na27-YLT",
-        text: "عَالِمِينَ",
-        position: 9
+        id: '450050030091',
+        corpusId: 'na27-YLT',
+        text: 'عَالِمِينَ',
+        position: 9,
       },
       {
-        id: "450050030101",
-        corpusId: "na27-YLT",
-        text: "أَنَّ",
-        position: 10
+        id: '450050030101',
+        corpusId: 'na27-YLT',
+        text: 'أَنَّ',
+        position: 10,
       },
       {
-        id: "450050030111",
-        corpusId: "na27-YLT",
-        text: "ٱلضِّيقَ",
-        position: 11
+        id: '450050030111',
+        corpusId: 'na27-YLT',
+        text: 'ٱلضِّيقَ',
+        position: 11,
       },
       {
-        id: "450050030121",
-        corpusId: "na27-YLT",
-        text: "يُنْشِئُ",
-        position: 12
+        id: '450050030121',
+        corpusId: 'na27-YLT',
+        text: 'يُنْشِئُ',
+        position: 12,
       },
       {
-        id: "450050030131",
-        corpusId: "na27-YLT",
-        text: "صَبْرًا،",
-        position: 13
-      }
-    ]
+        id: '450050030131',
+        corpusId: 'na27-YLT',
+        text: 'صَبْرًا،',
+        position: 13,
+      },
+    ],
   },
   languageInfo: {
     code: 'arb',
-    textDirection: 'rtl'
-  }
+    textDirection: 'rtl',
+  },
 } as VerseDisplayProps;
 
-export const Hebrew = (props: VerseDisplayProps) => (<VerseDisplay {...props} />);
+export const Hebrew = (props: VerseDisplayProps) => <VerseDisplay {...props} />;
 Hebrew.args = {
   verse: {
     bcvId: {
-      "book": 1,
-      "chapter": 1,
-      "verse": 1
+      book: 1,
+      chapter: 1,
+      verse: 1,
     },
-    citation: "1:1",
+    citation: '1:1',
     words: [
       {
-        id: "010010010011",
-        corpusId: "wlc-hebot",
-        text: "בְּ",
-        after: "",
-        position: 1
+        id: '010010010011',
+        corpusId: 'wlc-hebot',
+        text: 'בְּ',
+        after: '',
+        position: 1,
       },
       {
-        id: "010010010012",
-        corpusId: "wlc-hebot",
-        text: "רֵאשִׁ֖ית",
-        after: " ",
-        position: 1
+        id: '010010010012',
+        corpusId: 'wlc-hebot',
+        text: 'רֵאשִׁ֖ית',
+        after: ' ',
+        position: 1,
       },
       {
-        id: "010010010021",
-        corpusId: "wlc-hebot",
-        text: "בָּרָ֣א",
-        after: " ",
-        position: 2
+        id: '010010010021',
+        corpusId: 'wlc-hebot',
+        text: 'בָּרָ֣א',
+        after: ' ',
+        position: 2,
       },
       {
-        id: "010010010031",
-        corpusId: "wlc-hebot",
-        text: "אֱלֹהִ֑ים",
-        after: " ",
-        position: 3
+        id: '010010010031',
+        corpusId: 'wlc-hebot',
+        text: 'אֱלֹהִ֑ים',
+        after: ' ',
+        position: 3,
       },
       {
-        id: "010010010041",
-        corpusId: "wlc-hebot",
-        text: "אֵ֥ת",
-        after: " ",
-        position: 4
+        id: '010010010041',
+        corpusId: 'wlc-hebot',
+        text: 'אֵ֥ת',
+        after: ' ',
+        position: 4,
       },
       {
-        id: "010010010051",
-        corpusId: "wlc-hebot",
-        text: "הַ",
-        after: "",
-        position: 5
+        id: '010010010051',
+        corpusId: 'wlc-hebot',
+        text: 'הַ',
+        after: '',
+        position: 5,
       },
       {
-        id: "010010010052",
-        corpusId: "wlc-hebot",
-        text: "שָּׁמַ֖יִם",
-        after: " ",
-        position: 5
+        id: '010010010052',
+        corpusId: 'wlc-hebot',
+        text: 'שָּׁמַ֖יִם',
+        after: ' ',
+        position: 5,
       },
       {
-        id: "010010010061",
-        corpusId: "wlc-hebot",
-        text: "וְ",
-        after: "",
-        position: 6
+        id: '010010010061',
+        corpusId: 'wlc-hebot',
+        text: 'וְ',
+        after: '',
+        position: 6,
       },
       {
-        id: "010010010062",
-        corpusId: "wlc-hebot",
-        text: "אֵ֥ת",
-        after: " ",
-        position: 6
+        id: '010010010062',
+        corpusId: 'wlc-hebot',
+        text: 'אֵ֥ת',
+        after: ' ',
+        position: 6,
       },
       {
-        id: "010010010071",
-        corpusId: "wlc-hebot",
-        text: "הָ",
-        after: "",
-        position: 7
+        id: '010010010071',
+        corpusId: 'wlc-hebot',
+        text: 'הָ',
+        after: '',
+        position: 7,
       },
       {
-        id: "010010010072",
-        corpusId: "wlc-hebot",
-        text: "אָֽרֶץ",
-        after: "׃",
-        position: 7
-      }
-    ]
+        id: '010010010072',
+        corpusId: 'wlc-hebot',
+        text: 'אָֽרֶץ',
+        after: '׃',
+        position: 7,
+      },
+    ],
   },
   languageInfo: {
     code: 'heb',
     textDirection: 'rtl',
-    fontFamily: 'sbl-hebrew'
-  }
+    fontFamily: 'sbl-hebrew',
+  },
 } as VerseDisplayProps;

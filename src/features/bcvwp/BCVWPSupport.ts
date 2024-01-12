@@ -110,7 +110,9 @@ export default class BCVWP {
     if (!BCVWP.isValidString(reference)) {
       throw new Error(`Illegal reference string given to parser: ${reference}`);
     }
-    const sanitized = reference.match(/^\D/) ? reference.substring(1) : reference;
+    const sanitized = reference.match(/^\D/)
+      ? reference.substring(1)
+      : reference;
     const bookString = sanitized.substring(0, 2);
     const chapterString =
       sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;

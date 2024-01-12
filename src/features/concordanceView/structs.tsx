@@ -1,5 +1,5 @@
 import BCVWP from '../bcvwp/BCVWPSupport';
-import {LanguageInfo, Link} from '../../structs';
+import { LanguageInfo, Link } from '../../structs';
 
 export interface PivotWord {
   frequency: number;

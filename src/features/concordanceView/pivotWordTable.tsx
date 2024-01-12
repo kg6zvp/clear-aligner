@@ -1,18 +1,19 @@
-import {
-  CircularProgress,
-  TableContainer,
-} from '@mui/material';
+import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import { PivotWord } from './structs';
 import { Box } from '@mui/system';
 import {
   DataGrid,
-  GridColDef, GridRenderCellParams,
+  GridColDef,
+  GridRenderCellParams,
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
-import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
-import {LocalizedTextDisplay} from "../localizedTextDisplay";
+import {
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+} from '../../styles/dataGridFixes';
+import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
 const columns: GridColDef[] = [
   {
@@ -25,8 +26,11 @@ const columns: GridColDef[] = [
     headerName: 'Pivot Word',
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
-      <LocalizedTextDisplay children={row.pivotWord} languageInfo={row.languageInfo} />
-    )
+      <LocalizedTextDisplay
+        children={row.pivotWord}
+        languageInfo={row.languageInfo}
+      />
+    ),
   },
 ];
 

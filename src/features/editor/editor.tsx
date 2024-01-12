@@ -8,7 +8,7 @@ import Polyglot from 'features/polyglot';
 import ControlPanel from 'features/controlPanel';
 import ContextPanel from 'features/contextPanel';
 
-import {CorpusContainer} from 'structs';
+import { CorpusContainer } from 'structs';
 
 import '../../styles/theme.css';
 import { loadAlignments } from '../../state/alignment.slice';

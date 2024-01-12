@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import {CorpusContainer} from 'structs';
+import { CorpusContainer } from 'structs';
 import EditorWrapper from 'features/editor';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 

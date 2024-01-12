@@ -1,12 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
-import {CorpusContainer, Word} from '../../structs';
-import {
-  getAvailableCorporaContainers,
-  getAvailableCorporaIds,
-  queryText,
-} from '../../workbench/query';
+import { CorpusContainer, Word } from '../../structs';
+import { getAvailableCorporaContainers } from '../../workbench/query';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
@@ -31,7 +27,9 @@ const defaultDocumentTitle = 'ClearAligner';
 export const AlignmentEditor = () => {
   const layoutCtx = useContext(LayoutContext);
   const [availableWords, setAvailableWords] = useState([] as Word[]);
-  const [selectedCorporaContainers, setSelectedCorporaContainers] = useState([] as CorpusContainer[]);
+  const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
+    [] as CorpusContainer[]
+  );
 
   const [currentPosition, setCurrentPosition] = useState(
     getRefFromURL() ?? (new BCVWP(45, 5, 3) as BCVWP | null)
@@ -52,18 +50,18 @@ export const AlignmentEditor = () => {
   React.useEffect(() => {
     const loadSourceWords = async () => {
       const containers = await getAvailableCorporaContainers();
-      const targetCorpora = containers.find((v: CorpusContainer) => v.id === 'target');
+      const targetCorpora = containers.find(
+        (v: CorpusContainer) => v.id === 'target'
+      );
 
       setSelectedCorporaContainers(containers);
-      setAvailableWords(targetCorpora?.corpora.flatMap(({ words }) => words) ?? []);
+      setAvailableWords(
+        targetCorpora?.corpora.flatMap(({ words }) => words) ?? []
+      );
     };
 
     loadSourceWords().catch(console.error);
-  }, [
-    setAvailableWords,
-    setCurrentPosition,
-    setSelectedCorporaContainers,
-  ]);
+  }, [setAvailableWords, setCurrentPosition, setSelectedCorporaContainers]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
@@ -94,7 +92,10 @@ export const AlignmentEditor = () => {
           onNavigate={setCurrentPosition}
         />
       </div>
-      <Workbench corpora={selectedCorporaContainers} currentPosition={currentPosition} />
+      <Workbench
+        corpora={selectedCorporaContainers}
+        currentPosition={currentPosition}
+      />
     </>
   );
 };

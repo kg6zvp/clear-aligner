@@ -1,4 +1,4 @@
-import {Link, DisplayableLink, Verse, CorpusContainer} from '../../structs';
+import { Link, DisplayableLink, Verse, CorpusContainer } from '../../structs';
 import {
   DataGrid,
   GridColDef,
@@ -18,7 +18,10 @@ import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import findWord from '../../helpers/findWord';
-import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
+import {
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+} from '../../styles/dataGridFixes';
 
 export interface AlignmentTableContextProps {
   wordSource: WordSource;
@@ -42,7 +45,9 @@ export const VerseCell = (
       .map(BCVWP.parseFromString)
       .map((ref) => ref.toTruncatedReferenceString(BCVWPField.Verse)),
     _.isEqual
-  ).flatMap((ref) => container?.corpora.flatMap(({ wordsByVerse }) => wordsByVerse[ref]));
+  ).flatMap((ref) =>
+    container?.corpora.flatMap(({ wordsByVerse }) => wordsByVerse[ref])
+  );
   return (
     <>
       {verses.map((verse: Verse) => (

@@ -1,14 +1,14 @@
-import React, {ReactElement} from 'react';
+import React, { ReactElement } from 'react';
 import useDebug from 'hooks/useDebug';
-import {useAppSelector} from 'app/hooks';
-import {Divider, Typography} from '@mui/material';
+import { useAppSelector } from 'app/hooks';
+import { Divider, Typography } from '@mui/material';
 
-import {Corpus, Word} from 'structs';
+import { Corpus, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
-import BCVWP, {BCVWPField} from '../bcvwp/BCVWPSupport';
-import {WordDisplay} from "../wordDisplay";
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {
   corpora: Corpus[];
@@ -99,13 +99,20 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         );
         const partsAsWords: Word[][] = [];
         sortedSelectedPartsForText.forEach((part) => {
-          const lastIndex = partsAsWords.length-1;
+          const lastIndex = partsAsWords.length - 1;
           const currentValueRef: BCVWP = BCVWP.parseFromString(part.id);
 
-          if ((partsAsWords[lastIndex]?.length) === 0 ||
-            (lastIndex >= 0 && BCVWP.parseFromString(partsAsWords[lastIndex].at(-1)!.id).matchesTruncated(currentValueRef, BCVWPField.Word)) ) { // if text should be grouped in the last word
+          if (
+            partsAsWords[lastIndex]?.length === 0 ||
+            (lastIndex >= 0 &&
+              BCVWP.parseFromString(
+                partsAsWords[lastIndex].at(-1)!.id
+              ).matchesTruncated(currentValueRef, BCVWPField.Word))
+          ) {
+            // if text should be grouped in the last word
             partsAsWords[lastIndex].push(part);
-          } else { // new word
+          } else {
+            // new word
             partsAsWords.push([part]);
           }
         });
@@ -132,30 +139,35 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             <div>
               <span>&nbsp;</span>
               {partsAsWords
-                .filter(word => word.length > 0)
+                .filter((word) => word.length > 0)
                 .map((selectedWord, index: number): ReactElement => {
-                  const wordId = BCVWP.parseFromString(selectedWord.at(0)!.id).toTruncatedReferenceString(BCVWPField.Word);
+                  const wordId = BCVWP.parseFromString(
+                    selectedWord.at(0)!.id
+                  ).toTruncatedReferenceString(BCVWPField.Word);
                   let nextIsSequential: boolean = true;
                   const next = partsAsWords[index + 1];
                   if (next) {
-                    const sequenceDiff = next.at(0)!.position - selectedWord.at(0)!.position;
+                    const sequenceDiff =
+                      next.at(0)!.position - selectedWord.at(0)!.position;
                     if (sequenceDiff > 1) {
                       nextIsSequential = false;
                     }
                   }
                   return (
                     <span key={`selected_${wordId}`}>
-                      <WordDisplay readonly={true} key={wordId} parts={selectedWord} languageInfo={corpus.language}/>
+                      <WordDisplay
+                        readonly={true}
+                        key={wordId}
+                        parts={selectedWord}
+                        languageInfo={corpus.language}
+                      />
 
                       {!nextIsSequential ? (
-                        <span key={`selected_${wordId}_ellipsis`}>
-                          ...{' '}
-                        </span>
+                        <span key={`selected_${wordId}_ellipsis`}>... </span>
                       ) : null}
                     </span>
                   );
-                }
-              )}
+                })}
             </div>
             <div style={{ marginTop: '8px' }}>
               <Divider />

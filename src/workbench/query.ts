@@ -1,12 +1,18 @@
-import {Corpus, CorpusContainer, CorpusFileFormat, Verse, Word} from 'structs';
-import BCVWP, {BCVWPField} from '../features/bcvwp/BCVWPSupport';
+import {
+  Corpus,
+  CorpusContainer,
+  CorpusFileFormat,
+  Verse,
+  Word,
+} from 'structs';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
 import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
 // @ts-ignore
-import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv'
+import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
 import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
 
@@ -128,7 +134,9 @@ export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
   );
 };
 
-export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]> => {
+export const getAvailableCorporaContainers = async (): Promise<
+  CorpusContainer[]
+> => {
   if (!isInitialized) {
     isInitialized = true;
     // Macula Hebrew OT
@@ -139,7 +147,7 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
       language: {
         code: 'heb',
         textDirection: 'rtl',
-        fontFamily: 'sbl-hebrew'
+        fontFamily: 'sbl-hebrew',
       },
       words: [],
       wordsByVerse: {},
@@ -152,7 +160,7 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
     );
     maculaHebOT = {
       ...maculaHebOT,
-      ...maculaHebOTWords
+      ...maculaHebOTWords,
     };
 
     // YLT Old Testament
@@ -162,10 +170,10 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
       fullName: 'WLC YLT Old Testament',
       language: {
         code: 'en',
-        textDirection: 'ltr'
+        textDirection: 'ltr',
       },
       words: [],
-      wordsByVerse: {}
+      wordsByVerse: {},
     };
     const wlcYltOtWords = await parseTsvByFileType(
       WLC_OT_YLT_TSV,
@@ -174,7 +182,7 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
     );
     wlcYltOt = {
       ...wlcYltOt,
-      ...wlcYltOtWords
+      ...wlcYltOtWords,
     };
 
     // SBL GNT
@@ -184,7 +192,7 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
       fullName: 'SBL Greek New Testament',
       language: {
         code: 'grc',
-        textDirection: 'ltr'
+        textDirection: 'ltr',
       },
       words: [],
       wordsByVerse: {},
@@ -207,7 +215,7 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
       fullName: "Young's Literal Translation text New Testament",
       language: {
         code: 'eng',
-        textDirection: 'ltr'
+        textDirection: 'ltr',
       },
       words: [],
       wordsByVerse: {},
@@ -224,8 +232,14 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
       ...na27Words,
     };
 
-    const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [ maculaHebOT, sblGnt ]);
-    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [ wlcYltOt, na27Ylt ]);
+    const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
+      maculaHebOT,
+      sblGnt,
+    ]);
+    const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
+      wlcYltOt,
+      na27Ylt,
+    ]);
 
     availableCorpora.push(sourceContainer);
     availableCorpora.push(targetContainer);
@@ -235,11 +249,11 @@ export const getAvailableCorporaContainers = async (): Promise<CorpusContainer[]
 };
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (isInitialized ? availableCorpora : await getAvailableCorporaContainers()).map(
-    (corpus) => {
-      return corpus.id;
-    }
-  );
+  return (
+    isInitialized ? availableCorpora : await getAvailableCorporaContainers()
+  ).map((corpus) => {
+    return corpus.id;
+  });
 };
 
 export const queryText = async (
@@ -247,9 +261,11 @@ export const queryText = async (
   position?: BCVWP | null
 ): Promise<Corpus | null> => {
   if (!position) return null;
-  const container = (await getAvailableCorporaContainers()).find((container) => {
-    return container.id === containerId;
-  });
+  const container = (await getAvailableCorporaContainers()).find(
+    (container) => {
+      return container.id === containerId;
+    }
+  );
 
   if (!container) {
     throw new Error(`Unable to find requested: ${containerId}`);

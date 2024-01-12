@@ -1,31 +1,45 @@
 import {
   DataGrid,
-  GridColDef, GridRenderCellParams,
+  GridColDef,
+  GridRenderCellParams,
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
-import {AlignedWord, LocalizedWordEntry} from './structs';
+import { AlignedWord, LocalizedWordEntry } from './structs';
 import { TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
-import {DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix} from "../../styles/dataGridFixes";
-import {LocalizedTextDisplay} from "../localizedTextDisplay";
+import {
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+} from '../../styles/dataGridFixes';
+import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
 const renderWords = (words: LocalizedWordEntry[]) => {
   switch (words.length) {
     case 0:
-      return (<></>);
+      return <></>;
     case 1:
-      return (<LocalizedTextDisplay children={words[0].text} languageInfo={words[0].languageInfo}/>);
+      return (
+        <LocalizedTextDisplay
+          children={words[0].text}
+          languageInfo={words[0].languageInfo}
+        />
+      );
     default:
       return (
         <ul>
-          {words.map(wordEntry => <li>
-            <LocalizedTextDisplay children={wordEntry.text} languageInfo={wordEntry.languageInfo}/>
-          </li>)}
+          {words.map((wordEntry) => (
+            <li>
+              <LocalizedTextDisplay
+                children={wordEntry.text}
+                languageInfo={wordEntry.languageInfo}
+              />
+            </li>
+          ))}
         </ul>
       );
   }
-}
+};
 
 const columns: GridColDef[] = [
   {
@@ -37,13 +51,15 @@ const columns: GridColDef[] = [
     field: 'sourceWordTexts',
     headerName: 'Source',
     flex: 1,
-    renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) => renderWords(row.sourceWordTexts)
+    renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
+      renderWords(row.sourceWordTexts),
   },
   {
     field: 'targetWordTexts',
     headerName: 'Target',
     flex: 1,
-    renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) => renderWords(row.targetWordTexts)
+    renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
+      renderWords(row.targetWordTexts),
   },
 ];
 

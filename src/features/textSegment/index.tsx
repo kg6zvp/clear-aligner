@@ -4,11 +4,11 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { toggleTextSegment, AlignmentMode } from 'state/alignment.slice';
 import { hover, relatedAlignments } from 'state/textSegmentHover.slice';
-import {Alignment, Word, Link, LanguageInfo} from 'structs';
+import { Alignment, Word, Link, LanguageInfo } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
-import {LocalizedTextDisplay} from "../localizedTextDisplay";
+import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
 export interface TextSegmentProps {
   readonly?: boolean;
@@ -71,7 +71,7 @@ const computeDecoration = (
 export const TextSegment = ({
   readonly,
   word,
-  languageInfo
+  languageInfo,
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -264,8 +264,10 @@ export const TextSegment = ({
           isMemberOfMultipleAlignments
         )}`}
         style={{
-          ...languageInfo?.fontFamily ? { fontFamily: languageInfo.fontFamily } : {}
-      }}
+          ...(languageInfo?.fontFamily
+            ? { fontFamily: languageInfo.fontFamily }
+            : {}),
+        }}
         onMouseEnter={
           readonly
             ? undefined

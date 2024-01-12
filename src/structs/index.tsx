@@ -1,4 +1,4 @@
-import BCVWP, {BCVWPField} from '../features/bcvwp/BCVWPSupport';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 export enum SyntaxType {
   // Has syntax data.
@@ -40,7 +40,7 @@ export interface Verse {
   words: Word[];
 }
 
-export type TextDirection = 'ltr'|'rtl';
+export type TextDirection = 'ltr' | 'rtl';
 
 export interface LanguageInfo {
   code: string;
@@ -71,43 +71,47 @@ export class CorpusContainer {
   }
 
   containsCorpus(corpusId: string): boolean {
-    return this.corpora.some(corpus => corpus.id === corpusId);
+    return this.corpora.some((corpus) => corpus.id === corpusId);
   }
 
-  getCorpusById(corpusId: string): Corpus|undefined {
+  getCorpusById(corpusId: string): Corpus | undefined {
     return this.corpora.find((corpus) => corpus.id === corpusId);
   }
 
-  corpusAtReference(reference: BCVWP): Corpus|undefined {
+  corpusAtReference(reference: BCVWP): Corpus | undefined {
     const refString = reference.toTruncatedReferenceString(BCVWPField.Book); // assuming corpora differentiate by book
     return this.corpora.find((corpus) => {
       const keys = Object.keys(corpus.wordsByVerse);
-      return !!keys.find(key => key.startsWith(refString));
+      return !!keys.find((key) => key.startsWith(refString));
     });
   }
 
-  languageAtReference(reference: BCVWP): LanguageInfo|undefined {
+  languageAtReference(reference: BCVWP): LanguageInfo | undefined {
     return this.corpusAtReference(reference)?.language;
   }
 
-  verseByReference(reference: BCVWP): Verse|undefined {
+  verseByReference(reference: BCVWP): Verse | undefined {
     const refString = reference.toTruncatedReferenceString(BCVWPField.Verse);
     return this.verseByReferenceString(refString);
   }
 
-  verseByReferenceString(refString: string): Verse|undefined {
-    const corpus = this.corpora.find((corpus) => corpus.wordsByVerse[refString]);
-    if (!corpus)
-      return undefined;
+  verseByReferenceString(refString: string): Verse | undefined {
+    const corpus = this.corpora.find(
+      (corpus) => corpus.wordsByVerse[refString]
+    );
+    if (!corpus) return undefined;
     return corpus.wordsByVerse[refString];
   }
 
-  static fromIdAndCorpora = (id: string, corpora: Corpus[]): CorpusContainer => {
+  static fromIdAndCorpora = (
+    id: string,
+    corpora: Corpus[]
+  ): CorpusContainer => {
     const container = new CorpusContainer();
     container.id = id;
     container.corpora = corpora;
     return container;
-  }
+  };
 }
 
 export enum CorpusFileFormat {
