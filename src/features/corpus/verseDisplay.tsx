@@ -11,6 +11,14 @@ export interface VerseDisplayProps {
   verse: Verse;
 }
 
+/**
+ * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
+ * which doesn't edit alignments
+ * @param readonly optional property to specify if the verse should be displayed in read-only mode
+ * @param languageInfo language information to determine how the verse should be displayed
+ * @param verse verse to be displayed
+ * @constructor
+ */
 export const VerseDisplay = ({
   readonly,
   languageInfo,

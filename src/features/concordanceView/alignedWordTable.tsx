@@ -14,6 +14,10 @@ import {
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
+/**
+ * Render an individual word or list of words with the appropriate display for their language
+ * @param words words to be rendered
+ */
 const renderWords = (words: LocalizedWordEntry[]) => {
   switch (words.length) {
     case 0:
@@ -80,6 +84,14 @@ export interface AlignedWordTableProps {
   onChangeSort: (sortData: GridSortItem | null) => void;
 }
 
+/**
+ * Display aligned words in the concordance view
+ * @param sort current sort model for Material UI DataGrid
+ * @param alignedWords list of aligned words for display
+ * @param chosenAlignedWord currently selected aligned word
+ * @param onChooseAlignedWord callback for when an aligned word entry is clicked in the list
+ * @param onChangeSort callback for when the user changes the sort model
+ */
 export const AlignedWordTable = ({
   sort,
   alignedWords,

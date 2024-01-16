@@ -31,6 +31,10 @@ export interface AlignmentTableContextProps {
 
 const AlignmentTableContext = createContext({} as AlignmentTableContextProps);
 
+/**
+ * Render cells with verse text in the appropriate font and text orientation for the verse
+ * @param row rendering params for this DisplayableLink entry
+ */
 export const VerseCell = (
   row: GridRenderCellParams<DisplayableLink, any, any>
 ) => {
@@ -61,6 +65,10 @@ export const VerseCell = (
   );
 };
 
+/**
+ * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
+ * @param row rendering params for this DisplayableLink entry
+ */
 export const LinkCell = (
   row: GridRenderCellParams<DisplayableLink, any, any>
 ) => {
@@ -130,6 +138,21 @@ export interface AlignmentTableProps {
   onChooseAlignmentLink: (alignmentLink: DisplayableLink) => void;
 }
 
+/**
+ * The AlignmentTable displays a list of alignment Links and allows the user to navigate to that alignment link in the
+ * alignment editor
+ * @param sort current sort model for Material UI DataGrid
+ * @param wordSource current word source
+ * @param sourceContainer container with the source corpora
+ * @param targetContainer container with the target corpora
+ * @param pivotWord the pivot word that's currently selected, corresponds to the alignment rows being displayed and the
+ * currently selected aligned word
+ * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
+ * @param alignments alignment links to be displayed in the table
+ * @param onChangeSort callback for when the user changes the sort model
+ * @param chosenAlignmentLink currently selected alignment link
+ * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
+ */
 export const AlignmentTable = ({
   sort,
   wordSource,

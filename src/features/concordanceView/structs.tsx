@@ -1,4 +1,3 @@
-import BCVWP from '../bcvwp/BCVWPSupport';
 import { LanguageInfo, Link } from '../../structs';
 
 export interface PivotWord {
@@ -8,11 +7,17 @@ export interface PivotWord {
   alignedWords?: AlignedWord[];
 }
 
+/**
+ * text with corresponding language information for display
+ */
 export interface LocalizedWordEntry {
   text: string;
   languageInfo?: LanguageInfo;
 }
 
+/**
+ * Represents the data entries in the aligned words table
+ */
 export interface AlignedWord {
   id: string;
   frequency: number;

@@ -8,6 +8,12 @@ export interface WordDisplayProps {
   languageInfo?: LanguageInfo;
 }
 
+/**
+ * Display a word made up of one or more parts with spacing after it
+ * @param readonly whether the word should be displayed in read-only mode
+ * @param parts parts to display as a single word
+ * @param languageInfo language info for display
+ */
 export const WordDisplay = ({
   readonly,
   parts,
