@@ -16,3 +16,9 @@ export const DataGridScrollbarDisplayFix = {
     width: 0,
   },
 };
+
+export const DataGridSetMinRowHeightToDefault = {
+  ".MuiDataGrid-cell": {
+    minHeight: '52px !important',
+  },
+}

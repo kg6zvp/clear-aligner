@@ -10,7 +10,7 @@ import { TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix,
+  DataGridScrollbarDisplayFix, DataGridSetMinRowHeightToDefault,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
@@ -24,16 +24,15 @@ const renderWords = (words: LocalizedWordEntry[]) => {
       return <></>;
     case 1:
       return (
-        <LocalizedTextDisplay
-          children={words[0].text}
-          languageInfo={words[0].languageInfo}
-        />
+        <LocalizedTextDisplay languageInfo={words[0].languageInfo}>
+          {words[0].text}
+        </LocalizedTextDisplay>
       );
     default:
       return (
         <ul>
           {words.map((wordEntry) => (
-            <li>
+            <li key={wordEntry.text}>
               <LocalizedTextDisplay
                 children={wordEntry.text}
                 languageInfo={wordEntry.languageInfo}
@@ -123,6 +122,7 @@ export const AlignedWordTable = ({
       <DataGrid
         sx={{
           width: '100%',
+          ...DataGridSetMinRowHeightToDefault,
           ...DataGridScrollbarDisplayFix,
           ...DataGridResizeAnimationFixes,
         }}
@@ -156,6 +156,7 @@ export const AlignedWordTable = ({
         }: GridRowParams<AlignedWord>) =>
           !!alignments && (alignments?.length || 0) > 0
         }
+        getRowHeight={() => 'auto'}
       />
     </TableContainer>
   );
