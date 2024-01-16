@@ -60,7 +60,6 @@ export const VerseDisplay = ({
       sx={{
         p: '1px',
         pl: 4,
-        //flex: 8,
         flexGrow: 1,
         overflow: 'auto',
         ...(textDirection ? { direction: textDirection } : {}),
