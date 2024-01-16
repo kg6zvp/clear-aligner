@@ -59,7 +59,7 @@ export const VerseDisplay = ({
     });
 
     return finalTokens;
-  }, [verse.words]);
+  }, [verse?.words]);
 
   return (
     <Grid

@@ -49,9 +49,12 @@ export const VerseCell = (
       .map(BCVWP.parseFromString)
       .map((ref) => ref.toTruncatedReferenceString(BCVWPField.Verse)),
     _.isEqual
-  ).flatMap((ref) =>
-    container?.corpora.flatMap(({ wordsByVerse }) => wordsByVerse[ref])
-  );
+  )
+    .flatMap((ref) =>
+      container?.corpora.flatMap(({ wordsByVerse }) => wordsByVerse[ref])
+    )
+    .filter((v) => !!v);
+
   return (
     <>
       {verses.map((verse: Verse) => (
