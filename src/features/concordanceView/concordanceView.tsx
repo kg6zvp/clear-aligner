@@ -172,13 +172,13 @@ export const ConcordanceView = () => {
         .filter((key) => !!allWordsAndFrequencies[key])
         .map((key) => {
           return {
-            pivotWord: key,
+            normalizedText: key,
             frequency: allWordsAndFrequencies[key].count,
             languageInfo: allWordsAndFrequencies[key].languageInfo,
           } as PivotWord;
         })
         .reduce((accumulator, currentValue) => {
-          accumulator[currentValue.pivotWord] = currentValue;
+          accumulator[currentValue.normalizedText] = currentValue;
           return accumulator;
         }, {} as { [key: string]: PivotWord });
 
@@ -352,7 +352,7 @@ export const ConcordanceView = () => {
     if (searchParams.has('pivotWord')) {
       const pivotWordId = searchParams.get('pivotWord')!;
       const pivotWord = srcPivotWords.find(
-        (pivotWord) => pivotWord.pivotWord === pivotWordId
+        (pivotWord) => pivotWord.normalizedText === pivotWordId
       );
 
       if (pivotWord) {

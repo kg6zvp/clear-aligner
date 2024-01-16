@@ -1,8 +1,11 @@
 import { LanguageInfo, Link } from '../../structs';
 
+/**
+ * represents rows displayed in the pivot word table in the concordance view
+ */
 export interface PivotWord {
-  frequency: number;
-  pivotWord: string;
+  frequency: number; // number of times this pivot word appears in the text
+  normalizedText: string; // normalized text of the pivot word being represented
   languageInfo?: LanguageInfo;
   alignedWords?: AlignedWord[];
 }

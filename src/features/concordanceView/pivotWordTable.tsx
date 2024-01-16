@@ -27,7 +27,7 @@ const columns: GridColDef[] = [
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
       <LocalizedTextDisplay
-        children={row.pivotWord}
+        children={row.normalizedText}
         languageInfo={row.languageInfo}
       />
     ),
@@ -91,11 +91,11 @@ export const PivotWordTable = ({
         }}
         rowSelection={true}
         rowSelectionModel={
-          chosenWord?.pivotWord ? [chosenWord.pivotWord] : undefined
+          chosenWord?.normalizedText ? [chosenWord.normalizedText] : undefined
         }
         rows={pivotWords}
         columns={columns}
-        getRowId={(row) => row.pivotWord}
+        getRowId={(row) => row.normalizedText}
         sortModel={sort ? [sort] : []}
         onSortModelChange={(newSort, details) => {
           if (!newSort || newSort.length < 1) {

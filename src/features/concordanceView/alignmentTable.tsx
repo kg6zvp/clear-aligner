@@ -87,7 +87,7 @@ export const LinkCell = (
               findFirstRefFromLink(row.row)?.toTruncatedReferenceString(
                 BCVWPField.Verse
               ) ?? '',
-            pivotWord: tableCtx?.pivotWord?.pivotWord || '',
+            pivotWord: tableCtx?.pivotWord?.normalizedText || '',
             alignedWord: tableCtx?.alignedWord?.id || '',
             alignmentLink: row.row.id ?? '',
           }).toString(),

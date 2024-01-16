@@ -152,7 +152,6 @@ export const getAvailableCorporaContainers = async (): Promise<
       words: [],
       wordsByVerse: {},
     };
-    // @ts-ignore
     const maculaHebOTWords = await parseTsvByFileType(
       MACULA_HEBOT_TSV,
       maculaHebOT,
@@ -198,7 +197,6 @@ export const getAvailableCorporaContainers = async (): Promise<
       wordsByVerse: {},
     };
 
-    // @ts-ignore
     const sblWords = await parseTsvByFileType(
       MACULA_SBLGNT,
       sblGnt,
@@ -221,7 +219,6 @@ export const getAvailableCorporaContainers = async (): Promise<
       wordsByVerse: {},
     };
 
-    // @ts-ignore
     const na27Words = await parseTsvByFileType(
       NA27_YLT,
       na27Ylt,

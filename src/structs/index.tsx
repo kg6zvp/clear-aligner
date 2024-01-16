@@ -42,6 +42,9 @@ export interface Verse {
 
 export type TextDirection = 'ltr' | 'rtl';
 
+/**
+ * contains display information about a language
+ */
 export interface LanguageInfo {
   code: string;
   textDirection: TextDirection;
@@ -61,6 +64,10 @@ export interface Corpus {
   syntax?: SyntaxRoot;
 }
 
+/**
+ * Abstracts multiple corpora so they can be addressed as a single unit, typically used for `source` and `target` to
+ * hold manuscripts for them
+ */
 export class CorpusContainer {
   id: string;
   corpora: Corpus[];
@@ -122,10 +129,13 @@ export enum CorpusFileFormat {
 // An instance of alignment
 export interface Link {
   id?: string;
-  sources: string[];
-  targets: string[];
+  sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
+  targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
+/**
+ * Link containing information to assist in displaying it without requiring other context (UI model only)
+ */
 export interface DisplayableLink extends Link {
   sourceContainer: CorpusContainer;
   targetContainer: CorpusContainer;
