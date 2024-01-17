@@ -10,7 +10,8 @@ import { TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix, DataGridSetMinRowHeightToDefault,
+  DataGridScrollbarDisplayFix,
+  DataGridSetMinRowHeightToDefault,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 

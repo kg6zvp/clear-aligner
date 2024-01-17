@@ -103,11 +103,11 @@ export class CorpusContainer {
   }
 
   verseByReferenceString(refString: string): Verse | undefined {
-    const corpus = this.corpora.find(
-      (corpus) => corpus.wordsByVerse[refString]
-    );
-    if (!corpus) return undefined;
-    return corpus.wordsByVerse[refString];
+    for (let corpus of this.corpora) {
+      const verse = corpus.wordsByVerse[refString];
+      if (verse) return verse;
+    }
+    return undefined;
   }
 
   static fromIdAndCorpora = (
