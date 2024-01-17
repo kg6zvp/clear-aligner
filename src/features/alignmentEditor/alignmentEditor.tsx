@@ -7,20 +7,7 @@ import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { useSearchParams } from 'react-router-dom';
-
-const getRefParam = (): string | null => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('ref');
-};
-
-const getRefFromURL = (): BCVWP | null => {
-  const refParam = getRefParam();
-
-  if (refParam) {
-    return BCVWP.parseFromString(refParam);
-  }
-  return null;
-};
+import { AppContext } from '../../App';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -31,21 +18,26 @@ export const AlignmentEditor = () => {
     [] as CorpusContainer[]
   );
 
-  const [currentPosition, setCurrentPosition] = useState(
-    getRefFromURL() ?? (new BCVWP(45, 5, 3) as BCVWP | null)
-  );
+  const appCtx = useContext(AppContext);
+
+  // set current reference to default if none set
+  useEffect(() => {
+    if (!appCtx.currentReference) {
+      appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
+    }
+  }, [appCtx, appCtx.currentReference, appCtx.setCurrentReference]);
 
   React.useEffect(() => {
-    if (currentPosition) {
+    if (appCtx.currentReference) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          currentPosition?.getBookInfo()?.EnglishBookName
-        } ${currentPosition?.chapter}:${currentPosition?.verse}`
+          appCtx.currentReference?.getBookInfo()?.EnglishBookName
+        } ${appCtx.currentReference?.chapter}:${appCtx.currentReference?.verse}`
       );
     } else {
       layoutCtx.setWindowTitle(defaultDocumentTitle);
     }
-  }, [currentPosition, layoutCtx]);
+  }, [appCtx.currentReference, layoutCtx]);
 
   React.useEffect(() => {
     const loadSourceWords = async () => {
@@ -61,24 +53,28 @@ export const AlignmentEditor = () => {
     };
 
     loadSourceWords().catch(console.error);
-  }, [setAvailableWords, setCurrentPosition, setSelectedCorporaContainers]);
+  }, [
+    setAvailableWords,
+    appCtx.setCurrentReference,
+    setSelectedCorporaContainers,
+  ]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={currentPosition} />
+      <BCVDisplay currentPosition={appCtx.currentReference} />
     );
-  }, [layoutCtx, currentPosition]);
+  }, [layoutCtx, appCtx.currentReference]);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (searchParams.has('ref')) {
       const newPosition = BCVWP.parseFromString(searchParams.get('ref')!);
-      setCurrentPosition(newPosition);
+      appCtx.setCurrentReference(newPosition);
       searchParams.delete('ref');
     }
     setSearchParams(searchParams);
-  }, [searchParams, setCurrentPosition, setSearchParams]);
+  }, [searchParams, appCtx, appCtx.setCurrentReference, setSearchParams]);
 
   return (
     <>
@@ -88,13 +84,13 @@ export const AlignmentEditor = () => {
           horizontal
           disabled={!availableWords || availableWords.length < 1}
           words={availableWords}
-          currentPosition={currentPosition ?? undefined}
-          onNavigate={setCurrentPosition}
+          currentPosition={appCtx.currentReference ?? undefined}
+          onNavigate={appCtx.setCurrentReference}
         />
       </div>
       <Workbench
         corpora={selectedCorporaContainers}
-        currentPosition={currentPosition}
+        currentPosition={appCtx.currentReference}
       />
     </>
   );
