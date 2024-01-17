@@ -1,4 +1,4 @@
-import { SyntaxRoot, SyntaxNode, Alignment, Link } from 'structs';
+import { Alignment, Link, SyntaxNode, SyntaxRoot } from 'structs';
 
 const mapAlignedWords = (
   sourceId: string,
@@ -26,19 +26,15 @@ const mapAlignedWords = (
 
       secondaryMatchedLinks = matchedLinks
         .map((matchedLink: Link) => {
-          const secondaryLink = secondaryAlignment.links.find(
-            (secondaryLink: Link) => {
-              return secondaryLink[mappedSideName].find(
-                (secondaryLinkMappedId: string) => {
-                  return matchedLink[nonSyntaxSideName].includes(
-                    secondaryLinkMappedId
-                  );
-                }
-              );
-            }
-          );
-
-          return secondaryLink;
+          return secondaryAlignment.links.find((secondaryLink: Link) => {
+            return secondaryLink[mappedSideName].find(
+              (secondaryLinkMappedId: string) => {
+                return matchedLink[nonSyntaxSideName].includes(
+                  secondaryLinkMappedId
+                );
+              }
+            );
+          });
         })
         .filter((x): x is Link => Boolean(x));
 

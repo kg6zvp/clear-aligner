@@ -20,11 +20,21 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
   useDebug('LinkBuilderComponent');
   const sourceContainer = useMemo(
     () => containers.find(({ id }) => id === 'source')!,
-    [containers, containers.length]
+    [
+      containers,
+      // reference to `containers` doesn't change, but the length does
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      containers.length,
+    ]
   );
   const targetContainer = useMemo(
     () => containers.find(({ id }) => id === 'target')!,
-    [containers, containers.length]
+    [
+      containers,
+      // reference to `containers` doesn't change, but the length does
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      containers.length,
+    ]
   );
 
   const selectedWords: Record<string, Word[]> = useAppSelector((state) => {

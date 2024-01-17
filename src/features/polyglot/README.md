@@ -2,6 +2,6 @@
 
 The `polyglot` component displays the provided texts in horizontal orientation.
 
-```ts
+```html
 <Polyglot name="mike" />
 ```

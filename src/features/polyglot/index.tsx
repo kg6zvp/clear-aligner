@@ -32,6 +32,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     );
   }, [
     containers,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     containers.length, // necessary in spite of warning
     corpusViewports,
   ]);

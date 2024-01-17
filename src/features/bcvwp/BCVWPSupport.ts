@@ -71,8 +71,8 @@ export default class BCVWP {
 
   /**
    * checks whether the given BCVWP match at the given level of truncation
-   * @param other: BCVWP to check for a match
-   * @param truncation: amount of truncation to match to
+   * @param other BCVWP to check for a match
+   * @param truncation amount of truncation to match to
    */
   matchesTruncated(other: BCVWP, truncation: BCVWPField): boolean {
     return (
@@ -100,10 +100,11 @@ export default class BCVWP {
     });
   }
   static isValidString(reference: string): boolean {
-    if (!reference || !reference.match(/^[on]?\d/) || reference.length < 2) {
-      return false;
-    }
-    return true;
+    return !(
+      !reference ||
+      !reference.match(/^[on]?\d/) ||
+      reference.length < 2
+    );
   }
 
   static parseFromString(reference: string): BCVWP {

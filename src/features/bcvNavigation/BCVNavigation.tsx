@@ -122,9 +122,12 @@ const ICON_BTN_VERT_MARGIN = '.5em';
 
 /**
  * BCVNavigation component for use in React
- * @param props.words list of references available for navigation
- * @param props.currentPosition optional prop to specify current position
- * @param props.onNavigate callback function which will receive division, book, chapter and verse coordinates
+ * @param sx style configuration
+ * @param disabled optional parameter to indicate whether input should be disabled
+ * @param words list of references available for navigation
+ * @param currentPosition optional prop to specify current position
+ * @param onNavigate callback function which will receive division, book, chapter and verse coordinates
+ * @param horizontal optional parameter to specify horizontal layout
  */
 const BCVNavigation = ({
   sx,

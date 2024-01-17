@@ -35,12 +35,6 @@ const sourceWord1: Word = {
   text: '',
   position: 0,
 };
-const sourceWord2: Word = {
-  id: 'sbl_1',
-  corpusId: 'sbl',
-  text: '',
-  position: 1,
-};
 
 const targetWord1: Word = {
   id: 'leb_1',
@@ -53,13 +47,6 @@ const targetWord2: Word = {
   corpusId: 'leb',
   text: '',
   position: 2,
-};
-
-const otherTargetWord1: Word = {
-  id: 'nvi_1',
-  corpusId: 'nvi',
-  text: '',
-  position: 1,
 };
 
 describe('alignmentSlice reducer', () => {
@@ -377,7 +364,7 @@ describe('alignmentSlice reducer', () => {
       };
 
       try {
-        const resultState = alignmentSliceReducer(
+        alignmentSliceReducer(
           previousState,
           toggleTextSegment({
             id: 'nvi_6',

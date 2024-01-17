@@ -2,11 +2,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { CorpusContainer, DisplayableLink, Link } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import {
-  AlignedWord,
-  NormalizedTextToPivotWord,
-  PivotWord,
-} from './structs';
+import { AlignedWord, NormalizedTextToPivotWord, PivotWord } from './structs';
 import { getAvailableCorporaContainers } from '../../workbench/query';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { PivotWordTable } from './pivotWordTable';

@@ -58,7 +58,6 @@ describe('TextSegment', () => {
       />,
       testState
     );
-    const textSegment = getByText(/mikey/);
     // BLURG, custom css properties don't work with js-dom.
     // See https://github.com/jsdom/cssstyle/pull/127
     // and https://github.com/testing-library/jest-dom/issues/322

@@ -230,7 +230,7 @@ export const AlignmentTable = ({
           getRowId={(row) => row.id}
           getRowHeight={(_) => 'auto'}
           sortModel={sort ? [sort] : []}
-          onSortModelChange={(newSort, details) => {
+          onSortModelChange={(newSort) => {
             if (!newSort || newSort.length < 1) {
               onChangeSort(sort);
             }

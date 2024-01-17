@@ -135,7 +135,7 @@ export const AlignedWordTable = ({
         columns={hasGlossData ? columnsWithGloss : columns}
         getRowId={(row) => row.id}
         sortModel={sort ? [sort] : []}
-        onSortModelChange={(newSort, details) => {
+        onSortModelChange={(newSort) => {
           if (!newSort || newSort.length < 1) {
             onChangeSort(sort);
           }

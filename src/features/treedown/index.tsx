@@ -16,11 +16,6 @@ interface TreedownProps {
 
 let theme: 'night' | 'day' = 'night';
 
-const parsePosition = (osisId: string): number => {
-  //Number(/^.*!(\w)/.exec(syntaxNode.content.osisId)[1]
-  return 0;
-};
-
 const isClause = (syntaxNode: SyntaxNode) => {
   return syntaxNode.content.role === 'cl' || syntaxNode.content.class === 'cl';
 };
@@ -200,7 +195,7 @@ const recurseSyntax = (
                       id: syntaxNode.content.n,
                       corpusId: corpus.id,
                       text: syntaxNode.content.text,
-                      position: parsePosition(syntaxNode.content.osisId),
+                      position: 0,
                     }}
                   />
                 )}
@@ -239,7 +234,7 @@ const recurseSyntax = (
             id: syntaxNode.content.n,
             corpusId: corpus.id,
             text: syntaxNode.content.text,
-            position: parsePosition(syntaxNode.content.osisId),
+            position: 0,
           }}
         />
       );

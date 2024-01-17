@@ -12,6 +12,7 @@ export interface LocalizedTextDisplayProps
  * Display text in child components in the appropriate font and text direction according to the language info supplied
  * @param children components to be displayed according to the language info
  * @param languageInfo language info for localization
+ * @param typographyProps set of parameters from `<Typography>` to be applied to this localized text display
  */
 export const LocalizedTextDisplay = ({
   children,

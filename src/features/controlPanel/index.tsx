@@ -40,7 +40,7 @@ import {
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { Corpus, CorpusContainer } from '../../structs';
+import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 
 interface ControlPanelProps {
