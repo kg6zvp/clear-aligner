@@ -31,3 +31,31 @@ export interface AlignedWord {
   gloss?: string[] | null;
   alignments?: Link[];
 }
+
+/**
+ * index of alignment Links by normalized pivot word text, an intermediate data structure used by the concordance view
+ * for display
+ */
+export interface NormalizedTextToAlignmentLink {
+  [key: string]: Link[];
+}
+
+/**
+ * index of pivot words by normalized pivot word text, an intermediate data structure used to generate the table data displayed
+ * in the concordance view
+ */
+export interface NormalizedTextToPivotWord {
+  [text: string]: PivotWord;
+}
+
+/**
+ * intermediate data structure used by the concordance view in generating data for tables
+ * represents count of occurrences of a word in a text and the language information indexed
+ * by word
+ */
+export interface NormalizedWordsToFrequencyAndLocalization {
+  [key: string]: {
+    count: number;
+    languageInfo: LanguageInfo;
+  };
+}
