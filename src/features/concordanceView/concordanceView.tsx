@@ -1,14 +1,9 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import {
-  CorpusContainer,
-  DisplayableLink,
-  Link,
-} from '../../structs';
+import { CorpusContainer, DisplayableLink, Link } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import {
   AlignedWord,
-  LocalizedWordEntry,
   NormalizedTextToPivotWord,
   PivotWord,
 } from './structs';
@@ -20,13 +15,11 @@ import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useAppSelector } from '../../app';
-import BCVWP from '../bcvwp/BCVWPSupport';
-import findWord from '../../helpers/findWord';
-import _ from 'lodash';
 import { useSearchParams } from 'react-router-dom';
 import {
   generateAlignedWordsMap,
   generateAllWordsAndFrequencies,
+  generateListOfNavigablePivotWords,
   generatePivotWordsMap,
 } from './concordanceViewHelpers';
 
@@ -157,105 +150,22 @@ export const ConcordanceView = () => {
         allWordsAndFrequencies
       );
 
-      const alignedWordsAndFrequencies = generateAlignedWordsMap(
+      const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
         alignmentState,
         sourceContainer,
         targetContainer,
         wordSource
       );
 
-      const sourceTextId = sourceContainer.id;
-      const targetTextId = targetContainer.id;
-
-      Object.keys(alignedWordsAndFrequencies)
-        .filter((key) => !!alignedWordsAndFrequencies[key])
-        .map((key: string): AlignedWord => {
-          const frequency = alignedWordsAndFrequencies[key].length;
-
-          const sourceAndTargetWords = alignedWordsAndFrequencies[key]
-            .map((value: Link) => {
-              const sourceWords = value.sources
-                .map(BCVWP.parseFromString)
-                .map((ref: BCVWP) => {
-                  const wort = findWord(sourceContainer.corpora, ref);
-                  const languageInfo =
-                    sourceContainer.corpusAtReference(ref)?.language;
-                  if (!wort) return undefined;
-                  return {
-                    text: wort.text.toLowerCase(),
-                    languageInfo,
-                  };
-                })
-                .filter((v) => !!v);
-              const targetWords = value.targets
-                .map(BCVWP.parseFromString)
-                .map((ref: BCVWP) => {
-                  const wort = findWord(targetContainer.corpora, ref);
-                  const languageInfo =
-                    targetContainer.corpusAtReference(ref)?.language;
-                  if (!wort) return undefined;
-                  return {
-                    text: wort.text.toLowerCase(),
-                    languageInfo,
-                  };
-                })
-                .filter((v) => !!v);
-              return {
-                sourceWords,
-                targetWords,
-              } as {
-                sourceWords: LocalizedWordEntry[];
-                targetWords: LocalizedWordEntry[];
-              };
-            })
-            .reduce(
-              (accumulator, currentValue) => {
-                currentValue.sourceWords.forEach((current) =>
-                  accumulator.sourceWords.push(current)
-                );
-                currentValue.targetWords.forEach((current) =>
-                  accumulator.targetWords.push(current)
-                );
-                return accumulator;
-              },
-              {
-                sourceWords: [] as LocalizedWordEntry[],
-                targetWords: [] as LocalizedWordEntry[],
-              }
-            );
-
-          return {
-            id: key,
-            frequency,
-            sourceTextId,
-            targetTextId,
-            sourceWordTexts: _.uniqWith(
-              sourceAndTargetWords.sourceWords,
-              _.isEqual
-            ).sort(),
-            targetWordTexts: _.uniqWith(
-              sourceAndTargetWords.targetWords,
-              _.isEqual
-            ).sort(),
-            alignments: alignedWordsAndFrequencies[key],
-          };
-        })
-        .forEach((alignedWord: AlignedWord) => {
-          (wordSource === 'source'
-            ? alignedWord.sourceWordTexts
-            : alignedWord.targetWordTexts
-          ).forEach((wordEntry: LocalizedWordEntry) => {
-            if (!pivotWordsMap[wordEntry.text]) {
-              return;
-            }
-            if (!pivotWordsMap[wordEntry.text].alignedWords) {
-              pivotWordsMap[wordEntry.text].alignedWords = [];
-            }
-            pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
-          });
-        });
-
-      setSrcPivotWords(Object.values(pivotWordsMap));
+      setSrcPivotWords(
+        generateListOfNavigablePivotWords(
+          pivotWordsMap,
+          sourceContainer,
+          targetContainer,
+          normalizedTextToAlignmentLinks,
+          wordSource
+        )
+      );
       setLoading(false);
     };
 

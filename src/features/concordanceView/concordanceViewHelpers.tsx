@@ -1,5 +1,7 @@
 import { Alignment, CorpusContainer, Link } from '../../structs';
 import {
+  AlignedWord,
+  LocalizedWordEntry,
   NormalizedTextToAlignmentLink,
   NormalizedTextToPivotWord,
   NormalizedWordsToFrequencyAndLocalization,
@@ -119,3 +121,112 @@ export const generateAlignedWordsMap = (
         });
       return accumulator;
     }, {} as NormalizedTextToAlignmentLink);
+
+/**
+ * generates a list of pivot words with aligned words and alignment links
+ * @param pivotWordsMap map of word text to pivot words
+ * @param sourceContainer source corpora
+ * @param targetContainer target corpora
+ * @param normalizedTextToAlignmentLinks text to alignment link map
+ * @param wordSource 'source' or 'target'
+ */
+export const generateListOfNavigablePivotWords = (
+  pivotWordsMap: NormalizedTextToPivotWord,
+  sourceContainer: CorpusContainer,
+  targetContainer: CorpusContainer,
+  normalizedTextToAlignmentLinks: NormalizedTextToAlignmentLink,
+  wordSource: WordSource
+): PivotWord[] => {
+  const sourceTextId = sourceContainer.id;
+  const targetTextId = targetContainer.id;
+
+  Object.keys(normalizedTextToAlignmentLinks)
+    .filter((key) => !!normalizedTextToAlignmentLinks[key])
+    .map((key: string): AlignedWord => {
+      const frequency = normalizedTextToAlignmentLinks[key].length;
+
+      const sourceAndTargetWords = normalizedTextToAlignmentLinks[key]
+        .map((value: Link) => {
+          const sourceWords = value.sources
+            .map(BCVWP.parseFromString)
+            .map((ref: BCVWP) => {
+              const wort = findWord(sourceContainer.corpora, ref);
+              const languageInfo =
+                sourceContainer.corpusAtReference(ref)?.language;
+              if (!wort) return undefined;
+              return {
+                text: wort.text.toLowerCase(),
+                languageInfo,
+              };
+            })
+            .filter((v) => !!v);
+          const targetWords = value.targets
+            .map(BCVWP.parseFromString)
+            .map((ref: BCVWP) => {
+              const wort = findWord(targetContainer.corpora, ref);
+              const languageInfo =
+                targetContainer.corpusAtReference(ref)?.language;
+              if (!wort) return undefined;
+              return {
+                text: wort.text.toLowerCase(),
+                languageInfo,
+              };
+            })
+            .filter((v) => !!v);
+          return {
+            sourceWords,
+            targetWords,
+          } as {
+            sourceWords: LocalizedWordEntry[];
+            targetWords: LocalizedWordEntry[];
+          };
+        })
+        .reduce(
+          (accumulator, currentValue) => {
+            currentValue.sourceWords.forEach((current) =>
+              accumulator.sourceWords.push(current)
+            );
+            currentValue.targetWords.forEach((current) =>
+              accumulator.targetWords.push(current)
+            );
+            return accumulator;
+          },
+          {
+            sourceWords: [] as LocalizedWordEntry[],
+            targetWords: [] as LocalizedWordEntry[],
+          }
+        );
+
+      return {
+        id: key,
+        frequency,
+        sourceTextId,
+        targetTextId,
+        sourceWordTexts: _.uniqWith(
+          sourceAndTargetWords.sourceWords,
+          _.isEqual
+        ).sort(),
+        targetWordTexts: _.uniqWith(
+          sourceAndTargetWords.targetWords,
+          _.isEqual
+        ).sort(),
+        alignments: normalizedTextToAlignmentLinks[key],
+      };
+    })
+    .forEach((alignedWord: AlignedWord) => {
+      (wordSource === 'source'
+        ? alignedWord.sourceWordTexts
+        : alignedWord.targetWordTexts
+      ).forEach((wordEntry: LocalizedWordEntry) => {
+        if (!pivotWordsMap[wordEntry.text]) {
+          return;
+        }
+        if (!pivotWordsMap[wordEntry.text].alignedWords) {
+          pivotWordsMap[wordEntry.text].alignedWords = [];
+        }
+        pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
+      });
+    });
+
+  return Object.values(pivotWordsMap);
+};
