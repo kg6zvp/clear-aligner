@@ -62,7 +62,7 @@ export default class BCVWP {
       this.chapter ? chapterFormat.format(this.chapter) : '   '
     }${this.verse ? verseFormat.format(this.verse) : '   '}${
       this.word ? wordFormat.format(this.word) : '   '
-    }${this.word && this.part ? this.part ?? 1 : undefined}`;
+    }${this.word && this.part ? this.part ?? 1 : ''}`;
   }
 
   getBookInfo(): BookInfo | undefined {
@@ -100,20 +100,16 @@ export default class BCVWP {
     });
   }
   static isValidString(reference: string): boolean {
-    return !(
-      !reference ||
-      !reference.match(/^[on]?\d/) ||
-      reference.length < 2
-    );
+    return (!!reference &&
+      !!reference.match(/^[onON]?\d/) &&
+      reference.length > 1);
   }
 
   static parseFromString(reference: string): BCVWP {
     if (!BCVWP.isValidString(reference)) {
       throw new Error(`Illegal reference string given to parser: ${reference}`);
     }
-    const sanitized = reference.match(/^\D/)
-      ? reference.substring(1)
-      : reference;
+    const sanitized = !!reference.trim().match(/^[onON]\d/) ? reference.trim().substring(1) : reference.trim();
     const bookString = sanitized.substring(0, 2);
     const chapterString =
       sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;
