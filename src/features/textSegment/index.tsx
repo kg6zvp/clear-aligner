@@ -110,10 +110,10 @@ export const TextSegment = ({
         return false;
       }
       return (
-        (alignment.source === word.corpusId &&
-          state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
-        (alignment.target === word.corpusId &&
-          state.alignment.present.inProgressLink?.targets.includes(word.id))
+        (state.alignment.present.inProgressLink?.source === word.corpusId &&
+          state.alignment.present.inProgressLink?.sources.some((source) => source === word.id)) ||
+        (state.alignment.present.inProgressLink?.target === word.corpusId &&
+          state.alignment.present.inProgressLink?.targets.some((target) => target === word.id))
       );
     })
   );
