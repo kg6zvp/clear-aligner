@@ -23,6 +23,7 @@ export enum TreedownType {
 export interface Word {
   id: string;
   corpusId: string;
+  side: AlignmentSide;
 
   text: string;
   // character[s] following the text. i.e. punctuation.
@@ -173,8 +174,6 @@ export type AlignmentPolarity =
   | SecondaryAlignmentPolarity;
 
 export interface Alignment {
-  source: string;
-  target: string;
   polarity: AlignmentPolarity;
   links: Link[];
 }

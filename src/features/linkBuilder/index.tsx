@@ -60,9 +60,9 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         .filter((x): x is Word => x !== null);
 
       return {
-        [inProgressLink.source]: sourceWords,
-        [inProgressLink.target]: targetWords,
-      };
+        source: sourceWords ?? [],
+        target: targetWords ?? [],
+      } as Record<string, Word[]>;
     }
     return {};
   });
@@ -109,7 +109,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
       {Object.keys(selectedWords).map((textId: string): ReactElement => {
         const container = containers.find(
           (corpusContainer: CorpusContainer) => {
-            return !!corpusContainer.getCorpusById(textId);
+            return corpusContainer.id === textId;
           }
         );
         if (!container) return <div />;

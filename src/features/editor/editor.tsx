@@ -33,18 +33,6 @@ const Editor = (props: EditorProps): ReactElement => {
       dispatch(
         loadAlignments([
           {
-            source: 'wlc-hebot',
-            target: 'wlc-ylt',
-            links: [],
-            polarity: {
-              type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
-            },
-          },
-          {
-            source: 'sbl-gnt',
-            target: 'na27-YLT',
             links: [],
             polarity: {
               type: 'primary',

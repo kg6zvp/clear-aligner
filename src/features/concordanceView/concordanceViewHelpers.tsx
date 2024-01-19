@@ -78,16 +78,6 @@ export const generateAlignedWordsMap = (
 ): NormalizedTextToAlignmentLink =>
   alignmentState
     ?.map((alignmentData: Alignment) => {
-      if (!sourceContainer.containsCorpus(alignmentData.source)) {
-        throw new Error(
-          `${alignmentData.source} is not equal to ${sourceContainer.id}`
-        );
-      }
-      if (!targetContainer.containsCorpus(alignmentData.target)) {
-        throw new Error(
-          `${alignmentData.target} is not equal to ${targetContainer.id}`
-        );
-      }
       const src = wordSource === 'source' ? sourceContainer : targetContainer;
       return alignmentData.links.reduce((accumulator, singleAlignment) => {
         const uniqueAlignedWords = _.uniqWith(

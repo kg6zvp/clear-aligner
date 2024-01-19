@@ -311,7 +311,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const link = document.createElement('a');
 
                 // Set the download attribute and file name
-                link.download = `${currentAlignment.source}-${currentAlignment.target}_alignment-data.json`;
+                link.download = `${currentAlignment.polarity}_alignment-data.json`;
 
                 // Set the href attribute to the generated URL
                 link.href = url;

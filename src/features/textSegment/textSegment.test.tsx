@@ -10,8 +10,6 @@ const testState: RootState = {
     present: {
       alignments: [
         {
-          source: 'sbl',
-          target: 'leb',
           links: [],
           polarity: {
             type: 'primary',
@@ -22,8 +20,6 @@ const testState: RootState = {
       ],
       corpora: [],
       inProgressLink: {
-        source: 'sbl',
-        target: 'leb',
         sources: ['sbl_0'],
         targets: [],
       },
@@ -38,6 +34,7 @@ describe('TextSegment', () => {
         word={{
           id: 'test_1',
           corpusId: 'test',
+          side: 'targets',
           text: 'mikey',
           position: 0,
         }}
@@ -52,6 +49,7 @@ describe('TextSegment', () => {
         word={{
           id: 'sbl_0',
           corpusId: 'sbl',
+          side: 'sources',
           text: 'mikey',
           position: 0,
         }}

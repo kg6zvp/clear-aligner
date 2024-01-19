@@ -9,12 +9,14 @@ const findRelatedAlignments = (
 ): Alignment[] => {
   return unfilteredAlignments.reduce((acc, curAlignment) => {
     let filteredLinks = curAlignment.links.filter((link: Link) => {
-      if (curAlignment.source === word.corpusId) {
-        return link.sources.includes(word.id);
-      } else if (curAlignment.target === word.corpusId) {
-        return link.targets.includes(word.id);
+      switch (word.side) {
+        case 'sources':
+          return link.sources.includes(word.id);
+        case 'targets':
+          return link.targets.includes(word.id);
+        default:
+          return false;
       }
-      return false;
     });
 
     if (filteredLinks.length) {

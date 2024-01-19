@@ -93,27 +93,22 @@ export const TextSegment = ({
 
   const isMemberOfMultipleAlignments = useAppSelector((state) => {
     const relatedAlignments = state.alignment.present.alignments.filter(
-      (alignment) => {
-        return (
-          alignment.source === word.corpusId ||
-          alignment.target === word.corpusId
-        );
-      }
+      (_) => true
     );
     return relatedAlignments.length > 1;
   });
 
   const isSelected = Boolean(
     useAppSelector((state) => {
-      const alignment = state.alignment.present.alignments.find((_) => true);
-      if (!alignment) {
-        return false;
-      }
       return (
-        (state.alignment.present.inProgressLink?.source === word.corpusId &&
-          state.alignment.present.inProgressLink?.sources.some((source) => source === word.id)) ||
-        (state.alignment.present.inProgressLink?.target === word.corpusId &&
-          state.alignment.present.inProgressLink?.targets.some((target) => target === word.id))
+        (word.side === 'sources' &&
+          state.alignment.present.inProgressLink?.sources.some(
+            (source) => source === word.id
+          )) ||
+        (word.side === 'targets' &&
+          state.alignment.present.inProgressLink?.targets.some(
+            (target) => target === word.id
+          ))
       );
     })
   );
@@ -121,8 +116,10 @@ export const TextSegment = ({
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
       return (
-        state.alignment.present.inProgressLink?.sources.includes(word.id) ||
-        state.alignment.present.inProgressLink?.targets.includes(word.id)
+        (word.side === 'sources' &&
+          state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
+        (word.side === 'targets' &&
+          state.alignment.present.inProgressLink?.targets.includes(word.id))
       );
     })
   );
@@ -131,20 +128,13 @@ export const TextSegment = ({
     useAppSelector((state) => {
       if (word) {
         const relatedAlignment = state.textSegmentHover.relatedAlignments.find(
-          (alignment: Alignment) => {
-            return (
-              alignment.source === word.corpusId ||
-              alignment.target === word.corpusId
-            );
-          }
+          (_: Alignment) => true
         );
 
         const relatedLink = relatedAlignment?.links.filter((link: Link) => {
           return (
-            (relatedAlignment.source === word.corpusId &&
-              link.sources.includes(word.id)) ||
-            (relatedAlignment.target === word.corpusId &&
-              link.targets.includes(word.id))
+            (word.side === 'sources' && link.sources.includes(word.id)) ||
+            (word.side === 'targets' && link.targets.includes(word.id))
           );
         });
 
@@ -157,15 +147,7 @@ export const TextSegment = ({
     const inProgressLink = state.alignment.present.inProgressLink;
 
     const contextualAlignment = state.alignment.present.alignments.find(
-      (alignment: Alignment) => {
-        if (inProgressLink) {
-          return (
-            inProgressLink.source === alignment.source &&
-            inProgressLink.target === alignment.target
-          );
-        }
-        return false;
-      }
+      (_: Alignment) => !!inProgressLink
     );
 
     let foundLink = null;
@@ -174,10 +156,8 @@ export const TextSegment = ({
       if (word) {
         for (const link of contextualAlignment.links) {
           if (
-            (contextualAlignment.source === word.corpusId &&
-              link.sources.includes(word.id)) ||
-            (contextualAlignment.target === word.corpusId &&
-              link.targets.includes(word.id))
+            (word.side === 'sources' && link.sources.includes(word.id)) ||
+            (word.side === 'targets' && link.targets.includes(word.id))
           ) {
             foundLink = link;
           }
@@ -186,20 +166,13 @@ export const TextSegment = ({
     } else {
       if (word) {
         const possibleAlignments = state.alignment.present.alignments.filter(
-          (alignment: Alignment) => {
-            return (
-              alignment.source === word.corpusId ||
-              alignment.target === word.corpusId
-            );
-          }
+          (_: Alignment) => true
         );
         for (const alignment of possibleAlignments) {
           for (const link of alignment.links) {
             if (
-              (alignment.source === word.corpusId &&
-                link.sources.includes(word.id)) ||
-              (alignment.target === word.corpusId &&
-                link.targets.includes(word.id))
+              (word.side === 'sources' && link.sources.includes(word.id)) ||
+              (word.side === 'targets' && link.targets.includes(word.id))
             ) {
               foundLink = link;
             }
@@ -232,15 +205,7 @@ export const TextSegment = ({
   const isCurrentLinkMember = mightBeWorkingOnLink || isInProgressLinkMember;
 
   const isInvolved = Boolean(
-    useAppSelector((state) => {
-      const inProgressLink = state.alignment.present.inProgressLink;
-      if (inProgressLink) {
-        return (
-          inProgressLink.source === word.corpusId ||
-          inProgressLink.target === word.corpusId
-        );
-      }
-    })
+    useAppSelector((state) => !!state.alignment.present.inProgressLink)
   );
 
   if (!word) {
