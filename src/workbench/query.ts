@@ -125,45 +125,27 @@ const parseTsvByFileType = async (
   };
 };
 
-const putWordInCorpus = (corpus: Corpus, word: Word) => {
-  const bcv = BCVWP.parseFromString(word.id);
-  if (!(bcv.book && bcv.chapter && bcv.verse && bcv.word)) {
+const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
+  if (!(verse.bcvId.book && verse.bcvId.chapter && verse.bcvId.verse)) {
     return;
   }
   if (!corpus.books) {
     corpus.books = {};
   }
-  if (!corpus.books[bcv.book]) {
-    corpus.books[bcv.book] = {};
+  if (!corpus.books[verse.bcvId.book]) {
+    corpus.books[verse.bcvId.book] = {};
   }
-  const bookRef = corpus.books[bcv.book];
-  if (!bookRef[bcv.chapter]) {
-    bookRef[bcv.chapter] = {};
+  const bookRef = corpus.books[verse.bcvId.book];
+  if (!bookRef[verse.bcvId.chapter]) {
+    bookRef[verse.bcvId.chapter] = {};
   }
-  const chapterRef = bookRef[bcv.chapter];
-  if (!chapterRef[bcv.verse]) {
-    chapterRef[bcv.verse] = {};
-  }
-  const verseRef = chapterRef[bcv.verse];
-  if (bcv.part && !verseRef[bcv.word]) {
-    verseRef[bcv.word] = {};
-    const wordRef = verseRef[bcv.word] as { [key: number]: Word };
-    wordRef[bcv.part] = word;
-  } else {
-    verseRef[bcv.word] = word;
-  }
+  const chapterRef = bookRef[verse.bcvId.chapter];
+  chapterRef[verse.bcvId.verse] = verse;
 };
 
-export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
-  if (!bcvwp) return '';
-  return (
-    `${bcvwp.book}`.padStart(2, '0') +
-    [bcvwp.chapter as number, bcvwp.verse as number]
-      .filter((v) => v)
-      .map((section: number) => {
-        return `${section}`.padStart(3, '0');
-      })
-      .join('')
+const putVersesInCorpus = (corpus: Corpus) => {
+  Object.values(corpus.wordsByVerse).forEach((verse) =>
+    putVerseInCorpus(corpus, verse)
   );
 };
 
@@ -196,7 +178,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...maculaHebOT,
       ...maculaHebOTWords,
     };
-    maculaHebOT.words.forEach((word) => putWordInCorpus(maculaHebOT, word));
+    putVersesInCorpus(maculaHebOT);
 
     // YLT Old Testament
     let wlcYltOt: Corpus = {
@@ -221,7 +203,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...wlcYltOt,
       ...wlcYltOtWords,
     };
-    wlcYltOt.words.forEach((word) => putWordInCorpus(wlcYltOt, word));
+    putVersesInCorpus(wlcYltOt);
 
     // SBL GNT
     let sblGnt: Corpus = {
@@ -247,7 +229,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...sblGnt,
       ...sblWords,
     };
-    sblGnt.words.forEach((word) => putWordInCorpus(sblGnt, word));
+    putVersesInCorpus(sblGnt);
 
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
@@ -272,7 +254,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...na27Ylt,
       ...na27Words,
     };
-    na27Ylt.words.forEach((word) => putWordInCorpus(na27Ylt, word));
+    putVersesInCorpus(na27Ylt);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,

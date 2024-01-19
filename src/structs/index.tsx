@@ -61,20 +61,11 @@ export interface Corpus {
   words: Word[];
   wordsByVerse: Record<string, Verse>;
   books: {
-    // book
     [key: number]: {
-      // chapter
+      // book object containing chapters
       [key: number]: {
-        // verse
-        [key: number]: {
-          // word
-          [key: number]:
-            | Word
-            | {
-                //part
-                [key: number]: Word;
-              };
-        };
+        // chapter object containing verses
+        [key: number]: Verse;
       };
     };
   };
@@ -105,11 +96,10 @@ export class CorpusContainer {
   }
 
   corpusAtReference(reference: BCVWP): Corpus | undefined {
-    const refString = reference.toTruncatedReferenceString(BCVWPField.Book); // assuming corpora differentiate by book
-    return this.corpora.find((corpus) => {
-      const keys = Object.keys(corpus.wordsByVerse);
-      return !!keys.find((key) => key.startsWith(refString));
-    });
+    if (!reference.hasFields(BCVWPField.Book)) {
+      return undefined;
+    }
+    return this.corpora.find((corpus) => corpus.books[reference.book!]);
   }
 
   languageAtReference(reference: BCVWP): LanguageInfo | undefined {
@@ -117,16 +107,32 @@ export class CorpusContainer {
   }
 
   verseByReference(reference: BCVWP): Verse | undefined {
-    const refString = reference.toTruncatedReferenceString(BCVWPField.Verse);
-    return this.verseByReferenceString(refString);
+    if (
+      !reference.hasFields(
+        BCVWPField.Book,
+        BCVWPField.Chapter,
+        BCVWPField.Verse
+      )
+    ) {
+      return undefined;
+    }
+    const corpus = this.corpusAtReference(reference);
+    return corpus?.books[reference.book!]?.[reference.chapter!]?.[
+      reference.verse!
+    ];
   }
 
   verseByReferenceString(refString: string): Verse | undefined {
-    for (let corpus of this.corpora) {
-      const verse = corpus.wordsByVerse[refString];
-      if (verse) return verse;
+    return this.verseByReference(BCVWP.parseFromString(refString));
+  }
+
+  wordByReference(reference: BCVWP): Word | undefined {
+    if (!reference.hasFields(BCVWPField.Word)) {
+      return undefined;
     }
-    return undefined;
+    return this.verseByReference(reference)?.words?.find(
+      (word) => BCVWP.parseFromString(word.id)?.word === reference.word
+    );
   }
 
   static fromIdAndCorpora = (
