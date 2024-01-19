@@ -123,6 +123,9 @@ export class CorpusContainer {
   }
 
   verseByReferenceString(refString: string): Verse | undefined {
+    if (!refString) {
+      return undefined;
+    }
     return this.verseByReference(BCVWP.parseFromString(refString));
   }
 
