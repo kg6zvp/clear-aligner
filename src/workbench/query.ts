@@ -125,6 +125,35 @@ const parseTsvByFileType = async (
   };
 };
 
+const putWordInCorpus = (corpus: Corpus, word: Word) => {
+  const bcv = BCVWP.parseFromString(word.id);
+  if (! (bcv.book && bcv.chapter && bcv.verse && bcv.word && bcv.part) ) {
+    return;
+  }
+  if (!corpus.books) {
+    corpus.books = {};
+  }
+  if (!corpus.books[bcv.book]) {
+    corpus.books[bcv.book] = {};
+  }
+  const bookRef = corpus.books[bcv.book];
+  if (!bookRef[bcv.chapter]) {
+    bookRef[bcv.chapter] = {};
+  }
+  const chapterRef = bookRef[bcv.chapter];
+  if (!chapterRef[bcv.verse]) {
+    chapterRef[bcv.verse] = {};
+  }
+  const verseRef = chapterRef[bcv.verse];
+  if (!verseRef[bcv.word]) {
+    verseRef[bcv.word] = {};
+  }
+  const wordRef = verseRef[bcv.word];
+  if (!wordRef[bcv.part]) {
+    wordRef[bcv.part] = word;
+  }
+}
+
 export const convertBcvToIdentifier = (bcvwp: BCVWP | null | undefined) => {
   if (!bcvwp) return '';
   return (
@@ -155,6 +184,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      books: {}
     };
     const maculaHebOTWords = await parseTsvByFileType(
       MACULA_HEBOT_TSV,
@@ -166,6 +196,8 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...maculaHebOT,
       ...maculaHebOTWords,
     };
+    maculaHebOT.words
+      .forEach((word) => putWordInCorpus(maculaHebOT, word));
 
     // YLT Old Testament
     let wlcYltOt: Corpus = {
@@ -178,6 +210,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      books: {}
     };
     const wlcYltOtWords = await parseTsvByFileType(
       WLC_OT_YLT_TSV,
@@ -189,6 +222,8 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...wlcYltOt,
       ...wlcYltOtWords,
     };
+    wlcYltOt.words
+      .forEach((word) => putWordInCorpus(wlcYltOt, word));
 
     // SBL GNT
     let sblGnt: Corpus = {
@@ -201,6 +236,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      books: {}
     };
 
     const sblWords = await parseTsvByFileType(
@@ -213,6 +249,8 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...sblGnt,
       ...sblWords,
     };
+    sblGnt.words
+      .forEach((word) => putWordInCorpus(sblGnt, word));
 
     let na27Ylt: Corpus = {
       id: 'na27-YLT',
@@ -224,6 +262,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      books: {}
     };
 
     const na27Words = await parseTsvByFileType(
@@ -236,6 +275,8 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...na27Ylt,
       ...na27Words,
     };
+    na27Ylt.words
+      .forEach((word) => putWordInCorpus(na27Ylt, word));
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
@@ -292,5 +333,6 @@ export const queryText = async (
     language: corpus?.language ?? '',
     words: queriedData,
     wordsByVerse: corpus.wordsByVerse,
+    books: corpus.books,
   };
 };
