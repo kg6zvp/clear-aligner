@@ -60,17 +60,24 @@ export interface Corpus {
   language: LanguageInfo;
   words: Word[];
   wordsByVerse: Record<string, Verse>;
-  books: { // book
-    [key: number]: { // chapter
-      [key: number]: { // verse
-        [key: number]: { // word
-          [key: number]: { //part
-            [key: number]: Word;
-          }
-        }
-      }
-    }
-  }
+  books: {
+    // book
+    [key: number]: {
+      // chapter
+      [key: number]: {
+        // verse
+        [key: number]: {
+          // word
+          [key: number]:
+            | Word
+            | {
+                //part
+                [key: number]: Word;
+              };
+        };
+      };
+    };
+  };
   fullText?: string;
   viewType?: CorpusViewType;
   syntax?: SyntaxRoot;
