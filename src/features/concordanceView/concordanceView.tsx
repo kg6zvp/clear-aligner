@@ -10,7 +10,6 @@ import { AlignedWordTable } from './alignedWordTable';
 import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
-import { useAppSelector } from '../../app';
 import { useSearchParams } from 'react-router-dom';
 import {
   generateAlignedWordsMap,
@@ -18,6 +17,7 @@ import {
   generateListOfNavigablePivotWords,
   generatePivotWordsMap,
 } from './concordanceViewHelpers';
+import {useAppSelector} from "app/hooks";
 
 export type WordSource = 'source' | 'target';
 export type WordFilter = 'aligned' | 'all';
