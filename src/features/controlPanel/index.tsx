@@ -42,7 +42,7 @@ import {
 } from 'state/app.slice';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import BCVWP from "../bcvwp/BCVWPSupport";
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -242,8 +242,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   (record) => {
                     return {
                       id: record.id,
-                      sources: record.source.filter(v => v).map((ref) => BCVWP.parseFromString(ref)).map(bcv => bcv.toReferenceString()),
-                      targets: record.target.filter(v => v).map((ref) => BCVWP.parseFromString(ref)).map(bcv => bcv.toReferenceString()),
+                      sources: record.source
+                        .filter((v) => v)
+                        .map((ref) => BCVWP.parseFromString(ref))
+                        .map((bcv) => bcv.toReferenceString()),
+                      targets: record.target
+                        .filter((v) => v)
+                        .map((ref) => BCVWP.parseFromString(ref))
+                        .map((bcv) => bcv.toReferenceString()),
                     };
                   }
                 );

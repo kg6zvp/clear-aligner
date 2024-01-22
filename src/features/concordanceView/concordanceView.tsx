@@ -17,7 +17,7 @@ import {
   generateListOfNavigablePivotWords,
   generatePivotWordsMap,
 } from './concordanceViewHelpers';
-import {useAppSelector} from "app/hooks";
+import { useAppSelector } from 'app/hooks';
 
 export type WordSource = 'source' | 'target';
 export type WordFilter = 'aligned' | 'all';

@@ -18,23 +18,18 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
   containers,
 }): ReactElement => {
   useDebug('LinkBuilderComponent');
+
   const sourceContainer = useMemo(
     () => containers.find(({ id }) => id === 'source')!,
-    [
-      containers,
-      // reference to `containers` doesn't change, but the length does
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      containers.length,
-    ]
+    // reference to `containers` doesn't change, but the length does
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [containers, containers.length]
   );
   const targetContainer = useMemo(
     () => containers.find(({ id }) => id === 'target')!,
-    [
-      containers,
-      // reference to `containers` doesn't change, but the length does
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      containers.length,
-    ]
+    // reference to `containers` doesn't change, but the length does
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [containers, containers.length]
   );
 
   const selectedWords: Record<string, Word[]> = useAppSelector((state) => {
@@ -43,6 +38,9 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     if (inProgressLink) {
       const sourceWords: Word[] = inProgressLink.sources
         .map((sourceId) => {
+          if (!sourceContainer) {
+            return null;
+          }
           return findWordById(
             sourceContainer?.corpora,
             BCVWP.parseFromString(sourceId)
@@ -51,12 +49,15 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
-        .map((targetId) =>
-          findWordById(
+        .map((targetId) => {
+          if (!targetContainer) {
+            return null;
+          }
+          return findWordById(
             targetContainer?.corpora,
             BCVWP.parseFromString(targetId)
-          )
-        )
+          );
+        })
         .filter((x): x is Word => x !== null);
 
       return {
