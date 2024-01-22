@@ -30,17 +30,24 @@ const renderWords = (words: LocalizedWordEntry[]) => {
         </LocalizedTextDisplay>
       );
     default:
+      const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
       return (
-        <ul>
-          {words.map((wordEntry) => (
-            <li key={wordEntry.text}>
-              <LocalizedTextDisplay
-                children={wordEntry.text}
-                languageInfo={wordEntry.languageInfo}
-              />
-            </li>
+        <span
+          style={{
+            ...(languageInfo?.textDirection === 'rtl'
+              ? { direction: languageInfo.textDirection! }
+              : {}),
+          }}
+        >
+          {words.map((word, idx) => (
+            <>
+              <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
+                {word.text}
+              </LocalizedTextDisplay>
+              {words.length - 1 !== idx && ', '}
+            </>
           ))}
-        </ul>
+        </span>
       );
   }
 };
@@ -54,6 +61,7 @@ const columns: GridColDef[] = [
   {
     field: 'sourceWordTexts',
     headerName: 'Source',
+    sortable: false,
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
       renderWords(row.sourceWordTexts),
@@ -61,6 +69,7 @@ const columns: GridColDef[] = [
   {
     field: 'targetWordTexts',
     headerName: 'Target',
+    sortable: false,
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
       renderWords(row.targetWordTexts),

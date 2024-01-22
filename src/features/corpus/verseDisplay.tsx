@@ -1,9 +1,9 @@
 import { Grid, Typography } from '@mui/material';
 import { LanguageInfo, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
-import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { WordDisplay } from '../wordDisplay';
+import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 
 export interface VerseDisplayProps {
   readonly?: boolean;
@@ -26,28 +26,7 @@ export const VerseDisplay = ({
 }: VerseDisplayProps) => {
   const textDirection = languageInfo?.textDirection;
   const verseTokens: (string | Word[])[] = useMemo(() => {
-    const partsGroupedByWords = verse.words
-      .reduce((accumulator, currentValue) => {
-        const lastIndex = accumulator.length - 1;
-        const currentValueRef: BCVWP = BCVWP.parseFromString(currentValue.id);
-
-        if (
-          accumulator[lastIndex]?.length === 0 ||
-          (lastIndex >= 0 &&
-            BCVWP.parseFromString(
-              accumulator[lastIndex].at(-1)!.id
-            ).matchesTruncated(currentValueRef, BCVWPField.Word))
-        ) {
-          // if text should be grouped in the last word
-          accumulator[lastIndex].push(currentValue);
-          return accumulator;
-        } else {
-          // new word
-          accumulator.push([currentValue]);
-          return accumulator;
-        }
-      }, [] as Word[][])
-      .filter((value) => value.length >= 1);
+    const partsGroupedByWords = groupPartsIntoWords(verse.words);
 
     const finalTokens: (string | Word[])[] = [];
 
