@@ -316,9 +316,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 // Create a link element
                 const link = document.createElement('a');
+                const currentDate = new Date();
 
                 // Set the download attribute and file name
-                link.download = `${currentAlignment.polarity}_alignment-data.json`;
+                link.download = `alignment_data_${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDay()}T${currentDate.getHours()}_${currentDate.getMinutes()}.json`;
 
                 // Set the href attribute to the generated URL
                 link.href = url;
