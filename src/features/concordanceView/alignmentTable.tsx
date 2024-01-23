@@ -115,6 +115,7 @@ const columns: GridColDef[] = [
     field: 'verse',
     headerName: 'Verse Text',
     flex: 1,
+    sortable: false,
     renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
       <VerseCell {...row} />
     ),
@@ -122,6 +123,7 @@ const columns: GridColDef[] = [
   {
     field: 'id',
     headerName: 'Link',
+    sortable: false,
     renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
       <LinkCell {...row} />
     ),
