@@ -319,7 +319,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const currentDate = new Date();
 
                 // Set the download attribute and file name
-                link.download = `alignment_data_${currentDate.getFullYear()}-${currentDate.getMonth()+1}-${currentDate.getDate()}T${currentDate.getHours()}_${currentDate.getMinutes()}.json`;
+                link.download = `alignment_data_${currentDate.getFullYear()}-${String(
+                  currentDate.getMonth() + 1
+                ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
+                  2,
+                  '0'
+                )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
+                  currentDate.getMinutes()
+                ).padStart(2, '0')}.json`;
 
                 // Set the href attribute to the generated URL
                 link.href = url;
