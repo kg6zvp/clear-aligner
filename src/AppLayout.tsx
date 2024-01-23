@@ -17,7 +17,12 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import React, { createContext, useMemo, useState } from 'react';
 import Themed from './features/themed';
-import { Link, Outlet } from 'react-router-dom';
+import {
+  createSearchParams,
+  Outlet,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 import { AddLink, ManageSearch } from '@mui/icons-material';
 
 type THEME = 'night' | 'day';
@@ -66,6 +71,10 @@ export const AppLayout = () => {
     [setMenuBarDelegate]
   );
 
+  const [searchParams] = useSearchParams();
+
+  const navigate = useNavigate();
+
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
@@ -87,9 +96,13 @@ export const AppLayout = () => {
               <List>
                 <ListItem disablePadding>
                   <ListItemButton
-                    component={Link}
-                    to={'/'}
-                    onClick={() => setShowMenu(false)}
+                    onClick={() => {
+                      setShowMenu(false);
+                      navigate({
+                        pathname: '/',
+                        search: createSearchParams(searchParams).toString(),
+                      });
+                    }}
                   >
                     <ListItemIcon>
                       <AddLink />
@@ -99,9 +112,13 @@ export const AppLayout = () => {
                 </ListItem>
                 <ListItem disablePadding>
                   <ListItemButton
-                    component={Link}
-                    to={'/concordance'}
-                    onClick={() => setShowMenu(false)}
+                    onClick={() => {
+                      setShowMenu(false);
+                      navigate({
+                        pathname: '/concordance',
+                        search: createSearchParams(searchParams).toString(),
+                      });
+                    }}
                   >
                     <ListItemIcon>
                       <ManageSearch />
@@ -134,7 +151,7 @@ export const AppLayout = () => {
             </div>
           </Drawer>
         </AppBar>
-        <div id={'outlet'} style={{ marginTop: '64px' }}>
+        <div id={'outlet'} style={{ marginTop: '80px' }}>
           <Outlet />
         </div>
       </Themed>

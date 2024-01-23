@@ -62,7 +62,7 @@ export default class BCVWP {
       this.chapter ? chapterFormat.format(this.chapter) : '   '
     }${this.verse ? verseFormat.format(this.verse) : '   '}${
       this.word ? wordFormat.format(this.word) : '   '
-    }${this.part ?? 1}`;
+    }${this.word && this.part ? this.part ?? 1 : ''}`;
   }
 
   getBookInfo(): BookInfo | undefined {
@@ -71,8 +71,8 @@ export default class BCVWP {
 
   /**
    * checks whether the given BCVWP match at the given level of truncation
-   * @param other: BCVWP to check for a match
-   * @param truncation: amount of truncation to match to
+   * @param other BCVWP to check for a match
+   * @param truncation amount of truncation to match to
    */
   matchesTruncated(other: BCVWP, truncation: BCVWPField): boolean {
     return (
@@ -99,27 +99,35 @@ export default class BCVWP {
       }
     });
   }
-}
-
-export const parseFromString = (reference: string): BCVWP => {
-  if (!reference || reference.match(/\D/) || reference.length < 2) {
-    throw new Error(`Illegal reference string given to parser: ${reference}`);
+  static isValidString(reference: string): boolean {
+    return (
+      !!reference && !!reference.match(/^[onON]?\d/) && reference.length > 1
+    );
   }
-  const bookString = reference.substring(0, 2);
-  const chapterString =
-    reference.length >= 5 ? reference.substring(2, 5) : undefined;
-  const verseString =
-    reference.length >= 8 ? reference.substring(5, 8) : undefined;
-  const wordString =
-    reference.length >= 11 ? reference.substring(8, 11) : undefined;
-  const partString =
-    reference.length >= 12 ? reference.substring(11, 12) : undefined;
 
-  const bookNum = bookString ? Number(bookString) : undefined;
-  const chapterNum = chapterString ? Number(chapterString) : undefined;
-  const verseNum = verseString ? Number(verseString) : undefined;
-  const wordNum = wordString ? Number(wordString) : undefined;
-  const partNum = partString ? Number(partString) : undefined;
+  static parseFromString(reference: string): BCVWP {
+    if (!BCVWP.isValidString(reference)) {
+      throw new Error(`Illegal reference string given to parser: ${reference}`);
+    }
+    const sanitized = !!reference.trim().match(/^[onON]\d/)
+      ? reference.trim().substring(1)
+      : reference.trim();
+    const bookString = sanitized.substring(0, 2);
+    const chapterString =
+      sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;
+    const verseString =
+      sanitized.length >= 8 ? sanitized.substring(5, 8) : undefined;
+    const wordString =
+      sanitized.length >= 11 ? sanitized.substring(8, 11) : undefined;
+    const partString =
+      sanitized.length >= 12 ? sanitized.substring(11, 12) : undefined;
 
-  return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
-};
+    const bookNum = bookString ? Number(bookString) : undefined;
+    const chapterNum = chapterString ? Number(chapterString) : undefined;
+    const verseNum = verseString ? Number(verseString) : undefined;
+    const wordNum = wordString ? Number(wordString) : undefined;
+    const partNum = partString ? Number(partString) : undefined;
+
+    return new BCVWP(bookNum, chapterNum, verseNum, wordNum, partNum);
+  }
+}

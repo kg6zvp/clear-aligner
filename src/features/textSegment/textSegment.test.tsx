@@ -2,7 +2,6 @@ import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
 import { AlignmentMode } from 'state/alignment.slice';
 import TextSegment from 'features/textSegment';
-import { Corpus } from '../../structs';
 
 const testState: RootState = {
   ...preloadedState,
@@ -11,8 +10,6 @@ const testState: RootState = {
     present: {
       alignments: [
         {
-          source: 'sbl',
-          target: 'leb',
           links: [],
           polarity: {
             type: 'primary',
@@ -23,8 +20,6 @@ const testState: RootState = {
       ],
       corpora: [],
       inProgressLink: {
-        source: 'sbl',
-        target: 'leb',
         sources: ['sbl_0'],
         targets: [],
       },
@@ -36,10 +31,10 @@ describe('TextSegment', () => {
   it('renders without crashing', () => {
     renderWithProvider(
       <TextSegment
-        corpus={{} as Corpus}
         word={{
           id: 'test_1',
           corpusId: 'test',
+          side: 'targets',
           text: 'mikey',
           position: 0,
         }}
@@ -51,17 +46,16 @@ describe('TextSegment', () => {
   it('is selected', () => {
     const { getByText } = renderWithProvider(
       <TextSegment
-        corpus={{} as Corpus}
         word={{
           id: 'sbl_0',
           corpusId: 'sbl',
+          side: 'sources',
           text: 'mikey',
           position: 0,
         }}
       />,
       testState
     );
-    const textSegment = getByText(/mikey/);
     // BLURG, custom css properties don't work with js-dom.
     // See https://github.com/jsdom/cssstyle/pull/127
     // and https://github.com/testing-library/jest-dom/issues/322

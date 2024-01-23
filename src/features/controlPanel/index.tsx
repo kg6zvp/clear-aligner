@@ -40,11 +40,12 @@ import {
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { Corpus } from '../../structs';
+import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface ControlPanelProps {
-  corpora: Corpus[];
+  containers: CorpusContainer[];
 }
 
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
@@ -80,11 +81,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     return state.app.corpusViewports;
   });
 
-  const corporaWithoutViewport = props.corpora.filter((corpus) => {
+  const corporaWithoutViewport = props.containers.filter((container) => {
     const currentViewportIds = currentCorpusViewports.map(
-      (viewport) => viewport.corpusId
+      (viewport) => viewport.containerId
     );
-    return !currentViewportIds.includes(corpus.id);
+    return !currentViewportIds.includes(container.id);
   });
 
   const alignmentState = useAppSelector((state) => {
@@ -241,8 +242,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   (record) => {
                     return {
                       id: record.id,
-                      sources: record.source,
-                      targets: record.target,
+                      sources: record.source
+                        .filter((v) => v)
+                        .map((ref) => BCVWP.parseFromString(ref))
+                        .map((bcv) => bcv.toReferenceString()),
+                      targets: record.target
+                        .filter((v) => v)
+                        .map((ref) => BCVWP.parseFromString(ref))
+                        .map((bcv) => bcv.toReferenceString()),
                     };
                   }
                 );
@@ -309,9 +316,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 // Create a link element
                 const link = document.createElement('a');
+                const currentDate = new Date();
 
                 // Set the download attribute and file name
-                link.download = `${currentAlignment.source}-${currentAlignment.target}_alignment-data.json`;
+                link.download = `alignment_data_${currentDate.getFullYear()}-${String(
+                  currentDate.getMonth() + 1
+                ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
+                  2,
+                  '0'
+                )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
+                  currentDate.getMinutes()
+                ).padStart(2, '0')}.json`;
 
                 // Set the href attribute to the generated URL
                 link.href = url;

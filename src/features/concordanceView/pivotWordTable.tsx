@@ -1,18 +1,19 @@
-import {
-  CircularProgress,
-  TableCell,
-  TableContainer,
-  TableRow,
-} from '@mui/material';
+import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import { PivotWord } from './structs';
 import { Box } from '@mui/system';
 import {
   DataGrid,
   GridColDef,
+  GridRenderCellParams,
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
+import {
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+} from '../../styles/dataGridFixes';
+import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
 const columns: GridColDef[] = [
   {
@@ -21,40 +22,35 @@ const columns: GridColDef[] = [
     flex: 1,
   },
   {
-    field: 'pivotWord',
+    field: 'normalizedText',
     headerName: 'Pivot Word',
     flex: 1,
+    renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
+      <LocalizedTextDisplay languageInfo={row.languageInfo}>
+        {row.normalizedText}
+      </LocalizedTextDisplay>
+    ),
   },
 ];
-
-export interface PivotWordRowProps {
-  row: PivotWord;
-  onChooseWord: (word: PivotWord) => void;
-}
-
-export const PivotWordRow = React.memo(
-  ({ row, onChooseWord }: PivotWordRowProps) => (
-    <TableRow
-      hover
-      onClick={() => onChooseWord(row)}
-      role={'link'}
-      key={row.pivotWord}
-    >
-      <TableCell key={'frequency'}>{row.frequency ?? ''}</TableCell>
-      <TableCell key={'pivotWord'}>{row.pivotWord ?? ''}</TableCell>
-    </TableRow>
-  )
-);
 
 export interface PivotWordTableProps {
   loading?: boolean;
   sort: GridSortItem | null;
   pivotWords: PivotWord[];
-  chosenWord?: PivotWord;
+  chosenWord?: PivotWord | null;
   onChooseWord: (word: PivotWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
 }
 
+/**
+ * The PivotWordTable displays a list of pivot words
+ * @param loading optional parameter to indicate whether a loading indicator should be displayed
+ * @param sort current sort model for Material UI DataGrid
+ * @param onChangeSort callback for when the user changes the sort model
+ * @param pivotWords list of pivot words to be displayed
+ * @param chosenWord currently chosen pivot word
+ * @param onChooseWord callback for when the user clicks a pivot word
+ */
 export const PivotWordTable = ({
   loading,
   sort,
@@ -63,14 +59,12 @@ export const PivotWordTable = ({
   chosenWord,
   onChooseWord,
 }: PivotWordTableProps) => {
-  const rows = useMemo(
-    () =>
-      pivotWords.reduce((pivotWordObj, currentValue) => {
-        pivotWordObj[currentValue.pivotWord] = currentValue;
-        return pivotWordObj;
-      }, {} as { [key: string]: PivotWord }),
-    [pivotWords]
-  );
+  const initialPage = useMemo(() => {
+    if (chosenWord && pivotWords) {
+      return pivotWords.indexOf(chosenWord) / 20;
+    }
+    return 0;
+  }, [chosenWord, pivotWords]);
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
@@ -91,17 +85,18 @@ export const PivotWordTable = ({
       <DataGrid
         sx={{
           width: '100%',
-          '.MuiTablePagination-root::-webkit-scrollbar': {
-            width: 0,
-          },
+          ...DataGridScrollbarDisplayFix,
+          ...DataGridResizeAnimationFixes,
         }}
         rowSelection={true}
-        rowSelectionModel={chosenWord?.pivotWord}
+        rowSelectionModel={
+          chosenWord?.normalizedText ? [chosenWord.normalizedText] : undefined
+        }
         rows={pivotWords}
         columns={columns}
-        getRowId={(row) => row.pivotWord}
+        getRowId={(row) => row.normalizedText}
         sortModel={sort ? [sort] : []}
-        onSortModelChange={(newSort, details) => {
+        onSortModelChange={(newSort) => {
           if (!newSort || newSort.length < 1) {
             onChangeSort(sort);
           }
@@ -109,13 +104,16 @@ export const PivotWordTable = ({
         }}
         initialState={{
           pagination: {
-            paginationModel: { page: 0, pageSize: 20 },
+            paginationModel: { page: initialPage, pageSize: 20 },
           },
         }}
+        pagination={true}
         pageSizeOptions={[20, 50]}
-        onRowClick={(row: GridRowParams<PivotWord>) =>
-          onChooseWord(rows[row.id])
-        }
+        onRowClick={(clickEvent: GridRowParams<PivotWord>) => {
+          if (onChooseWord) {
+            onChooseWord(clickEvent.row);
+          }
+        }}
         isRowSelectable={({
           row: { alignedWords },
         }: GridRowParams<PivotWord>) =>

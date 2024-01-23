@@ -13,7 +13,7 @@ import { BookInfo } from '../../workbench/books';
 import { Box } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
 import { BCVWPField } from 'features/bcvwp/BCVWPSupport';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 
 export interface Verse {
@@ -32,7 +32,8 @@ export interface NavigableBook extends BookInfo {
 
 const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
   words
-    .map((word) => parseFromString(word.id))
+    .map((word) => word.id)
+    .map(BCVWP.parseFromString)
     .filter((ref) =>
       ref.hasFields(
         BCVWPField.Book,
@@ -121,9 +122,12 @@ const ICON_BTN_VERT_MARGIN = '.5em';
 
 /**
  * BCVNavigation component for use in React
- * @param props.words list of references available for navigation
- * @param props.currentPosition optional prop to specify current position
- * @param props.onNavigate callback function which will receive division, book, chapter and verse coordinates
+ * @param sx style configuration
+ * @param disabled optional parameter to indicate whether input should be disabled
+ * @param words list of references available for navigation
+ * @param currentPosition optional prop to specify current position
+ * @param onNavigate callback function which will receive division, book, chapter and verse coordinates
+ * @param horizontal optional parameter to specify horizontal layout
  */
 const BCVNavigation = ({
   sx,

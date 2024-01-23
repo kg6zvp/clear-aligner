@@ -1,95 +1,80 @@
 import React, { useContext, useEffect, useState } from 'react';
-import BCVWP, { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
-import { Corpus, Word } from '../../structs';
-import {
-  getAvailableCorpora,
-  getAvailableCorporaIds,
-  queryText,
-} from '../../workbench/query';
+import { CorpusContainer, Word } from '../../structs';
+import { getAvailableCorporaContainers } from '../../workbench/query';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
-
-const getRefParam = (): string | null => {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('ref');
-};
-
-const getRefFromURL = (): BCVWP | null => {
-  const refParam = getRefParam();
-
-  if (refParam) {
-    return parseFromString(refParam);
-  }
-  return null;
-};
+import { useSearchParams } from 'react-router-dom';
+import { AppContext } from '../../App';
 
 const defaultDocumentTitle = 'ClearAligner';
 
 export const AlignmentEditor = () => {
   const layoutCtx = useContext(LayoutContext);
   const [availableWords, setAvailableWords] = useState([] as Word[]);
-  const [selectedCorpora, setSelectedCorpora] = useState([] as Corpus[]);
+  const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
+    [] as CorpusContainer[]
+  );
 
-  const [currentPosition, setCurrentPosition] = useState(getRefFromURL());
+  const appCtx = useContext(AppContext);
+
+  // set current reference to default if none set
+  useEffect(() => {
+    if (!appCtx.currentReference) {
+      appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
+    }
+  }, [appCtx, appCtx.currentReference, appCtx.setCurrentReference]);
 
   React.useEffect(() => {
-    if (currentPosition) {
+    if (appCtx.currentReference) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          currentPosition?.getBookInfo()?.EnglishBookName
-        } ${currentPosition?.chapter}:${currentPosition?.verse}`
+          appCtx.currentReference?.getBookInfo()?.EnglishBookName
+        } ${appCtx.currentReference?.chapter}:${appCtx.currentReference?.verse}`
       );
     } else {
       layoutCtx.setWindowTitle(defaultDocumentTitle);
     }
-  }, [currentPosition, layoutCtx]);
+  }, [appCtx.currentReference, layoutCtx]);
 
   React.useEffect(() => {
     const loadSourceWords = async () => {
-      const corpora = await getAvailableCorpora();
-      const corpus = corpora.find((v: Corpus) => v.id === 'sbl-gnt');
-      const currentPosition = new BCVWP(45, 5, 3);
+      const containers = await getAvailableCorporaContainers();
+      const targetCorpora = containers.find(
+        (v: CorpusContainer) => v.id === 'target'
+      );
 
-      const retrievedCorpora: Corpus[] = [];
-
-      for (const corpusId of corpora.map((c) => c.id)) {
-        const corpus = await queryText(corpusId, currentPosition);
-        if (corpus) retrievedCorpora.push(corpus!);
-      }
-
-      setSelectedCorpora(retrievedCorpora);
-      setAvailableWords(corpus?.words ?? []);
-      setCurrentPosition(currentPosition);
+      setSelectedCorporaContainers(containers);
+      setAvailableWords(
+        targetCorpora?.corpora.flatMap(({ words }) => words) ?? []
+      );
     };
 
     loadSourceWords().catch(console.error);
-  }, [setAvailableWords, setCurrentPosition, setSelectedCorpora]);
-
-  React.useEffect(() => {
-    if (!currentPosition) {
-      return;
-    }
-    const loadCorporaAtPosition = async () => {
-      const corpusIds = await getAvailableCorporaIds();
-
-      const retrievedCorpora: Corpus[] = [];
-      for (const corpusId of corpusIds) {
-        const corpus = await queryText(corpusId, currentPosition);
-        if (corpus) retrievedCorpora.push(corpus);
-      }
-      setSelectedCorpora(retrievedCorpora);
-    };
-
-    void loadCorporaAtPosition();
-  }, [currentPosition, setSelectedCorpora]);
+  }, [
+    setAvailableWords,
+    appCtx.setCurrentReference,
+    setSelectedCorporaContainers,
+  ]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={currentPosition} />
+      <BCVDisplay currentPosition={appCtx.currentReference} />
     );
-  }, [layoutCtx, currentPosition]);
+  }, [layoutCtx, appCtx.currentReference]);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.has('ref')) {
+      const newPosition = BCVWP.parseFromString(searchParams.get('ref')!);
+      appCtx.setCurrentReference(newPosition);
+      searchParams.delete('ref');
+    }
+    setSearchParams(searchParams);
+  }, [searchParams, appCtx, appCtx.setCurrentReference, setSearchParams]);
 
   return (
     <>
@@ -99,11 +84,14 @@ export const AlignmentEditor = () => {
           horizontal
           disabled={!availableWords || availableWords.length < 1}
           words={availableWords}
-          currentPosition={currentPosition ?? undefined}
-          onNavigate={setCurrentPosition}
+          currentPosition={appCtx.currentReference ?? undefined}
+          onNavigate={appCtx.setCurrentReference}
         />
       </div>
-      <Workbench corpora={selectedCorpora} currentPosition={currentPosition} />
+      <Workbench
+        corpora={selectedCorporaContainers}
+        currentPosition={appCtx.currentReference}
+      />
     </>
   );
 };

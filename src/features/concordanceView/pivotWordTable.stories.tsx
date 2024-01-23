@@ -15,57 +15,57 @@ export default meta;
 const pivotWords: PivotWord[] = [
   {
     frequency: 73_611,
-    pivotWord: 'the',
+    normalizedText: 'the',
     alignedWords: [
       {
         id: 'the',
         frequency: 73_611,
         sourceTextId: 'srcId',
         targetTextId: 'tgtId',
-        sourceWordTexts: ['the'],
-        targetWordTexts: ['der'],
+        sourceWordTexts: [{ text: 'the' }],
+        targetWordTexts: [{ text: 'der' }],
         alignments: [],
       },
     ],
   },
   {
     frequency: 60_382,
-    pivotWord: 'and',
+    normalizedText: 'and',
     alignedWords: [
       {
         id: 'and',
         frequency: 60_382,
         sourceTextId: 'srcId',
         targetTextId: 'tgtId',
-        sourceWordTexts: ['and'],
-        targetWordTexts: ['und'],
+        sourceWordTexts: [{ text: 'and' }],
+        targetWordTexts: [{ text: 'und' }],
         alignments: [],
       },
     ],
   },
   {
     frequency: 40_029,
-    pivotWord: 'of',
+    normalizedText: 'of',
     alignedWords: [],
   },
   {
     frequency: 16_372,
-    pivotWord: 'to',
+    normalizedText: 'to',
     alignedWords: [],
   },
   {
     frequency: 5_000,
-    pivotWord: 'thus',
+    normalizedText: 'thus',
     alignedWords: [],
   },
   {
     frequency: 4_999,
-    pivotWord: 'so',
+    normalizedText: 'so',
     alignedWords: [],
   },
   {
     frequency: 4_998,
-    pivotWord: 'as',
+    normalizedText: 'as',
     alignedWords: [],
   },
 ];

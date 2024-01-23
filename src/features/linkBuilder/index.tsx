@@ -1,22 +1,36 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { Corpus, Word } from 'structs';
+import { CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
-import { parseFromString } from '../bcvwp/BCVWPSupport';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {
-  corpora: Corpus[];
+  containers: CorpusContainer[];
 }
 
 export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
-  corpora,
+  containers,
 }): ReactElement => {
   useDebug('LinkBuilderComponent');
+
+  const sourceContainer = useMemo(
+    () => containers.find(({ id }) => id === 'source')!,
+    // reference to `containers` doesn't change, but the length does
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [containers, containers.length]
+  );
+  const targetContainer = useMemo(
+    () => containers.find(({ id }) => id === 'target')!,
+    // reference to `containers` doesn't change, but the length does
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [containers, containers.length]
+  );
 
   const selectedWords: Record<string, Word[]> = useAppSelector((state) => {
     const inProgressLink = state.alignment.present.inProgressLink;
@@ -24,18 +38,32 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     if (inProgressLink) {
       const sourceWords: Word[] = inProgressLink.sources
         .map((sourceId) => {
-          return findWordById(corpora, parseFromString(sourceId));
+          if (!sourceContainer) {
+            return null;
+          }
+          return findWordById(
+            sourceContainer?.corpora,
+            BCVWP.parseFromString(sourceId)
+          );
         })
         .filter((x): x is Word => x !== null);
 
       const targetWords: Word[] = inProgressLink.targets
-        .map((targetId) => findWordById(corpora, parseFromString(targetId)))
+        .map((targetId) => {
+          if (!targetContainer) {
+            return null;
+          }
+          return findWordById(
+            targetContainer?.corpora,
+            BCVWP.parseFromString(targetId)
+          );
+        })
         .filter((x): x is Word => x !== null);
 
       return {
-        [inProgressLink.source]: sourceWords,
-        [inProgressLink.target]: targetWords,
-      };
+        source: sourceWords ?? [],
+        target: targetWords ?? [],
+      } as Record<string, Word[]>;
     }
     return {};
   });
@@ -80,21 +108,55 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
       }}
     >
       {Object.keys(selectedWords).map((textId: string): ReactElement => {
-        const corpus = corpora.find((corpus: Corpus) => {
-          return corpus.id === textId;
-        });
-        if (!corpus) return <div />;
+        const container = containers.find(
+          (corpusContainer: CorpusContainer) => {
+            return corpusContainer.id === textId;
+          }
+        );
+        if (!container) return <div />;
 
-        const selectedWordsForText = selectedWords[textId];
-        const sortedSelectedWordsForText = selectedWordsForText.sort(
+        const selectedPartsForText = selectedWords[textId];
+        const sortedSelectedPartsForText = selectedPartsForText.sort(
           (a: Word, b: Word) => {
+            if (a.position === b.position) {
+              return a.id > b.id ? 1 : -1;
+            }
             return a.position > b.position ? 1 : -1;
           }
         );
+        const partsAsWords: Word[][] = [];
+        sortedSelectedPartsForText.forEach((part) => {
+          const lastIndex = partsAsWords.length - 1;
+          const currentValueRef: BCVWP = BCVWP.parseFromString(part.id);
+
+          if (
+            partsAsWords[lastIndex]?.length === 0 ||
+            (lastIndex >= 0 &&
+              BCVWP.parseFromString(
+                partsAsWords[lastIndex].at(-1)!.id
+              ).matchesTruncated(currentValueRef, BCVWPField.Word))
+          ) {
+            // if text should be grouped in the last word
+            partsAsWords[lastIndex].push(part);
+          } else {
+            // new word
+            partsAsWords.push([part]);
+          }
+        });
+
+        const wordInDisplayGroup = partsAsWords
+          .find(({ length }) => length > 0)
+          ?.find((word) => word.id);
+        const refInWords = wordInDisplayGroup
+          ? BCVWP.parseFromString(wordInDisplayGroup.id)
+          : undefined;
+        const corpusAtRef = refInWords
+          ? container?.corpusAtReference(refInWords)
+          : undefined;
 
         return (
           <div
-            key={`linkBuilder_${corpus?.name}`}
+            key={`linkBuilder_${corpusAtRef?.name}`}
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -106,44 +168,43 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             }}
           >
             <Typography variant="h6" style={{ textAlign: 'right' }}>
-              {corpus?.name}
+              {corpusAtRef?.name}
             </Typography>
             <div style={{ marginBottom: '8px' }}>
               <Divider />
             </div>
             <div>
               <span>&nbsp;</span>
-              {sortedSelectedWordsForText.map(
-                (selectedWord, index: number): ReactElement => {
-                  const word = (
-                    corpus?.wordsByVerse[
-                      (selectedWord?.id || '').substring(0, 8)
-                    ]?.words || []
-                  )
-                    .filter((w) => w)
-                    .find((word: Word): boolean => word.id === selectedWord.id);
-
+              {partsAsWords
+                .filter((word) => word.length > 0)
+                .map((selectedWord, index: number): ReactElement => {
+                  const wordId = BCVWP.parseFromString(
+                    selectedWord.at(0)!.id
+                  ).toTruncatedReferenceString(BCVWPField.Word);
                   let nextIsSequential: boolean = true;
-                  const next = sortedSelectedWordsForText[index + 1];
+                  const next = partsAsWords[index + 1];
                   if (next) {
-                    const sequenceDiff = next.position - selectedWord.position;
+                    const sequenceDiff =
+                      next.at(0)!.position - selectedWord.at(0)!.position;
                     if (sequenceDiff > 1) {
                       nextIsSequential = false;
                     }
                   }
                   return (
-                    <span key={`selected_${selectedWord.id}`}>
-                      <span>{word?.text} </span>
+                    <span key={`selected_${wordId}`}>
+                      <WordDisplay
+                        readonly={true}
+                        key={wordId}
+                        parts={selectedWord}
+                        languageInfo={corpusAtRef?.language}
+                      />
 
                       {!nextIsSequential ? (
-                        <span key={`selected_${selectedWord.id}_ellipsis`}>
-                          ...{' '}
-                        </span>
+                        <span key={`selected_${wordId}_ellipsis`}>... </span>
                       ) : null}
                     </span>
                   );
-                }
-              )}
+                })}
             </div>
             <div style={{ marginTop: '8px' }}>
               <Divider />

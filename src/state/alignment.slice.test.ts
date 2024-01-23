@@ -1,9 +1,4 @@
-import {
-  Word,
-  Alignment,
-  AlignmentSide,
-  PrimaryAlignmentPolarity,
-} from 'structs';
+import { Word, Alignment, PrimaryAlignmentPolarity } from 'structs';
 
 import alignmentSliceReducer, {
   createLink,
@@ -14,8 +9,6 @@ import alignmentSliceReducer, {
 } from 'state/alignment.slice';
 
 const englishAlignment: Alignment = {
-  source: 'sbl',
-  target: 'leb',
   links: [],
   polarity: {
     type: 'primary',
@@ -24,8 +17,6 @@ const englishAlignment: Alignment = {
   },
 };
 const spanishAlignment: Alignment = {
-  source: 'sbl',
-  target: 'nvi',
   links: [],
   polarity: {
     type: 'primary',
@@ -37,34 +28,24 @@ const spanishAlignment: Alignment = {
 const sourceWord1: Word = {
   id: 'sbl_0',
   corpusId: 'sbl',
+  side: 'sources',
   text: '',
   position: 0,
-};
-const sourceWord2: Word = {
-  id: 'sbl_1',
-  corpusId: 'sbl',
-  text: '',
-  position: 1,
 };
 
 const targetWord1: Word = {
   id: 'leb_1',
   corpusId: 'leb',
+  side: 'targets',
   text: '',
   position: 1,
 };
 const targetWord2: Word = {
   id: 'leb_2',
   corpusId: 'leb',
+  side: 'targets',
   text: '',
   position: 2,
-};
-
-const otherTargetWord1: Word = {
-  id: 'nvi_1',
-  corpusId: 'nvi',
-  text: '',
-  position: 1,
 };
 
 describe('alignmentSlice reducer', () => {
@@ -339,6 +320,7 @@ describe('alignmentSlice reducer', () => {
         toggleTextSegment({
           id: 'leb_4',
           corpusId: 'leb',
+          side: 'targets',
           text: 'some word',
           position: 4,
         })
@@ -382,11 +364,12 @@ describe('alignmentSlice reducer', () => {
       };
 
       try {
-        const resultState = alignmentSliceReducer(
+        alignmentSliceReducer(
           previousState,
           toggleTextSegment({
             id: 'nvi_6',
             corpusId: 'nvi',
+            side: 'sources',
             text: 'some word',
             position: 6,
           })
@@ -428,6 +411,7 @@ describe('alignmentSlice reducer', () => {
         toggleTextSegment({
           id: 'sbl_2',
           corpusId: 'sbl',
+          side: 'targets',
           // role: CorpusRole.Target,
           text: 'asdf',
           position: 3,
@@ -457,8 +441,6 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(previousState, createLink());
 
       expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].source).toBe('sbl');
-      expect(resultState.alignments[0].target).toBe('leb');
       expect(resultState.alignments[0].links[0]).toEqual({
         id: 'sbl-leb-0',
         sources: ['sbl_1'],
@@ -482,8 +464,6 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(previousState, createLink());
 
       expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].source).toBe('sbl');
-      expect(resultState.alignments[0].target).toBe('nvi');
       expect(resultState.alignments[0].links[0]).toEqual({
         id: 'sbl-nvi-1',
         sources: ['sbl_1'],
@@ -520,8 +500,6 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(previousState, createLink());
 
       expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].source).toBe('sbl');
-      expect(resultState.alignments[0].target).toBe('leb');
       expect(resultState.alignments[0].links[0]).toEqual({
         id: 'sbl-leb-1',
         sources: ['sbl_0'],
@@ -562,8 +540,6 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(previousState, createLink());
 
       expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].source).toBe('sbl');
-      expect(resultState.alignments[0].target).toBe('leb');
       expect(resultState.alignments[0].links[0]).toEqual({
         id: 'sbl-leb-1',
         sources: ['sbl_0'],

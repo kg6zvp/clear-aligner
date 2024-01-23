@@ -1,16 +1,7 @@
-import { createSlice, PayloadAction, Draft, current } from '@reduxjs/toolkit';
-import {
-  Word,
-  Alignment,
-  Link,
-  InProgressLink,
-  Corpus,
-  SyntaxType,
-} from 'structs';
+import { createSlice, PayloadAction, current } from '@reduxjs/toolkit';
+import { Alignment, Link, Corpus, Word } from 'structs';
 import removeSegmentFromLink from 'helpers/removeSegmentFromLink';
-import singularizeAlignmentPolarityField from 'helpers/singularizeAlignmentPolarityField';
 import generateLinkId from 'helpers/generateLinkId';
-import syntaxMapper from 'features/treedown/syntaxMapper';
 
 export enum AlignmentMode {
   CleanSlate = 'cleanSlate', // Default mode
@@ -21,7 +12,7 @@ export enum AlignmentMode {
 
 export interface AlignmentState {
   alignments: Alignment[];
-  inProgressLink: InProgressLink | null;
+  inProgressLink: Link | null;
   mode: AlignmentMode;
   corpora: Corpus[];
 }
@@ -34,118 +25,7 @@ export const initialState: AlignmentState = {
 };
 
 const createNextLinkId = (alignment: Alignment) => {
-  return `${alignment.source}-${alignment.target}-${generateLinkId(
-    alignment.links
-  )}`;
-};
-
-const findPrimaryAlignmentBySecondary = (
-  alignments: Alignment[],
-  secondaryAlignment: Alignment
-) => {
-  if (secondaryAlignment.polarity.type === 'secondary') {
-    let mappedSecondaryCorpusId: string;
-    if (secondaryAlignment.polarity.mappedSide === 'sources') {
-      mappedSecondaryCorpusId = secondaryAlignment['source'];
-    }
-    if (secondaryAlignment.polarity.mappedSide === 'targets') {
-      mappedSecondaryCorpusId = secondaryAlignment['target'];
-    }
-    return alignments.find((alignment) => {
-      if (alignment.polarity.type === 'primary') {
-        const nonSyntaxSide = singularizeAlignmentPolarityField(
-          alignment.polarity,
-          'nonSyntaxSide'
-        );
-        return alignment[nonSyntaxSide] === mappedSecondaryCorpusId;
-      }
-      return false;
-    });
-  } else {
-    throw new Error(
-      'Attempted to find a primary alignment for the wrong polarity.'
-    );
-  }
-};
-
-const remapSyntax = (state: Draft<AlignmentState>, alignmentIndex: number) => {
-  const sourceCorpusId = state.alignments[alignmentIndex].source;
-  const targetCorpusId = state.alignments[alignmentIndex].target;
-  const sourceCorpusIndex = state.corpora.findIndex((corpus: Corpus) => {
-    return corpus.id === sourceCorpusId;
-  });
-  const targetCorpusIndex = state.corpora.findIndex((corpus: Corpus) => {
-    return corpus.id === targetCorpusId;
-  });
-
-  const sourceCorpusSyntaxType =
-    state.corpora[sourceCorpusIndex]?.syntax?._syntaxType;
-  const targetCorpusSyntaxType =
-    state.corpora[targetCorpusIndex]?.syntax?._syntaxType;
-
-  if (state.alignments[alignmentIndex].polarity.type === 'primary') {
-    if (sourceCorpusSyntaxType === SyntaxType.Mapped) {
-      const oldSyntax = state.corpora[sourceCorpusIndex].syntax;
-
-      if (oldSyntax) {
-        state.corpora[sourceCorpusIndex].syntax = syntaxMapper(
-          oldSyntax,
-          state.alignments[alignmentIndex]
-        );
-      }
-    }
-
-    if (targetCorpusSyntaxType === SyntaxType.Mapped) {
-      const oldSyntax = state.corpora[targetCorpusIndex].syntax;
-
-      if (oldSyntax) {
-        state.corpora[targetCorpusIndex].syntax = syntaxMapper(
-          oldSyntax,
-          state.alignments[alignmentIndex]
-        );
-      }
-    }
-  }
-
-  if (state.alignments[alignmentIndex].polarity.type === 'secondary') {
-    if (sourceCorpusSyntaxType === SyntaxType.MappedSecondary) {
-      const secondaryAlignment = state.alignments[alignmentIndex];
-      const oldSyntax = state.corpora[sourceCorpusIndex].syntax;
-      if (oldSyntax && secondaryAlignment) {
-        const primaryAlignment = findPrimaryAlignmentBySecondary(
-          state.alignments,
-          secondaryAlignment
-        );
-
-        if (primaryAlignment) {
-          state.corpora[sourceCorpusIndex].syntax = syntaxMapper(
-            oldSyntax,
-            primaryAlignment,
-            secondaryAlignment
-          );
-        }
-      }
-    }
-
-    if (targetCorpusSyntaxType === SyntaxType.MappedSecondary) {
-      const secondaryAlignment = state.alignments[alignmentIndex];
-      const oldSyntax = state.corpora[targetCorpusIndex].syntax;
-      if (oldSyntax && secondaryAlignment) {
-        const primaryAlignment = findPrimaryAlignmentBySecondary(
-          state.alignments,
-          secondaryAlignment
-        );
-
-        if (primaryAlignment) {
-          state.corpora[targetCorpusIndex].syntax = syntaxMapper(
-            oldSyntax,
-            primaryAlignment,
-            secondaryAlignment
-          );
-        }
-      }
-    }
-  }
+  return `${Date.now()}-${generateLinkId(alignment.links)}`;
 };
 
 const alignmentSlice = createSlice({
@@ -159,7 +39,7 @@ const alignmentSlice = createSlice({
           links: alignment.links.map((link, index) => {
             return {
               ...link,
-              id: `${alignment.source}-${alignment.target}-${index}`,
+              id: `${alignment.polarity}-${index}`,
             };
           }),
         };
@@ -169,11 +49,9 @@ const alignmentSlice = createSlice({
     toggleTextSegment: (state, action: PayloadAction<Word>) => {
       if (state.inProgressLink?.id === '?') {
         // There is a partial in-progress link.
-        if (state.inProgressLink.source === action.payload.corpusId) {
-          state.inProgressLink.source = action.payload.corpusId;
+        if ('sources' === action.payload.side) {
           state.inProgressLink.sources.push(action.payload.id);
-        } else if (state.inProgressLink.target === action.payload.corpusId) {
-          state.inProgressLink.target = action.payload.corpusId;
+        } else if ('targets' === action.payload.side) {
           state.inProgressLink.targets.push(action.payload.id);
         }
 
@@ -182,12 +60,7 @@ const alignmentSlice = createSlice({
           state.inProgressLink.targets.length !== 0
         ) {
           state.mode = AlignmentMode.Edit;
-          const relatedAlignment = state.alignments.find((alignment) => {
-            return (
-              alignment.source === state.inProgressLink?.source &&
-              alignment.target === state.inProgressLink?.target
-            );
-          });
+          const relatedAlignment = state.alignments.find((_) => true);
 
           if (!relatedAlignment) {
             throw new Error(
@@ -211,9 +84,9 @@ const alignmentSlice = createSlice({
         state.mode = AlignmentMode.Edit;
 
         const alreadyToggled =
-          (state.inProgressLink.source === action.payload.corpusId &&
+          ('sources' === action.payload.side &&
             state.inProgressLink.sources.includes(action.payload.id)) ||
-          (state.inProgressLink.target === action.payload.corpusId &&
+          ('targets' === action.payload.side &&
             state.inProgressLink.targets.includes(action.payload.id));
 
         if (alreadyToggled) {
@@ -235,11 +108,11 @@ const alignmentSlice = createSlice({
           }
         } else {
           // add segment to link
-          if (action.payload.corpusId === state.inProgressLink.source) {
+          if (action.payload.side === 'sources') {
             state.inProgressLink.sources.push(action.payload.id);
           }
 
-          if (action.payload.corpusId === state.inProgressLink.target) {
+          if (action.payload.side === 'targets') {
             state.inProgressLink.targets.push(action.payload.id);
           }
         }
@@ -248,34 +121,28 @@ const alignmentSlice = createSlice({
         // Either create, or load existing link to edit.
         const newInProgressLink = {
           id: '?',
-          source: '?',
-          target: '?',
           sources: [] as string[],
           targets: [] as string[],
         };
 
-        const potentialAlignments = state.alignments.filter(
-          (alignment) =>
-            alignment.target === action.payload.corpusId ||
-            alignment.source === action.payload.corpusId
-        );
+        const potentialAlignment = state.alignments.find((_) => true);
 
-        if (potentialAlignments.length === 0) {
+        if (!potentialAlignment) {
           // No alignments found for text segment.
           throw new Error(
             `No alignment found for selected text segment: ${action.payload.id}, ${action.payload.corpusId}`
           );
         }
 
-        if (potentialAlignments.length === 1) {
+        if (potentialAlignment) {
           // Single alignmnent for text segment found.
-          const alignment = potentialAlignments[0];
+          const alignment = potentialAlignment;
 
           const existingLink = alignment.links.find((link: Link) => {
             return (
-              (alignment.source === action.payload.corpusId &&
+              (action.payload.side === 'sources' &&
                 link.sources.includes(action.payload.id)) ||
-              (alignment.target === action.payload.corpusId &&
+              (action.payload.side === 'targets' &&
                 link.targets.includes(action.payload.id))
             );
           });
@@ -284,8 +151,6 @@ const alignmentSlice = createSlice({
             // Load the existing link
             state.inProgressLink = {
               id: existingLink.id,
-              source: alignment.source,
-              target: alignment.target,
               sources: existingLink.sources,
               targets: existingLink.targets,
             };
@@ -297,32 +162,19 @@ const alignmentSlice = createSlice({
             // Initialize partial edit mode.
 
             newInProgressLink.id = createNextLinkId(alignment);
-            newInProgressLink.source = alignment.source;
-            newInProgressLink.target = alignment.target;
 
-            if (action.payload.corpusId === alignment.source) {
-              newInProgressLink.sources.push(action.payload.id);
-            } else if (action.payload.corpusId === alignment.target) {
-              newInProgressLink.targets.push(action.payload.id);
+            switch (action.payload.side) {
+              case 'sources':
+                newInProgressLink.sources.push(action.payload.id);
+                break;
+              case 'targets':
+                newInProgressLink.targets.push(action.payload.id);
+                break;
             }
             state.inProgressLink = newInProgressLink;
             state.mode = AlignmentMode.Edit;
             return;
           }
-        }
-
-        if (potentialAlignments.length > 1) {
-          // Multiple potential alignments for text segment.
-          // Punt?
-          //
-          // Both sides are not known.
-          // Enter partial edit mode.
-          alert(
-            'The feature "DISAMBIGUATE POTENTIAL ALIGNMENTS" has not been implemented yet. Please contact support.'
-          );
-          throw new Error(
-            'DISAMBIGUATE POTENTIAL ALIGNMENTS? Not implemented yet.'
-          );
         }
       }
     },
@@ -334,12 +186,7 @@ const alignmentSlice = createSlice({
 
     createLink: (state) => {
       if (state.inProgressLink) {
-        const alignment = state.alignments.find((alignment: Alignment) => {
-          return (
-            alignment.source === state.inProgressLink?.source &&
-            alignment.target === state.inProgressLink?.target
-          );
-        });
+        const alignment = state.alignments.find((_: Alignment) => true);
 
         if (!alignment) {
           throw new Error(
@@ -366,7 +213,6 @@ const alignmentSlice = createSlice({
 
         state.inProgressLink = null;
         state.mode = AlignmentMode.CleanSlate;
-        remapSyntax(state, state.alignments.indexOf(alignment));
       }
     },
     deleteLink: (state) => {
@@ -374,12 +220,7 @@ const alignmentSlice = createSlice({
 
       if (inProgressLink) {
         const alignmentIndex = state.alignments.findIndex(
-          (alignment: Alignment) => {
-            return (
-              alignment.source === inProgressLink.source &&
-              alignment.target === inProgressLink.target
-            );
-          }
+          (_: Alignment) => true
         );
 
         if (Number.isFinite(alignmentIndex)) {
@@ -393,7 +234,6 @@ const alignmentSlice = createSlice({
             state.alignments[alignmentIndex].links.splice(linkToDeleteIndex, 1);
             state.inProgressLink = null;
             state.mode = AlignmentMode.CleanSlate;
-            remapSyntax(state, alignmentIndex);
           }
         }
       }

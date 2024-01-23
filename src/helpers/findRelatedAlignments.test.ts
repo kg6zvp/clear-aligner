@@ -3,8 +3,6 @@ import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 const testAlignments: Alignment[] = [
   {
-    source: 'regular',
-    target: 'goofy',
     links: [
       { sources: ['regular_8'], targets: ['goofy_7'] },
       { sources: ['regular_1'], targets: ['goofy_2'] },
@@ -16,8 +14,6 @@ const testAlignments: Alignment[] = [
     },
   },
   {
-    source: 'specificThing',
-    target: 'genericThing',
     links: [{ sources: ['specific_1', 'specific_2'], targets: ['generic_4'] }],
     polarity: {
       type: 'primary',
@@ -30,6 +26,7 @@ const testAlignments: Alignment[] = [
 const testWord: Word = {
   id: 'regular_8',
   corpusId: 'regular',
+  side: 'sources',
   text: 'asdf',
   position: 8,
 };

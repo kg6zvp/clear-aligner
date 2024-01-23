@@ -1,12 +1,56 @@
 import {
   DataGrid,
   GridColDef,
+  GridRenderCellParams,
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
-import { AlignedWord } from './structs';
+import { AlignedWord, LocalizedWordEntry } from './structs';
 import { TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
+import {
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+  DataGridSetMinRowHeightToDefault,
+} from '../../styles/dataGridFixes';
+import { LocalizedTextDisplay } from '../localizedTextDisplay';
+
+/**
+ * Render an individual word or list of words with the appropriate display for their language
+ * @param words words to be rendered
+ */
+const renderWords = (words: LocalizedWordEntry[]) => {
+  switch (words.length) {
+    case 0:
+      return <></>;
+    case 1:
+      return (
+        <LocalizedTextDisplay languageInfo={words[0].languageInfo}>
+          {words[0].text}
+        </LocalizedTextDisplay>
+      );
+    default:
+      const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
+      return (
+        <span
+          style={{
+            ...(languageInfo?.textDirection === 'rtl'
+              ? { direction: languageInfo.textDirection! }
+              : {}),
+          }}
+        >
+          {words.map((word, idx) => (
+            <>
+              <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
+                {word.text}
+              </LocalizedTextDisplay>
+              {words.length - 1 !== idx && ', '}
+            </>
+          ))}
+        </span>
+      );
+  }
+};
 
 const columns: GridColDef[] = [
   {
@@ -17,12 +61,18 @@ const columns: GridColDef[] = [
   {
     field: 'sourceWordTexts',
     headerName: 'Source',
+    sortable: false,
     flex: 1,
+    renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
+      renderWords(row.sourceWordTexts),
   },
   {
     field: 'targetWordTexts',
     headerName: 'Target',
+    sortable: false,
     flex: 1,
+    renderCell: ({ row }: GridRenderCellParams<AlignedWord, any, any>) =>
+      renderWords(row.targetWordTexts),
   },
 ];
 
@@ -38,11 +88,19 @@ const columnsWithGloss: GridColDef[] = [
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
   alignedWords: AlignedWord[];
-  chosenAlignedWord?: AlignedWord;
+  chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
 }
 
+/**
+ * Display aligned words in the concordance view
+ * @param sort current sort model for Material UI DataGrid
+ * @param alignedWords list of aligned words for display
+ * @param chosenAlignedWord currently selected aligned word
+ * @param onChooseAlignedWord callback for when an aligned word entry is clicked in the list
+ * @param onChangeSort callback for when the user changes the sort model
+ */
 export const AlignedWordTable = ({
   sort,
   alignedWords,
@@ -50,18 +108,16 @@ export const AlignedWordTable = ({
   onChooseAlignedWord,
   onChangeSort,
 }: AlignedWordTableProps) => {
-  const rows = useMemo(
-    () =>
-      alignedWords.reduce((accumulator, row) => {
-        accumulator[row.id] = row;
-        return accumulator;
-      }, {} as { [key: string]: AlignedWord }),
+  const hasGlossData = useMemo(
+    () => alignedWords.some((alignedWord: AlignedWord) => !!alignedWord.gloss),
     [alignedWords]
   );
-
-  const hasGlossData = alignedWords.some(
-    (alignedWord: AlignedWord) => !!alignedWord.gloss
-  );
+  const initialPage = useMemo(() => {
+    if (chosenAlignedWord && alignedWords) {
+      return alignedWords.indexOf(chosenAlignedWord) / 20;
+    }
+    return 0;
+  }, [chosenAlignedWord, alignedWords]);
 
   return (
     <TableContainer
@@ -76,17 +132,19 @@ export const AlignedWordTable = ({
       <DataGrid
         sx={{
           width: '100%',
-          '.MuiTablePagination-root::-webkit-scrollbar': {
-            width: 0,
-          },
+          ...DataGridSetMinRowHeightToDefault,
+          ...DataGridScrollbarDisplayFix,
+          ...DataGridResizeAnimationFixes,
         }}
         rowSelection={true}
-        rowSelectionModel={chosenAlignedWord?.id}
+        rowSelectionModel={
+          chosenAlignedWord?.id ? [chosenAlignedWord.id] : undefined
+        }
         rows={alignedWords}
         columns={hasGlossData ? columnsWithGloss : columns}
         getRowId={(row) => row.id}
         sortModel={sort ? [sort] : []}
-        onSortModelChange={(newSort, details) => {
+        onSortModelChange={(newSort) => {
           if (!newSort || newSort.length < 1) {
             onChangeSort(sort);
           }
@@ -94,19 +152,21 @@ export const AlignedWordTable = ({
         }}
         initialState={{
           pagination: {
-            paginationModel: { page: 0, pageSize: 20 },
+            paginationModel: { page: initialPage, pageSize: 20 },
           },
         }}
         pageSizeOptions={[20, 50]}
-        onRowClick={(row: GridRowParams<AlignedWord>) =>
-          onChooseAlignedWord(rows[row.id])
-        }
-        //onRowSelectionModelChange={(rowSelectionModel, details) => { }}
+        onRowClick={(clickEvent: GridRowParams<AlignedWord>) => {
+          if (onChooseAlignedWord) {
+            onChooseAlignedWord(clickEvent.row);
+          }
+        }}
         isRowSelectable={({
           row: { alignments },
         }: GridRowParams<AlignedWord>) =>
           !!alignments && (alignments?.length || 0) > 0
         }
+        getRowHeight={() => 'auto'}
       />
     </TableContainer>
   );

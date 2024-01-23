@@ -35,8 +35,16 @@ Default.args = {
       frequency: 73_611,
       sourceTextId: 'srcId',
       targetTextId: 'tgtId',
-      sourceWordTexts: ['the'],
-      targetWordTexts: ['der'],
+      sourceWordTexts: [
+        {
+          text: 'the',
+        },
+      ],
+      targetWordTexts: [
+        {
+          text: 'der',
+        },
+      ],
       alignments: [],
     } as AlignedWord,
   ],

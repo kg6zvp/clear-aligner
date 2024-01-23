@@ -3,14 +3,14 @@ import { Card, Stack } from '@mui/material';
 
 import useDebug from 'hooks/useDebug';
 import LinkBuilderComponent from 'features/linkBuilder';
-import { Corpus } from 'structs';
+import { CorpusContainer } from 'structs';
 
 interface ContextPanelProps {
-  corpora: Corpus[];
+  containers: CorpusContainer[];
 }
 
 export const ContextPanel: React.FC<ContextPanelProps> = ({
-  corpora,
+  containers,
 }): ReactElement => {
   useDebug('ContextPanel');
 
@@ -30,7 +30,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
           flexBasis: '0',
         }}
       >
-        <LinkBuilderComponent corpora={corpora} />
+        <LinkBuilderComponent containers={containers} />
       </Card>
     </Stack>
   );

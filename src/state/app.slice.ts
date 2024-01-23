@@ -41,12 +41,12 @@ const appSlice = createSlice({
       if (state.corpusViewports.length < CORPUS_VIEWPORT_MAX) {
         if (action.payload.availableCorpora.length > 0) {
           state.corpusViewports = state.corpusViewports.concat({
-            corpusId: action.payload.availableCorpora[0],
+            containerId: action.payload.availableCorpora[0],
           });
           return;
         }
 
-        state.corpusViewports.push({ corpusId: null });
+        state.corpusViewports.push({ containerId: null });
       }
     },
     removeCorpusViewport: (state) => {
