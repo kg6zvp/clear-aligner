@@ -53,7 +53,8 @@ export const VerseCell = (
     .flatMap((ref) =>
       container?.corpora.flatMap(({ wordsByVerse }) => wordsByVerse[ref])
     )
-    .filter((v) => !!v);
+    .filter((v) => !!v)
+    .sort((a, b) => BCVWP.compare(a.bcvId, b.bcvId));
 
   const anyVerse = verses.find(v => !!v.bcvId);
   const languageInfo = container?.languageAtReference(anyVerse?.bcvId!);
