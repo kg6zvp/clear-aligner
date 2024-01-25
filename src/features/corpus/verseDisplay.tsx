@@ -1,6 +1,5 @@
 import { LanguageInfo, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
-import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 
@@ -23,42 +22,22 @@ export const VerseDisplay = ({
   languageInfo,
   verse,
 }: VerseDisplayProps) => {
-  const verseTokens: (string | Word[])[] = useMemo(() => {
-    const partsGroupedByWords = groupPartsIntoWords(verse.words);
-
-    const finalTokens: (string | Word[])[] = [];
-
-    partsGroupedByWords.forEach((word) => {
-      finalTokens.push(word);
-      if (word.at(-1)?.after) {
-        finalTokens.push(word.at(-1)!.after!);
-      }
-    });
-
-    return finalTokens;
-  }, [verse?.words]);
+  const verseTokens: (Word[])[] = useMemo(() =>
+      groupPartsIntoWords(verse.words)
+  , [verse?.words]);
 
   return (
     <>
       {(verseTokens || []).map(
-        (token: string | Word[], index): ReactElement => {
-          if (typeof token === 'string') {
-            return (
-              <LocalizedTextDisplay key={index} languageInfo={languageInfo}>
-                {token}
-              </LocalizedTextDisplay>
-            );
-          } else {
-            return (
-              <WordDisplay
-                readonly={readonly}
-                key={`${index}/${token.at(0)?.id}`}
-                languageInfo={languageInfo}
-                parts={token}
-              />
-            );
-          }
-        }
+        (token: Word[], index): ReactElement =>
+          (
+            <WordDisplay
+              readonly={readonly}
+              key={`${index}/${token.at(0)?.id}`}
+              languageInfo={languageInfo}
+              parts={token}
+            />
+          )
       )}
     </>
   );
