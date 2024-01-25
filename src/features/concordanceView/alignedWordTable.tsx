@@ -17,42 +17,29 @@ import { LocalizedTextDisplay } from '../localizedTextDisplay';
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
+ * @param id for keys
  * @param words words to be rendered
  */
 const renderWords = (words: LocalizedWordEntry[]) => {
-  switch (words.length) {
-    case 0:
-      return <></>;
-    case 1:
-      return (
-        <LocalizedTextDisplay
-          key={words[0].text}
-          languageInfo={words[0].languageInfo}
-        >
-          {words[0].text}
-        </LocalizedTextDisplay>
-      );
-    default:
-      const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
-      return (
-        <span
-          style={{
-            ...(languageInfo?.textDirection === 'rtl'
-              ? { direction: languageInfo.textDirection! }
-              : {}),
-          }}
-        >
-          {words.map((word, idx) => (
-            <React.Fragment key={`${word.text}/${idx}`}>
-              <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
-                {word.text}
-              </LocalizedTextDisplay>
-              {words.length - 1 !== idx && ', '}
-            </React.Fragment>
-          ))}
-        </span>
-      );
-  }
+  const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
+  return (
+    <span
+      style={{
+        ...(languageInfo?.textDirection === 'rtl'
+          ? { direction: languageInfo.textDirection! }
+          : {}),
+      }}
+    >
+      {words?.map((word, idx) => (
+        <React.Fragment key={`${word.text}/${idx}`}>
+          <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
+            {word.text}
+          </LocalizedTextDisplay>
+          {words.length - 1 !== idx && ', '}
+        </React.Fragment>
+      ))}
+    </span>
+  );
 };
 
 const columns: GridColDef[] = [
