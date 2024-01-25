@@ -55,8 +55,15 @@ export const VerseCell = (
     )
     .filter((v) => !!v);
 
+  const anyVerse = verses.find(v => !!v.bcvId);
+  const languageInfo = container?.languageAtReference(anyVerse?.bcvId!);
+
   return (
-    <>
+    <div
+      lang={languageInfo?.code}
+      style={{
+        ...languageInfo?.textDirection ? { direction: languageInfo.textDirection } : {},
+      }} >
       {verses.map((verse: Verse) => {
         const languageInfo = container?.languageAtReference(verse.bcvId);
         return (
@@ -68,7 +75,7 @@ export const VerseCell = (
           />
         );
       })}
-    </>
+    </div>
   );
 };
 
