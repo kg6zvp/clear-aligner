@@ -29,6 +29,7 @@ const determineCorpusView = (
   const corpus = bcvId ? viewCorpora.corpusAtReference(bcvId) : undefined;
   if (!corpus) return <></>;
   return verses.map((verse) => {
+    const languageInfo = viewCorpora.languageAtReference(verse.bcvId);
     return (
       <Grid
         container
@@ -54,8 +55,10 @@ const determineCorpusView = (
               pl: 4,
               flexGrow: 1,
               overflow: 'auto',
+              ...languageInfo?.textDirection ? { direction: languageInfo?.textDirection } : {},
             }} >
             <Typography
+              lang={languageInfo?.code}
               style={{
                 paddingBottom: '0.5rem',
                 paddingLeft: '0.7rem',

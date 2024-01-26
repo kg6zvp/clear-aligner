@@ -2,6 +2,7 @@ import { LanguageInfo, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 
 export interface WordDisplayProps {
   readonly?: boolean;
@@ -23,10 +24,12 @@ export const WordDisplay = ({
   parts,
   languageInfo,
 }: WordDisplayProps) => {
+  const ref = parts?.find(part => part.id)?.id;
   return (
     <>
       <Typography
         component={'span'}
+        key={`${ref ? BCVWP.parseFromString(ref).toTruncatedReferenceString(BCVWPField.Word) : ''}-${languageInfo?.code}`}
         style={{
           padding: '1px',
         }}
@@ -48,11 +51,11 @@ export const WordDisplay = ({
                   >
                     {part.after}
                   </LocalizedTextDisplay>}
-                <span> </span>
               </>
             }
           </>
         ))}
+        <span> </span>
       </Typography>
     </>
   );
