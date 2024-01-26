@@ -105,7 +105,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       viewCorpora.verseByReferenceString(
         verseKeys[
           verseKeys.indexOf(
-            visibleVerses[0].bcvId.toTruncatedReferenceString(BCVWPField.Verse)
+            visibleVerses[0]?.bcvId.toTruncatedReferenceString(BCVWPField.Verse)
           ) - 1
         ]
       ),
@@ -141,13 +141,13 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const corpusActionEnableState = useMemo(() => {
     const firstBcvId = viewCorpora.verseByReferenceString(
       verseKeys[
-        verseKeys.indexOf(visibleVerses[0].bcvId.toReferenceString()) - 1
+        verseKeys.indexOf(visibleVerses[0]?.bcvId.toReferenceString()) - 1
       ]
     )?.bcvId;
     const lastBcvId = viewCorpora.verseByReferenceString(
       verseKeys[
         verseKeys.indexOf(
-          visibleVerses[visibleVerses.length - 1].bcvId.toReferenceString()
+          visibleVerses[visibleVerses.length - 1]?.bcvId.toReferenceString()
         ) + 1
       ]
     )?.bcvId;
