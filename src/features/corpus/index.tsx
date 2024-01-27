@@ -47,7 +47,24 @@ const determineCorpusView = (
           </Typography>
         </Grid>
         <Grid item xs={11}>
-          <VerseDisplay languageInfo={corpus.language} verse={verse} />
+          <Grid
+            container
+            sx={{
+              p: '1px',
+              pl: 4,
+              flexGrow: 1,
+              overflow: 'auto',
+            }} >
+            <Typography
+              style={{
+                paddingBottom: '0.5rem',
+                paddingLeft: '0.7rem',
+                paddingRight: '0.7rem',
+              }}
+            >
+              <VerseDisplay languageInfo={corpus.language} verse={verse} />
+            </Typography>
+          </Grid>
         </Grid>
       </Grid>
     );

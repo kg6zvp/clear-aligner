@@ -1,4 +1,3 @@
-import { Grid, Typography } from '@mui/material';
 import { LanguageInfo, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -24,7 +23,6 @@ export const VerseDisplay = ({
   languageInfo,
   verse,
 }: VerseDisplayProps) => {
-  const textDirection = languageInfo?.textDirection;
   const verseTokens: (string | Word[])[] = useMemo(() => {
     const partsGroupedByWords = groupPartsIntoWords(verse.words);
 
@@ -41,45 +39,27 @@ export const VerseDisplay = ({
   }, [verse?.words]);
 
   return (
-    <Grid
-      container
-      lang={languageInfo?.code}
-      sx={{
-        p: '1px',
-        pl: 4,
-        flexGrow: 1,
-        overflow: 'auto',
-        ...(textDirection ? { direction: textDirection } : {}),
-      }}
-    >
-      <Typography
-        style={{
-          paddingBottom: '0.5rem',
-          paddingLeft: '0.7rem',
-          paddingRight: '0.7rem',
-        }}
-      >
-        {(verseTokens || []).map(
-          (token: string | Word[], index): ReactElement => {
-            if (typeof token === 'string') {
-              return (
-                <LocalizedTextDisplay key={index} languageInfo={languageInfo}>
-                  {token}
-                </LocalizedTextDisplay>
-              );
-            } else {
-              return (
-                <WordDisplay
-                  readonly={readonly}
-                  key={`${index}/${token.at(0)?.id}`}
-                  languageInfo={languageInfo}
-                  parts={token}
-                />
-              );
-            }
+    <>
+      {(verseTokens || []).map(
+        (token: string | Word[], index): ReactElement => {
+          if (typeof token === 'string') {
+            return (
+              <LocalizedTextDisplay key={index} languageInfo={languageInfo}>
+                {token}
+              </LocalizedTextDisplay>
+            );
+          } else {
+            return (
+              <WordDisplay
+                readonly={readonly}
+                key={`${index}/${token.at(0)?.id}`}
+                languageInfo={languageInfo}
+                parts={token}
+              />
+            );
           }
-        )}
-      </Typography>
-    </Grid>
+        }
+      )}
+    </>
   );
 };
