@@ -3,6 +3,7 @@ import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import React from 'react';
 
 export interface WordDisplayProps {
   readonly?: boolean;
@@ -35,7 +36,7 @@ export const WordDisplay = ({
         }}
       >
         {parts?.map((part) => (
-          <>
+          <React.Fragment key={part?.id}>
             <TextSegment
               readonly={readonly}
               key={part.id}
@@ -53,7 +54,7 @@ export const WordDisplay = ({
                   </LocalizedTextDisplay>}
               </>
             }
-          </>
+          </React.Fragment>
         ))}
         <span> </span>
       </Typography>
