@@ -1,4 +1,11 @@
-import React, { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove, Settings } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
@@ -10,7 +17,7 @@ import {
   computeAvailableChaptersAndVersesFromNavigableBooksAndPosition,
   findNextNavigableVerse,
   findPreviousNavigableVerse,
-  getReferenceListFromWords
+  getReferenceListFromWords,
 } from '../bcvNavigation/structs';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 
@@ -55,8 +62,11 @@ const determineCorpusView = (
               pl: 4,
               flexGrow: 1,
               overflow: 'auto',
-              ...languageInfo?.textDirection ? { direction: languageInfo?.textDirection } : {},
-            }} >
+              ...(languageInfo?.textDirection
+                ? { direction: languageInfo?.textDirection }
+                : {}),
+            }}
+          >
             <Typography
               lang={languageInfo?.code}
               style={{
@@ -79,7 +89,10 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const { viewCorpora, viewportIndex, corpora, position } = props;
   useDebug('TextComponent');
 
-  const verseAtPosition: Verse|undefined = useMemo(() => position ? viewCorpora.verseByReference(position) : undefined, [ position, viewCorpora ]);
+  const verseAtPosition: Verse | undefined = useMemo(
+    () => (position ? viewCorpora.verseByReference(position) : undefined),
+    [position, viewCorpora]
+  );
 
   const initialVerses = useMemo(() => {
     if (!position || !viewCorpora) return [];
@@ -109,14 +122,33 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       return;
     }
 
-    const corporaWords = viewCorpora?.corpora?.flatMap(({ words }) => words) ?? [];
+    const corporaWords =
+      viewCorpora?.corpora?.flatMap(({ words }) => words) ?? [];
     const navigableWords = getReferenceListFromWords(corporaWords);
 
-    const stateForFirstVerse = computeAvailableChaptersAndVersesFromNavigableBooksAndPosition(navigableWords, firstExistingRef);
-    const stateForLastVerse = computeAvailableChaptersAndVersesFromNavigableBooksAndPosition(navigableWords, lastExistingRef);
+    const stateForFirstVerse =
+      computeAvailableChaptersAndVersesFromNavigableBooksAndPosition(
+        navigableWords,
+        firstExistingRef
+      );
+    const stateForLastVerse =
+      computeAvailableChaptersAndVersesFromNavigableBooksAndPosition(
+        navigableWords,
+        lastExistingRef
+      );
 
-    const newFirstVerse = findPreviousNavigableVerse(navigableWords, stateForFirstVerse.availableChapters, stateForFirstVerse.availableVerses, firstExistingRef);
-    const newLastVerse = findNextNavigableVerse(navigableWords, stateForLastVerse.availableChapters, stateForLastVerse.availableVerses, lastExistingRef);
+    const newFirstVerse = findPreviousNavigableVerse(
+      navigableWords,
+      stateForFirstVerse.availableChapters,
+      stateForFirstVerse.availableVerses,
+      firstExistingRef
+    );
+    const newLastVerse = findNextNavigableVerse(
+      navigableWords,
+      stateForLastVerse.availableChapters,
+      stateForLastVerse.availableVerses,
+      lastExistingRef
+    );
 
     const updatedVerses = [
       newFirstVerse ? viewCorpora.verseByReference(newFirstVerse) : undefined,
@@ -128,7 +160,12 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
 
   const removeBcvId = useCallback(() => {
     setVisibleVerses((verses) => {
-      if (verses.length < 1 || (position && verses[0].bcvId.matchesTruncated(position, BCVWPField.Verse))) return verses;
+      if (
+        verses.length < 1 ||
+        (position &&
+          verses[0].bcvId.matchesTruncated(position, BCVWPField.Verse))
+      )
+        return verses;
       return verses.slice(1, -1);
     });
   }, [position]);
@@ -233,11 +270,14 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           container
           sx={{ pl: 4, flex: 8, overflow: 'auto' }}
         >
-          {(verseAtPosition || visibleVerses.length > 0)
-            ? determineCorpusView(viewCorpora, visibleVerses, position)
-            : (<Typography>
-            No verse available at in corpora at <BCVDisplay currentPosition={position} />
-          </Typography>)}
+          {verseAtPosition || visibleVerses.length > 0 ? (
+            determineCorpusView(viewCorpora, visibleVerses, position)
+          ) : (
+            <Typography>
+              No verse available in corpora at{' '}
+              <BCVDisplay currentPosition={position} />
+            </Typography>
+          )}
         </Grid>
       )}
     </Grid>

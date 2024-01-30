@@ -25,12 +25,18 @@ export const WordDisplay = ({
   parts,
   languageInfo,
 }: WordDisplayProps) => {
-  const ref = parts?.find(part => part.id)?.id;
+  const ref = parts?.find((part) => part.id)?.id;
   return (
     <>
       <Typography
         component={'span'}
-        key={`${ref ? BCVWP.parseFromString(ref).toTruncatedReferenceString(BCVWPField.Word) : ''}-${languageInfo?.code}`}
+        key={`${
+          ref
+            ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
+                BCVWPField.Word
+              )
+            : ''
+        }-${languageInfo?.code}`}
         style={{
           padding: '1px',
         }}
@@ -43,17 +49,18 @@ export const WordDisplay = ({
               word={part}
               languageInfo={languageInfo}
             />
-            {!suppressAfter &&
+            {!suppressAfter && (
               <>
-                {(part.after) &&
+                {part.after && (
                   <LocalizedTextDisplay
                     key={`${part.id}-after`}
                     languageInfo={languageInfo}
                   >
                     {part.after}
-                  </LocalizedTextDisplay>}
+                  </LocalizedTextDisplay>
+                )}
               </>
-            }
+            )}
           </React.Fragment>
         ))}
         <span> </span>

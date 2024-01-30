@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
+import {
+  Autocomplete,
+  Button,
+  IconButton,
+  SxProps,
+  TextField,
+  Theme,
+  Tooltip,
+} from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
 import { ArrowBack, ArrowForward } from '@mui/icons-material';
@@ -7,10 +15,12 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import {
   Chapter,
-  findBookInNavigableBooksByBookNumber, findNextNavigableVerse, findPreviousNavigableVerse,
+  findBookInNavigableBooksByBookNumber,
+  findNextNavigableVerse,
+  findPreviousNavigableVerse,
   getReferenceListFromWords,
   NavigableBook,
-  Verse
+  Verse,
 } from './structs';
 
 export interface BCVNavigationProps {
@@ -122,7 +132,16 @@ const BCVNavigation = ({
     setSelectedVerse(null);
   };
 
-  const previousNavigableVerse: BCVWP | null = useMemo(() => findPreviousNavigableVerse(availableBooks, availableChapters, availableVerses, currentPosition), [currentPosition, availableBooks, availableChapters, availableVerses]);
+  const previousNavigableVerse: BCVWP | null = useMemo(
+    () =>
+      findPreviousNavigableVerse(
+        availableBooks,
+        availableChapters,
+        availableVerses,
+        currentPosition
+      ),
+    [currentPosition, availableBooks, availableChapters, availableVerses]
+  );
 
   const navigateBack: (() => void) | null = useMemo(() => {
     if (!previousNavigableVerse) {
@@ -160,7 +179,16 @@ const BCVNavigation = ({
     [disabled, navigateBack, previousNavigableVerse]
   );
 
-  const nextNavigableVerse: BCVWP | null = useMemo(() => findNextNavigableVerse(availableBooks, availableChapters, availableVerses, currentPosition), [currentPosition, availableBooks, availableChapters, availableVerses]);
+  const nextNavigableVerse: BCVWP | null = useMemo(
+    () =>
+      findNextNavigableVerse(
+        availableBooks,
+        availableChapters,
+        availableVerses,
+        currentPosition
+      ),
+    [currentPosition, availableBooks, availableChapters, availableVerses]
+  );
 
   const navigateForward: (() => void) | null = useMemo(() => {
     if (!nextNavigableVerse) {

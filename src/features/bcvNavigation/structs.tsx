@@ -41,11 +41,11 @@ export const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
             reference: ref.chapter ?? 0,
             verses: [
               {
-                reference: ref.verse ?? 0
-              }
-            ]
-          }
-        ]
+                reference: ref.verse ?? 0,
+              },
+            ],
+          },
+        ],
       })
     )
     /**
@@ -70,7 +70,7 @@ export const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
         );
         return [
           ...accumulator.filter((b) => b.index !== currentReference.index),
-          book
+          book,
         ];
       }
       const currentVerse = currentChapter.verses[0];
@@ -84,7 +84,7 @@ export const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
         );
         return [
           ...accumulator.filter((b) => b.index !== currentReference.index),
-          book
+          book,
         ];
       }
       return accumulator;
@@ -107,32 +107,41 @@ export interface BookChapterVerseState {
   availableChapters?: Chapter[];
   selectedChapter?: Chapter;
   availableVerses?: Verse[];
-};
+}
 
 /**
  * compute state from navigable books and a given position
  * @param availableBooks navigable tree of books
  * @param position position to compute state from
  */
-export const computeAvailableChaptersAndVersesFromNavigableBooksAndPosition = (availableBooks: NavigableBook[], position: BCVWP): BookChapterVerseState => {
-  const selectedBook = findBookInNavigableBooksByBookNumber(availableBooks, position.book);
+export const computeAvailableChaptersAndVersesFromNavigableBooksAndPosition = (
+  availableBooks: NavigableBook[],
+  position: BCVWP
+): BookChapterVerseState => {
+  const selectedBook = findBookInNavigableBooksByBookNumber(
+    availableBooks,
+    position.book
+  );
 
   const availableChapters = selectedBook?.chapters;
 
   const selectedChapter = availableChapters?.find(
-    (chapter) => chapter.reference === position?.chapter);
+    (chapter) => chapter.reference === position?.chapter
+  );
 
-  const availableVerses = selectedChapter ? availableChapters?.find(
-    (chapter) => chapter.reference === selectedChapter?.reference
-  )?.verses : undefined;
+  const availableVerses = selectedChapter
+    ? availableChapters?.find(
+        (chapter) => chapter.reference === selectedChapter?.reference
+      )?.verses
+    : undefined;
 
   return {
     selectedBook,
     availableChapters,
     selectedChapter,
-    availableVerses
+    availableVerses,
   };
-}
+};
 
 /**
  * look at the list of words and find the verse preceding the given verse that is available in the given corpora
@@ -141,7 +150,12 @@ export const computeAvailableChaptersAndVersesFromNavigableBooksAndPosition = (a
  * @param availableVerses verses in current chapters (based on currentPosition)
  * @param currentPosition position from which to find the previous verse
  */
-export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], availableChapters?: Chapter[], availableVerses?: Verse[], currentPosition?: BCVWP): BCVWP|null => {
+export const findPreviousNavigableVerse = (
+  availableBooks: NavigableBook[],
+  availableChapters?: Chapter[],
+  availableVerses?: Verse[],
+  currentPosition?: BCVWP
+): BCVWP | null => {
   if (
     !availableBooks ||
     !currentPosition ||
@@ -156,7 +170,7 @@ export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], avai
 
   if (availableVerses) {
     const selectedVerse = availableVerses.find(
-      (verse) => verse.reference === currentPosition.verse!-1
+      (verse) => verse.reference === currentPosition.verse! - 1
     );
     if (selectedVerse) {
       return new BCVWP(
@@ -170,7 +184,7 @@ export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], avai
   if (availableChapters) {
     // must go back to end of previous chapter
     const previousChapter = availableChapters.find(
-      (chapter) => chapter.reference === (currentPosition?.chapter ?? 0)-1
+      (chapter) => chapter.reference === (currentPosition?.chapter ?? 0) - 1
     );
     if (previousChapter) {
       return new BCVWP(
@@ -194,7 +208,7 @@ export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], avai
     return new BCVWP(book.BookNumber, chapter?.reference, verse?.reference);
   }
   return null;
-}
+};
 
 /**
  * look at the list of words and find the verse after the given verse that is available in the given corpora
@@ -203,7 +217,12 @@ export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], avai
  * @param availableVerses verses in current chapters (based on currentPosition)
  * @param currentPosition position from which to find the next verse
  */
-export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availableChapters?: Chapter[], availableVerses?: Verse[], currentPosition?: BCVWP): BCVWP|null => {
+export const findNextNavigableVerse = (
+  availableBooks?: NavigableBook[],
+  availableChapters?: Chapter[],
+  availableVerses?: Verse[],
+  currentPosition?: BCVWP
+): BCVWP | null => {
   if (
     !availableBooks ||
     !currentPosition ||
@@ -218,7 +237,7 @@ export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availab
 
   if (availableVerses) {
     const selectedVerse = availableVerses.find(
-      (verse) => verse.reference === currentPosition.verse!+1
+      (verse) => verse.reference === currentPosition.verse! + 1
     );
     if (selectedVerse) {
       // if not the last verse in the chapter
@@ -233,7 +252,7 @@ export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availab
   if (availableChapters) {
     // must go to next chapter
     const nextChapter = availableChapters.find(
-      (chapter) => chapter.reference === currentPosition.chapter!+1
+      (chapter) => chapter.reference === currentPosition.chapter! + 1
     );
     if (nextChapter) {
       return new BCVWP(
@@ -258,4 +277,4 @@ export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availab
     return new BCVWP(book.BookNumber, chapter?.reference, verse?.reference);
   }
   return null;
-}
+};

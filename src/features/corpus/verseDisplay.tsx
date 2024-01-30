@@ -22,22 +22,22 @@ export const VerseDisplay = ({
   languageInfo,
   verse,
 }: VerseDisplayProps) => {
-  const verseTokens: (Word[])[] = useMemo(() =>
-      groupPartsIntoWords(verse.words)
-  , [verse?.words]);
+  const verseTokens: Word[][] = useMemo(
+    () => groupPartsIntoWords(verse.words),
+    [verse?.words]
+  );
 
   return (
     <>
       {(verseTokens || []).map(
-        (token: Word[], index): ReactElement =>
-          (
-            <WordDisplay
-              readonly={readonly}
-              key={`${index}/${token.at(0)?.id}`}
-              languageInfo={languageInfo}
-              parts={token}
-            />
-          )
+        (token: Word[], index): ReactElement => (
+          <WordDisplay
+            readonly={readonly}
+            key={`${index}/${token.at(0)?.id}`}
+            languageInfo={languageInfo}
+            parts={token}
+          />
+        )
       )}
     </>
   );
