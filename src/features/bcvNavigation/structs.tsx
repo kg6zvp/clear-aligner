@@ -16,6 +16,10 @@ export interface NavigableBook extends BookInfo {
   chapters: Chapter[];
 }
 
+/**
+ * Generate navigable tree of books from a word list
+ * @param words contains the list of references to generate books, chapters and verses from
+ */
 export const getReferenceListFromWords = (words: Word[]): NavigableBook[] =>
   words
     .map((word) => word.id)
@@ -95,20 +99,28 @@ export const findBookInNavigableBooksByBookNumber = (
     ? navigableBooks.find((book) => book.BookNumber === bookNumber) ?? null
     : null;
 
+/**
+ * container object for computed state based on navigable books and a position
+ */
 export interface BookChapterVerseState {
   selectedBook: NavigableBook | null;
+  availableChapters?: Chapter[];
   selectedChapter?: Chapter;
   availableVerses?: Verse[];
-  availableChapters?: Chapter[];
 };
 
-const computeAvailableChaptersAndVersesFromNavigableBooksAndPosition = (availableBooks: NavigableBook[], currentPosition: BCVWP): BookChapterVerseState => {
-  const selectedBook = findBookInNavigableBooksByBookNumber(availableBooks, currentPosition.book);
+/**
+ * compute state from navigable books and a given position
+ * @param availableBooks navigable tree of books
+ * @param position position to compute state from
+ */
+export const computeAvailableChaptersAndVersesFromNavigableBooksAndPosition = (availableBooks: NavigableBook[], position: BCVWP): BookChapterVerseState => {
+  const selectedBook = findBookInNavigableBooksByBookNumber(availableBooks, position.book);
 
   const availableChapters = selectedBook?.chapters;
 
   const selectedChapter = availableChapters?.find(
-    (chapter) => chapter.reference === currentPosition?.chapter);
+    (chapter) => chapter.reference === position?.chapter);
 
   const availableVerses = selectedChapter ? availableChapters?.find(
     (chapter) => chapter.reference === selectedChapter?.reference
@@ -122,11 +134,16 @@ const computeAvailableChaptersAndVersesFromNavigableBooksAndPosition = (availabl
   };
 }
 
+/**
+ * look at the list of words and find the verse preceding the given verse that is available in the given corpora
+ * @param availableBooks available books (based on current corpus)
+ * @param availableChapters chapters in current book (based on currentPosition)
+ * @param availableVerses verses in current chapters (based on currentPosition)
+ * @param currentPosition position from which to find the previous verse
+ */
 export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], availableChapters?: Chapter[], availableVerses?: Verse[], currentPosition?: BCVWP): BCVWP|null => {
   if (
     !availableBooks ||
-    !availableChapters ||
-    !availableVerses ||
     !currentPosition ||
     !currentPosition?.hasFields(
       BCVWPField.Book,
@@ -137,57 +154,58 @@ export const findPreviousNavigableVerse = (availableBooks: NavigableBook[], avai
     return null;
   }
 
-  const selectedVerseIndex = availableVerses.findIndex(
-    (verse) => verse.reference === currentPosition?.verse
-  );
-  if (selectedVerseIndex < 0) {
-    return null;
-  }
-  if (selectedVerseIndex < availableVerses.length - 1) {
-    // if not the last verse in the chapter
-    return new BCVWP(
-      currentPosition?.book,
-      currentPosition?.chapter,
-      availableVerses[selectedVerseIndex + 1].reference
+  if (availableVerses) {
+    const selectedVerse = availableVerses.find(
+      (verse) => verse.reference === currentPosition.verse!-1
     );
+    if (selectedVerse) {
+      return new BCVWP(
+        currentPosition.book,
+        currentPosition.chapter,
+        selectedVerse.reference
+      );
+    }
   }
-  // must go to next chapter
-  const selectedChapterIndex = availableChapters.findIndex(
-    (chapter) => chapter.reference === currentPosition?.chapter
-  );
-  if (selectedChapterIndex < 0) {
-    return null;
-  }
-  if (selectedChapterIndex < availableChapters.length - 1) {
-    // if not the last chapter in the book
-    const chapter = availableChapters[selectedChapterIndex + 1]; // go forward one chapter
-    return new BCVWP(
-      currentPosition.book,
-      chapter.reference,
-      chapter.verses[0].reference
+
+  if (availableChapters) {
+    // must go back to end of previous chapter
+    const previousChapter = availableChapters.find(
+      (chapter) => chapter.reference === (currentPosition?.chapter ?? 0)-1
     );
+    if (previousChapter) {
+      return new BCVWP(
+        currentPosition.book,
+        previousChapter.reference,
+        previousChapter.verses.at(-1)?.reference
+      );
+    }
   }
+
   const selectedBookIndex = availableBooks.findIndex(
     (book) => book.BookNumber === currentPosition?.book
   );
   if (selectedBookIndex < 0) {
     return null;
   }
-  if (selectedBookIndex < availableBooks.length - 1) {
-    // if not the last book
-    const book = availableBooks[selectedBookIndex + 1]; // go back one book
-    const chapter = book.chapters[0];
-    const verse = chapter?.verses[0];
+  if (selectedBookIndex > 0) {
+    const book = availableBooks[selectedBookIndex - 1]; // go back one book
+    const chapter = book.chapters.at(-1);
+    const verse = chapter?.verses.at(-1);
     return new BCVWP(book.BookNumber, chapter?.reference, verse?.reference);
   }
   return null;
 }
 
+/**
+ * look at the list of words and find the verse after the given verse that is available in the given corpora
+ * @param availableBooks available books (based on current corpus)
+ * @param availableChapters chapters in current book (based on currentPosition)
+ * @param availableVerses verses in current chapters (based on currentPosition)
+ * @param currentPosition position from which to find the next verse
+ */
 export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availableChapters?: Chapter[], availableVerses?: Verse[], currentPosition?: BCVWP): BCVWP|null => {
   if (
     !availableBooks ||
-    !availableChapters ||
-    !availableVerses ||
     !currentPosition ||
     !currentPosition?.hasFields(
       BCVWPField.Book,
@@ -197,36 +215,35 @@ export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availab
   ) {
     return null;
   }
-  const selectedVerseIndex = availableVerses.findIndex(
-    (verse) => verse.reference === currentPosition?.verse
-  );
-  if (selectedVerseIndex < 0) {
-    return null;
-  }
-  if (selectedVerseIndex < availableVerses.length - 1) {
-    // if not the last verse in the chapter
-    return new BCVWP(
-      currentPosition?.book,
-      currentPosition?.chapter,
-      availableVerses[selectedVerseIndex + 1].reference
+
+  if (availableVerses) {
+    const selectedVerse = availableVerses.find(
+      (verse) => verse.reference === currentPosition.verse!+1
     );
+    if (selectedVerse) {
+      // if not the last verse in the chapter
+      return new BCVWP(
+        currentPosition?.book,
+        currentPosition?.chapter,
+        selectedVerse.reference
+      );
+    }
   }
-  // must go to next chapter
-  const selectedChapterIndex = availableChapters.findIndex(
-    (chapter) => chapter.reference === currentPosition?.chapter
-  );
-  if (selectedChapterIndex < 0) {
-    return null;
-  }
-  if (selectedChapterIndex < availableChapters.length - 1) {
-    // if not the last chapter in the book
-    const chapter = availableChapters[selectedChapterIndex + 1]; // go forward one chapter
-    return new BCVWP(
-      currentPosition.book,
-      chapter.reference,
-      chapter.verses[0].reference
+
+  if (availableChapters) {
+    // must go to next chapter
+    const nextChapter = availableChapters.find(
+      (chapter) => chapter.reference === currentPosition.chapter!+1
     );
+    if (nextChapter) {
+      return new BCVWP(
+        currentPosition.book,
+        nextChapter.reference,
+        nextChapter.verses[0].reference
+      );
+    }
   }
+
   const selectedBookIndex = availableBooks.findIndex(
     (book) => book.BookNumber === currentPosition?.book
   );
@@ -235,7 +252,7 @@ export const findNextNavigableVerse = (availableBooks?: NavigableBook[], availab
   }
   if (selectedBookIndex < availableBooks.length - 1) {
     // if not the last book
-    const book = availableBooks[selectedBookIndex + 1]; // go back one book
+    const book = availableBooks[selectedBookIndex + 1]; // go forward one book
     const chapter = book.chapters[0];
     const verse = chapter?.verses[0];
     return new BCVWP(book.BookNumber, chapter?.reference, verse?.reference);
