@@ -19,7 +19,6 @@ import {
   findPreviousNavigableVerse,
   getReferenceListFromWords,
 } from '../bcvNavigation/structs';
-import { BCVDisplay } from '../bcvwp/BCVDisplay';
 
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
@@ -280,8 +279,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
             determineCorpusView(viewCorpora, visibleVerses, position)
           ) : (
             <Typography>
-              No verse available in corpora at{' '}
-              <BCVDisplay currentPosition={position} />
+              No verse data for this reference.
             </Typography>
           )}
         </Grid>
