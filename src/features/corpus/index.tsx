@@ -160,13 +160,19 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
 
   const removeBcvId = useCallback(() => {
     setVisibleVerses((verses) => {
-      if (
-        verses.length < 1 ||
-        (position &&
-          verses[0].bcvId.matchesTruncated(position, BCVWPField.Verse))
-      )
+      if (verses.length < 1 || !position) {
         return verses;
-      return verses.slice(1, -1);
+      }
+      return verses.slice(
+        position?.matchesTruncated(verses[0]?.bcvId, BCVWPField.Verse) ? 0 : 1,
+        verses.length === 1 ||
+          position?.matchesTruncated(
+            verses[verses.length - 1]?.bcvId,
+            BCVWPField.Verse
+          )
+          ? verses.length
+          : -1
+      );
     });
   }, [position]);
 
