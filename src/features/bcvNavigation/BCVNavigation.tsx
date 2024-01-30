@@ -243,7 +243,7 @@ const BCVNavigation = ({
         options={availableVerses ?? []}
         typeof={'select'}
         value={
-          selectedVerse && (availableVerses?.length ?? 0) > 0
+          selectedVerse && availableVerses?.includes(selectedVerse)
             ? selectedVerse
             : null
         }
@@ -310,7 +310,11 @@ const BCVNavigation = ({
           return 'Apocrypha';
         }}
         getOptionLabel={(option) => option.EnglishBookName}
-        value={selectedBook}
+        value={
+          selectedBook && availableBooks?.includes(selectedBook)
+            ? selectedBook
+            : null
+        }
         onChange={(_, value) => handleSetBook(value)}
         renderInput={(params) => (
           <TextField {...params} label={'Book'} variant={'standard'} />
@@ -327,7 +331,11 @@ const BCVNavigation = ({
         options={availableChapters}
         typeof={'select'}
         getOptionLabel={(option) => String(option.reference)}
-        value={selectedChapter}
+        value={
+          selectedChapter && availableChapters?.includes(selectedChapter)
+            ? selectedChapter
+            : null
+        }
         onChange={(_, value) => handleSetChapter(value)}
         renderInput={(params) => (
           <TextField label={'Chapter'} {...params} variant={'standard'} />

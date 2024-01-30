@@ -278,9 +278,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           {verseAtPosition || visibleVerses.length > 0 ? (
             determineCorpusView(viewCorpora, visibleVerses, position)
           ) : (
-            <Typography>
-              No verse data for this reference.
-            </Typography>
+            <Typography>No verse data for this reference.</Typography>
           )}
         </Grid>
       )}
