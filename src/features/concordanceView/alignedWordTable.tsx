@@ -25,7 +25,10 @@ const renderWords = (words: LocalizedWordEntry[]) => {
       return <></>;
     case 1:
       return (
-        <LocalizedTextDisplay key={words[0].text} languageInfo={words[0].languageInfo}>
+        <LocalizedTextDisplay
+          key={words[0].text}
+          languageInfo={words[0].languageInfo}
+        >
           {words[0].text}
         </LocalizedTextDisplay>
       );
