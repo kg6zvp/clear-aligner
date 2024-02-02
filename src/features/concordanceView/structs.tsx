@@ -1,5 +1,4 @@
 import { LanguageInfo, Link } from '../../structs';
-import BCVWP from '../bcvwp/BCVWPSupport';
 
 /**
  * represents rows displayed in the pivot word table in the concordance view
@@ -57,6 +56,7 @@ export interface NormalizedTextToPivotWord {
  */
 export interface NormalizedWordsToFrequencyAndLocalization {
   [key: string]: {
+    // key is pivot word text
     count: number;
     languageInfo: LanguageInfo;
   };

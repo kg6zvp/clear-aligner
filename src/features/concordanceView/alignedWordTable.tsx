@@ -14,6 +14,7 @@ import {
   DataGridSetMinRowHeightToDefault,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
@@ -22,6 +23,7 @@ import { LocalizedTextDisplay } from '../localizedTextDisplay';
  */
 const renderWords = (words: LocalizedWordEntry[]) => {
   const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
+  const partsByWord = groupLocalizedPartsByWord(words);
   return (
     <span
       style={{
@@ -30,12 +32,17 @@ const renderWords = (words: LocalizedWordEntry[]) => {
           : {}),
       }}
     >
-      {words?.map((word, idx) => (
-        <React.Fragment key={`${word.text}/${idx}`}>
-          <LocalizedTextDisplay key={idx} languageInfo={word.languageInfo}>
-            {word.text}
-          </LocalizedTextDisplay>
-          {words.length - 1 !== idx && ', '}
+      {partsByWord?.map((word, idx) => (
+        <React.Fragment key={idx}>
+          {word.map((wordPart, wordPartIndex) => (
+            <LocalizedTextDisplay
+              key={wordPartIndex}
+              languageInfo={wordPart.languageInfo}
+            >
+              {wordPart.text}
+            </LocalizedTextDisplay>
+          ))}
+          {words.length - 1 !== idx && ' '}
         </React.Fragment>
       ))}
     </span>

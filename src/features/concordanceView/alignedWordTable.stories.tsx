@@ -39,13 +39,17 @@ Default.args = {
       sourceWordTexts: [
         {
           text: 'the',
-          position: BCVWP.parseFromString('010010010011').toTruncatedReferenceString(BCVWPField.Word),
+          position: BCVWP.parseFromString(
+            '010010010011'
+          ).toTruncatedReferenceString(BCVWPField.Word),
         },
       ],
       targetWordTexts: [
         {
           text: 'der',
-          position: BCVWP.parseFromString('010010010011').toTruncatedReferenceString(BCVWPField.Word),
+          position: BCVWP.parseFromString(
+            '010010010011'
+          ).toTruncatedReferenceString(BCVWPField.Word),
         },
       ],
       alignments: [],

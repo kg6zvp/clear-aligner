@@ -149,8 +149,7 @@ export const ConcordanceView = () => {
       const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
         alignmentState,
         sourceContainer,
-        targetContainer,
-        wordSource
+        targetContainer
       );
 
       setSrcPivotWords(
