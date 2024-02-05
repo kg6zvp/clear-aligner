@@ -13,29 +13,25 @@ import PouchDB from 'pouchdb';
 export interface AppContextProps {
   currentReference: BCVWP | null;
   setCurrentReference: (currentPosition: BCVWP | null) => void;
+  db: PouchDB.Database|null;
+  setDb: (db: PouchDB.Database|null) => void;
 }
 
 export const AppContext = createContext({} as AppContextProps);
 
 const App = () => {
-  const db = useMemo(() =>
-    new PouchDB(''), []);
-
   const [currentReference, setCurrentReference] = useState(
     null as BCVWP | null
   );
-
-  useEffect(() => {
-    if (db) {
-      console.log('db', db);
-    }
-  }, [db]);
+  const [db, setDb] = useState(null as PouchDB.Database|null);
 
   return (
     <AppContext.Provider
       value={{
         currentReference,
         setCurrentReference,
+        db,
+        setDb,
       }}
     >
       <Provider store={store}>

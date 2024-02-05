@@ -1,4 +1,4 @@
-import { ReactElement, useRef, useState } from 'react';
+import { ReactElement, useContext, useRef, useState } from 'react';
 import { ActionCreators } from 'redux-undo';
 import {
   Button,
@@ -40,9 +40,11 @@ import {
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { CorpusContainer } from '../../structs';
+import { Alignment, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AppContext } from '../../App';
+import { Primary } from '@storybook/blocks';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -51,6 +53,8 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
+
+  const { currentReference, setCurrentReference, db, setDb } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -230,16 +234,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
+                const db = new PouchDB(content.split(content.includes('/') ? '/' : '\\').at(-1));
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
 
-                // clone alignment state so that we can mutate
-                const newAlignmentState = cloneDeep(alignmentState);
-
                 // override the alignments from alignment file
-                newAlignmentState![0].links = alignmentFile.records.map(
-                  (record) => {
+                alignmentFile.records
+                  .map((record) => {
                     return {
                       id: record.id,
                       sources: record.source
@@ -250,12 +252,18 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                         .filter((v) => v)
                         .map((ref) => BCVWP.parseFromString(ref))
                         .map((bcv) => bcv.toReferenceString()),
-                    };
-                  }
-                );
+                    } as Link;
+                  })
+                  .forEach((link) => {
+                    db.put(link, {}, (err, res) => {
+                      if (err) {
+                        console.log('error', err);
+                      }
+                    });
+                  });
 
                 // dispatch the updated alignment
-                dispatch(loadAlignments(newAlignmentState));
+                setDb(db);
               }}
             />
             <Button
@@ -277,8 +285,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               disabled={currentCorpusViewports.length === 0}
               variant="contained"
               onClick={() => {
-                dispatch(loadAlignments(alignmentState));
-
                 // create starting instance
                 const alignmentExport: AlignmentFile = {
                   type: 'translation',
@@ -288,60 +294,66 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   records: [],
                 };
 
-                const currentAlignment = alignmentState[0];
+                if (!db) {
+                  return;
+                }
 
-                // ETL alignment links
-                alignmentExport.records = currentAlignment.links.map((link) => {
-                  return {
-                    id: link.id,
-                    source: link.sources,
-                    target: link.targets,
-                  } as AlignmentRecord;
+                db.allDocs({ include_docs: true }).then((docs) => {
+                  docs.rows
+                    .map((row) => row as unknown as Link)
+                    .map((link: Link) => {
+                        return {
+                          id: link.id,
+                          source: link.sources,
+                          target: link.targets,
+                        } as AlignmentRecord;
+                      })
+                    .forEach((record) => alignmentExport.records.push(record));
+
+                  // Create alignment file content
+                  const fileContent = JSON.stringify(
+                    alignmentExport,
+                    undefined,
+                    2
+                  );
+
+                  // Create a Blob from the data
+                  const blob = new Blob([fileContent], {
+                    type: 'application/json',
+                  });
+
+                  // Create a URL for the Blob
+                  const url = URL.createObjectURL(blob);
+
+                  // Create a link element
+                  const link = document.createElement('a');
+                  const currentDate = new Date();
+
+                  // Set the download attribute and file name
+                  link.download = `alignment_data_${currentDate.getFullYear()}-${String(
+                    currentDate.getMonth() + 1
+                  ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
+                    2,
+                    '0'
+                  )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
+                    currentDate.getMinutes()
+                  ).padStart(2, '0')}.json`;
+
+                  // Set the href attribute to the generated URL
+                  link.href = url;
+
+                  // Append the link to the document
+                  document.body.appendChild(link);
+
+                  // Trigger a click event on the link
+                  link.click();
+
+                  // Remove the link from the document
+                  document.body.removeChild(link);
+
+                  // Revoke the URL to free up resources
+                  URL.revokeObjectURL(url);
                 });
-
-                // Create alignment file content
-                const fileContent = JSON.stringify(
-                  alignmentExport,
-                  undefined,
-                  2
-                );
-
-                // Create a Blob from the data
-                const blob = new Blob([fileContent], {
-                  type: 'application/json',
-                });
-
-                // Create a URL for the Blob
-                const url = URL.createObjectURL(blob);
-
-                // Create a link element
-                const link = document.createElement('a');
-                const currentDate = new Date();
-
-                // Set the download attribute and file name
-                link.download = `alignment_data_${currentDate.getFullYear()}-${String(
-                  currentDate.getMonth() + 1
-                ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
-                  2,
-                  '0'
-                )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
-                  currentDate.getMinutes()
-                ).padStart(2, '0')}.json`;
-
-                // Set the href attribute to the generated URL
-                link.href = url;
-
-                // Append the link to the document
-                document.body.appendChild(link);
-
-                // Trigger a click event on the link
-                link.click();
-
-                // Remove the link from the document
-                document.body.removeChild(link);
-
-                // Revoke the URL to free up resources
-                URL.revokeObjectURL(url);
               }}
             >
               <FileDownload />
