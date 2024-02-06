@@ -9,7 +9,6 @@ import {
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
-
 import {
   AddLink,
   LinkOff,
@@ -22,9 +21,6 @@ import {
   FileDownload,
   FileUpload,
 } from '@mui/icons-material';
-
-import cloneDeep from 'lodash/cloneDeep';
-
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import {
@@ -32,19 +28,17 @@ import {
   createLink,
   deleteLink,
   AlignmentMode,
-  loadAlignments,
 } from 'state/alignment.slice';
-
 import {
   addCorpusViewport,
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { Alignment, CorpusContainer, Link } from '../../structs';
+import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
-import { Primary } from '@storybook/blocks';
+import PouchDB from 'pouchdb';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -54,7 +48,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { currentReference, setCurrentReference, db, setDb } = useContext(AppContext);
+  const { state, setState } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,10 +84,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       (viewport) => viewport.containerId
     );
     return !currentViewportIds.includes(container.id);
-  });
-
-  const alignmentState = useAppSelector((state) => {
-    return state.alignment.present.alignments;
   });
 
   if (scrollLock && !formats.includes('scroll-lock')) {
@@ -234,7 +224,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                const db = new PouchDB(content.split(content.includes('/') ? '/' : '\\').at(-1));
+                const linksTable = new PouchDB(content.split(content.includes('/') ? '/' : '\\').at(-1));
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
@@ -255,7 +245,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                     } as Link;
                   })
                   .forEach((link) => {
-                    db.put(link, {}, (err, res) => {
+                    linksTable.put({ _id: link.id, ...link }, {}, (err, _) => {
                       if (err) {
                         console.log('error', err);
                       }
@@ -263,7 +253,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   });
 
                 // dispatch the updated alignment
-                setDb(db);
+                setState({
+                  ...state,
+                  linksTable
+                })
               }}
             />
             <Button
@@ -294,13 +287,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   records: [],
                 };
 
-                if (!db) {
+                if (!state.linksTable) {
                   return;
                 }
 
-                db.allDocs({ include_docs: true }).then((docs) => {
+                state.linksTable.allDocs({ include_docs: true }).then((docs) => {
                   docs.rows
-                    .map((row) => row as unknown as Link)
+                    .map(({ doc }) => doc as unknown as Link)
                     .map((link: Link) => {
                         return {
                           id: link.id,

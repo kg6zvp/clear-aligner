@@ -8,13 +8,14 @@ import { ConcordanceView } from './features/concordanceView/concordanceView';
 import { store } from 'app/store';
 import { Provider } from 'react-redux';
 import BCVWP from './features/bcvwp/BCVWPSupport';
-import PouchDB from 'pouchdb';
+import { Link } from './structs';
+import { AppState } from './state/databaseManagement';
 
 export interface AppContextProps {
   currentReference: BCVWP | null;
   setCurrentReference: (currentPosition: BCVWP | null) => void;
-  db: PouchDB.Database|null;
-  setDb: (db: PouchDB.Database|null) => void;
+  state: AppState;
+  setState: (state: AppState) => void;
 }
 
 export const AppContext = createContext({} as AppContextProps);
@@ -23,15 +24,29 @@ const App = () => {
   const [currentReference, setCurrentReference] = useState(
     null as BCVWP | null
   );
-  const [db, setDb] = useState(null as PouchDB.Database|null);
+  const [state, setState] = useState({} as AppState);
+
+  //debug
+  useEffect(() => {
+    if (!state.linksTable) {
+      return;
+    }
+    console.log('entries');
+    state.linksTable.allDocs({ include_docs: true })
+      .then((docs) => docs.rows
+        .map(({ doc }) => doc as unknown as Link)
+        .forEach((link) => {
+          console.log('link', link);
+        }))
+  }, [state.linksTable]);
 
   return (
     <AppContext.Provider
       value={{
         currentReference,
         setCurrentReference,
-        db,
-        setDb,
+        state,
+        setState,
       }}
     >
       <Provider store={store}>
