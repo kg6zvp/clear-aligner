@@ -3,7 +3,14 @@ import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 
-export interface VerseDisplayProps {
+/**
+ * optionally declare only link data from the given links will be reflected in the verse display
+ */
+export interface LimitedToLinks {
+  onlyLinkIds?: string[]; // alignment link ids
+}
+
+export interface VerseDisplayProps extends LimitedToLinks {
   readonly?: boolean;
   languageInfo?: LanguageInfo;
   verse: Verse;
@@ -21,6 +28,7 @@ export const VerseDisplay = ({
   readonly,
   languageInfo,
   verse,
+  onlyLinkIds,
 }: VerseDisplayProps) => {
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
@@ -32,8 +40,9 @@ export const VerseDisplay = ({
       {(verseTokens || []).map(
         (token: Word[], index): ReactElement => (
           <WordDisplay
-            readonly={readonly}
             key={`${index}/${token.at(0)?.id}`}
+            readonly={readonly}
+            onlyLinkIds={onlyLinkIds}
             languageInfo={languageInfo}
             parts={token}
           />
