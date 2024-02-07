@@ -15,15 +15,22 @@ import {
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
- * @param id for keys
  * @param words words to be rendered
  */
 const renderWords = (words: LocalizedWordEntry[]) => {
   const languageInfo = words.find((w) => w.languageInfo)?.languageInfo;
-  const partsByWord = groupLocalizedPartsByWord(words);
+  const partsByWord = groupLocalizedPartsByWord(
+    words.sort((a, b) =>
+      BCVWP.compare(
+        BCVWP.parseFromString(a.position),
+        BCVWP.parseFromString(b.position)
+      )
+    )
+  );
   return (
     <span
       style={{

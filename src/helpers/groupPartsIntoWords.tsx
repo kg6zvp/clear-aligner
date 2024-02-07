@@ -4,7 +4,11 @@ import { LocalizedWordEntry } from '../features/concordanceView/structs';
 
 type IdLookupFunction<T> = (t: T) => string;
 
-const groupingReducer = <T extends Word|LocalizedWordEntry>(accumulator: T[][], currentValue: T, idLookup: IdLookupFunction<T>): T[][] => {
+const groupingReducer = <T extends Word | LocalizedWordEntry>(
+  accumulator: T[][],
+  currentValue: T,
+  idLookup: IdLookupFunction<T>
+): T[][] => {
   const lastIndex = accumulator.length - 1;
   const currentValueRef: BCVWP = BCVWP.parseFromString(idLookup(currentValue));
 
@@ -23,7 +27,7 @@ const groupingReducer = <T extends Word|LocalizedWordEntry>(accumulator: T[][], 
     accumulator.push([currentValue]);
     return accumulator;
   }
-}
+};
 
 /**
  * Words as a type represent entire words as well as word parts and this function takes a list of Words in and returns
@@ -34,13 +38,24 @@ const groupingReducer = <T extends Word|LocalizedWordEntry>(accumulator: T[][], 
  */
 export const groupPartsIntoWords = <T extends Word>(words: T[]): T[][] =>
   words
-    .reduce((accumulator, currentValue) => groupingReducer(accumulator, currentValue, (part: T) => part.id), [] as T[][])
+    .reduce(
+      (accumulator, currentValue) =>
+        groupingReducer(accumulator, currentValue, (part: T) => part.id),
+      [] as T[][]
+    )
     .filter((value) => value.length >= 1);
 
 export const groupLocalizedPartsByWord = (
   words: LocalizedWordEntry[]
 ): LocalizedWordEntry[][] =>
   words
-    .reduce((accumulator, currentValue) =>
-      groupingReducer(accumulator, currentValue, (part: LocalizedWordEntry) => part.position), [] as LocalizedWordEntry[][])
+    .reduce(
+      (accumulator, currentValue) =>
+        groupingReducer(
+          accumulator,
+          currentValue,
+          (part: LocalizedWordEntry) => part.position
+        ),
+      [] as LocalizedWordEntry[][]
+    )
     .filter((value) => value.length >= 1);
