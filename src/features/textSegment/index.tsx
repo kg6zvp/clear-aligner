@@ -102,6 +102,9 @@ export const TextSegment = ({
 
   const isSelected = Boolean(
     useAppSelector((state) => {
+      if (readonly || onlyLinkIds) {
+        return false;
+      }
       return (
         (word.side === 'sources' &&
           state.alignment.present.inProgressLink?.sources.some(
@@ -117,6 +120,9 @@ export const TextSegment = ({
 
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
+      if (readonly || onlyLinkIds) {
+        return false;
+      }
       return (
         (word.side === 'sources' &&
           state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
