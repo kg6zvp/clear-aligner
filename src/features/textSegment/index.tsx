@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useContext, useEffect, useState } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
@@ -10,6 +10,8 @@ import findRelatedAlignments from 'helpers/findRelatedAlignments';
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
+import { AppContext } from '../../App';
+import { SourcesIndex, TargetsIndex } from '../../state/linksIndexes';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -78,6 +80,24 @@ export const TextSegment = ({
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
+  const { state } = useContext(AppContext);
+
+  const [ isMemberOfMultipleAlignments, setIsMemberOfMultipleAlignments ] = useState(false);
+
+  const [ isSelected, setIsSelected ] = useState(false);
+
+  useEffect(() => {
+    if (!state.linksTable) {
+      console.log('TextSegment: linksTable not ready');
+      return;
+    }
+
+    state.linksTable
+      .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id })
+      .then((result) => {
+        setIsMemberOfMultipleAlignments(result.rows.length > 1);
+      });
+  }, [state.linksTable, setIsMemberOfMultipleAlignments, word.side, word.id]);
 
   const alignments = useAppSelector((state) => {
     return state.alignment.present.alignments;
@@ -93,36 +113,21 @@ export const TextSegment = ({
       state.textSegmentHover.hovered?.corpusId === word.corpusId
   );
 
-  const isMemberOfMultipleAlignments = useAppSelector((state) => {
-    const relatedAlignments = state.alignment.present.alignments.filter(
-      (_) => true
-    );
-    return relatedAlignments.length > 1;
-  });
+  useEffect(() => {
+    if (!state.linksTable) {
+      console.log('TextSegment: linksTable not ready');
+      return;
+    }
 
-  const isSelected = Boolean(
-    useAppSelector((state) => {
-      if (readonly || onlyLinkIds) {
-        return false;
-      }
-      return (
-        (word.side === 'sources' &&
-          state.alignment.present.inProgressLink?.sources.some(
-            (source) => source === word.id
-          )) ||
-        (word.side === 'targets' &&
-          state.alignment.present.inProgressLink?.targets.some(
-            (target) => target === word.id
-          ))
-      );
-    })
-  );
+    state.linksTable
+      .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id })
+      .then((result) => {
+        setIsSelected(result.rows.length > 0);
+      });
+  }, [state.linksTable, setIsSelected, word.side, word.id]);
 
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
-      if (readonly || onlyLinkIds) {
-        return false;
-      }
       return (
         (word.side === 'sources' &&
           state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
@@ -132,27 +137,23 @@ export const TextSegment = ({
     })
   );
 
-  const isRelated = Boolean(
-    useAppSelector((state) => {
-      if (word) {
-        const relatedAlignment = state.textSegmentHover.relatedAlignments.find(
-          (_: Alignment) => true
-        );
+  const [ isRelated, setIsRelated ] = useState(false);
 
-        const relatedLink = relatedAlignment?.links.filter((link: Link) => {
-          if (onlyLinkIds && link.id && !onlyLinkIds.includes(link.id)) {
-            return false;
-          }
-          return (
-            (word.side === 'sources' && link.sources.includes(word.id)) ||
-            (word.side === 'targets' && link.targets.includes(word.id))
-          );
-        });
+  useEffect(() => {
+    if (!state.linksTable) {
+      console.log('TextSegment: linksTable not ready');
+      return;
+    }
 
-        return Boolean(relatedLink?.length);
-      }
-    })
-  );
+    state.linksTable
+      .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id, include_docs: true })
+      .then((result) => {
+        return result.rows
+          .map((link) => link.doc as unknown as Link)
+          .filter((v) =>
+            (!onlyLinkIds || !v.id || onlyLinkIds.includes(v.id)))?.length > 0
+      });
+  }, [state.linksTable, setIsRelated, onlyLinkIds, word.side, word.id]);
 
   const link = useAppSelector((state) => {
     const inProgressLink = state.alignment.present.inProgressLink;

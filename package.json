@@ -47,7 +47,16 @@
       "react-app",
       "react-app/jest",
       "plugin:storybook/recommended"
-    ]
+    ],
+    "rules": {
+      "no-restricted-syntax": [
+        "error",
+        {
+          "selector": "NewExpression[callee.name='PouchDB']",
+          "message": "Find or declare a factory in databaseManagement.tsx to initialize PouchDB"
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [

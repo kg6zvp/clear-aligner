@@ -1,6 +1,6 @@
 import './App.css';
 import './styles/theme.css';
-import React, { createContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useEffect, useState } from 'react';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
@@ -9,13 +9,13 @@ import { store } from 'app/store';
 import { Provider } from 'react-redux';
 import BCVWP from './features/bcvwp/BCVWPSupport';
 import { Link } from './structs';
-import { AppState } from './state/databaseManagement';
+import { ProjectState } from './state/databaseManagement';
 
 export interface AppContextProps {
   currentReference: BCVWP | null;
   setCurrentReference: (currentPosition: BCVWP | null) => void;
-  state: AppState;
-  setState: (state: AppState) => void;
+  state: ProjectState;
+  setState: (state: ProjectState) => void;
 }
 
 export const AppContext = createContext({} as AppContextProps);
@@ -24,14 +24,14 @@ const App = () => {
   const [currentReference, setCurrentReference] = useState(
     null as BCVWP | null
   );
-  const [state, setState] = useState({} as AppState);
+  const [state, setState] = useState({} as ProjectState);
 
   //debug
   useEffect(() => {
     if (!state.linksTable) {
       return;
     }
-    console.log('entries');
+   console.log('entries');
     state.linksTable.allDocs({ include_docs: true })
       .then((docs) => docs.rows
         .map(({ doc }) => doc as unknown as Link)

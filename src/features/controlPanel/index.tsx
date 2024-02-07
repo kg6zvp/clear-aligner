@@ -38,7 +38,7 @@ import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
-import PouchDB from 'pouchdb';
+import { createTableLinks, reindexTableLinks } from '../../state/databaseManagement';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -224,7 +224,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                const linksTable = new PouchDB(content.split(content.includes('/') ? '/' : '\\').at(-1));
+                const linksTable = createTableLinks();
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
@@ -251,6 +251,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                       }
                     });
                   });
+
+                //void reindexTableLinks(linksTable);
 
                 // dispatch the updated alignment
                 setState({
