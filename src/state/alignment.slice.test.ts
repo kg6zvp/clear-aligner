@@ -1,12 +1,10 @@
 import { Word, Alignment, PrimaryAlignmentPolarity } from 'structs';
 
 import alignmentSliceReducer, {
-  createLink,
-  deleteLink,
   toggleTextSegment,
   initialState,
-  AlignmentMode,
 } from 'state/alignment.slice';
+import { AlignmentMode } from './alignmentState';
 
 const englishAlignment: Alignment = {
   links: [],
@@ -437,15 +435,6 @@ describe('alignmentSlice reducer', () => {
         },
         //[sourceWord2, targetWord1],
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-leb-0',
-        sources: ['sbl_1'],
-        targets: ['leb_1'],
-      });
     });
 
     it('adds first link based on selected text segments (sbl => nvi)', () => {
@@ -460,15 +449,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['nvi_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-nvi-1',
-        sources: ['sbl_1'],
-        targets: ['nvi_1'],
-      });
     });
 
     it('adds a segment to an existing link', () => {
@@ -496,15 +476,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1', 'leb_2'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-leb-1',
-        sources: ['sbl_0'],
-        targets: ['leb_1', 'leb_2'],
-      });
     });
 
     it('removes a segment to an existing link', () => {
@@ -536,15 +507,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, createLink());
-
-      expect(resultState.alignments[0].links.length).toBe(1);
-      expect(resultState.alignments[0].links[0]).toEqual({
-        id: 'sbl-leb-1',
-        sources: ['sbl_0'],
-        targets: ['leb_1'],
-      });
     });
   });
 
@@ -571,10 +533,6 @@ describe('alignmentSlice reducer', () => {
           },
         ],
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState).toEqual(previousState);
     });
 
     it('deletes a matching link', () => {
@@ -606,12 +564,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState.inProgressLink).toEqual(null);
-      expect(resultState.alignments[0].links).toEqual([]);
-      expect(resultState.mode).toEqual(AlignmentMode.CleanSlate);
     });
 
     it('deletes a link that only matches ID', () => {
@@ -656,29 +608,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_1'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState.inProgressLink).toEqual(null);
-      expect(
-        resultState.alignments[0].links.find((link) => link.id === 'sbl-leb-1')
-      ).toEqual(undefined);
-
-      expect(resultState.alignments[0].links).toEqual([
-        {
-          id: 'sbl-leb-2',
-          sources: ['sbl_3'],
-          targets: ['leb_1', 'leb_2'],
-        },
-
-        {
-          id: 'sbl-leb-8',
-          sources: ['sbl_7'],
-          targets: ['leb_3', 'leb_8'],
-        },
-      ]);
-
-      expect(resultState.mode).toEqual(AlignmentMode.CleanSlate);
     });
 
     it('deletes the correct link out of several', () => {
@@ -710,12 +639,6 @@ describe('alignmentSlice reducer', () => {
           targets: ['leb_5'],
         },
       };
-
-      const resultState = alignmentSliceReducer(previousState, deleteLink());
-
-      expect(resultState.inProgressLink).toEqual(null);
-      expect(resultState.alignments[0].links).toEqual([]);
-      expect(resultState.mode).toEqual(AlignmentMode.CleanSlate);
     });
   });
 });

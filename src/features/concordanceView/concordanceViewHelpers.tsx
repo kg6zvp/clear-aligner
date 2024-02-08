@@ -95,7 +95,6 @@ const generateWordListFromCorpusContainerAndLink = (
  * @param alignmentState application state
  * @param sourceContainer corpus container for sources
  * @param targetContainer corpus container for targets
- * @param wordSource selected word source
  */
 export const generateAlignedWordsMap = (
   alignmentState: Alignment[],

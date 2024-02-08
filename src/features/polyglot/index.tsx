@@ -19,23 +19,12 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const corpusViewports = useAppSelector((state) => {
-    return state.app.corpusViewports;
-  });
 
-  const containersWithoutViewport = useMemo(() => {
-    return containers.filter(
-      (container) =>
-        !corpusViewports
-          .map((viewport) => viewport.containerId)
-          .includes(container.id)
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    containers,
-    containers.length, // necessary in spite of warning
-    corpusViewports,
-  ]);
+  const corpusViewports: CorpusViewport[]|null = useMemo(() =>
+      containers?.map((container): CorpusViewport => ({
+        containerId: container.id
+      })) ?? null,
+    [containers, containers.length]);
 
   return (
     <Stack
@@ -45,25 +34,17 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       justifyContent="stretch"
       alignItems="stretch"
     >
-      {!corpusViewports.length ? (
-        containersWithoutViewport.length ? (
+      {(!corpusViewports || corpusViewports.length < 1) && (
+        <Grid container flexDirection="column" alignItems="center">
           <Typography variant="h6" style={{ margin: 'auto' }}>
-            To begin, add a corpus viewport.
+            Loading corpora.
           </Typography>
-        ) : (
-          <Grid container flexDirection="column" alignItems="center">
-            <Typography variant="h6" style={{ margin: 'auto' }}>
-              Loading corpora.
-            </Typography>
-            <CircularProgress variant="indeterminate" />
-          </Grid>
-        )
-      ) : (
-        ''
+          <CircularProgress variant="indeterminate" />
+        </Grid>
       )}
 
-      {containers.length
-        ? corpusViewports.map(
+      {corpusViewports
+        && corpusViewports.map(
             (corpusViewport: CorpusViewport, index: number) => {
               const corpusId = corpusViewport.containerId;
               const key = `text_${index}`;
@@ -109,8 +90,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 </Card>
               );
             }
-          )
-        : ''}
+          )}
     </Stack>
   );
 };

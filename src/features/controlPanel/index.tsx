@@ -1,4 +1,4 @@
-import { ReactElement, useContext, useRef, useState } from 'react';
+import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
 import { ActionCreators } from 'redux-undo';
 import {
   Button,
@@ -25,20 +25,18 @@ import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import {
   resetTextSegments,
-  createLink,
-  deleteLink,
-  AlignmentMode,
 } from 'state/alignment.slice';
 import {
   addCorpusViewport,
   removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { CorpusContainer, Link } from '../../structs';
+import { CorpusContainer, CorpusViewport, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
 import { createTableLinks, reindexTableLinks } from '../../state/databaseManagement';
+import { AlignmentMode } from '../../state/alignmentState';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -48,7 +46,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { state, setState } = useContext(AppContext);
+  const { projectState, setProjectState } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,33 +56,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
   const [formats, setFormats] = useState([] as string[]);
 
+  const inProgressLink = useAppSelector((state) => state.alignment.present.inProgressLink);
+
+  const mode = useAppSelector((state) => state.alignment.present.mode);
+
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
 
-  const anySegmentsSelected = useAppSelector((state) =>
-    Boolean(state.alignment.present.inProgressLink)
-  );
+  const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
 
-  const mode = useAppSelector((state) => {
-    return state.alignment.present.mode;
-  });
-
-  const linkHasBothSides = useAppSelector((state) => {
-    return (
-      Number(state.alignment.present.inProgressLink?.sources.length) > 0 &&
-      Number(state.alignment.present.inProgressLink?.targets.length) > 0
-    );
-  });
-
-  const currentCorpusViewports = useAppSelector((state) => {
-    return state.app.corpusViewports;
-  });
-
-  const corporaWithoutViewport = props.containers.filter((container) => {
-    const currentViewportIds = currentCorpusViewports.map(
-      (viewport) => viewport.containerId
-    );
-    return !currentViewportIds.includes(container.id);
-  });
+  const linkHasBothSides = useMemo(() =>
+      Number(inProgressLink?.sources.length) > 0 && Number(inProgressLink?.targets.length) > 0,
+    [inProgressLink]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
@@ -135,7 +117,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               variant="contained"
               disabled={mode !== AlignmentMode.Edit || !linkHasBothSides}
               onClick={() => {
-                dispatch(createLink());
+                if (!projectState.linksTable || !inProgressLink) {
+                  return;
+                }
+                projectState.linksTable
+                  .put(inProgressLink)
+                  .finally(() =>
+                    dispatch(resetTextSegments()));
               }}
             >
               <AddLink />
@@ -148,7 +136,20 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               variant="contained"
               disabled={!(mode === AlignmentMode.Select)}
               onClick={() => {
-                dispatch(deleteLink());
+                if (!projectState.linksTable || !inProgressLink) {
+                  return;
+                }
+                if (inProgressLink?.id) {
+                  const linksTable = projectState.linksTable;
+                  linksTable.get(inProgressLink.id)
+                    .then(async (currentLink) => {
+                      await linksTable.remove(currentLink);
+                      dispatch(resetTextSegments());
+                      void linksTable.compact();
+                    });
+                } else {
+                  dispatch(resetTextSegments());
+                }
               }}
             >
               <LinkOff />
@@ -169,41 +170,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           </span>
         </Tooltip>
       </ButtonGroup>
-
-      {
-        /* Undo/Redo  */
-        isRedoEnabled && (
-          <ButtonGroup>
-            <Tooltip title="Undo" arrow describeChild>
-              <span>
-                <Button
-                  disabled={currentCorpusViewports.length === 0}
-                  variant="contained"
-                  onClick={() => {
-                    dispatch(ActionCreators.undo());
-                  }}
-                >
-                  <Undo />
-                </Button>
-              </span>
-            </Tooltip>
-
-            <Tooltip title="Redo" arrow describeChild>
-              <span>
-                <Button
-                  disabled={currentCorpusViewports.length === 0}
-                  variant="contained"
-                  onClick={() => {
-                    dispatch(ActionCreators.redo());
-                  }}
-                >
-                  <Redo />
-                </Button>
-              </span>
-            </Tooltip>
-          </ButtonGroup>
-        )
-      }
 
       <ButtonGroup>
         <Tooltip title="Load Alignment Data" arrow describeChild>
@@ -252,17 +218,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                     });
                   });
 
-                //void reindexTableLinks(linksTable);
+                void reindexTableLinks(linksTable);
 
                 // dispatch the updated alignment
-                setState({
-                  ...state,
+                setProjectState({
+                  ...projectState,
                   linksTable
                 })
               }}
             />
             <Button
-              disabled={currentCorpusViewports.length === 0}
+              disabled={props.containers.length === 0}
               variant="contained"
               onClick={() => {
                 // delegate file loading to regular file input
@@ -277,7 +243,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         <Tooltip title="Save Alignment Data" arrow describeChild>
           <span>
             <Button
-              disabled={currentCorpusViewports.length === 0}
+              disabled={props.containers.length === 0}
               variant="contained"
               onClick={() => {
                 // create starting instance
@@ -289,11 +255,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   records: [],
                 };
 
-                if (!state.linksTable) {
+                if (!projectState.linksTable) {
                   return;
                 }
 
-                state.linksTable.allDocs({ include_docs: true }).then((docs) => {
+                projectState.linksTable.allDocs({ include_docs: true }).then((docs) => {
                   docs.rows
                     .map(({ doc }) => doc as unknown as Link)
                     .map((link: Link) => {
@@ -352,62 +318,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               }}
             >
               <FileDownload />
-            </Button>
-          </span>
-        </Tooltip>
-      </ButtonGroup>
-
-      <ButtonGroup>
-        <Tooltip
-          placement="top"
-          arrow
-          open={Boolean(
-            !currentCorpusViewports.length && corporaWithoutViewport.length
-          )}
-          title={
-            <>
-              <Typography color="info.light">Click here</Typography>
-              <Typography>to add a corpus viewport.</Typography>
-            </>
-          }
-        >
-          <>
-            <Tooltip
-              title="Add corpus viewport"
-              arrow
-              describeChild
-              disableHoverListener={currentCorpusViewports.length === 0}
-            >
-              <span>
-                <Button
-                  variant="contained"
-                  disabled={!corporaWithoutViewport.length}
-                  onClick={() => {
-                    dispatch(
-                      addCorpusViewport({
-                        availableCorpora: corporaWithoutViewport.map(
-                          (corpus) => corpus.id
-                        ),
-                      })
-                    );
-                  }}
-                >
-                  <Add />
-                </Button>
-              </span>
-            </Tooltip>
-          </>
-        </Tooltip>
-        <Tooltip title="Remove a corpus viewport" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={currentCorpusViewports.length === 0}
-              onClick={() => {
-                dispatch(removeCorpusViewport());
-              }}
-            >
-              <Remove />
             </Button>
           </span>
         </Tooltip>

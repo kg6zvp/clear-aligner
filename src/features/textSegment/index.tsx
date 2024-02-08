@@ -1,17 +1,19 @@
-import React, { ReactElement, useContext, useEffect, useState } from 'react';
+import React, { ReactElement, useContext, useEffect, useMemo, useState } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
-import { toggleTextSegment, AlignmentMode } from 'state/alignment.slice';
-import { hover, relatedAlignments } from 'state/textSegmentHover.slice';
-import { Alignment, Word, Link, LanguageInfo } from 'structs';
+import { toggleTextSegment } from 'state/alignment.slice';
+import { hover, relatedLinks } from 'state/textSegmentHover.slice';
+import { Word, Link, LanguageInfo } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
-import { SourcesIndex, TargetsIndex } from '../../state/linksIndexes';
+import { SourceBookIndex, SourcesIndex, TargetBookIndex, TargetsIndex } from '../../state/linksIndexes';
+import { AlignmentMode } from '../../state/alignmentState';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -80,28 +82,52 @@ export const TextSegment = ({
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
-  const { state } = useContext(AppContext);
+  const { projectState } = useContext(AppContext);
 
   const [ isMemberOfMultipleAlignments, setIsMemberOfMultipleAlignments ] = useState(false);
 
   const [ isSelected, setIsSelected ] = useState(false);
 
+  const [ isRelated, setIsRelated ] = useState(false);
+
+  const inProgressLink = useAppSelector((state) => state.alignment.present.inProgressLink);
+
+  const [ links, setLinks ] = useState([] as Link[]);
+
+  const wordBook = useMemo(() =>
+    BCVWP.parseFromString(word.id).book,
+    [word.id]);
+
   useEffect(() => {
-    if (!state.linksTable) {
+    if (!projectState.linksTable || !wordBook) {
+      return;
+    }
+
+    projectState.linksTable
+      .query(word.side === 'sources' ? SourceBookIndex : TargetBookIndex, {
+        key: String(wordBook),
+        include_docs: true
+      })
+      .then((value) => {
+        setLinks(value.rows
+          .map((link) => link as unknown as Link)
+          .filter((link) =>
+            word.side === 'sources' ? link.sources.includes(word.id) : link.targets.includes(word.id)));
+      });
+  }, [links, setLinks, onlyLinkIds, projectState.linksTable, wordBook, word.id, word.side]);
+
+  useEffect(() => {
+    if (!projectState.linksTable) {
       console.log('TextSegment: linksTable not ready');
       return;
     }
 
-    state.linksTable
+    projectState.linksTable
       .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id })
       .then((result) => {
         setIsMemberOfMultipleAlignments(result.rows.length > 1);
       });
-  }, [state.linksTable, setIsMemberOfMultipleAlignments, word.side, word.id]);
-
-  const alignments = useAppSelector((state) => {
-    return state.alignment.present.alignments;
-  });
+  }, [projectState.linksTable, setIsMemberOfMultipleAlignments, word.side, word.id]);
 
   const mode = useAppSelector((state) => {
     return state.alignment.present.mode;
@@ -114,38 +140,32 @@ export const TextSegment = ({
   );
 
   useEffect(() => {
-    if (!state.linksTable) {
+    if (!projectState.linksTable) {
       console.log('TextSegment: linksTable not ready');
       return;
     }
 
-    state.linksTable
+    projectState.linksTable
       .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id })
       .then((result) => {
         setIsSelected(result.rows.length > 0);
       });
-  }, [state.linksTable, setIsSelected, word.side, word.id]);
+  }, [projectState.linksTable, setIsSelected, word.side, word.id]);
 
-  const isInProgressLinkMember = Boolean(
-    useAppSelector((state) => {
-      return (
+  const isInProgressLinkMember = useMemo(() =>
         (word.side === 'sources' &&
-          state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
+          inProgressLink?.sources.includes(word.id)) ||
         (word.side === 'targets' &&
-          state.alignment.present.inProgressLink?.targets.includes(word.id))
-      );
-    })
-  );
-
-  const [ isRelated, setIsRelated ] = useState(false);
+          inProgressLink?.targets.includes(word.id)),
+    [inProgressLink, word]);
 
   useEffect(() => {
-    if (!state.linksTable) {
+    if (!projectState.linksTable) {
       console.log('TextSegment: linksTable not ready');
       return;
     }
 
-    state.linksTable
+    projectState.linksTable
       .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id, include_docs: true })
       .then((result) => {
         return result.rows
@@ -153,76 +173,11 @@ export const TextSegment = ({
           .filter((v) =>
             (!onlyLinkIds || !v.id || onlyLinkIds.includes(v.id)))?.length > 0
       });
-  }, [state.linksTable, setIsRelated, onlyLinkIds, word.side, word.id]);
+  }, [projectState.linksTable, setIsRelated, onlyLinkIds, word.side, word.id]);
 
-  const link = useAppSelector((state) => {
-    const inProgressLink = state.alignment.present.inProgressLink;
+  const isCurrentLinkMember = useMemo(() => /*mightBeWorkingOnLink ||*/ isInProgressLinkMember, [/*mightBeWorkingOnLink,*/ isInProgressLinkMember]);
 
-    const contextualAlignment = state.alignment.present.alignments.find(
-      (_: Alignment) => !!inProgressLink
-    );
-
-    let foundLink = null;
-
-    if (contextualAlignment) {
-      if (word) {
-        for (const link of contextualAlignment.links) {
-          if (
-            (word.side === 'sources' && link.sources.includes(word.id)) ||
-            (word.side === 'targets' && link.targets.includes(word.id))
-          ) {
-            if (!onlyLinkIds || !link.id || onlyLinkIds.includes(link.id)) {
-              foundLink = link;
-            }
-          }
-        }
-      }
-    } else {
-      if (word) {
-        const possibleAlignments = state.alignment.present.alignments.filter(
-          (_: Alignment) => true
-        );
-        for (const alignment of possibleAlignments) {
-          for (const link of alignment.links) {
-            if (
-              (word.side === 'sources' && link.sources.includes(word.id)) ||
-              (word.side === 'targets' && link.targets.includes(word.id))
-            ) {
-              if (!onlyLinkIds || !link.id || onlyLinkIds.includes(link.id)) {
-                foundLink = link;
-              }
-            }
-          }
-        }
-      }
-    }
-    return foundLink;
-  });
-
-  const isLinked = Boolean(link);
-
-  const mightBeWorkingOnLink = Boolean(
-    useAppSelector((state) => {
-      const inProgressLink = state.alignment.present.inProgressLink;
-
-      if (inProgressLink && link) {
-        const sourcesIntersection = link.sources.filter((sourceId) => {
-          return inProgressLink.sources.includes(sourceId);
-        });
-        const targetsIntersection = link.targets.filter((targetId) => {
-          return inProgressLink.targets.includes(targetId);
-        });
-
-        return sourcesIntersection.length > 0 || targetsIntersection.length > 0;
-      }
-    })
-  );
-
-  const isCurrentLinkMember = mightBeWorkingOnLink || isInProgressLinkMember;
-
-  const isInvolved = Boolean(
-    useAppSelector((state) => !!state.alignment.present.inProgressLink)
-  );
+  const isInvolved = useMemo(() => !!inProgressLink, [inProgressLink]);
 
   if (!word) {
     return <span>{'ERROR'}</span>;
@@ -232,7 +187,7 @@ export const TextSegment = ({
       <Typography
         paragraph={false}
         component="span"
-        variant={computeVariant(isSelected, isLinked)}
+        variant={computeVariant(isSelected, /*!!link*/ false)}
         className={`text-segment${
           readonly ? '.readonly' : ''
         } ${computeDecoration(
@@ -240,7 +195,7 @@ export const TextSegment = ({
           isHovered,
           isRelated,
           mode,
-          isLinked,
+          /*!!link,*/ false,
           isInvolved,
           isMemberOfMultipleAlignments
         )}`}
@@ -254,9 +209,9 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(word));
-                dispatch(
-                  relatedAlignments(findRelatedAlignments(alignments, word))
-                );
+                findRelatedAlignments(projectState, word, (links) => {
+                  dispatch(relatedLinks(links))
+                });
               }
         }
         onMouseLeave={
@@ -264,7 +219,7 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(null));
-                dispatch(relatedAlignments([]));
+                dispatch(relatedLinks([]));
               }
         }
         onClick={
@@ -273,10 +228,10 @@ export const TextSegment = ({
             : () => {
                 const editOrSelect =
                   [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
-                  (!isLinked || isCurrentLinkMember) &&
+                  (/*!link*/ true || isCurrentLinkMember) &&
                   isInvolved;
                 const unLinkedEdit =
-                  mode === AlignmentMode.PartialEdit && !isLinked;
+                  mode === AlignmentMode.PartialEdit && /*!link*/ true;
                 const cleanSlate = mode === AlignmentMode.CleanSlate;
 
                 if (editOrSelect || unLinkedEdit || cleanSlate) {

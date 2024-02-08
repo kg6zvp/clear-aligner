@@ -1,15 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-import { Alignment, Word } from 'structs';
+import { Link, Word } from 'structs';
 
 interface TextSegmentState {
   hovered: Word | null;
-  relatedAlignments: Alignment[];
+  relatedLinks: Link[];
 }
 
 const initialState: TextSegmentState = {
   hovered: null,
-  relatedAlignments: [],
+  relatedLinks: [],
 };
 
 const textSegmentHoverSlice = createSlice({
@@ -19,11 +18,11 @@ const textSegmentHoverSlice = createSlice({
     hover: (state, action: PayloadAction<Word | null>) => {
       state.hovered = action.payload;
     },
-    relatedAlignments: (state, action: PayloadAction<Alignment[]>) => {
-      state.relatedAlignments = action.payload;
+    relatedLinks: (state, action: PayloadAction<Link[]>) => {
+      state.relatedLinks = action.payload;
     },
   },
 });
 
-export const { hover, relatedAlignments } = textSegmentHoverSlice.actions;
+export const { hover, relatedLinks } = textSegmentHoverSlice.actions;
 export default textSegmentHoverSlice.reducer;

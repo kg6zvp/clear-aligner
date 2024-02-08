@@ -1,31 +1,25 @@
-import { Alignment, Word, Link } from 'structs';
+import { Word, Link } from 'structs';
+import { ProjectState } from '../state/databaseManagement';
+import { SourcesIndex, TargetsIndex } from '../state/linksIndexes';
 
-// Takes an array of `Alignment` and a `Word`.
-// Returns only `Alignment` items that include the word.
-// `Alignment` `Link`s are filtered by relation to the word.
+// Takes `ProjectState` and a `Word`.
+// calls back with `Link` items that include the word.
+// `Link`s are filtered by relation to the word.
 const findRelatedAlignments = (
-  unfilteredAlignments: Alignment[],
-  word: Word
-): Alignment[] => {
-  return unfilteredAlignments.reduce((acc, curAlignment) => {
-    let filteredLinks = curAlignment.links.filter((link: Link) => {
-      switch (word.side) {
-        case 'sources':
-          return link.sources.includes(word.id);
-        case 'targets':
-          return link.targets.includes(word.id);
-        default:
-          return false;
-      }
+  projectState: ProjectState,
+  word: Word,
+  callback: (payload: Link[]) => void
+): void => {
+  if (!projectState.linksTable) {
+    callback([]);
+    return;
+  }
+  projectState.linksTable
+    .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id, include_docs: true })
+    .then((result) => {
+      callback(result.rows
+        .map((link) => link as unknown as Link));
     });
-
-    if (filteredLinks.length) {
-      acc.push({ ...curAlignment, links: filteredLinks });
-    }
-
-    // return accumulator
-    return acc;
-  }, [] as Alignment[]);
 };
 
 export default findRelatedAlignments;
