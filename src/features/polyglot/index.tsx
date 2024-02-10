@@ -24,6 +24,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       containers?.map((container): CorpusViewport => ({
         containerId: container.id
       })) ?? null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]);
 
   return (

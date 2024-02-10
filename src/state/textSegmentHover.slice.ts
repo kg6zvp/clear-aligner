@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Link, Word } from 'structs';
 
-interface TextSegmentState {
+export interface TextSegmentState {
   hovered: Word | null;
   relatedLinks: Link[];
 }

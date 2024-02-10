@@ -35,8 +35,8 @@ import { CorpusContainer, CorpusViewport, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
-import { createTableLinks, reindexTableLinks } from '../../state/databaseManagement';
 import { AlignmentMode } from '../../state/alignmentState';
+import { createVirtualTableLinks, reindexTableLinks } from '../../state/links/tableManager';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -58,15 +58,15 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
   const inProgressLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
-  const mode = useAppSelector((state) => state.alignment.present.mode);
-
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
 
-  const linkHasBothSides = useMemo(() =>
-      Number(inProgressLink?.sources.length) > 0 && Number(inProgressLink?.targets.length) > 0,
-    [inProgressLink]);
+  const linkHasBothSides = useMemo(() => {
+    debugger;
+      return Number(inProgressLink?.sources.length) > 0 && Number(inProgressLink?.targets.length) > 0;
+    },
+    [inProgressLink, inProgressLink?.sources.length, inProgressLink?.targets.length]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
@@ -115,13 +115,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant="contained"
-              disabled={mode !== AlignmentMode.Edit || !linkHasBothSides}
+              disabled={!linkHasBothSides}
               onClick={() => {
                 if (!projectState.linksTable || !inProgressLink) {
                   return;
                 }
                 projectState.linksTable
-                  .put(inProgressLink)
+                  .save(inProgressLink)
                   .finally(() =>
                     dispatch(resetTextSegments()));
               }}
@@ -134,19 +134,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant="contained"
-              disabled={!(mode === AlignmentMode.Select)}
+              disabled={!(inProgressLink?.id)}
               onClick={() => {
                 if (!projectState.linksTable || !inProgressLink) {
                   return;
                 }
                 if (inProgressLink?.id) {
                   const linksTable = projectState.linksTable;
-                  linksTable.get(inProgressLink.id)
-                    .then(async (currentLink) => {
-                      await linksTable.remove(currentLink);
-                      dispatch(resetTextSegments());
-                      void linksTable.compact();
-                    });
+                  void linksTable.remove(inProgressLink.id);
                 } else {
                   dispatch(resetTextSegments());
                 }
@@ -190,16 +185,19 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                const linksTable = createTableLinks();
+                const linksTable = createVirtualTableLinks();
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
 
                 // override the alignments from alignment file
                 alignmentFile.records
-                  .map((record) => {
+                  .map((record, idx) => {
+                    if (idx > 10) {
+                      return null;
+                    }
                     return {
-                      id: record.id,
+                      id: record.id ?? `record-${idx}`,
                       sources: record.source
                         .filter((v) => v)
                         .map((ref) => BCVWP.parseFromString(ref))
@@ -210,12 +208,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                         .map((bcv) => bcv.toReferenceString()),
                     } as Link;
                   })
+                  .filter((v) => v)
+                  .map((v) => v as Link)
                   .forEach((link) => {
-                    linksTable.put({ _id: link.id, ...link }, {}, (err, _) => {
-                      if (err) {
-                        console.log('error', err);
-                      }
-                    });
+                    void linksTable.save(link);
                   });
 
                 void reindexTableLinks(linksTable);

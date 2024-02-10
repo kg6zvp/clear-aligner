@@ -1,6 +1,6 @@
 import { Word, Link } from 'structs';
 import { ProjectState } from '../state/databaseManagement';
-import { SourcesIndex, TargetsIndex } from '../state/linksIndexes';
+import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 // Takes `ProjectState` and a `Word`.
 // calls back with `Link` items that include the word.
@@ -15,11 +15,8 @@ const findRelatedAlignments = (
     return;
   }
   projectState.linksTable
-    .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id, include_docs: true })
-    .then((result) => {
-      callback(result.rows
-        .map((link) => link as unknown as Link));
-    });
+    .findByWord(word.side, BCVWP.parseFromString(word.id))
+    .then((results) => callback(results));
 };
 
 export default findRelatedAlignments;

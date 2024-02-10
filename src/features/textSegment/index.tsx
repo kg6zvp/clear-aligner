@@ -2,7 +2,7 @@ import React, { ReactElement, useContext, useEffect, useMemo, useState } from 'r
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
-import { toggleTextSegment } from 'state/alignment.slice';
+import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover, relatedLinks } from 'state/textSegmentHover.slice';
 import { Word, Link, LanguageInfo } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
@@ -11,7 +11,6 @@ import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
-import { SourceBookIndex, SourcesIndex, TargetBookIndex, TargetsIndex } from '../../state/linksIndexes';
 import { AlignmentMode } from '../../state/alignmentState';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
@@ -44,7 +43,7 @@ const computeDecoration = (
   isMemberOfMultipleAlignments: boolean
 ): string => {
   let decoration = '';
-  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Select) {
+  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Create) {
     if (isLinked) {
       // Prevents previously linked segments being added to other links.
       decoration += ' locked';
@@ -98,6 +97,8 @@ export const TextSegment = ({
     BCVWP.parseFromString(word.id).book,
     [word.id]);
 
+  const mode = useAppSelector(selectAlignmentMode);
+
   useEffect(() => {
     if (!projectState.linksTable || !wordBook) {
       return;
@@ -118,7 +119,6 @@ export const TextSegment = ({
 
   useEffect(() => {
     if (!projectState.linksTable) {
-      console.log('TextSegment: linksTable not ready');
       return;
     }
 
@@ -129,10 +129,6 @@ export const TextSegment = ({
       });
   }, [projectState.linksTable, setIsMemberOfMultipleAlignments, word.side, word.id]);
 
-  const mode = useAppSelector((state) => {
-    return state.alignment.present.mode;
-  });
-
   const isHovered = useAppSelector(
     (state) =>
       state.textSegmentHover.hovered?.id === word.id &&
@@ -141,7 +137,6 @@ export const TextSegment = ({
 
   useEffect(() => {
     if (!projectState.linksTable) {
-      console.log('TextSegment: linksTable not ready');
       return;
     }
 
@@ -161,7 +156,6 @@ export const TextSegment = ({
 
   useEffect(() => {
     if (!projectState.linksTable) {
-      console.log('TextSegment: linksTable not ready');
       return;
     }
 
@@ -226,15 +220,15 @@ export const TextSegment = ({
           readonly
             ? undefined
             : () => {
-                const editOrSelect =
-                  [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
+                const editOrCreate =
+                  [AlignmentMode.Edit, AlignmentMode.Create].includes(mode) &&
                   (/*!link*/ true || isCurrentLinkMember) &&
                   isInvolved;
                 const unLinkedEdit =
                   mode === AlignmentMode.PartialEdit && /*!link*/ true;
                 const cleanSlate = mode === AlignmentMode.CleanSlate;
 
-                if (editOrSelect || unLinkedEdit || cleanSlate) {
+                if (editOrCreate || unLinkedEdit || cleanSlate) {
                   dispatch(toggleTextSegment(word));
                 }
               }

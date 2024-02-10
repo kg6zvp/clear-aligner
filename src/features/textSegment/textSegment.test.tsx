@@ -12,7 +12,6 @@ const testState: RootState = {
         sources: ['sbl_0'],
         targets: [],
       },
-      mode: AlignmentMode.CleanSlate,
     },
   },
 };

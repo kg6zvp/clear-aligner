@@ -26,12 +26,13 @@ interface PouchDBViewDefinition {
  * @param mapFunction index value function
  * @param reduceFunction aggregation function
  */
-export const createDesignDoc = <T>(name: string, mapFunction: (obj: T) => any, reduceFunction?: (obj: T) => any): PouchDB.Core.PutDocument<any> => {
+export const createDesignDoc = <T>(name: string, mapFunction: (obj: T) => any, lib?: { [key: string]: string }, reduceFunction?: (obj: T) => any): PouchDB.Core.PutDocument<any> => {
   const doc = {
     _id: `_design/${name}`,
     views: {
       [`${name}`]: {
-        map: mapFunction.toString()
+        map: mapFunction.toString(),
+        lib
       } as PouchDBViewDefinition
     }
   }

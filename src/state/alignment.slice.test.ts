@@ -243,8 +243,6 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment(targetWord1)
       );
-
-      expect(resultState.mode).toEqual(AlignmentMode.Select);
     });
 
     it('enters edit mode (from select)', () => {
@@ -277,8 +275,6 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment(targetWord2)
       );
-
-      expect(resultState.mode).toEqual(AlignmentMode.Edit);
     });
 
     it('enters edit mode (from clean) for non-ambigious alignments', () => {
@@ -326,7 +322,6 @@ describe('alignmentSlice reducer', () => {
 
       expect(resultState.inProgressLink).toBeTruthy();
       expect(resultState.inProgressLink?.id).toEqual('nvi-leb-2');
-      expect(resultState.mode).toEqual(AlignmentMode.Edit);
     });
 
     it('enters partial edit mode (from clean, ambiguous)', () => {
@@ -417,7 +412,6 @@ describe('alignmentSlice reducer', () => {
       );
 
       expect(resultState.inProgressLink?.id).toEqual('nvi-sbl-2');
-      expect(resultState.mode).toEqual(AlignmentMode.Edit);
     });
   });
 

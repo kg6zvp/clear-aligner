@@ -7,13 +7,11 @@ const preloadedState: RootState = {
     past: [],
     present: {
       inProgressLink: null,
-      mode: AlignmentMode.CleanSlate,
     },
     future: [],
     group: null,
     _latestUnfiltered: {
       inProgressLink: null,
-      mode: AlignmentMode.CleanSlate,
     },
     index: 0,
     limit: 1,
