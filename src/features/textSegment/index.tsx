@@ -100,34 +100,9 @@ export const TextSegment = ({
   const mode = useAppSelector(selectAlignmentMode);
 
   useEffect(() => {
-    if (!projectState.linksTable || !wordBook) {
-      return;
-    }
-
-    projectState.linksTable
-      .query(word.side === 'sources' ? SourceBookIndex : TargetBookIndex, {
-        key: String(wordBook),
-        include_docs: true
-      })
-      .then((value) => {
-        setLinks(value.rows
-          .map((link) => link as unknown as Link)
-          .filter((link) =>
-            word.side === 'sources' ? link.sources.includes(word.id) : link.targets.includes(word.id)));
-      });
-  }, [links, setLinks, onlyLinkIds, projectState.linksTable, wordBook, word.id, word.side]);
-
-  useEffect(() => {
-    if (!projectState.linksTable) {
-      return;
-    }
-
-    projectState.linksTable
-      .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id })
-      .then((result) => {
-        setIsMemberOfMultipleAlignments(result.rows.length > 1);
-      });
-  }, [projectState.linksTable, setIsMemberOfMultipleAlignments, word.side, word.id]);
+    findRelatedAlignments(word, (result) =>
+        setIsMemberOfMultipleAlignments(result.length > 1), projectState.linksTable);
+  }, [projectState.linksTable, setIsMemberOfMultipleAlignments, word]);
 
   const isHovered = useAppSelector(
     (state) =>
@@ -136,16 +111,11 @@ export const TextSegment = ({
   );
 
   useEffect(() => {
-    if (!projectState.linksTable) {
-      return;
-    }
-
-    projectState.linksTable
-      .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id })
-      .then((result) => {
-        setIsSelected(result.rows.length > 0);
-      });
-  }, [projectState.linksTable, setIsSelected, word.side, word.id]);
+    findRelatedAlignments(word, (result) => {
+      const filteredResults = onlyLinkIds ? result.filter((link) => onlyLinkIds!.includes(link.id!)) : result;
+      setIsSelected(filteredResults.length > 0);
+    }, projectState.linksTable);
+  }, [projectState.linksTable, setIsSelected, word]);
 
   const isInProgressLinkMember = useMemo(() =>
         (word.side === 'sources' &&
@@ -153,21 +123,6 @@ export const TextSegment = ({
         (word.side === 'targets' &&
           inProgressLink?.targets.includes(word.id)),
     [inProgressLink, word]);
-
-  useEffect(() => {
-    if (!projectState.linksTable) {
-      return;
-    }
-
-    projectState.linksTable
-      .query(word.side === 'sources' ? SourcesIndex : TargetsIndex, { key: word.id, include_docs: true })
-      .then((result) => {
-        return result.rows
-          .map((link) => link.doc as unknown as Link)
-          .filter((v) =>
-            (!onlyLinkIds || !v.id || onlyLinkIds.includes(v.id)))?.length > 0
-      });
-  }, [projectState.linksTable, setIsRelated, onlyLinkIds, word.side, word.id]);
 
   const isCurrentLinkMember = useMemo(() => /*mightBeWorkingOnLink ||*/ isInProgressLinkMember, [/*mightBeWorkingOnLink,*/ isInProgressLinkMember]);
 
@@ -203,9 +158,9 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(word));
-                findRelatedAlignments(projectState, word, (links) => {
+                findRelatedAlignments(word, (links) => {
                   dispatch(relatedLinks(links))
-                });
+                }, projectState.linksTable);
               }
         }
         onMouseLeave={

@@ -6,6 +6,9 @@ import { Link_TargetColumns, PersistentLink_Target } from './linksTargets';
 import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
+import FindPlugin from 'pouchdb-find';
+
+PouchDB.plugin(FindPlugin);
 
 export class VirtualTableLinks {
   links: PouchDB.Database<PersistentInternalLink>;
@@ -31,7 +34,19 @@ export class VirtualTableLinks {
     for (let tgt of newLink.targets) {
       await this.linksTargets.put(tgt);
     }
-    return await this.get(newLink.link._id);
+    try {
+      const v = await this.get(newLink.link._id)
+        .catch((e) => {
+          console.log('caught error', e);
+        });
+      if (v) {
+        return v;
+      } else {
+        return undefined;
+      }
+    } catch(e) {
+      return undefined;
+    }
   };
 
   findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
@@ -42,7 +57,7 @@ export class VirtualTableLinks {
           selector: {
             sourceWordOrPart: { $eq: wordId.toReferenceString() }
           },
-          sort: [Link_SourceColumns.sourceWordOrPart]
+          //sort: [Link_SourceColumns.sourceWordOrPart]
         })).docs
         .map(({ linkId }) => linkId), _.isEqual);
         for (let linkId of sourceLinkIds) {
@@ -57,7 +72,7 @@ export class VirtualTableLinks {
           selector: {
             targetWordOrPart: { $eq: wordId.toReferenceString() }
           },
-          sort: [Link_TargetColumns.targetWordOrPart]
+          //sort: [Link_TargetColumns.targetWordOrPart]
         })).docs
           .map(({ linkId }) => linkId), _.isEqual);
         for (let linkId of targetLinkIds) {
@@ -67,6 +82,22 @@ export class VirtualTableLinks {
           }
         }
         break;
+    }
+    return links;
+  }
+
+  getAll = async (): Promise<Link[]> => {
+    const linkIds = (await this.links.allDocs({ include_docs: true })).rows
+      .map(({ doc }) => doc)
+      .filter((v) => v?._id);
+    const links: Link[] = [];
+    for (let link of linkIds) {
+      const tmpLink: InternalLink = {
+        link: link!,
+        sources: await this._getSources(link!),
+        targets: await this._getTargets(link!)
+      };
+      links.push(preRetrieveLink(tmpLink));
     }
     return links;
   }

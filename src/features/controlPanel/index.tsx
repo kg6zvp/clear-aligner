@@ -63,7 +63,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
 
   const linkHasBothSides = useMemo(() => {
-    debugger;
       return Number(inProgressLink?.sources.length) > 0 && Number(inProgressLink?.targets.length) > 0;
     },
     [inProgressLink, inProgressLink?.sources.length, inProgressLink?.targets.length]);
@@ -255,17 +254,15 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   return;
                 }
 
-                projectState.linksTable.allDocs({ include_docs: true }).then((docs) => {
-                  docs.rows
-                    .map(({ doc }) => doc as unknown as Link)
-                    .map((link: Link) => {
-                        return {
-                          id: link.id,
-                          source: link.sources,
-                          target: link.targets,
-                        } as AlignmentRecord;
-                      })
-                    .forEach((record) => alignmentExport.records.push(record));
+                projectState.linksTable.getAll()
+                  .then((rows) => {
+                    rows
+                      .map((link) => ({
+                        id: link.id,
+                        source: link.sources,
+                        target: link.targets,
+                      } as AlignmentRecord))
+                      .forEach((record) => alignmentExport.records.push(record));
 
                   // Create alignment file content
                   const fileContent = JSON.stringify(
