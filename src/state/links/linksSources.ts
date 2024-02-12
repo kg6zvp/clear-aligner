@@ -51,9 +51,9 @@ export const toLinkSources = (src: string, link: PersistentInternalLink): Persis
 
 const persistableLinkSource = (linkSource: InternalLink_Source): PersistentLink_Source => {
   const ref = BCVWP.parseFromString(linkSource.sourceWordOrPart);
-  if (!ref.hasFields(BCVWPField.Book, BCVWPField.Chapter, BCVWPField.Verse, BCVWPField.Word)) {
+  /*if (!ref.hasFields(BCVWPField.Book, BCVWPField.Chapter, BCVWPField.Verse, BCVWPField.Word)) {
     throw new Error(`link id ${linkSource.linkId} includes too short a source: ${linkSource.sourceWordOrPart}`)
-  }
+  }//*/
   return {
     ...linkSource,
     _id: `${linkSource.linkId}-${linkSource.sourceWordOrPart}`,

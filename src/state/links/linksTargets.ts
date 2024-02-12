@@ -50,9 +50,9 @@ export const toLinkTargets = (tgt: string, link: PersistentInternalLink): Persis
 
 const persistableLinkTarget = (linkTarget: InternalLink_Target): PersistentLink_Target => {
   const ref = BCVWP.parseFromString(linkTarget.targetWordOrPart);
-  if (!ref.hasFields(BCVWPField.Book, BCVWPField.Chapter, BCVWPField.Verse, BCVWPField.Word)) {
+  /*if (!ref.hasFields(BCVWPField.Book, BCVWPField.Chapter, BCVWPField.Verse, BCVWPField.Word)) {
     throw new Error(`link id ${linkTarget.linkId} includes too short a target: ${linkTarget.targetWordOrPart}`)
-  }
+  } //*/
   return {
     ...linkTarget,
     _id: `${linkTarget.linkId}-${linkTarget.targetWordOrPart}`,

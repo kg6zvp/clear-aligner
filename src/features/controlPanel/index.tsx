@@ -184,7 +184,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                const linksTable = createVirtualTableLinks();
+                const linksTable = await createVirtualTableLinks();
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
@@ -192,19 +192,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // override the alignments from alignment file
                 alignmentFile.records
                   .map((record, idx) => {
-                    if (idx > 10) {
-                      return null;
-                    }
                     return {
                       id: record.id ?? `record-${idx}`,
-                      sources: record.source
-                        .filter((v) => v)
-                        .map((ref) => BCVWP.parseFromString(ref))
-                        .map((bcv) => bcv.toReferenceString()),
-                      targets: record.target
-                        .filter((v) => v)
-                        .map((ref) => BCVWP.parseFromString(ref))
-                        .map((bcv) => bcv.toReferenceString()),
+                      sources: record.source,
+                      targets: record.target,
                     } as Link;
                   })
                   .filter((v) => v)

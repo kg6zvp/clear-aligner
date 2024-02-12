@@ -22,7 +22,7 @@ export class VirtualTableLinks {
   }
 
   save = async (link: Link): Promise<Link | undefined> => {
-    const existingLink = !!link.id ? await this.links.get(link.id) : undefined;
+    const existingLink = !!link.id ? await this._getPersistentInternalLink(link.id) : undefined;
     if (existingLink) { // remove existing link, sources and targets
       await this.remove(existingLink._id);
     }
@@ -129,10 +129,8 @@ export class VirtualTableLinks {
   };
 
   _getInternalLink = async (id?: string): Promise<InternalLink|undefined> => {
-    if (!id) return undefined;
-
     // retrieve all parts
-    const link = await this.links.get(id);
+    const link = await this._getPersistentInternalLink(id);
     if (!link) return undefined;
     const sources = await this._getSources(link);
     const targets = await this._getTargets(link);
@@ -144,30 +142,44 @@ export class VirtualTableLinks {
     };
   }
 
+  _getPersistentInternalLink = async (id?: string): Promise<PersistentInternalLink & PouchDB.Core.GetMeta|undefined> => {
+    try {
+      if (!id) return undefined;
+      return await this.links.get(id);
+    } catch (x) {
+      return undefined;
+    }
+  }
+
   _getSources = async (link: PersistentInternalLink & PouchDB.Core.IdMeta & PouchDB.Core.GetMeta): Promise<PouchDB.Core.ExistingDocument<PersistentLink_Source>[]> => {
     return (await this.linksSources.find({
       selector: {
         linkId: { $eq: link._id }
-      }, sort: [Link_SourceColumns.sourceWordOrPart]
-    })).docs;
+      },
+    })).docs
+      .sort((a, b) => BCVWP.compare(BCVWP.parseFromString(a.sourceWordOrPart), BCVWP.parseFromString(b.sourceWordOrPart)));
   };
 
   _getTargets = async (link: PersistentInternalLink & PouchDB.Core.IdMeta & PouchDB.Core.GetMeta): Promise<PouchDB.Core.ExistingDocument<PersistentLink_Target>[]> => {
     return (await this.linksTargets.find({
       selector: {
         linkId: { $eq: link._id }
-      }, sort: [Link_TargetColumns.targetWordOrPart]
-    })).docs;
+      },
+    })).docs
+      .sort((a, b) => BCVWP.compare(BCVWP.parseFromString(a.targetWordOrPart), BCVWP.parseFromString(b.targetWordOrPart)));
   }
 }
 
 /**
  * create virtual links table with all necessary indexes
  */
-export const createVirtualTableLinks = (): VirtualTableLinks => {
-  const linksDB = new PouchDB('links', { revs_limit: 1 }) as PouchDB.Database<PersistentInternalLink>;
-  const sourcesDB = new PouchDB('links_sources', { revs_limit: 1 }) as PouchDB.Database<PersistentLink_Source>;
-  const targetsDB = new PouchDB('links_targets', { revs_limit: 1 }) as PouchDB.Database<PersistentLink_Target>;
+export const createVirtualTableLinks = async (): Promise<VirtualTableLinks> => {
+  const linksDB = new PouchDB('links'/*, { revs_limit: 1 }*/) as PouchDB.Database<PersistentInternalLink>;
+  await linksDB.info();
+  const sourcesDB = new PouchDB('links_sources'/*, { revs_limit: 1 }*/) as PouchDB.Database<PersistentLink_Source>;
+  await sourcesDB.info();
+  const targetsDB = new PouchDB('links_targets'/*, { revs_limit: 1 }*/) as PouchDB.Database<PersistentLink_Target>;
+  await targetsDB.info();
 
   [linksDB, sourcesDB, targetsDB].forEach(db => db.on('error', (error: any) => {
     console.error(error);
