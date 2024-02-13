@@ -56,7 +56,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -82,7 +85,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1
+        })
       );
 
       // When the last selected segment has been untoggled,
@@ -104,7 +110,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -130,7 +139,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -156,7 +168,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(sourceWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: sourceWord1
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -181,7 +196,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -207,7 +225,10 @@ describe('alignmentSlice reducer', () => {
       };
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(sourceWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: sourceWord1
+        })
       );
 
       expect(resultState.inProgressLink).toEqual({
@@ -241,7 +262,10 @@ describe('alignmentSlice reducer', () => {
 
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord1)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord1
+        })
       );
     });
 
@@ -273,7 +297,10 @@ describe('alignmentSlice reducer', () => {
 
       const resultState = alignmentSliceReducer(
         previousState,
-        toggleTextSegment(targetWord2)
+        toggleTextSegment({
+          foundRelatedLinks: [],
+          word: targetWord2
+        })
       );
     });
 
@@ -312,11 +339,15 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(
         previousState,
         toggleTextSegment({
-          id: 'leb_4',
-          corpusId: 'leb',
-          side: 'targets',
-          text: 'some word',
-          position: 4,
+          foundRelatedLinks: [],
+          word:
+            {
+              id: 'leb_4',
+              corpusId: 'leb',
+              side: 'targets',
+              text: 'some word',
+              position: 4,
+            }
         })
       );
 
@@ -360,11 +391,15 @@ describe('alignmentSlice reducer', () => {
         alignmentSliceReducer(
           previousState,
           toggleTextSegment({
-            id: 'nvi_6',
-            corpusId: 'nvi',
-            side: 'sources',
-            text: 'some word',
-            position: 6,
+            foundRelatedLinks: [],
+            word:
+              {
+                id: 'nvi_6',
+                corpusId: 'nvi',
+                side: 'sources',
+                text: 'some word',
+                position: 6,
+              }
           })
         );
       } catch (error) {
@@ -402,12 +437,15 @@ describe('alignmentSlice reducer', () => {
       const resultState = alignmentSliceReducer(
         previousState,
         toggleTextSegment({
-          id: 'sbl_2',
-          corpusId: 'sbl',
-          side: 'targets',
-          // role: CorpusRole.Target,
-          text: 'asdf',
-          position: 3,
+          foundRelatedLinks: [],
+          word: {
+            id: 'sbl_2',
+            corpusId: 'sbl',
+            side: 'targets',
+            // role: CorpusRole.Target,
+            text: 'asdf',
+            position: 3,
+          }
         })
       );
 

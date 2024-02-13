@@ -1,10 +1,10 @@
-import React, { ReactElement, useContext, useEffect, useMemo, useState } from 'react';
+import React, { ReactElement, useContext, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover, relatedLinks } from 'state/textSegmentHover.slice';
-import { Word, Link, LanguageInfo } from 'structs';
+import { Word, LanguageInfo } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
@@ -12,7 +12,8 @@ import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import { AlignmentMode } from '../../state/alignmentState';
-import BCVWP from '../bcvwp/BCVWPSupport';
+import { useRelatedLinks } from './useRelatedLinks';
+import _ from 'lodash';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -83,50 +84,41 @@ export const TextSegment = ({
   const dispatch = useAppDispatch();
   const { projectState } = useContext(AppContext);
 
-  const [ isMemberOfMultipleAlignments, setIsMemberOfMultipleAlignments ] = useState(false);
-
-  const [ isSelected, setIsSelected ] = useState(false);
-
-  const [ isRelated, setIsRelated ] = useState(false);
-
-  const inProgressLink = useAppSelector((state) => state.alignment.present.inProgressLink);
-
-  const [ links, setLinks ] = useState([] as Link[]);
-
-  const wordBook = useMemo(() =>
-    BCVWP.parseFromString(word.id).book,
-    [word.id]);
-
-  const mode = useAppSelector(selectAlignmentMode);
-
-  useEffect(() => {
-    findRelatedAlignments(word, (result) =>
-        setIsMemberOfMultipleAlignments(result.length > 1), projectState.linksTable);
-  }, [projectState.linksTable, setIsMemberOfMultipleAlignments, word]);
+  const mode = useAppSelector(selectAlignmentMode); // get alignment mode
 
   const isHovered = useAppSelector(
     (state) =>
-      state.textSegmentHover.hovered?.id === word.id &&
-      state.textSegmentHover.hovered?.corpusId === word.corpusId
+      state.textSegmentHover.hovered?.side === word.side &&
+      state.textSegmentHover.hovered?.id === word.id
   );
 
-  useEffect(() => {
-    findRelatedAlignments(word, (result) => {
-      const filteredResults = onlyLinkIds ? result.filter((link) => onlyLinkIds!.includes(link.id!)) : result;
-      setIsSelected(filteredResults.length > 0);
-    }, projectState.linksTable);
-  }, [projectState.linksTable, setIsSelected, word]);
+  const currentlyHovered = useAppSelector((state) => state.textSegmentHover.hovered);
 
-  const isInProgressLinkMember = useMemo(() =>
-        (word.side === 'sources' &&
-          inProgressLink?.sources.includes(word.id)) ||
-        (word.side === 'targets' &&
-          inProgressLink?.targets.includes(word.id)),
-    [inProgressLink, word]);
+  const foundRelatedLinks = useRelatedLinks(word);
 
-  const isCurrentLinkMember = useMemo(() => /*mightBeWorkingOnLink ||*/ isInProgressLinkMember, [/*mightBeWorkingOnLink,*/ isInProgressLinkMember]);
+  const isMemberOfMultipleAlignments = useMemo(() => foundRelatedLinks.length > 1,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [foundRelatedLinks.length])
 
-  const isInvolved = useMemo(() => !!inProgressLink, [inProgressLink]);
+  /**
+   * is member of persisted link
+   */
+  const isSelected = useMemo(() => {
+    const filteredResults = onlyLinkIds ? foundRelatedLinks.filter((link) => onlyLinkIds!.includes(link.id!)) : foundRelatedLinks;
+    return filteredResults.length > 0;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectState.linksTable, foundRelatedLinks, onlyLinkIds]);
+
+  const hoverRelatedLinks = useRelatedLinks(currentlyHovered); // links related to the hovered word
+  const isRelatedToCurrentlyHovered = useMemo(() => {
+    return _.intersection(foundRelatedLinks, hoverRelatedLinks).length > 0;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [hoverRelatedLinks, hoverRelatedLinks.length, foundRelatedLinks, foundRelatedLinks.length]);
+
+  const isLinked = useMemo(() => foundRelatedLinks.length > 0, [ foundRelatedLinks.length ]);
+
+  const isInvolved = useAppSelector((state) => !!state.alignment.present.inProgressLink);
 
   if (!word) {
     return <span>{'ERROR'}</span>;
@@ -136,15 +128,15 @@ export const TextSegment = ({
       <Typography
         paragraph={false}
         component="span"
-        variant={computeVariant(isSelected, /*!!link*/ false)}
+        variant={computeVariant(isSelected, isLinked)}
         className={`text-segment${
           readonly ? '.readonly' : ''
         } ${computeDecoration(
           !!readonly,
           isHovered,
-          isRelated,
+          isRelatedToCurrentlyHovered,
           mode,
-          /*!!link,*/ false,
+          isLinked,
           isInvolved,
           isMemberOfMultipleAlignments
         )}`}
@@ -158,9 +150,10 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(word));
-                findRelatedAlignments(word, (links) => {
-                  dispatch(relatedLinks(links))
-                }, projectState.linksTable);
+                findRelatedAlignments(word, projectState.linksTable)
+                  .then((links) => {
+                    dispatch(relatedLinks(links))
+                  });
               }
         }
         onMouseLeave={
@@ -174,19 +167,7 @@ export const TextSegment = ({
         onClick={
           readonly
             ? undefined
-            : () => {
-                const editOrCreate =
-                  [AlignmentMode.Edit, AlignmentMode.Create].includes(mode) &&
-                  (/*!link*/ true || isCurrentLinkMember) &&
-                  isInvolved;
-                const unLinkedEdit =
-                  mode === AlignmentMode.PartialEdit && /*!link*/ true;
-                const cleanSlate = mode === AlignmentMode.CleanSlate;
-
-                if (editOrCreate || unLinkedEdit || cleanSlate) {
-                  dispatch(toggleTextSegment(word));
-                }
-              }
+            : () => dispatch(toggleTextSegment({ foundRelatedLinks, word }))
         }
       >
         <LocalizedTextDisplay languageInfo={languageInfo}>

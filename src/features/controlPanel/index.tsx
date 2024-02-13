@@ -1,10 +1,8 @@
 import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
-import { ActionCreators } from 'redux-undo';
 import {
   Button,
   ButtonGroup,
   Tooltip,
-  Typography,
   Stack,
   ToggleButtonGroup,
   ToggleButton,
@@ -13,10 +11,6 @@ import {
   AddLink,
   LinkOff,
   RestartAlt,
-  Redo,
-  Undo,
-  Add,
-  Remove,
   SyncLock,
   FileDownload,
   FileUpload,
@@ -27,16 +21,12 @@ import {
   resetTextSegments,
 } from 'state/alignment.slice';
 import {
-  addCorpusViewport,
-  removeCorpusViewport,
   toggleScrollLock,
 } from 'state/app.slice';
-import { CorpusContainer, CorpusViewport, Link } from '../../structs';
+import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
-import { AlignmentMode } from '../../state/alignmentState';
-import { createVirtualTableLinks, reindexTableLinks } from '../../state/links/tableManager';
+import { createVirtualTableLinks } from '../../state/links/tableManager';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -51,9 +41,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // hide the undo/redo buttons until they can be assessed in CA-32
-  const [isRedoEnabled] = useState(false);
-
   const [formats, setFormats] = useState([] as string[]);
 
   const inProgressLink = useAppSelector((state) => state.alignment.present.inProgressLink);
@@ -65,6 +52,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   const linkHasBothSides = useMemo(() => {
       return Number(inProgressLink?.sources.length) > 0 && Number(inProgressLink?.targets.length) > 0;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [inProgressLink, inProgressLink?.sources.length, inProgressLink?.targets.length]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
@@ -140,9 +128,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 }
                 if (inProgressLink?.id) {
                   const linksTable = projectState.linksTable;
-                  void linksTable.remove(inProgressLink.id);
-                } else {
-                  dispatch(resetTextSegments());
+                  linksTable.remove(inProgressLink.id)
+                    .finally(() =>
+                      dispatch(resetTextSegments()));
                 }
               }}
             >
@@ -186,31 +174,33 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const content = await file.text();
                 const linksTable = await createVirtualTableLinks();
 
+                setProjectState({
+                  ...projectState,
+                  linksTable
+                });
+
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
 
                 // override the alignments from alignment file
-                alignmentFile.records
-                  .map((record, idx) => {
-                    return {
-                      id: record.id ?? `record-${idx}`,
-                      sources: record.source,
-                      targets: record.target,
-                    } as Link;
-                  })
-                  .filter((v) => v)
-                  .map((v) => v as Link)
-                  .forEach((link) => {
-                    void linksTable.save(link);
-                  });
+                let idx = 0;
+                for (let record of alignmentFile.records) {
+                  if (idx > 1_000) break;
+                  const link = {
+                    id: record.id ?? `record-${idx}`,
+                    sources: record.source,
+                    targets: record.target,
+                  } as Link;
 
-                void reindexTableLinks(linksTable);
-
-                // dispatch the updated alignment
-                setProjectState({
-                  ...projectState,
-                  linksTable
-                })
+                  if (link) {
+                    try {
+                      await linksTable.save(link);
+                    } catch (e) {
+                      console.log('e', e);
+                    }
+                    ++idx;
+                  }
+                }
               }}
             />
             <Button

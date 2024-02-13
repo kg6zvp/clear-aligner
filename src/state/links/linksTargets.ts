@@ -1,4 +1,4 @@
-import BCVWP, { BCVWPField } from '../../features/bcvwp/BCVWPSupport';
+import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { PersistentInternalLink } from './link';
 
 export enum Link_TargetColumns {
@@ -43,16 +43,13 @@ export interface PersistentLink_Target extends InternalLink_Target {
 export const toLinkTargets = (tgt: string, link: PersistentInternalLink): PersistentLink_Target => {
   const internalLinkedTarget: InternalLink_Target = ({
     linkId: link._id,
-    targetWordOrPart: tgt
+    targetWordOrPart: BCVWP.parseFromString(tgt).toReferenceString()
   });
   return persistableLinkTarget(internalLinkedTarget);
 }
 
 const persistableLinkTarget = (linkTarget: InternalLink_Target): PersistentLink_Target => {
   const ref = BCVWP.parseFromString(linkTarget.targetWordOrPart);
-  /*if (!ref.hasFields(BCVWPField.Book, BCVWPField.Chapter, BCVWPField.Verse, BCVWPField.Word)) {
-    throw new Error(`link id ${linkTarget.linkId} includes too short a target: ${linkTarget.targetWordOrPart}`)
-  } //*/
   return {
     ...linkTarget,
     _id: `${linkTarget.linkId}-${linkTarget.targetWordOrPart}`,

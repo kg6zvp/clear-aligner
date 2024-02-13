@@ -5,18 +5,15 @@ import { VirtualTableLinks } from '../state/links/tableManager';
 // Takes `ProjectState` and a `Word`.
 // calls back with `Link` items that include the word.
 // `Link`s are filtered by relation to the word.
-const findRelatedAlignments = (
+const findRelatedAlignments = async (
   word: Word,
-  callback: (payload: Link[]) => void,
   linksTable?: VirtualTableLinks,
-): void => {
+): Promise<Link[]> => {
   if (!linksTable) {
-    callback([]);
-    return;
+    return [];
   }
-  linksTable
-    .findByWord(word.side, BCVWP.parseFromString(word.id))
-    .then((results) => callback(results));
+  return await linksTable
+    .findByWord(word.side, BCVWP.parseFromString(word.id));
 };
 
 export default findRelatedAlignments;

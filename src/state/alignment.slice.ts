@@ -43,27 +43,38 @@ const alignmentSlice = createSlice({
       state.inProgressLink = action.payload;
     },
 
-    toggleTextSegment: (state, action: PayloadAction<Word>) => {
+    toggleTextSegment: (state, action: PayloadAction<{ foundRelatedLinks: Link[], word: Word }>) => {
+      const relatedLink = action.payload.foundRelatedLinks.find(_ => true);
       if (!state.inProgressLink) {
-        state.inProgressLink = {
-          sources: [],
-          targets: [],
-        };
+        if (relatedLink) {
+          state.inProgressLink = {
+            id: relatedLink.id,
+            sources: relatedLink.sources,
+            targets: relatedLink.targets
+          };
+          return;
+        } else {
+          state.inProgressLink = {
+            sources: [],
+            targets: [],
+          };
+        }
       }
+      console.log('toggleTextSegment', action.payload.word, action.payload.foundRelatedLinks);
       // There is a partial in-progress link.
-      switch (action.payload.side) {
+      switch (action.payload.word.side) {
         case 'sources':
-          if (state.inProgressLink.sources.includes(action.payload.id)) {
-            state.inProgressLink.sources.splice(state.inProgressLink.sources.indexOf(action.payload.id), 1);
+          if (state.inProgressLink.sources.includes(action.payload.word.id)) {
+            state.inProgressLink.sources.splice(state.inProgressLink.sources.indexOf(action.payload.word.id), 1);
           } else {
-            state.inProgressLink.sources.push(action.payload.id);
+            state.inProgressLink.sources.push(action.payload.word.id);
           }
           break;
         case 'targets':
-          if (state.inProgressLink.targets.includes(action.payload.id)) {
-            state.inProgressLink.targets.splice(state.inProgressLink.targets.indexOf(action.payload.id), 1);
+          if (state.inProgressLink.targets.includes(action.payload.word.id)) {
+            state.inProgressLink.targets.splice(state.inProgressLink.targets.indexOf(action.payload.word.id), 1);
           } else {
-            state.inProgressLink.targets.push(action.payload.id);
+            state.inProgressLink.targets.push(action.payload.word.id);
           }
           break;
       }

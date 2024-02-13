@@ -50,38 +50,33 @@ export class VirtualTableLinks {
   };
 
   findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
+    const linkIds: string[] = [];
     const links: Link[] = [];
     switch (side) {
       case 'sources':
-        const sourceLinkIds = _.uniqWith((await this.linksSources.find({
+        _.uniqWith((await this.linksSources.find({
           selector: {
             sourceWordOrPart: { $eq: wordId.toReferenceString() }
           },
-          //sort: [Link_SourceColumns.sourceWordOrPart]
         })).docs
-        .map(({ linkId }) => linkId), _.isEqual);
-        for (let linkId of sourceLinkIds) {
-          const link = await this.get(linkId);
-          if (link) {
-            links.push(link);
-          }
-        }
+        .map(({ linkId }) => linkId), _.isEqual)
+          .forEach((id) => linkIds.push(id));
         break;
       case 'targets':
-        const targetLinkIds = _.uniqWith((await this.linksTargets.find({
+        _.uniqWith((await this.linksTargets.find({
           selector: {
             targetWordOrPart: { $eq: wordId.toReferenceString() }
           },
-          //sort: [Link_TargetColumns.targetWordOrPart]
         })).docs
-          .map(({ linkId }) => linkId), _.isEqual);
-        for (let linkId of targetLinkIds) {
-          const link = await this.get(linkId);
-          if (link) {
-            links.push(link);
-          }
-        }
+          .map(({ linkId }) => linkId), _.isEqual)
+          .forEach((id) => linkIds.push(id));
         break;
+    }
+    for (let linkId of linkIds) {
+      const link = await this.get(linkId);
+      if (link) {
+        links.push(link);
+      }
     }
     return links;
   }
@@ -174,11 +169,11 @@ export class VirtualTableLinks {
  * create virtual links table with all necessary indexes
  */
 export const createVirtualTableLinks = async (): Promise<VirtualTableLinks> => {
-  const linksDB = new PouchDB('links'/*, { revs_limit: 1 }*/) as PouchDB.Database<PersistentInternalLink>;
+  const linksDB = new PouchDB('links', { revs_limit: 1 }) as PouchDB.Database<PersistentInternalLink>;
   await linksDB.info();
-  const sourcesDB = new PouchDB('links_sources'/*, { revs_limit: 1 }*/) as PouchDB.Database<PersistentLink_Source>;
+  const sourcesDB = new PouchDB('links_sources', { revs_limit: 1 }) as PouchDB.Database<PersistentLink_Source>;
   await sourcesDB.info();
-  const targetsDB = new PouchDB('links_targets'/*, { revs_limit: 1 }*/) as PouchDB.Database<PersistentLink_Target>;
+  const targetsDB = new PouchDB('links_targets', { revs_limit: 1 }) as PouchDB.Database<PersistentLink_Target>;
   await targetsDB.info();
 
   [linksDB, sourcesDB, targetsDB].forEach(db => db.on('error', (error: any) => {
@@ -186,21 +181,20 @@ export const createVirtualTableLinks = async (): Promise<VirtualTableLinks> => {
     debugger;
   }));
 
-  console.log('sourceColumns', Object.values(Link_SourceColumns));
-  console.log('targetColumns', Object.values(Link_TargetColumns));
-
-  Object.values(Link_SourceColumns)
-    .forEach((indexProp) => sourcesDB.createIndex({
+  for (let column of Object.values(Link_SourceColumns)) {
+    await sourcesDB.createIndex({
       index: {
-        fields: [indexProp]
+        fields: [column]
       }
-    }));
-  Object.values(Link_TargetColumns)
-    .forEach((indexProp) => targetsDB.createIndex({
+    });
+  }
+  for (let column of Object.values(Link_TargetColumns)) {
+    await targetsDB.createIndex({
       index: {
-        fields: [indexProp]
+        fields: [column]
       }
-    }));
+    });
+  }
 
   return new VirtualTableLinks(linksDB, sourcesDB, targetsDB);
 };
