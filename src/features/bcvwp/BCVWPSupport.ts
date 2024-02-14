@@ -47,6 +47,10 @@ export default class BCVWP {
     this.part = part;
   }
 
+  toHumanReadableString(): string {
+    return `${this.getBookInfo()?.EnglishBookName ?? ''} ${this.chapter ?? 'NA'}:${this.verse ?? 'NA'} ${this.word ?? ''}${this.word && this.part ? `/${this.part}` : ''}`.trim();
+  }
+
   toTruncatedReferenceString(truncation: BCVWPField): string {
     return this.toReferenceString().substring(0, truncation);
   }

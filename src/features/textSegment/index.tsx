@@ -1,4 +1,4 @@
-import React, { ReactElement, useContext, useMemo } from 'react';
+import React, { ReactElement, useContext, useEffect, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
@@ -14,6 +14,7 @@ import { AppContext } from '../../App';
 import { AlignmentMode } from '../../state/alignmentState';
 import { useRelatedLinks } from './useRelatedLinks';
 import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -119,6 +120,28 @@ export const TextSegment = ({
   const isLinked = useMemo(() => foundRelatedLinks.length > 0, [ foundRelatedLinks.length ]);
 
   const isInvolved = useAppSelector((state) => !!state.alignment.present.inProgressLink);
+
+  // print state
+  useEffect(() => {
+    console.log(`state ${word.side}\n '${BCVWP.parseFromString(word.id).toHumanReadableString()}'`, {
+      readonly,
+      isHovered,
+      isRelatedToCurrentlyHovered,
+      mode,
+      isLinked,
+      isInvolved,
+      isMemberOfMultipleAlignments
+    });
+  }, [
+    word.id, word.side,
+    readonly,
+    isHovered,
+    isRelatedToCurrentlyHovered,
+    mode,
+    isLinked,
+    isInvolved,
+    isMemberOfMultipleAlignments
+  ]);
 
   if (!word) {
     return <span>{'ERROR'}</span>;

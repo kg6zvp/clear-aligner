@@ -1,6 +1,6 @@
 import { Link } from '../../structs';
-import { InternalLink_Source, PersistentLink_Source, toLinkSources } from './linksSources';
-import { InternalLink_Target, PersistentLink_Target, toLinkTargets } from './linksTargets';
+import { PersistentLink_Source, toLinkSources } from './linksSources';
+import { PersistentLink_Target, toLinkTargets } from './linksTargets';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

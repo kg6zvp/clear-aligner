@@ -5,10 +5,10 @@ export enum Link_SourceColumns {
   linkId = 'linkId',
   sourceWordOrPart = 'sourceWordOrPart',
   book = 'book',
-  chapter = 'chapter',
+  /*chapter = 'chapter',
   verse = 'verse',
   word = 'word',
-  part = 'part',
+  part = 'part',//*/
 }
 
 /**
@@ -29,10 +29,10 @@ export interface PersistentLink_Source extends InternalLink_Source {
   _id: string;
 
   book: number;
-  chapter: number;
+  /*chapter: number;
   verse: number;
   word: number;
-  part?: number;
+  part?: number;//*/
 }
 
 /**
@@ -54,9 +54,9 @@ const persistableLinkSource = (linkSource: InternalLink_Source): PersistentLink_
     ...linkSource,
     _id: `${linkSource.linkId}-${linkSource.sourceWordOrPart}`,
     book: ref.book!,
-    chapter: ref.chapter!,
+    /*chapter: ref.chapter!,
     verse: ref.verse!,
     word: ref.word!,
-    part: ref.part,
+    part: ref.part,//*/
   };
 }

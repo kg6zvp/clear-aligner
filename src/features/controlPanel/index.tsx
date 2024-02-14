@@ -26,7 +26,8 @@ import {
 import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { createVirtualTableLinks } from '../../state/links/tableManager';
+import { createVirtualTableLinks, VirtualTableLinks } from '../../state/links/tableManager';
+import _ from 'lodash';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -36,7 +37,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { projectState, setProjectState } = useContext(AppContext);
+  const { projectState, replaceLinksTable } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,11 +173,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                const linksTable = await createVirtualTableLinks();
-
-                setProjectState({
-                  ...projectState,
-                  linksTable
+                let linksTable: VirtualTableLinks;
+                await replaceLinksTable(async () => {
+                  linksTable = await createVirtualTableLinks();
+                  return linksTable;
                 });
 
                 // convert into an appropriate object
@@ -184,23 +184,26 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 // override the alignments from alignment file
                 let idx = 0;
-                for (let record of alignmentFile.records) {
-                  if (idx > 1_000) break;
-                  const link = {
-                    id: record.id ?? `record-${idx}`,
-                    sources: record.source,
-                    targets: record.target,
-                  } as Link;
-
-                  if (link) {
-                    try {
-                      await linksTable.save(link);
-                    } catch (e) {
-                      console.log('e', e);
-                    }
-                    ++idx;
+                const chunks = _.chunk(alignmentFile.records, 500);
+                for (let chunk of chunks) {
+                  const records = chunk;
+                  const links = records
+                    .map((record) => {
+                      const link: Link = ({
+                        id: record.id ?? `record-${idx}`,
+                        sources: record.source,
+                        targets: record.target
+                      });
+                      ++idx;
+                      return link;
+                    });
+                  try {
+                    await linksTable!.saveAll(links, true);
+                  } catch (e) {
+                    console.error('e', e);
                   }
                 }
+                linksTable!.onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
             <Button

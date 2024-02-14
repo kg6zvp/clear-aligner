@@ -7,15 +7,17 @@ import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import FindPlugin from 'pouchdb-find';
+import { VirtualTable } from '../databaseManagement';
 
 PouchDB.plugin(FindPlugin);
 
-export class VirtualTableLinks {
+export class VirtualTableLinks extends VirtualTable {
   links: PouchDB.Database<PersistentInternalLink>;
   linksSources: PouchDB.Database<PersistentLink_Source>;
   linksTargets: PouchDB.Database<PersistentLink_Target>;
 
   constructor(links: PouchDB.Database<PersistentInternalLink>, linksSources: PouchDB.Database<PersistentLink_Source>, linksTargets: PouchDB.Database<PersistentLink_Target>) {
+    super();
     this.links = links;
     this.linksSources = linksSources;
     this.linksTargets = linksTargets;
@@ -46,8 +48,37 @@ export class VirtualTableLinks {
       }
     } catch(e) {
       return undefined;
+    } finally {
+      this.onUpdate();
     }
   };
+
+  saveAll = async (links: Link[], suppressOnUpdate?: boolean) => {
+    const linkRoots: PersistentInternalLink[] = [];
+    const linksSources: PersistentLink_Source[] = [];
+    const linksTargets: PersistentLink_Target[] = [];
+
+    links.map(prePersistLink)
+      .forEach((link) => {
+        linkRoots.push(link.link);
+        link.sources.forEach((src) => linksSources.push(src));
+        link.targets.forEach((tgt) => linksTargets.push(tgt));
+      });
+
+    const rootsPromise = this.links.bulkDocs(linkRoots);
+    const sourcesPromise = this.linksSources.bulkDocs(linksSources);
+    const targetsPromise = this.linksTargets.bulkDocs(linksTargets);
+
+    try {
+      await Promise.all([rootsPromise, sourcesPromise, targetsPromise]);
+    } catch (x) {
+      console.error('error persisting in bulk', x);
+    } finally {
+      if (!suppressOnUpdate) {
+        this.onUpdate();
+      }
+    }
+  }
 
   findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
     const linkIds: string[] = [];
@@ -56,7 +87,10 @@ export class VirtualTableLinks {
       case 'sources':
         _.uniqWith((await this.linksSources.find({
           selector: {
-            sourceWordOrPart: { $eq: wordId.toReferenceString() }
+            $and: [
+              { sourceWordOrPart: { $eq: wordId.toReferenceString() } },
+              { book: { $eq: wordId.book } }
+            ]
           },
         })).docs
         .map(({ linkId }) => linkId), _.isEqual)
@@ -65,7 +99,10 @@ export class VirtualTableLinks {
       case 'targets':
         _.uniqWith((await this.linksTargets.find({
           selector: {
-            targetWordOrPart: { $eq: wordId.toReferenceString() }
+            $and: [
+              { targetWordOrPart: { $eq: wordId.toReferenceString() } },
+              { book: { $eq: wordId.book } }
+            ]
           },
         })).docs
           .map(({ linkId }) => linkId), _.isEqual)
@@ -121,6 +158,8 @@ export class VirtualTableLinks {
     for (let target of targets) {
       await this.linksTargets.remove(target);
     }
+
+    this.onUpdate();
   };
 
   _getInternalLink = async (id?: string): Promise<InternalLink|undefined> => {
@@ -163,6 +202,12 @@ export class VirtualTableLinks {
     })).docs
       .sort((a, b) => BCVWP.compare(BCVWP.parseFromString(a.targetWordOrPart), BCVWP.parseFromString(b.targetWordOrPart)));
   }
+
+  close = async () => {
+    await this.links.close();
+    await this.linksSources.close();
+    await this.linksTargets.close();
+  }
 }
 
 /**
@@ -181,20 +226,41 @@ export const createVirtualTableLinks = async (): Promise<VirtualTableLinks> => {
     debugger;
   }));
 
-  for (let column of Object.values(Link_SourceColumns)) {
+  await sourcesDB.createIndex({
+    index: {
+      fields: [Link_SourceColumns.linkId]
+    }
+  });
+  await sourcesDB.createIndex({
+    index: {
+      fields: [Link_SourceColumns.sourceWordOrPart, Link_SourceColumns.book]
+    }
+  });
+  /*for (let column of Object.values(Link_SourceColumns)) {
     await sourcesDB.createIndex({
       index: {
         fields: [column]
       }
     });
-  }
-  for (let column of Object.values(Link_TargetColumns)) {
+  }//*/
+  await targetsDB.createIndex({
+    index: {
+      fields: [Link_TargetColumns.linkId]
+    }
+  });
+
+  await targetsDB.createIndex({
+    index: {
+      fields: [Link_TargetColumns.targetWordOrPart, Link_TargetColumns.book]
+    }
+  });
+  /*for (let column of Object.values(Link_TargetColumns)) {
     await targetsDB.createIndex({
       index: {
         fields: [column]
       }
     });
-  }
+  }//*/
 
   return new VirtualTableLinks(linksDB, sourcesDB, targetsDB);
 };

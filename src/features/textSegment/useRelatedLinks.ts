@@ -16,7 +16,9 @@ export const useRelatedLinks = (word?: Word|null): Link[] => {
       findRelatedAlignments(word, projectState.linksTable)
         .then(setRelatedLinks);
     }
-  }, [projectState.linksTable, setRelatedLinks, word]);
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projectState.linksTable, projectState.linksTable?.lastUpdate, setRelatedLinks, word]);
 
   return relatedLinks;
 }
