@@ -1,275 +1,153 @@
-/* eslint-disable no-restricted-syntax */
-import PouchDB from 'pouchdb';
-import { InternalLink, PersistentInternalLink, prePersistLink, preRetrieveLink } from './link';
-import { Link_SourceColumns, PersistentLink_Source } from './linksSources';
-import { Link_TargetColumns, PersistentLink_Target } from './linksTargets';
 import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
-import _ from 'lodash';
-import FindPlugin from 'pouchdb-find';
 import { VirtualTable } from '../databaseManagement';
-
-PouchDB.plugin(FindPlugin);
+import { v4 as uuidv4 } from 'uuid';
 
 export class VirtualTableLinks extends VirtualTable {
-  links: PouchDB.Database<PersistentInternalLink>;
-  linksSources: PouchDB.Database<PersistentLink_Source>;
-  linksTargets: PouchDB.Database<PersistentLink_Target>;
+  links: Map<string, Link>;
+  sourcesIndex: Map<string, Set<string>>;
+  targetsIndex: Map<string, Set<string>>;
 
-  constructor(links: PouchDB.Database<PersistentInternalLink>, linksSources: PouchDB.Database<PersistentLink_Source>, linksTargets: PouchDB.Database<PersistentLink_Target>) {
+  constructor() {
     super();
-    this.links = links;
-    this.linksSources = linksSources;
-    this.linksTargets = linksTargets;
+    this.links = new Map<string, Link>();
+    this.sourcesIndex = new Map<string, Set<string>>(); // links a normalized BCVWP reference string to a set of link id strings
+    this.targetsIndex = new Map<string, Set<string>>(); // links a normalized BCVWP reference string to a set of link id strings
   }
 
-  save = async (link: Link): Promise<Link | undefined> => {
-    const existingLink = !!link.id ? await this._getPersistentInternalLink(link.id) : undefined;
-    if (existingLink) { // remove existing link, sources and targets
-      await this.remove(existingLink._id);
-    }
-    const newLink = prePersistLink(link);
-    await this.links.put(newLink.link);
-    for (let src of newLink.sources) {
-      await this.linksSources.put(src);
-    }
-    for (let tgt of newLink.targets) {
-      await this.linksTargets.put(tgt);
+  save = (link: Link, suppressOnUpdate?: boolean): Link|undefined => {
+    const exists = this.exists(link.id);
+    if (exists) { // remove existing link, sources and targets
+      this.remove(link.id);
     }
     try {
-      const v = await this.get(newLink.link._id)
-        .catch((e) => {
-          console.log('caught error', e);
-        });
-      if (v) {
-        return v;
-      } else {
-        return undefined;
-      }
+      const newLink: Link = {
+        ...link,
+        id: link.id ?? uuidv4(),
+      };
+      this.links.set(newLink.id!, newLink);
+      this._indexLink(newLink);
+      return newLink;
     } catch(e) {
       return undefined;
     } finally {
-      this.onUpdate();
+      this.onUpdate(suppressOnUpdate);
     }
   };
 
-  saveAll = async (links: Link[], suppressOnUpdate?: boolean) => {
-    const linkRoots: PersistentInternalLink[] = [];
-    const linksSources: PersistentLink_Source[] = [];
-    const linksTargets: PersistentLink_Target[] = [];
-
-    links.map(prePersistLink)
-      .forEach((link) => {
-        linkRoots.push(link.link);
-        link.sources.forEach((src) => linksSources.push(src));
-        link.targets.forEach((tgt) => linksTargets.push(tgt));
+  /**
+   * perform indexing on the given link
+   * @param link
+   */
+  _indexLink = (link: Link) => {
+    if (!link.id) {
+      throw new Error('Cannot index link without an id!');
+    }
+    // index sources
+    link.sources.map(BCVWP.parseFromString)
+      .map((ref) => ref.toReferenceString())
+      .forEach((normalizedRefString) => {
+        const linksOnSource = this.sourcesIndex.get(normalizedRefString) ?? new Set<string>();
+        linksOnSource.add(link.id!);
+        this.sourcesIndex.set(normalizedRefString, linksOnSource);
       });
 
-    const rootsPromise = this.links.bulkDocs(linkRoots);
-    const sourcesPromise = this.linksSources.bulkDocs(linksSources);
-    const targetsPromise = this.linksTargets.bulkDocs(linksTargets);
+    // index targets
+    link.targets.map(BCVWP.parseFromString)
+      .map((ref) => ref.toReferenceString())
+      .forEach((normalizedRefString) => {
+        const linksOnSource = this.targetsIndex.get(normalizedRefString) ?? new Set<string>();
+        linksOnSource.add(link.id!);
+        this.targetsIndex.set(normalizedRefString, linksOnSource);
+      });
+  }
 
+  exists = (id?: string): boolean => {
+    if (!id) return false;
+    return this.links.has(id);
+  }
+
+  saveAll = (links: Link[], suppressOnUpdate?: boolean) => {
     try {
-      await Promise.all([rootsPromise, sourcesPromise, targetsPromise]);
+      links.forEach((link) => this.save(link, true));
     } catch (x) {
       console.error('error persisting in bulk', x);
     } finally {
-      if (!suppressOnUpdate) {
-        this.onUpdate();
-      }
+      this.onUpdate(suppressOnUpdate);
     }
   }
 
-  findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
+  findLinkIdsByWord = (side: AlignmentSide, wordId: BCVWP): string[] => {
+    const refString = wordId.toReferenceString();
     const linkIds: string[] = [];
-    const links: Link[] = [];
     switch (side) {
-      case 'sources':
-        _.uniqWith((await this.linksSources.find({
-          selector: {
-            $and: [
-              { sourceWordOrPart: { $eq: wordId.toReferenceString() } },
-              { book: { $eq: wordId.book } }
-            ]
-          },
-        })).docs
-        .map(({ linkId }) => linkId), _.isEqual)
-          .forEach((id) => linkIds.push(id));
+      case "sources":
+        (this.sourcesIndex.get(refString) ?? new Set<string>())
+          .forEach((id) =>
+            linkIds.push(id));
         break;
-      case 'targets':
-        _.uniqWith((await this.linksTargets.find({
-          selector: {
-            $and: [
-              { targetWordOrPart: { $eq: wordId.toReferenceString() } },
-              { book: { $eq: wordId.book } }
-            ]
-          },
-        })).docs
-          .map(({ linkId }) => linkId), _.isEqual)
-          .forEach((id) => linkIds.push(id));
+      case "targets":
+        (this.targetsIndex.get(refString) ?? new Set<string>())
+          .forEach((id) =>
+            linkIds.push(id));
         break;
     }
-    for (let linkId of linkIds) {
-      const link = await this.get(linkId);
-      if (link) {
-        links.push(link);
-      }
-    }
-    return links;
+    return linkIds;
   }
 
-  getAll = async (): Promise<Link[]> => {
-    const linkIds = (await this.links.allDocs({ include_docs: true })).rows
-      .map(({ doc }) => doc)
-      .filter((v) => v?._id);
-    const links: Link[] = [];
-    for (let link of linkIds) {
-      const tmpLink: InternalLink = {
-        link: link!,
-        sources: await this._getSources(link!),
-        targets: await this._getTargets(link!)
-      };
-      links.push(preRetrieveLink(tmpLink));
-    }
-    return links;
-  }
+  findByWord = (side: AlignmentSide, wordId: BCVWP): Link[] =>
+    this.findLinkIdsByWord(side, wordId)
+      .map(this.get)
+      .filter((v) => !!v) as Link[];
 
-  get = async (id?: string): Promise<Link | undefined> => {
+  getAll = (): Link[] =>
+    Array.from(this.links.values());
+
+  get = (id?: string): Link|undefined => {
     if (!id) return undefined;
 
-    const internalLink = await this._getInternalLink(id);
-    if (!internalLink) return undefined;
-
-    // reconstitute into Link object familiar to user
-    return preRetrieveLink(internalLink);
+    return this.links.get(id);
   };
 
-  remove = async (id?: string) => {
-    if (!id) return undefined;
-    const link = await this.links.get(id);
-    if (!link) return undefined;
-    const sources = await this._getSources(link);
-    const targets = await this._getTargets(link);
+  remove = (id?: string, suppressOnUpdate?: boolean) => {
+    if (!this.exists(id)) return undefined;
+    const link = this.links.get(id!)!;
 
-    await this.links.remove(link);
-    for (let source of sources) {
-      await this.linksSources.remove(source);
-    }
-    for (let target of targets) {
-      await this.linksTargets.remove(target);
-    }
+    this._removeIndexes(link);
 
-    this.onUpdate();
+    this.links.delete(link?.id!);
+
+    this.onUpdate(suppressOnUpdate);
   };
 
-  _getInternalLink = async (id?: string): Promise<InternalLink|undefined> => {
-    // retrieve all parts
-    const link = await this._getPersistentInternalLink(id);
-    if (!link) return undefined;
-    const sources = await this._getSources(link);
-    const targets = await this._getTargets(link);
+  /**
+   * remove the indexes created for a given link
+   * @param link
+   */
+  _removeIndexes = (link?: Link) => {
+    if (!link || !link.id) return;
 
-    return {
-      link,
-      sources,
-      targets
-    };
-  }
+    link.sources
+      .forEach((src) => {
+        const associatedLinks = this.sourcesIndex.get(src);
+        if (!associatedLinks) return;
 
-  _getPersistentInternalLink = async (id?: string): Promise<PersistentInternalLink & PouchDB.Core.GetMeta|undefined> => {
-    try {
-      if (!id) return undefined;
-      return await this.links.get(id);
-    } catch (x) {
-      return undefined;
-    }
-  }
+        associatedLinks.delete(link.id!);
 
-  _getSources = async (link: PersistentInternalLink & PouchDB.Core.IdMeta & PouchDB.Core.GetMeta): Promise<PouchDB.Core.ExistingDocument<PersistentLink_Source>[]> => {
-    return (await this.linksSources.find({
-      selector: {
-        linkId: { $eq: link._id }
-      },
-    })).docs
-      .sort((a, b) => BCVWP.compare(BCVWP.parseFromString(a.sourceWordOrPart), BCVWP.parseFromString(b.sourceWordOrPart)));
-  };
+        if (associatedLinks.size < 1) {
+          this.sourcesIndex.delete(src);
+        }
+      });
+    link.targets
+      .forEach((tgt) => {
+        const associatedLinks = this.targetsIndex.get(tgt);
+        if (!associatedLinks) return;
 
-  _getTargets = async (link: PersistentInternalLink & PouchDB.Core.IdMeta & PouchDB.Core.GetMeta): Promise<PouchDB.Core.ExistingDocument<PersistentLink_Target>[]> => {
-    return (await this.linksTargets.find({
-      selector: {
-        linkId: { $eq: link._id }
-      },
-    })).docs
-      .sort((a, b) => BCVWP.compare(BCVWP.parseFromString(a.targetWordOrPart), BCVWP.parseFromString(b.targetWordOrPart)));
-  }
+        associatedLinks.delete(link.id!);
 
-  close = async () => {
-    await this.links.close();
-    await this.linksSources.close();
-    await this.linksTargets.close();
+        if (associatedLinks.size < 1) {
+          this.targetsIndex.delete(tgt);
+        }
+      });
   }
 }
-
-/**
- * create virtual links table with all necessary indexes
- */
-export const createVirtualTableLinks = async (): Promise<VirtualTableLinks> => {
-  const linksDB = new PouchDB('links', { revs_limit: 1 }) as PouchDB.Database<PersistentInternalLink>;
-  await linksDB.info();
-  const sourcesDB = new PouchDB('links_sources', { revs_limit: 1 }) as PouchDB.Database<PersistentLink_Source>;
-  await sourcesDB.info();
-  const targetsDB = new PouchDB('links_targets', { revs_limit: 1 }) as PouchDB.Database<PersistentLink_Target>;
-  await targetsDB.info();
-
-  [linksDB, sourcesDB, targetsDB].forEach(db => db.on('error', (error: any) => {
-    console.error(error);
-    debugger;
-  }));
-
-  await sourcesDB.createIndex({
-    index: {
-      fields: [Link_SourceColumns.linkId]
-    }
-  });
-  await sourcesDB.createIndex({
-    index: {
-      fields: [Link_SourceColumns.sourceWordOrPart, Link_SourceColumns.book]
-    }
-  });
-  /*for (let column of Object.values(Link_SourceColumns)) {
-    await sourcesDB.createIndex({
-      index: {
-        fields: [column]
-      }
-    });
-  }//*/
-  await targetsDB.createIndex({
-    index: {
-      fields: [Link_TargetColumns.linkId]
-    }
-  });
-
-  await targetsDB.createIndex({
-    index: {
-      fields: [Link_TargetColumns.targetWordOrPart, Link_TargetColumns.book]
-    }
-  });
-  /*for (let column of Object.values(Link_TargetColumns)) {
-    await targetsDB.createIndex({
-      index: {
-        fields: [column]
-      }
-    });
-  }//*/
-
-  return new VirtualTableLinks(linksDB, sourcesDB, targetsDB);
-};
-/**
- * trigger a re-index for data in the links table
- * @param linksTable
- */
-export const reindexTableLinks = async (linksTable: VirtualTableLinks) => {
-  await linksTable.links.viewCleanup();
-  await linksTable.linksSources.viewCleanup();
-  await linksTable.linksTargets.viewCleanup();
-};

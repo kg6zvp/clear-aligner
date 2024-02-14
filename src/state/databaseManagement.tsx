@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import { VirtualTableLinks } from './links/tableManager';
 
 /**
@@ -23,8 +22,10 @@ export class VirtualTable {
     this.lastUpdate = Date.now();
   }
 
-  onUpdate = () => {
-    this.lastUpdate = Date.now();
+  onUpdate = (suppressOnUpdate?: boolean) => {
+    if (!suppressOnUpdate) {
+      this.lastUpdate = Date.now();
+    }
   }
 }
 

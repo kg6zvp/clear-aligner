@@ -26,7 +26,7 @@ import {
 import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { createVirtualTableLinks, VirtualTableLinks } from '../../state/links/tableManager';
+import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
 
 interface ControlPanelProps {
@@ -37,7 +37,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { projectState, replaceLinksTable } = useContext(AppContext);
+  const { projectState, setProjectState } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -109,9 +109,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   return;
                 }
                 projectState.linksTable
-                  .save(inProgressLink)
-                  .finally(() =>
-                    dispatch(resetTextSegments()));
+                  .save(inProgressLink);
+                dispatch(resetTextSegments());
               }}
             >
               <AddLink />
@@ -129,9 +128,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 }
                 if (inProgressLink?.id) {
                   const linksTable = projectState.linksTable;
-                  linksTable.remove(inProgressLink.id)
-                    .finally(() =>
-                      dispatch(resetTextSegments()));
+                  linksTable.remove(inProgressLink.id);
+                  dispatch(resetTextSegments());
                 }
               }}
             >
@@ -173,10 +171,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                let linksTable: VirtualTableLinks;
-                await replaceLinksTable(async () => {
-                  linksTable = await createVirtualTableLinks();
-                  return linksTable;
+                const linksTable: VirtualTableLinks = new VirtualTableLinks();
+
+                setProjectState({
+                  ...projectState,
+                  linksTable,
                 });
 
                 // convert into an appropriate object
@@ -184,10 +183,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 // override the alignments from alignment file
                 let idx = 0;
-                const chunks = _.chunk(alignmentFile.records, 500);
+                const chunks = _.chunk(alignmentFile.records, 10_000);
                 for (let chunk of chunks) {
-                  const records = chunk;
-                  const links = records
+                  const links = chunk
                     .map((record) => {
                       const link: Link = ({
                         id: record.id ?? `record-${idx}`,
@@ -198,12 +196,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                       return link;
                     });
                   try {
-                    await linksTable!.saveAll(links, true);
+                    linksTable.saveAll(links, true);
                   } catch (e) {
                     console.error('e', e);
                   }
                 }
-                linksTable!.onUpdate(); // modify variable to indicate that an update has occurred
+                linksTable.onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
             <Button
@@ -239,8 +237,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 }
 
                 projectState.linksTable.getAll()
-                  .then((rows) => {
-                    rows
                       .map((link) => ({
                         id: link.id,
                         source: link.sources,
@@ -291,7 +287,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                   // Revoke the URL to free up resources
                   URL.revokeObjectURL(url);
-                });
               }}
             >
               <FileDownload />
