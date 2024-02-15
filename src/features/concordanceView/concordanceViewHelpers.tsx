@@ -97,53 +97,52 @@ const generateWordListFromCorpusContainerAndLink = (
  * @param targetContainer corpus container for targets
  */
 export const generateAlignedWordsMap = (
-  alignmentState: Alignment[],
+  links: Link[],
   sourceContainer: CorpusContainer,
   targetContainer: CorpusContainer
-): NormalizedTextToAlignmentLink =>
-  alignmentState
-    ?.map((alignmentData: Alignment) => {
-      return alignmentData.links.reduce((accumulator, singleAlignment) => {
-        const srcWordsList = _.uniqWith(
-          generateWordListFromCorpusContainerAndLink(
-            sourceContainer,
-            singleAlignment,
-            'sources'
-          ),
-          _.isEqual
-        ).sort();
-        const tgtWordsList = _.uniqWith(
-          generateWordListFromCorpusContainerAndLink(
-            targetContainer,
-            singleAlignment,
-            'targets'
-          ),
-          _.isEqual
-        ).sort();
-        const uniqueAlignedWords = [...srcWordsList, ...tgtWordsList];
+): NormalizedTextToAlignmentLink => {
+  const linkMap = links.reduce((accumulator, singleAlignment) => {
+    const srcWordsList = _.uniqWith(
+      generateWordListFromCorpusContainerAndLink(
+        sourceContainer,
+        singleAlignment,
+        'sources'
+      ),
+      _.isEqual
+    ).sort();
+    const tgtWordsList = _.uniqWith(
+      generateWordListFromCorpusContainerAndLink(
+        targetContainer,
+        singleAlignment,
+        'targets'
+      ),
+      _.isEqual
+    ).sort();
+    const uniqueAlignedWords = [...srcWordsList, ...tgtWordsList];
 
-        const alignedWordsString = uniqueAlignedWords.sort().join(',');
+    const alignedWordsString = uniqueAlignedWords.sort().join(',');
 
-        if (!accumulator[alignedWordsString]) {
-          accumulator[alignedWordsString] = [];
-        }
+    if (!accumulator[alignedWordsString]) {
+      accumulator[alignedWordsString] = [];
+    }
 
-        accumulator[alignedWordsString].push(singleAlignment);
-        return accumulator;
-      }, {} as { [key: string]: Link[] });
-    })
-    ?.reduce((accumulator, linkMap) => {
-      Object.keys(linkMap)
-        .filter((key) => !!linkMap[key] && Array.isArray(linkMap[key]))
-        .forEach((key) => {
-          if (!accumulator[key]) {
-            accumulator[key] = linkMap[key];
-          } else {
-            linkMap[key].forEach((link) => accumulator[key].push(link));
-          }
-        });
-      return accumulator;
-    }, {} as NormalizedTextToAlignmentLink);
+    accumulator[alignedWordsString].push(singleAlignment);
+    return accumulator;
+  }, {} as { [key: string]: Link[] });
+
+  const accumulator = {} as NormalizedTextToAlignmentLink;
+
+  Object.keys(linkMap)
+    .filter((key) => !!linkMap[key] && Array.isArray(linkMap[key]))
+    .forEach((key) => {
+      if (!accumulator[key]) {
+        accumulator[key] = linkMap[key];
+      } else {
+        linkMap[key].forEach((link) => accumulator[key].push(link));
+      }
+    });
+  return accumulator;
+};
 
 /**
  * generates a list of pivot words with aligned words and alignment links

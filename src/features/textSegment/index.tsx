@@ -176,34 +176,6 @@ export const TextSegment = ({
         .includes(state.alignment.present.inProgressLink.id)
   );
 
-  // print state
-  useEffect(() => {
-    console.log(
-      `state ${word.side}\n '${BCVWP.parseFromString(
-        word.id
-      ).toHumanReadableString()}'`,
-      {
-        readonly,
-        isHovered,
-        isRelatedToCurrentlyHovered,
-        mode,
-        isLinked,
-        isInvolved,
-        isMemberOfMultipleAlignments,
-      }
-    );
-  }, [
-    word.id,
-    word.side,
-    readonly,
-    isHovered,
-    isRelatedToCurrentlyHovered,
-    mode,
-    isLinked,
-    isInvolved,
-    isMemberOfMultipleAlignments,
-  ]);
-
   if (!word) {
     return <span>{'ERROR'}</span>;
   }

@@ -17,12 +17,14 @@ import {
   generateListOfNavigablePivotWords,
   generatePivotWordsMap,
 } from './concordanceViewHelpers';
+import { AppContext } from '../../App';
 
 export type WordSource = 'source' | 'target';
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
+  const { projectState } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
   const [sourceContainer, setSourceContainer] = useState(
     null as CorpusContainer | null
@@ -142,7 +144,7 @@ export const ConcordanceView = () => {
       );
 
       const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
-        [],
+        projectState?.linksTable?.getAll() ?? [],
         sourceContainer,
         targetContainer
       );
