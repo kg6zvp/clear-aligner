@@ -58,7 +58,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord1
+          word: targetWord1,
         })
       );
 
@@ -87,7 +87,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord1
+          word: targetWord1,
         })
       );
 
@@ -112,7 +112,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord1
+          word: targetWord1,
         })
       );
 
@@ -141,7 +141,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord1
+          word: targetWord1,
         })
       );
 
@@ -170,7 +170,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: sourceWord1
+          word: sourceWord1,
         })
       );
 
@@ -198,7 +198,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord1
+          word: targetWord1,
         })
       );
 
@@ -227,7 +227,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: sourceWord1
+          word: sourceWord1,
         })
       );
 
@@ -264,7 +264,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord1
+          word: targetWord1,
         })
       );
     });
@@ -299,7 +299,7 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word: targetWord2
+          word: targetWord2,
         })
       );
     });
@@ -340,14 +340,13 @@ describe('alignmentSlice reducer', () => {
         previousState,
         toggleTextSegment({
           foundRelatedLinks: [],
-          word:
-            {
-              id: 'leb_4',
-              corpusId: 'leb',
-              side: 'targets',
-              text: 'some word',
-              position: 4,
-            }
+          word: {
+            id: 'leb_4',
+            corpusId: 'leb',
+            side: 'targets',
+            text: 'some word',
+            position: 4,
+          },
         })
       );
 
@@ -392,14 +391,13 @@ describe('alignmentSlice reducer', () => {
           previousState,
           toggleTextSegment({
             foundRelatedLinks: [],
-            word:
-              {
-                id: 'nvi_6',
-                corpusId: 'nvi',
-                side: 'sources',
-                text: 'some word',
-                position: 6,
-              }
+            word: {
+              id: 'nvi_6',
+              corpusId: 'nvi',
+              side: 'sources',
+              text: 'some word',
+              position: 6,
+            },
           })
         );
       } catch (error) {
@@ -445,7 +443,7 @@ describe('alignmentSlice reducer', () => {
             // role: CorpusRole.Target,
             text: 'asdf',
             position: 3,
-          }
+          },
         })
       );
 

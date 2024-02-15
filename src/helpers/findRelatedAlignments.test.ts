@@ -42,6 +42,5 @@ describe('findRelatedAlignments', () => {
     expect(testAlignments.length).toBe(2);
   });
 
-  it('filters Link by Word', () => {
-  });
+  it('filters Link by Word', () => {});
 });

@@ -26,8 +26,7 @@ export class VirtualTable {
     if (!suppressOnUpdate) {
       this.lastUpdate = Date.now();
     }
-  }
+  };
 }
 
 // Table factories
-

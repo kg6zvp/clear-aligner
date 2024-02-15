@@ -14,26 +14,34 @@ export const initialState: AlignmentState = {
 };
 
 export const selectAlignmentMode = (state: {
-  app: AppState,
-  alignment: StateWithHistory<AlignmentState>,
-  textSegmentHover: TextSegmentState
+  app: AppState;
+  alignment: StateWithHistory<AlignmentState>;
+  textSegmentHover: TextSegmentState;
 }): AlignmentMode => {
   const { inProgressLink } = state.alignment.present;
   if (!inProgressLink) {
     return AlignmentMode.CleanSlate;
   }
-  if (inProgressLink.id) { // edit
-    if (inProgressLink.sources.length > 0 && inProgressLink.targets.length > 0) {
+  if (inProgressLink.id) {
+    // edit
+    if (
+      inProgressLink.sources.length > 0 &&
+      inProgressLink.targets.length > 0
+    ) {
       return AlignmentMode.Edit;
     }
     return AlignmentMode.PartialEdit;
-  } else { // create
-    if (inProgressLink.sources.length > 0 && inProgressLink.targets.length > 0) {
+  } else {
+    // create
+    if (
+      inProgressLink.sources.length > 0 &&
+      inProgressLink.targets.length > 0
+    ) {
       return AlignmentMode.Create;
     }
     return AlignmentMode.PartialCreate;
   }
-}
+};
 
 const alignmentSlice = createSlice({
   name: 'alignment',
@@ -43,14 +51,17 @@ const alignmentSlice = createSlice({
       state.inProgressLink = action.payload;
     },
 
-    toggleTextSegment: (state, action: PayloadAction<{ foundRelatedLinks: Link[], word: Word }>) => {
-      const relatedLink = action.payload.foundRelatedLinks.find(_ => true);
+    toggleTextSegment: (
+      state,
+      action: PayloadAction<{ foundRelatedLinks: Link[]; word: Word }>
+    ) => {
+      const relatedLink = action.payload.foundRelatedLinks.find((_) => true);
       if (!state.inProgressLink) {
         if (relatedLink) {
           state.inProgressLink = {
             id: relatedLink.id,
             sources: relatedLink.sources,
-            targets: relatedLink.targets
+            targets: relatedLink.targets,
           };
           return;
         } else {
@@ -60,19 +71,29 @@ const alignmentSlice = createSlice({
           };
         }
       }
-      console.log('toggleTextSegment', action.payload.word, action.payload.foundRelatedLinks);
+      console.log(
+        'toggleTextSegment',
+        action.payload.word,
+        action.payload.foundRelatedLinks
+      );
       // There is a partial in-progress link.
       switch (action.payload.word.side) {
         case 'sources':
           if (state.inProgressLink.sources.includes(action.payload.word.id)) {
-            state.inProgressLink.sources.splice(state.inProgressLink.sources.indexOf(action.payload.word.id), 1);
+            state.inProgressLink.sources.splice(
+              state.inProgressLink.sources.indexOf(action.payload.word.id),
+              1
+            );
           } else {
             state.inProgressLink.sources.push(action.payload.word.id);
           }
           break;
         case 'targets':
           if (state.inProgressLink.targets.includes(action.payload.word.id)) {
-            state.inProgressLink.targets.splice(state.inProgressLink.targets.indexOf(action.payload.word.id), 1);
+            state.inProgressLink.targets.splice(
+              state.inProgressLink.targets.indexOf(action.payload.word.id),
+              1
+            );
           } else {
             state.inProgressLink.targets.push(action.payload.word.id);
           }
@@ -86,10 +107,7 @@ const alignmentSlice = createSlice({
   },
 });
 
-export const {
-  loadInProgressLink,
-  toggleTextSegment,
-  resetTextSegments,
-} = alignmentSlice.actions;
+export const { loadInProgressLink, toggleTextSegment, resetTextSegments } =
+  alignmentSlice.actions;
 
 export default alignmentSlice.reducer;

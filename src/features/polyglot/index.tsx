@@ -20,12 +20,16 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
 
-  const corpusViewports: CorpusViewport[]|null = useMemo(() =>
-      containers?.map((container): CorpusViewport => ({
-        containerId: container.id
-      })) ?? null,
+  const corpusViewports: CorpusViewport[] | null = useMemo(
+    () =>
+      containers?.map(
+        (container): CorpusViewport => ({
+          containerId: container.id,
+        })
+      ) ?? null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [containers, containers.length]);
+    [containers, containers.length]
+  );
 
   return (
     <Stack
@@ -44,54 +48,51 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
         </Grid>
       )}
 
-      {corpusViewports
-        && corpusViewports.map(
-            (corpusViewport: CorpusViewport, index: number) => {
-              const corpusId = corpusViewport.containerId;
-              const key = `text_${index}`;
-              const container = containers.find(
-                (c) => c.id === corpusViewport.containerId
-              );
-              if (!container) return <Grid />;
-              return (
-                <Card
-                  onScroll={(e) => {
-                    if (scrollLock) {
-                      const newScrollTop = (e.target as HTMLDivElement)
-                        .scrollTop;
-                      containerViewportRefs.current.forEach((ref) => {
-                        ref.scrollTop = newScrollTop;
-                      });
-                    }
-                  }}
-                  ref={(el) => {
-                    if (el) {
-                      containerViewportRefs.current[index] = el;
-                    }
-                  }}
-                  elevation={2}
-                  className="corpus-container corpus-scroll-container"
-                  key={key}
-                  style={{
-                    flexGrow: '1',
-                    flexBasis: '0',
-                    minWidth: '16rem',
-                    position: 'relative',
-                  }}
-                >
-                  <CorpusComponent
-                    key={corpusId}
-                    viewCorpora={container}
-                    viewportIndex={index}
-                    corpora={
-                      containers.flatMap((container) => container.corpora) ?? []
-                    }
-                    position={position}
-                  />
-                </Card>
-              );
-            }
-          )}
+      {corpusViewports &&
+        corpusViewports.map((corpusViewport: CorpusViewport, index: number) => {
+          const corpusId = corpusViewport.containerId;
+          const key = `text_${index}`;
+          const container = containers.find(
+            (c) => c.id === corpusViewport.containerId
+          );
+          if (!container) return <Grid />;
+          return (
+            <Card
+              onScroll={(e) => {
+                if (scrollLock) {
+                  const newScrollTop = (e.target as HTMLDivElement).scrollTop;
+                  containerViewportRefs.current.forEach((ref) => {
+                    ref.scrollTop = newScrollTop;
+                  });
+                }
+              }}
+              ref={(el) => {
+                if (el) {
+                  containerViewportRefs.current[index] = el;
+                }
+              }}
+              elevation={2}
+              className="corpus-container corpus-scroll-container"
+              key={key}
+              style={{
+                flexGrow: '1',
+                flexBasis: '0',
+                minWidth: '16rem',
+                position: 'relative',
+              }}
+            >
+              <CorpusComponent
+                key={corpusId}
+                viewCorpora={container}
+                viewportIndex={index}
+                corpora={
+                  containers.flatMap((container) => container.corpora) ?? []
+                }
+                position={position}
+              />
+            </Card>
+          );
+        })}
     </Stack>
   );
 };

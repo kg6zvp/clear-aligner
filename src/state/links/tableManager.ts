@@ -15,9 +15,10 @@ export class VirtualTableLinks extends VirtualTable {
     this.targetsIndex = new Map<string, Set<string>>(); // links a normalized BCVWP reference string to a set of link id strings
   }
 
-  save = (link: Link, suppressOnUpdate?: boolean): Link|undefined => {
+  save = (link: Link, suppressOnUpdate?: boolean): Link | undefined => {
     const exists = this.exists(link.id);
-    if (exists) { // remove existing link, sources and targets
+    if (exists) {
+      // remove existing link, sources and targets
       this.remove(link.id);
     }
     try {
@@ -28,7 +29,7 @@ export class VirtualTableLinks extends VirtualTable {
       this.links.set(newLink.id!, newLink);
       this._indexLink(newLink);
       return newLink;
-    } catch(e) {
+    } catch (e) {
       return undefined;
     } finally {
       this.onUpdate(suppressOnUpdate);
@@ -44,28 +45,32 @@ export class VirtualTableLinks extends VirtualTable {
       throw new Error('Cannot index link without an id!');
     }
     // index sources
-    link.sources.map(BCVWP.parseFromString)
+    link.sources
+      .map(BCVWP.parseFromString)
       .map((ref) => ref.toReferenceString())
       .forEach((normalizedRefString) => {
-        const linksOnSource = this.sourcesIndex.get(normalizedRefString) ?? new Set<string>();
+        const linksOnSource =
+          this.sourcesIndex.get(normalizedRefString) ?? new Set<string>();
         linksOnSource.add(link.id!);
         this.sourcesIndex.set(normalizedRefString, linksOnSource);
       });
 
     // index targets
-    link.targets.map(BCVWP.parseFromString)
+    link.targets
+      .map(BCVWP.parseFromString)
       .map((ref) => ref.toReferenceString())
       .forEach((normalizedRefString) => {
-        const linksOnSource = this.targetsIndex.get(normalizedRefString) ?? new Set<string>();
+        const linksOnSource =
+          this.targetsIndex.get(normalizedRefString) ?? new Set<string>();
         linksOnSource.add(link.id!);
         this.targetsIndex.set(normalizedRefString, linksOnSource);
       });
-  }
+  };
 
   exists = (id?: string): boolean => {
     if (!id) return false;
     return this.links.has(id);
-  }
+  };
 
   saveAll = (links: Link[], suppressOnUpdate?: boolean) => {
     try {
@@ -75,35 +80,34 @@ export class VirtualTableLinks extends VirtualTable {
     } finally {
       this.onUpdate(suppressOnUpdate);
     }
-  }
+  };
 
   findLinkIdsByWord = (side: AlignmentSide, wordId: BCVWP): string[] => {
     const refString = wordId.toReferenceString();
     const linkIds: string[] = [];
     switch (side) {
-      case "sources":
-        (this.sourcesIndex.get(refString) ?? new Set<string>())
-          .forEach((id) =>
-            linkIds.push(id));
+      case 'sources':
+        (this.sourcesIndex.get(refString) ?? new Set<string>()).forEach((id) =>
+          linkIds.push(id)
+        );
         break;
-      case "targets":
-        (this.targetsIndex.get(refString) ?? new Set<string>())
-          .forEach((id) =>
-            linkIds.push(id));
+      case 'targets':
+        (this.targetsIndex.get(refString) ?? new Set<string>()).forEach((id) =>
+          linkIds.push(id)
+        );
         break;
     }
     return linkIds;
-  }
+  };
 
   findByWord = (side: AlignmentSide, wordId: BCVWP): Link[] =>
     this.findLinkIdsByWord(side, wordId)
       .map(this.get)
       .filter((v) => !!v) as Link[];
 
-  getAll = (): Link[] =>
-    Array.from(this.links.values());
+  getAll = (): Link[] => Array.from(this.links.values());
 
-  get = (id?: string): Link|undefined => {
+  get = (id?: string): Link | undefined => {
     if (!id) return undefined;
 
     return this.links.get(id);
@@ -127,27 +131,25 @@ export class VirtualTableLinks extends VirtualTable {
   _removeIndexes = (link?: Link) => {
     if (!link || !link.id) return;
 
-    link.sources
-      .forEach((src) => {
-        const associatedLinks = this.sourcesIndex.get(src);
-        if (!associatedLinks) return;
+    link.sources.forEach((src) => {
+      const associatedLinks = this.sourcesIndex.get(src);
+      if (!associatedLinks) return;
 
-        associatedLinks.delete(link.id!);
+      associatedLinks.delete(link.id!);
 
-        if (associatedLinks.size < 1) {
-          this.sourcesIndex.delete(src);
-        }
-      });
-    link.targets
-      .forEach((tgt) => {
-        const associatedLinks = this.targetsIndex.get(tgt);
-        if (!associatedLinks) return;
+      if (associatedLinks.size < 1) {
+        this.sourcesIndex.delete(src);
+      }
+    });
+    link.targets.forEach((tgt) => {
+      const associatedLinks = this.targetsIndex.get(tgt);
+      if (!associatedLinks) return;
 
-        associatedLinks.delete(link.id!);
+      associatedLinks.delete(link.id!);
 
-        if (associatedLinks.size < 1) {
-          this.targetsIndex.delete(tgt);
-        }
-      });
-  }
+      if (associatedLinks.size < 1) {
+        this.targetsIndex.delete(tgt);
+      }
+    });
+  };
 }

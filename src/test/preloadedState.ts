@@ -1,5 +1,4 @@
 import { RootState } from 'test/harness';
-import { AlignmentMode } from '../state/alignmentState';
 
 const preloadedState: RootState = {
   app: { debug: false, theme: 'day', corpusViewports: [], scrollLock: false },
@@ -16,7 +15,7 @@ const preloadedState: RootState = {
     index: 0,
     limit: 1,
   },
-  textSegmentHover: { hovered: null, relatedLinks: [] },
+  textSegmentHover: { hovered: null },
 };
 
 export default preloadedState;

@@ -9,7 +9,6 @@ export enum AlignmentMode {
 }
 
 export interface AlignmentState {
-  inProgressLink: Link|null;
+  inProgressLink: Link | null;
   mode: AlignmentMode;
 }
-

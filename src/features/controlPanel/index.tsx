@@ -17,12 +17,8 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import {
-  resetTextSegments,
-} from 'state/alignment.slice';
-import {
-  toggleScrollLock,
-} from 'state/app.slice';
+import { resetTextSegments } from 'state/alignment.slice';
+import { toggleScrollLock } from 'state/app.slice';
 import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
@@ -44,17 +40,28 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
   const [formats, setFormats] = useState([] as string[]);
 
-  const inProgressLink = useAppSelector((state) => state.alignment.present.inProgressLink);
+  const inProgressLink = useAppSelector(
+    (state) => state.alignment.present.inProgressLink
+  );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
 
-  const linkHasBothSides = useMemo(() => {
-      return Number(inProgressLink?.sources.length) > 0 && Number(inProgressLink?.targets.length) > 0;
+  const linkHasBothSides = useMemo(
+    () => {
+      return (
+        Number(inProgressLink?.sources.length) > 0 &&
+        Number(inProgressLink?.targets.length) > 0
+      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [inProgressLink, inProgressLink?.sources.length, inProgressLink?.targets.length]);
+    [
+      inProgressLink,
+      inProgressLink?.sources.length,
+      inProgressLink?.targets.length,
+    ]
+  );
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
@@ -108,8 +115,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 if (!projectState.linksTable || !inProgressLink) {
                   return;
                 }
-                projectState.linksTable
-                  .save(inProgressLink);
+                projectState.linksTable.save(inProgressLink);
                 dispatch(resetTextSegments());
               }}
             >
@@ -121,7 +127,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant="contained"
-              disabled={!(inProgressLink?.id)}
+              disabled={!inProgressLink?.id}
               onClick={() => {
                 if (!projectState.linksTable || !inProgressLink) {
                   return;
@@ -185,16 +191,15 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 let idx = 0;
                 const chunks = _.chunk(alignmentFile.records, 10_000);
                 for (let chunk of chunks) {
-                  const links = chunk
-                    .map((record) => {
-                      const link: Link = ({
-                        id: record.id ?? `record-${idx}`,
-                        sources: record.source,
-                        targets: record.target
-                      });
-                      ++idx;
-                      return link;
-                    });
+                  const links = chunk.map((record) => {
+                    const link: Link = {
+                      id: record.id ?? `record-${idx}`,
+                      sources: record.source,
+                      targets: record.target,
+                    };
+                    ++idx;
+                    return link;
+                  });
                   try {
                     linksTable.saveAll(links, true);
                   } catch (e) {
@@ -236,57 +241,61 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   return;
                 }
 
-                projectState.linksTable.getAll()
-                      .map((link) => ({
+                projectState.linksTable
+                  .getAll()
+                  .map(
+                    (link) =>
+                      ({
                         id: link.id,
                         source: link.sources,
                         target: link.targets,
-                      } as AlignmentRecord))
-                      .forEach((record) => alignmentExport.records.push(record));
+                      } as AlignmentRecord)
+                  )
+                  .forEach((record) => alignmentExport.records.push(record));
 
-                  // Create alignment file content
-                  const fileContent = JSON.stringify(
-                    alignmentExport,
-                    undefined,
-                    2
-                  );
+                // Create alignment file content
+                const fileContent = JSON.stringify(
+                  alignmentExport,
+                  undefined,
+                  2
+                );
 
-                  // Create a Blob from the data
-                  const blob = new Blob([fileContent], {
-                    type: 'application/json',
-                  });
+                // Create a Blob from the data
+                const blob = new Blob([fileContent], {
+                  type: 'application/json',
+                });
 
-                  // Create a URL for the Blob
-                  const url = URL.createObjectURL(blob);
+                // Create a URL for the Blob
+                const url = URL.createObjectURL(blob);
 
-                  // Create a link element
-                  const link = document.createElement('a');
-                  const currentDate = new Date();
+                // Create a link element
+                const link = document.createElement('a');
+                const currentDate = new Date();
 
-                  // Set the download attribute and file name
-                  link.download = `alignment_data_${currentDate.getFullYear()}-${String(
-                    currentDate.getMonth() + 1
-                  ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
-                    2,
-                    '0'
-                  )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
-                    currentDate.getMinutes()
-                  ).padStart(2, '0')}.json`;
+                // Set the download attribute and file name
+                link.download = `alignment_data_${currentDate.getFullYear()}-${String(
+                  currentDate.getMonth() + 1
+                ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
+                  2,
+                  '0'
+                )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
+                  currentDate.getMinutes()
+                ).padStart(2, '0')}.json`;
 
-                  // Set the href attribute to the generated URL
-                  link.href = url;
+                // Set the href attribute to the generated URL
+                link.href = url;
 
-                  // Append the link to the document
-                  document.body.appendChild(link);
+                // Append the link to the document
+                document.body.appendChild(link);
 
-                  // Trigger a click event on the link
-                  link.click();
+                // Trigger a click event on the link
+                link.click();
 
-                  // Remove the link from the document
-                  document.body.removeChild(link);
+                // Remove the link from the document
+                document.body.removeChild(link);
 
-                  // Revoke the URL to free up resources
-                  URL.revokeObjectURL(url);
+                // Revoke the URL to free up resources
+                URL.revokeObjectURL(url);
               }}
             >
               <FileDownload />
