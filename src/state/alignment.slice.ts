@@ -71,11 +71,6 @@ const alignmentSlice = createSlice({
           };
         }
       }
-      console.log(
-        'toggleTextSegment',
-        action.payload.word,
-        action.payload.foundRelatedLinks
-      );
       // There is a partial in-progress link.
       switch (action.payload.word.side) {
         case 'sources':
