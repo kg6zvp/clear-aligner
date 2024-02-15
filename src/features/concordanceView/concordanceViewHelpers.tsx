@@ -1,5 +1,4 @@
 import {
-  Alignment,
   AlignmentSide,
   CorpusContainer,
   Link,

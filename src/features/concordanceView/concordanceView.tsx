@@ -165,7 +165,11 @@ export const ConcordanceView = () => {
       setLoading(true);
       void loadPivotWordData();
     }
-  }, [
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+    projectState?.linksTable,
+    projectState?.linksTable?.lastUpdate,
     wordSource,
     sourceContainer,
     targetContainer,

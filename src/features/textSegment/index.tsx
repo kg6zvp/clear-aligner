@@ -1,4 +1,4 @@
-import React, { ReactElement, useContext, useEffect, useMemo } from 'react';
+import React, { ReactElement, useContext, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
@@ -13,7 +13,6 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
-import BCVWP from '../bcvwp/BCVWPSupport';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
