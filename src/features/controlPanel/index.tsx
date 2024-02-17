@@ -185,11 +185,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 });
 
                 // convert into an appropriate object
+                console.time('Loaded from file');
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
+                console.timeEnd('Loaded from file');
 
                 // override the alignments from alignment file
                 let idx = 0;
                 const chunks = _.chunk(alignmentFile.records, 10_000);
+                console.time('Processed chunk');
                 for (let chunk of chunks) {
                   const links = chunk.map((record) => {
                     const link: Link = {
@@ -205,7 +208,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   } catch (e) {
                     console.error('e', e);
                   }
+                  console.timeLog('Processed chunk', idx);
                 }
+                console.timeEnd('Processed chunk');
                 linksTable.onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
