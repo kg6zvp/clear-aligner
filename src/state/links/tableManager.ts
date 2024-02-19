@@ -2,7 +2,6 @@ import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { VirtualTable } from '../databaseManagement';
 import { v4 as uuidv4 } from 'uuid';
-import _ from 'lodash';
 
 export class VirtualTableLinks extends VirtualTable {
   links: Map<string, Link>;

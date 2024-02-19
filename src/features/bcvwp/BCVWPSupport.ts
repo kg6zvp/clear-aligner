@@ -118,9 +118,10 @@ export default class BCVWP {
   }
 
   static sanitize(reference: string): string {
-    return !!reference.trim().match(/^[onON]\d/)
-      ? reference.trim().substring(1)
-      : reference.trim();
+    const trimmed = reference.trim();
+    return !!trimmed.match(/^[onON]\d/)
+      ? trimmed.substring(1)
+      : trimmed;
   }
 
   static parseFromString(reference: string): BCVWP {

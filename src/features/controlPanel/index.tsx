@@ -187,25 +187,21 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
 
+                const chunkSize = 10_000;
                 // override the alignments from alignment file
-                let idx = 0;
-                const chunks = _.chunk(alignmentFile.records, 10_000);
-                for (let chunk of chunks) {
-                  const links = chunk.map((record) => {
-                    const link: Link = {
-                      id: record.id ?? `record-${idx}`,
-                      sources: record.source,
-                      targets: record.target,
-                    };
-                    ++idx;
-                    return link;
+                _.chunk(alignmentFile.records, chunkSize)
+                  .forEach((chunk, chunkIdx) => {
+                    const links = chunk.map((record, recordIdx) => ({
+                        id: record.id ?? `record-${(chunkIdx*chunkSize) + (recordIdx+1)}`,
+                        sources: record.source,
+                        targets: record.target,
+                      }));
+                    try {
+                      linksTable.saveAll(links, true);
+                    } catch (e) {
+                      console.error('e', e);
+                    }
                   });
-                  try {
-                    linksTable.saveAll(links, true);
-                  } catch (e) {
-                    console.error('e', e);
-                  }
-                }
                 linksTable.onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
