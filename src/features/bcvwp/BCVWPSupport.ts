@@ -33,6 +33,8 @@ export default class BCVWP {
    */
   part?: number;
 
+  referenceString?: string;
+
   constructor(
     book?: number,
     chapter?: number,
@@ -60,17 +62,19 @@ export default class BCVWP {
   }
 
   toReferenceString(): string {
+    if (this.referenceString) return this.referenceString;
     const bookFormet = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2 });
     const chapterFormat = Intl.NumberFormat('en-US', {
       minimumIntegerDigits: 3,
     });
     const verseFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
     const wordFormat = Intl.NumberFormat('en-US', { minimumIntegerDigits: 3 });
-    return `${this.book ? bookFormet.format(this.book) : '  '}${
+    this.referenceString = `${this.book ? bookFormet.format(this.book) : '  '}${
       this.chapter ? chapterFormat.format(this.chapter) : '   '
     }${this.verse ? verseFormat.format(this.verse) : '   '}${
       this.word ? wordFormat.format(this.word) : '   '
     }${this.word && this.part ? this.part ?? 1 : ''}`;
+    return this.referenceString;
   }
 
   getBookInfo(): BookInfo | undefined {

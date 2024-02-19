@@ -2,17 +2,18 @@ import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { VirtualTable } from '../databaseManagement';
 import { v4 as uuidv4 } from 'uuid';
+import _ from 'lodash';
 
 export class VirtualTableLinks extends VirtualTable {
   links: Map<string, Link>;
-  sourcesIndex: Map<string, Set<string>>;
-  targetsIndex: Map<string, Set<string>>;
+  sourcesIndex: Map<string, string[]>;
+  targetsIndex: Map<string, string[]>;
 
   constructor() {
     super();
     this.links = new Map<string, Link>();
-    this.sourcesIndex = new Map<string, Set<string>>(); // links a normalized BCVWP reference string to a set of link id strings
-    this.targetsIndex = new Map<string, Set<string>>(); // links a normalized BCVWP reference string to a set of link id strings
+    this.sourcesIndex = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
+    this.targetsIndex = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
   }
 
   save = (link: Link, suppressOnUpdate?: boolean): Link | undefined => {
@@ -50,8 +51,11 @@ export class VirtualTableLinks extends VirtualTable {
       .map((ref) => ref.toReferenceString())
       .forEach((normalizedRefString) => {
         const linksOnSource =
-          this.sourcesIndex.get(normalizedRefString) ?? new Set<string>();
-        linksOnSource.add(link.id!);
+          this.sourcesIndex.get(normalizedRefString) ?? [];
+        if (linksOnSource.includes(link.id!)) {
+          return;
+        }
+        linksOnSource.push(link.id!);
         this.sourcesIndex.set(normalizedRefString, linksOnSource);
       });
 
@@ -60,10 +64,13 @@ export class VirtualTableLinks extends VirtualTable {
       .map(BCVWP.parseFromString)
       .map((ref) => ref.toReferenceString())
       .forEach((normalizedRefString) => {
-        const linksOnSource =
-          this.targetsIndex.get(normalizedRefString) ?? new Set<string>();
-        linksOnSource.add(link.id!);
-        this.targetsIndex.set(normalizedRefString, linksOnSource);
+        const linksOnTarget =
+          this.targetsIndex.get(normalizedRefString) ?? [];
+        if (linksOnTarget.includes(link.id!)) {
+          return;
+        }
+        linksOnTarget.push(link.id!);
+        this.targetsIndex.set(normalizedRefString, linksOnTarget);
       });
   };
 
@@ -135,20 +142,24 @@ export class VirtualTableLinks extends VirtualTable {
       const associatedLinks = this.sourcesIndex.get(src);
       if (!associatedLinks) return;
 
-      associatedLinks.delete(link.id!);
+      const newAssociatedLinks = associatedLinks.filter((v) => v !== link.id!);
 
-      if (associatedLinks.size < 1) {
+      if (newAssociatedLinks.length < 1) {
         this.sourcesIndex.delete(src);
+      } else {
+        this.sourcesIndex.set(src, newAssociatedLinks);
       }
     });
     link.targets.forEach((tgt) => {
       const associatedLinks = this.targetsIndex.get(tgt);
       if (!associatedLinks) return;
 
-      associatedLinks.delete(link.id!);
+      const newAssociatedLinks = associatedLinks.filter((v) => v !== link.id!);
 
-      if (associatedLinks.size < 1) {
+      if (associatedLinks.length < 1) {
         this.targetsIndex.delete(tgt);
+      } else {
+        this.targetsIndex.set(tgt, newAssociatedLinks);
       }
     });
   };

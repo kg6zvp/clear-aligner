@@ -204,7 +204,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                     return link;
                   });
                   try {
+                    console.time('saveAll');
                     linksTable.saveAll(links, true);
+                    console.timeEnd('saveAll');
                   } catch (e) {
                     console.error('e', e);
                   }
