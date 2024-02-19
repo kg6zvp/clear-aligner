@@ -117,13 +117,17 @@ export default class BCVWP {
     );
   }
 
+  static sanitize(reference: string): string {
+    return !!reference.trim().match(/^[onON]\d/)
+      ? reference.trim().substring(1)
+      : reference.trim();
+  }
+
   static parseFromString(reference: string): BCVWP {
     if (!BCVWP.isValidString(reference)) {
       throw new Error(`Illegal reference string given to parser: ${reference}`);
     }
-    const sanitized = !!reference.trim().match(/^[onON]\d/)
-      ? reference.trim().substring(1)
-      : reference.trim();
+    const sanitized = BCVWP.sanitize(reference);
     const bookString = sanitized.substring(0, 2);
     const chapterString =
       sanitized.length >= 5 ? sanitized.substring(2, 5) : undefined;

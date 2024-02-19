@@ -47,8 +47,7 @@ export class VirtualTableLinks extends VirtualTable {
     }
     // index sources
     link.sources
-      .map(BCVWP.parseFromString)
-      .map((ref) => ref.toReferenceString())
+      .map(BCVWP.sanitize)
       .forEach((normalizedRefString) => {
         const linksOnSource =
           this.sourcesIndex.get(normalizedRefString) ?? [];
@@ -61,8 +60,7 @@ export class VirtualTableLinks extends VirtualTable {
 
     // index targets
     link.targets
-      .map(BCVWP.parseFromString)
-      .map((ref) => ref.toReferenceString())
+      .map(BCVWP.sanitize)
       .forEach((normalizedRefString) => {
         const linksOnTarget =
           this.targetsIndex.get(normalizedRefString) ?? [];
