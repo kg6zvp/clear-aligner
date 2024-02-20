@@ -16,6 +16,8 @@ import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
 import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
+// @ts-ignore
+import BSB from 'tsv/target_BSB_new.tsv'
 
 let isInitialized: boolean = false;
 
@@ -63,11 +65,11 @@ const parseTsvByFileType = async (
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (punctuationFilter.includes(values[headerMap['text']])) {
+        if (punctuationFilter.includes(values[headerMap['token']])) {
           // skip punctuation
           return accumulator;
         }
-
+        // debugger;
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['identifier']];
         if (!BCVWP.isValidString(id)) {
@@ -78,7 +80,7 @@ const parseTsvByFileType = async (
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['text']],
+          text: values[headerMap['token']],
           position: pos,
         };
 
@@ -180,30 +182,7 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(maculaHebOT);
 
-    // YLT Old Testament
-    let wlcYltOt: Corpus = {
-      id: 'wlc-ylt',
-      name: 'YLT',
-      fullName: 'YLT Old Testament',
-      language: {
-        code: 'en',
-        textDirection: 'ltr',
-      },
-      words: [],
-      wordsByVerse: {},
-      books: {},
-    };
-    const wlcYltOtWords = await parseTsvByFileType(
-      WLC_OT_YLT_TSV,
-      wlcYltOt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    wlcYltOt = {
-      ...wlcYltOt,
-      ...wlcYltOtWords,
-    };
-    putVersesInCorpus(wlcYltOt);
+
 
     // SBL GNT
     let sblGnt: Corpus = {
@@ -231,10 +210,12 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(sblGnt);
 
-    let na27Ylt: Corpus = {
-      id: 'na27-YLT',
-      name: 'YLT',
-      fullName: "Young's Literal Translation text New Testament",
+
+
+    let bsbCorp: Corpus = {
+      id: 'bsb',
+      name: 'bsb',
+      fullName: "Bsb",
       language: {
         code: 'eng',
         textDirection: 'ltr',
@@ -244,25 +225,26 @@ export const getAvailableCorporaContainers = async (): Promise<
       books: {},
     };
 
-    const na27Words = await parseTsvByFileType(
-      NA27_YLT,
-      na27Ylt,
+    const bsbWords = await parseTsvByFileType(
+      BSB,
+      bsbCorp,
       'targets',
       CorpusFileFormat.TSV_TARGET
     );
-    na27Ylt = {
-      ...na27Ylt,
-      ...na27Words,
+    bsbCorp = {
+      ...bsbCorp,
+      ...bsbWords,
     };
-    putVersesInCorpus(na27Ylt);
+    putVersesInCorpus(bsbCorp);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
       sblGnt,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      wlcYltOt,
-      na27Ylt,
+     // wlcYltOt,
+      // na27Ylt,
+      bsbCorp
     ]);
 
     availableCorpora.push(sourceContainer);
