@@ -15,8 +15,6 @@ import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
 // @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
-import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
-// @ts-ignore
 import BSB from 'tsv/target_BSB_new.tsv'
 
 let isInitialized: boolean = false;
@@ -54,7 +52,7 @@ const parseTsvByFileType = async (
   const wordsByVerse: Record<string, Verse> = {};
 
   header.split('\t').forEach((header, idx) => {
-    headerMap[header] = idx;
+         headerMap[header] = idx;
   });
 
   const reducedWords = rows.reduce((accumulator, row) => {
@@ -65,28 +63,39 @@ const parseTsvByFileType = async (
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (punctuationFilter.includes(values[headerMap['token']])) {
+         if (punctuationFilter.includes(values[headerMap['token']])) {
+
           // skip punctuation
           return accumulator;
         }
         // debugger;
         // remove redundant 'o'/'n' qualifier
-        id = values[headerMap['identifier']];
+        id = values[headerMap['identifier']]?values[headerMap['identifier']]:values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
           return accumulator;
         }
-        pos = +id.substring(8, 11); // grab word position
+
+      //  if(sourceVerse){
+        //  console.log('sv',+sourceVerse.substring(8, 11))
+       //   console.log('id',+id.substring(8, 11))
+          //pos = +sourceVerse.substring(8, 11)
+      //  }else {
+          pos = +id.substring(8, 11); // grab word position
+       // }
+
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['token']],
+          text: values[headerMap['text']],
           position: pos,
-        };
 
+        };
         verse = wordsByVerse[id.substring(0, 8)] || {};
+        console.log(verse)
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
+          sourceVerse:values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
@@ -176,6 +185,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       'sources',
       CorpusFileFormat.TSV_MACULA
     );
+
     maculaHebOT = {
       ...maculaHebOT,
       ...maculaHebOTWords,
@@ -210,12 +220,35 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(sblGnt);
 
+    let na27Ylt: Corpus = {
+      id: 'na27-YLT',
+      name: 'YLT',
+      fullName: "Young's Literal Translation text New Testament",
+      language: {
+        code: 'eng',
+        textDirection: 'ltr',
+      },
+      words: [],
+      wordsByVerse: {},
+      books: {},
+    };
 
+    const na27Words = await parseTsvByFileType(
+      NA27_YLT,
+      na27Ylt,
+      'targets',
+      CorpusFileFormat.TSV_TARGET
+    );
+    na27Ylt = {
+      ...na27Ylt,
+      ...na27Words,
+    };
+    //putVersesInCorpus(na27Ylt);
 
     let bsbCorp: Corpus = {
       id: 'bsb',
-      name: 'bsb',
-      fullName: "Bsb",
+      name: 'BSB',
+      fullName: "BSB",
       language: {
         code: 'eng',
         textDirection: 'ltr',
@@ -231,10 +264,12 @@ export const getAvailableCorporaContainers = async (): Promise<
       'targets',
       CorpusFileFormat.TSV_TARGET
     );
+
     bsbCorp = {
       ...bsbCorp,
       ...bsbWords,
     };
+
     putVersesInCorpus(bsbCorp);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
@@ -243,7 +278,7 @@ export const getAvailableCorporaContainers = async (): Promise<
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
      // wlcYltOt,
-      // na27Ylt,
+       //na27Ylt,
       bsbCorp
     ]);
 

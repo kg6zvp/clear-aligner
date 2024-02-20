@@ -37,6 +37,7 @@ export interface CorpusViewport {
 
 export interface Verse {
   bcvId: BCVWP;
+  sourceVerse?:string;
   citation: string; // ${chapter}:${verse}
   words: Word[];
 }
