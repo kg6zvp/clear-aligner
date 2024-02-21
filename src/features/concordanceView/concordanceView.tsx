@@ -17,13 +17,14 @@ import {
   generateListOfNavigablePivotWords,
   generatePivotWordsMap,
 } from './concordanceViewHelpers';
-import { useAppSelector } from 'app/hooks';
+import { AppContext } from '../../App';
 
 export type WordSource = 'source' | 'target';
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
+  const { projectState } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
   const [sourceContainer, setSourceContainer] = useState(
     null as CorpusContainer | null
@@ -119,10 +120,6 @@ export const ConcordanceView = () => {
     void loadCorpora();
   }, [setSourceContainer, setTargetContainer]);
 
-  const alignmentState = useAppSelector((state) => {
-    return state.alignment.present.alignments;
-  });
-
   /**
    * create navigable tree structure of pivot words with alignment links as the leaf nodes
    */
@@ -147,7 +144,7 @@ export const ConcordanceView = () => {
       );
 
       const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
-        alignmentState,
+        projectState?.linksTable?.getAll() ?? [],
         sourceContainer,
         targetContainer
       );
@@ -164,16 +161,15 @@ export const ConcordanceView = () => {
       setLoading(false);
     };
 
-    if (!alignmentState || alignmentState.length < 1) {
-      setLoading(false);
-      return;
-    }
     if (sourceContainer && targetContainer && wordSource) {
       setLoading(true);
       void loadPivotWordData();
     }
-  }, [
-    alignmentState,
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+    projectState?.linksTable,
+    projectState?.linksTable?.lastUpdate,
     wordSource,
     sourceContainer,
     targetContainer,

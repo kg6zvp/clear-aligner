@@ -1,15 +1,19 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useContext, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
-import { toggleTextSegment, AlignmentMode } from 'state/alignment.slice';
-import { hover, relatedAlignments } from 'state/textSegmentHover.slice';
-import { Alignment, Word, Link, LanguageInfo } from 'structs';
+import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
+import { hover } from 'state/textSegmentHover.slice';
+import { LanguageInfo, Word } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
+import { AppContext } from '../../App';
+import { AlignmentMode } from '../../state/alignmentState';
+import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -40,7 +44,7 @@ const computeDecoration = (
   isMemberOfMultipleAlignments: boolean
 ): string => {
   let decoration = '';
-  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Select) {
+  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Create || mode === AlignmentMode.PartialCreate || mode === AlignmentMode.PartialEdit) {
     if (isLinked) {
       // Prevents previously linked segments being added to other links.
       decoration += ' locked';
@@ -78,166 +82,113 @@ export const TextSegment = ({
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
+  const { projectState } = useContext(AppContext);
 
-  const alignments = useAppSelector((state) => {
-    return state.alignment.present.alignments;
-  });
-
-  const mode = useAppSelector((state) => {
-    return state.alignment.present.mode;
-  });
+  const mode = useAppSelector(selectAlignmentMode); // get alignment mode
 
   const isHovered = useAppSelector(
     (state) =>
-      state.textSegmentHover.hovered?.id === word.id &&
-      state.textSegmentHover.hovered?.corpusId === word.corpusId
+      state.textSegmentHover.hovered?.side === word.side &&
+      state.textSegmentHover.hovered?.id === word.id
   );
 
-  const isMemberOfMultipleAlignments = useAppSelector((state) => {
-    const relatedAlignments = state.alignment.present.alignments.filter(
-      (_) => true
-    );
-    return relatedAlignments.length > 1;
-  });
-
-  const isSelected = Boolean(
-    useAppSelector((state) => {
-      if (readonly || onlyLinkIds) {
-        return false;
-      }
-      return (
-        (word.side === 'sources' &&
-          state.alignment.present.inProgressLink?.sources.some(
-            (source) => source === word.id
-          )) ||
-        (word.side === 'targets' &&
-          state.alignment.present.inProgressLink?.targets.some(
-            (target) => target === word.id
-          ))
-      );
-    })
+  const currentlyHovered = useAppSelector(
+    (state) => state.textSegmentHover.hovered
   );
 
-  const isInProgressLinkMember = Boolean(
-    useAppSelector((state) => {
-      if (readonly || onlyLinkIds) {
-        return false;
-      }
-      return (
-        (word.side === 'sources' &&
-          state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
-        (word.side === 'targets' &&
-          state.alignment.present.inProgressLink?.targets.includes(word.id))
-      );
-    })
-  );
-
-  const isRelated = Boolean(
-    useAppSelector((state) => {
-      if (word) {
-        const relatedAlignment = state.textSegmentHover.relatedAlignments.find(
-          (_: Alignment) => true
+  const foundRelatedLinks = useMemo(
+    () => {
+      const related = findRelatedAlignments(word, projectState.linksTable);
+      if (onlyLinkIds) {
+        return related.filter(
+          (link) => link.id && onlyLinkIds.includes(link.id)
         );
-
-        const relatedLink = relatedAlignment?.links.filter((link: Link) => {
-          if (onlyLinkIds && link.id && !onlyLinkIds.includes(link.id)) {
-            return false;
-          }
-          return (
-            (word.side === 'sources' && link.sources.includes(word.id)) ||
-            (word.side === 'targets' && link.targets.includes(word.id))
-          );
-        });
-
-        return Boolean(relatedLink?.length);
       }
-    })
+      return related;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      word,
+      projectState.linksTable,
+      projectState.linksTable?.lastUpdate,
+      onlyLinkIds,
+      onlyLinkIds?.length,
+    ]
   );
 
-  const link = useAppSelector((state) => {
-    const inProgressLink = state.alignment.present.inProgressLink;
+  const isMemberOfMultipleAlignments = useMemo(
+    () => foundRelatedLinks.length > 1,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [foundRelatedLinks.length]
+  );
 
-    const contextualAlignment = state.alignment.present.alignments.find(
-      (_: Alignment) => !!inProgressLink
-    );
-
-    let foundLink = null;
-
-    if (contextualAlignment) {
-      if (word) {
-        for (const link of contextualAlignment.links) {
-          if (
-            (word.side === 'sources' && link.sources.includes(word.id)) ||
-            (word.side === 'targets' && link.targets.includes(word.id))
-          ) {
-            if (!onlyLinkIds || !link.id || onlyLinkIds.includes(link.id)) {
-              foundLink = link;
-            }
-          }
-        }
-      }
-    } else {
-      if (word) {
-        const possibleAlignments = state.alignment.present.alignments.filter(
-          (_: Alignment) => true
+  const isSelectedInEditedLink = useAppSelector((state) => {
+    switch (word.side) {
+      case 'sources':
+        return !!state.alignment.present.inProgressLink?.sources.includes(
+          BCVWP.sanitize(word.id)
         );
-        for (const alignment of possibleAlignments) {
-          for (const link of alignment.links) {
-            if (
-              (word.side === 'sources' && link.sources.includes(word.id)) ||
-              (word.side === 'targets' && link.targets.includes(word.id))
-            ) {
-              if (!onlyLinkIds || !link.id || onlyLinkIds.includes(link.id)) {
-                foundLink = link;
-              }
-            }
-          }
-        }
-      }
+      case 'targets':
+        return !!state.alignment.present.inProgressLink?.targets.includes(
+          BCVWP.sanitize(word.id)
+        );
     }
-    return foundLink;
+    return false;
   });
 
-  const isLinked = Boolean(link);
-
-  const mightBeWorkingOnLink = Boolean(
-    useAppSelector((state) => {
-      const inProgressLink = state.alignment.present.inProgressLink;
-
-      if (inProgressLink && link) {
-        const sourcesIntersection = link.sources.filter((sourceId) => {
-          return inProgressLink.sources.includes(sourceId);
-        });
-        const targetsIntersection = link.targets.filter((targetId) => {
-          return inProgressLink.targets.includes(targetId);
-        });
-
-        return sourcesIntersection.length > 0 || targetsIntersection.length > 0;
-      }
-    })
+  const hoverRelatedLinks = useMemo(
+    () => {
+      // links related to the hovered word
+      if (!currentlyHovered) return [];
+      return findRelatedAlignments(currentlyHovered, projectState.linksTable);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      currentlyHovered,
+      projectState.linksTable,
+      projectState.linksTable?.lastUpdate,
+    ]
   );
 
-  const isCurrentLinkMember = mightBeWorkingOnLink || isInProgressLinkMember;
+  const isRelatedToCurrentlyHovered = useMemo(
+    () => {
+      return _.intersection(foundRelatedLinks, hoverRelatedLinks).length > 0;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      hoverRelatedLinks,
+      hoverRelatedLinks.length,
+      foundRelatedLinks,
+      foundRelatedLinks.length,
+    ]
+  );
 
-  const isInvolved = Boolean(
-    useAppSelector((state) => !!state.alignment.present.inProgressLink)
+  const isLinked = useMemo(
+    () => foundRelatedLinks.length > 0,
+    [foundRelatedLinks.length]
+  );
+
+  const isInvolved = useAppSelector(
+    (state) =>
+      !!state.alignment.present.inProgressLink
   );
 
   if (!word) {
     return <span>{'ERROR'}</span>;
   }
+
   return (
     <React.Fragment>
       <Typography
         paragraph={false}
         component="span"
-        variant={computeVariant(isSelected, isLinked)}
+        variant={computeVariant(isSelectedInEditedLink, isLinked)}
         className={`text-segment${
           readonly ? '.readonly' : ''
         } ${computeDecoration(
           !!readonly,
           isHovered,
-          isRelated,
+          isRelatedToCurrentlyHovered,
           mode,
           isLinked,
           isInvolved,
@@ -253,9 +204,6 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(word));
-                dispatch(
-                  relatedAlignments(findRelatedAlignments(alignments, word))
-                );
               }
         }
         onMouseLeave={
@@ -263,25 +211,12 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(null));
-                dispatch(relatedAlignments([]));
               }
         }
         onClick={
           readonly
             ? undefined
-            : () => {
-                const editOrSelect =
-                  [AlignmentMode.Edit, AlignmentMode.Select].includes(mode) &&
-                  (!isLinked || isCurrentLinkMember) &&
-                  isInvolved;
-                const unLinkedEdit =
-                  mode === AlignmentMode.PartialEdit && !isLinked;
-                const cleanSlate = mode === AlignmentMode.CleanSlate;
-
-                if (editOrSelect || unLinkedEdit || cleanSlate) {
-                  dispatch(toggleTextSegment(word));
-                }
-              }
+            : () => dispatch(toggleTextSegment({ foundRelatedLinks, word }))
         }
       >
         <LocalizedTextDisplay languageInfo={languageInfo}>

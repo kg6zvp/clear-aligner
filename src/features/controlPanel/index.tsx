@@ -1,40 +1,33 @@
-import { ReactElement, useEffect, useRef, useState } from 'react';
 import { ActionCreators } from 'redux-undo';
+import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
 import {
   Button,
   ButtonGroup,
   Tooltip,
   Stack,
 } from '@mui/material';
-
 import {
   AddLink,
   LinkOff,
   RestartAlt,
   Redo,
   Undo,
+  SyncLock,
   FileDownload,
   FileUpload,
 } from '@mui/icons-material';
-
-import cloneDeep from 'lodash/cloneDeep';
-
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import {
-  resetTextSegments,
-  createLink,
-  deleteLink,
-  AlignmentMode,
-  loadAlignments,
-} from 'state/alignment.slice';
-
-import {
   addCorpusViewport
 } from 'state/app.slice';
-import { CorpusContainer } from '../../structs';
+import { resetTextSegments } from 'state/alignment.slice';
+import { toggleScrollLock } from 'state/app.slice';
+import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import BCVWP from '../bcvwp/BCVWPSupport';
+import { AppContext } from '../../App';
+import { VirtualTableLinks } from '../../state/links/tableManager';
+import _ from 'lodash';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -44,45 +37,35 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
+  const { projectState, setProjectState } = useContext(AppContext);
+
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // hide the undo/redo buttons until they can be assessed in CA-32
-  const [isRedoEnabled] = useState(false);
-
   const [formats, setFormats] = useState([] as string[]);
+
+  const inProgressLink = useAppSelector(
+    (state) => state.alignment.present.inProgressLink
+  );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
 
-  const anySegmentsSelected = useAppSelector((state) =>
-    Boolean(state.alignment.present.inProgressLink)
+  const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
+
+  const linkHasBothSides = useMemo(
+    () => {
+      return (
+        Number(inProgressLink?.sources.length) > 0 &&
+        Number(inProgressLink?.targets.length) > 0
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      inProgressLink,
+      inProgressLink?.sources.length,
+      inProgressLink?.targets.length,
+    ]
   );
-
-  const mode = useAppSelector((state) => {
-    return state.alignment.present.mode;
-  });
-
-  const linkHasBothSides = useAppSelector((state) => {
-    return (
-      Number(state.alignment.present.inProgressLink?.sources.length) > 0 &&
-      Number(state.alignment.present.inProgressLink?.targets.length) > 0
-    );
-  });
-
-  const currentCorpusViewports = useAppSelector((state) => {
-    return state.app.corpusViewports;
-  });
-
-  const corporaWithoutViewport = props.containers.filter((container) => {
-    const currentViewportIds = currentCorpusViewports.map(
-      (viewport) => viewport.containerId
-    );
-    return !currentViewportIds.includes(container.id);
-  });
-
-  const alignmentState = useAppSelector((state) => {
-    return state.alignment.present.alignments;
-  });
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
@@ -110,9 +93,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant="contained"
-              disabled={mode !== AlignmentMode.Edit || !linkHasBothSides}
+              disabled={!linkHasBothSides}
               onClick={() => {
-                dispatch(createLink());
+                if (!projectState.linksTable || !inProgressLink) {
+                  return;
+                }
+                projectState.linksTable.save(inProgressLink);
+                dispatch(resetTextSegments());
               }}
             >
               <AddLink />
@@ -123,9 +110,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant="contained"
-              disabled={!(mode === AlignmentMode.Select)}
+              disabled={!inProgressLink?.id}
               onClick={() => {
-                dispatch(deleteLink());
+                if (!projectState.linksTable || !inProgressLink) {
+                  return;
+                }
+                if (inProgressLink?.id) {
+                  const linksTable = projectState.linksTable;
+                  linksTable.remove(inProgressLink.id);
+                  dispatch(resetTextSegments());
+                }
               }}
             >
               <LinkOff />
@@ -147,41 +141,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         </Tooltip>
       </ButtonGroup>
 
-      {
-        /* Undo/Redo  */
-        isRedoEnabled && (
-          <ButtonGroup>
-            <Tooltip title="Undo" arrow describeChild>
-              <span>
-                <Button
-                  disabled={currentCorpusViewports.length === 0}
-                  variant="contained"
-                  onClick={() => {
-                    dispatch(ActionCreators.undo());
-                  }}
-                >
-                  <Undo />
-                </Button>
-              </span>
-            </Tooltip>
-
-            <Tooltip title="Redo" arrow describeChild>
-              <span>
-                <Button
-                  disabled={currentCorpusViewports.length === 0}
-                  variant="contained"
-                  onClick={() => {
-                    dispatch(ActionCreators.redo());
-                  }}
-                >
-                  <Redo />
-                </Button>
-              </span>
-            </Tooltip>
-          </ButtonGroup>
-        )
-      }
-
       <ButtonGroup>
         <Tooltip title="Load Alignment Data" arrow describeChild>
           <span>
@@ -201,36 +160,36 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
+                const linksTable: VirtualTableLinks = new VirtualTableLinks();
+
+                setProjectState({
+                  ...projectState,
+                  linksTable,
+                });
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
 
-                // clone alignment state so that we can mutate
-                const newAlignmentState = cloneDeep(alignmentState);
-
+                const chunkSize = 10_000;
                 // override the alignments from alignment file
-                newAlignmentState![0].links = alignmentFile.records.map(
-                  (record) => {
-                    return {
-                      id: record.id,
-                      sources: record.source
-                        .filter((v) => v)
-                        .map((ref) => BCVWP.parseFromString(ref))
-                        .map((bcv) => bcv.toReferenceString()),
-                      targets: record.target
-                        .filter((v) => v)
-                        .map((ref) => BCVWP.parseFromString(ref))
-                        .map((bcv) => bcv.toReferenceString()),
-                    };
-                  }
-                );
-
-                // dispatch the updated alignment
-                dispatch(loadAlignments(newAlignmentState));
+                _.chunk(alignmentFile.records, chunkSize)
+                  .forEach((chunk, chunkIdx) => {
+                    const links = chunk.map((record, recordIdx) => ({
+                        id: record.id ?? `record-${(chunkIdx*chunkSize) + (recordIdx+1)}`,
+                        sources: record.source,
+                        targets: record.target,
+                      }));
+                    try {
+                      linksTable.saveAll(links, true);
+                    } catch (e) {
+                      console.error('e', e);
+                    }
+                  });
+                linksTable.onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
             <Button
-              disabled={currentCorpusViewports.length === 0}
+              disabled={props.containers.length === 0}
               variant="contained"
               onClick={() => {
                 // delegate file loading to regular file input
@@ -245,11 +204,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         <Tooltip title="Save Alignment Data" arrow describeChild>
           <span>
             <Button
-              disabled={currentCorpusViewports.length === 0}
+              disabled={props.containers.length === 0}
               variant="contained"
               onClick={() => {
-                dispatch(loadAlignments(alignmentState));
-
                 // create starting instance
                 const alignmentExport: AlignmentFile = {
                   type: 'translation',
@@ -259,16 +216,21 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   records: [],
                 };
 
-                const currentAlignment = alignmentState[0];
+                if (!projectState.linksTable) {
+                  return;
+                }
 
-                // ETL alignment links
-                alignmentExport.records = currentAlignment.links.map((link) => {
-                  return {
-                    id: link.id,
-                    source: link.sources,
-                    target: link.targets,
-                  } as AlignmentRecord;
-                });
+                projectState.linksTable
+                  .getAll()
+                  .map(
+                    (link) =>
+                      ({
+                        id: link.id,
+                        source: link.sources,
+                        target: link.targets,
+                      } as AlignmentRecord)
+                  )
+                  .forEach((record) => alignmentExport.records.push(record));
 
                 // Create alignment file content
                 const fileContent = JSON.stringify(
