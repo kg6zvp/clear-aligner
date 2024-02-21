@@ -4,8 +4,9 @@ import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React from 'react';
+import { LimitedToLinks } from '../corpus/verseDisplay';
 
-export interface WordDisplayProps {
+export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
   suppressAfter?: boolean;
   parts?: Word[];
@@ -22,6 +23,7 @@ export interface WordDisplayProps {
 export const WordDisplay = ({
   readonly,
   suppressAfter,
+  onlyLinkIds,
   parts,
   languageInfo,
 }: WordDisplayProps) => {
@@ -44,8 +46,9 @@ export const WordDisplay = ({
         {parts?.map((part) => (
           <React.Fragment key={part?.id}>
             <TextSegment
-              readonly={readonly}
               key={part.id}
+              readonly={readonly}
+              onlyLinkIds={onlyLinkIds}
               word={part}
               languageInfo={languageInfo}
             />
