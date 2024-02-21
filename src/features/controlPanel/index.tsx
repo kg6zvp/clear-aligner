@@ -1,13 +1,10 @@
-import { ReactElement, useRef, useState } from 'react';
+import { ReactElement, useEffect, useRef, useState } from 'react';
 import { ActionCreators } from 'redux-undo';
 import {
   Button,
   ButtonGroup,
   Tooltip,
-  Typography,
   Stack,
-  ToggleButtonGroup,
-  ToggleButton,
 } from '@mui/material';
 
 import {
@@ -16,9 +13,6 @@ import {
   RestartAlt,
   Redo,
   Undo,
-  Add,
-  Remove,
-  SyncLock,
   FileDownload,
   FileUpload,
 } from '@mui/icons-material';
@@ -36,9 +30,7 @@ import {
 } from 'state/alignment.slice';
 
 import {
-  addCorpusViewport,
-  removeCorpusViewport,
-  toggleScrollLock,
+  addCorpusViewport
 } from 'state/app.slice';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
@@ -95,6 +87,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
+   useEffect(() => {
+     if(corporaWithoutViewport.length>0){
+       dispatch(addCorpusViewport({
+             availableCorpora: corporaWithoutViewport.map(
+               (corpus) => corpus.id
+             ),
+           }))
+     }
+   }, [dispatch, corporaWithoutViewport]);
+
   return (
     <Stack
       direction="row"
@@ -103,38 +105,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       alignItems="baseline"
       style={{ marginTop: '16px', marginBottom: '16px' }}
     >
-      <ToggleButtonGroup
-        size="small"
-        value={formats}
-        sx={{
-          display: 'unset',
-        }}
-        // For later.
-        // onChange={(
-        //   event: React.MouseEvent<HTMLElement>,
-        //   newFormats: string[]
-        // ) => {}}
-      >
-        <ToggleButton
-          value="scroll-lock"
-          sx={{
-            height: '36px',
-          }}
-          onClick={() => {
-            if (formats.includes('scroll-lock')) {
-              setFormats(formats.filter((item) => item !== 'scroll-lock'));
-            } else {
-              setFormats(formats.concat(['scroll-lock']));
-            }
-
-            dispatch(toggleScrollLock());
-          }}
-        >
-          <SyncLock />
-        </ToggleButton>
-      </ToggleButtonGroup>
-
-      <ButtonGroup>
+           <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
@@ -345,62 +316,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               }}
             >
               <FileDownload />
-            </Button>
-          </span>
-        </Tooltip>
-      </ButtonGroup>
-
-      <ButtonGroup>
-        <Tooltip
-          placement="top"
-          arrow
-          open={Boolean(
-            !currentCorpusViewports.length && corporaWithoutViewport.length
-          )}
-          title={
-            <>
-              <Typography color="info.light">Click here</Typography>
-              <Typography>to add a corpus viewport.</Typography>
-            </>
-          }
-        >
-          <>
-            <Tooltip
-              title="Add corpus viewport"
-              arrow
-              describeChild
-              disableHoverListener={currentCorpusViewports.length === 0}
-            >
-              <span>
-                <Button
-                  variant="contained"
-                  disabled={!corporaWithoutViewport.length}
-                  onClick={() => {
-                    dispatch(
-                      addCorpusViewport({
-                        availableCorpora: corporaWithoutViewport.map(
-                          (corpus) => corpus.id
-                        ),
-                      })
-                    );
-                  }}
-                >
-                  <Add />
-                </Button>
-              </span>
-            </Tooltip>
-          </>
-        </Tooltip>
-        <Tooltip title="Remove a corpus viewport" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={currentCorpusViewports.length === 0}
-              onClick={() => {
-                dispatch(removeCorpusViewport());
-              }}
-            >
-              <Remove />
             </Button>
           </span>
         </Tooltip>
