@@ -44,7 +44,12 @@ const computeDecoration = (
   isMemberOfMultipleAlignments: boolean
 ): string => {
   let decoration = '';
-  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Create || mode === AlignmentMode.PartialCreate || mode === AlignmentMode.PartialEdit) {
+  if (
+    mode === AlignmentMode.Edit ||
+    mode === AlignmentMode.Create ||
+    mode === AlignmentMode.PartialCreate ||
+    mode === AlignmentMode.PartialEdit
+  ) {
     if (isLinked) {
       // Prevents previously linked segments being added to other links.
       decoration += ' locked';
@@ -169,8 +174,7 @@ export const TextSegment = ({
   );
 
   const isInvolved = useAppSelector(
-    (state) =>
-      !!state.alignment.present.inProgressLink
+    (state) => !!state.alignment.present.inProgressLink
   );
 
   if (!word) {

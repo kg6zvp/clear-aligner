@@ -19,7 +19,7 @@ import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { resetTextSegments } from 'state/alignment.slice';
 import { toggleScrollLock } from 'state/app.slice';
-import { CorpusContainer, Link } from '../../structs';
+import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
@@ -189,19 +189,22 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 const chunkSize = 10_000;
                 // override the alignments from alignment file
-                _.chunk(alignmentFile.records, chunkSize)
-                  .forEach((chunk, chunkIdx) => {
+                _.chunk(alignmentFile.records, chunkSize).forEach(
+                  (chunk, chunkIdx) => {
                     const links = chunk.map((record, recordIdx) => ({
-                        id: record.id ?? `record-${(chunkIdx*chunkSize) + (recordIdx+1)}`,
-                        sources: record.source,
-                        targets: record.target,
-                      }));
+                      id:
+                        record.id ??
+                        `record-${chunkIdx * chunkSize + (recordIdx + 1)}`,
+                      sources: record.source,
+                      targets: record.target,
+                    }));
                     try {
                       linksTable.saveAll(links, true);
                     } catch (e) {
                       console.error('e', e);
                     }
-                  });
+                  }
+                );
                 linksTable.onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />

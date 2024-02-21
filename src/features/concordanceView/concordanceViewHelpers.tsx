@@ -1,9 +1,4 @@
-import {
-  AlignmentSide,
-  CorpusContainer,
-  Link,
-  Word,
-} from '../../structs';
+import { AlignmentSide, CorpusContainer, Link, Word } from '../../structs';
 import {
   AlignedWord,
   LocalizedWordEntry,

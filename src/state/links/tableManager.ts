@@ -25,7 +25,7 @@ export class VirtualTableLinks extends VirtualTable {
       const newLink: Link = {
         id: link.id ?? uuidv4(),
         sources: link.sources.map(BCVWP.sanitize),
-        targets: link.targets.map(BCVWP.sanitize)
+        targets: link.targets.map(BCVWP.sanitize),
       };
       this.links.set(newLink.id!, newLink);
       this._indexLink(newLink);
@@ -46,30 +46,24 @@ export class VirtualTableLinks extends VirtualTable {
       throw new Error('Cannot index link without an id!');
     }
     // index sources
-    link.sources
-      .map(BCVWP.sanitize)
-      .forEach((normalizedRefString) => {
-        const linksOnSource =
-          this.sourcesIndex.get(normalizedRefString) ?? [];
-        if (linksOnSource.includes(link.id!)) {
-          return;
-        }
-        linksOnSource.push(link.id!);
-        this.sourcesIndex.set(normalizedRefString, linksOnSource);
-      });
+    link.sources.map(BCVWP.sanitize).forEach((normalizedRefString) => {
+      const linksOnSource = this.sourcesIndex.get(normalizedRefString) ?? [];
+      if (linksOnSource.includes(link.id!)) {
+        return;
+      }
+      linksOnSource.push(link.id!);
+      this.sourcesIndex.set(normalizedRefString, linksOnSource);
+    });
 
     // index targets
-    link.targets
-      .map(BCVWP.sanitize)
-      .forEach((normalizedRefString) => {
-        const linksOnTarget =
-          this.targetsIndex.get(normalizedRefString) ?? [];
-        if (linksOnTarget.includes(link.id!)) {
-          return;
-        }
-        linksOnTarget.push(link.id!);
-        this.targetsIndex.set(normalizedRefString, linksOnTarget);
-      });
+    link.targets.map(BCVWP.sanitize).forEach((normalizedRefString) => {
+      const linksOnTarget = this.targetsIndex.get(normalizedRefString) ?? [];
+      if (linksOnTarget.includes(link.id!)) {
+        return;
+      }
+      linksOnTarget.push(link.id!);
+      this.targetsIndex.set(normalizedRefString, linksOnTarget);
+    });
   };
 
   exists = (id?: string): boolean => {
