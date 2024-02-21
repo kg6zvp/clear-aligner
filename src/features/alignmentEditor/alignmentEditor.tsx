@@ -23,7 +23,8 @@ export const AlignmentEditor = () => {
   // set current reference to default if none set
   useEffect(() => {
     if (!appCtx.currentReference) {
-      appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
+       //appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
+      appCtx.setCurrentReference(new BCVWP(1, 1, 1)); // set current reference to default
     }
   }, [appCtx, appCtx.currentReference, appCtx.setCurrentReference]);
 
@@ -45,6 +46,8 @@ export const AlignmentEditor = () => {
       const targetCorpora = containers.find(
         (v: CorpusContainer) => v.id === 'target'
       );
+
+      console.log(targetCorpora?.corpora)
 
       setSelectedCorporaContainers(containers);
       setAvailableWords(

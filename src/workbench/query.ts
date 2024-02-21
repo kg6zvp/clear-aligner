@@ -54,17 +54,17 @@ const parseTsvByFileType = async (
   header.split('\t').forEach((header, idx) => {
          headerMap[header] = idx;
   });
+  console.log(fileType)
 
   const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
     let id, pos, word: Word, verse;
-
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
+
         // filter out punctuation in content
          if (punctuationFilter.includes(values[headerMap['token']])) {
-
           // skip punctuation
           return accumulator;
         }
@@ -74,15 +74,9 @@ const parseTsvByFileType = async (
         if (!BCVWP.isValidString(id)) {
           return accumulator;
         }
-
-      //  if(sourceVerse){
-        //  console.log('sv',+sourceVerse.substring(8, 11))
-       //   console.log('id',+id.substring(8, 11))
-          //pos = +sourceVerse.substring(8, 11)
-      //  }else {
-          pos = +id.substring(8, 11); // grab word position
-       // }
-
+        console.log("id",id)
+        pos = +id.substring(8, 11); // grab word position
+        console.log(pos)
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
@@ -92,7 +86,7 @@ const parseTsvByFileType = async (
 
         };
         verse = wordsByVerse[id.substring(0, 8)] || {};
-        console.log(verse)
+       // console.log(verse)
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
           sourceVerse:values[headerMap['source_verse']],
@@ -195,54 +189,54 @@ export const getAvailableCorporaContainers = async (): Promise<
 
 
     // SBL GNT
-    let sblGnt: Corpus = {
-      id: 'sbl-gnt',
-      name: 'SBLGNT',
-      fullName: 'SBL Greek New Testament',
-      language: {
-        code: 'grc',
-        textDirection: 'ltr',
-      },
-      words: [],
-      wordsByVerse: {},
-      books: {},
-    };
+    // let sblGnt: Corpus = {
+    //   id: 'sbl-gnt',
+    //   name: 'SBLGNT',
+    //   fullName: 'SBL Greek New Testament',
+    //   language: {
+    //     code: 'grc',
+    //     textDirection: 'ltr',
+    //   },
+    //   words: [],
+    //   wordsByVerse: {},
+    //   books: {},
+    // };
+    //
+    // const sblWords = await parseTsvByFileType(
+    //   MACULA_SBLGNT,
+    //   sblGnt,
+    //   'sources',
+    //   CorpusFileFormat.TSV_MACULA
+    // );
+    // sblGnt = {
+    //   ...sblGnt,
+    //   ...sblWords,
+    // };
+    // putVersesInCorpus(sblGnt);
 
-    const sblWords = await parseTsvByFileType(
-      MACULA_SBLGNT,
-      sblGnt,
-      'sources',
-      CorpusFileFormat.TSV_MACULA
-    );
-    sblGnt = {
-      ...sblGnt,
-      ...sblWords,
-    };
-    putVersesInCorpus(sblGnt);
-
-    let na27Ylt: Corpus = {
-      id: 'na27-YLT',
-      name: 'YLT',
-      fullName: "Young's Literal Translation text New Testament",
-      language: {
-        code: 'eng',
-        textDirection: 'ltr',
-      },
-      words: [],
-      wordsByVerse: {},
-      books: {},
-    };
-
-    const na27Words = await parseTsvByFileType(
-      NA27_YLT,
-      na27Ylt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    na27Ylt = {
-      ...na27Ylt,
-      ...na27Words,
-    };
+    // let na27Ylt: Corpus = {
+    //   id: 'na27-YLT',
+    //   name: 'YLT',
+    //   fullName: "Young's Literal Translation text New Testament",
+    //   language: {
+    //     code: 'eng',
+    //     textDirection: 'ltr',
+    //   },
+    //   words: [],
+    //   wordsByVerse: {},
+    //   books: {},
+    // };
+    //
+    // const na27Words = await parseTsvByFileType(
+    //   NA27_YLT,
+    //   na27Ylt,
+    //   'targets',
+    //   CorpusFileFormat.TSV_TARGET
+    // );
+    // na27Ylt = {
+    //   ...na27Ylt,
+    //   ...na27Words,
+    // };
     //putVersesInCorpus(na27Ylt);
 
     let bsbCorp: Corpus = {
@@ -274,7 +268,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
-      sblGnt,
+      //sblGnt,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
      // wlcYltOt,
