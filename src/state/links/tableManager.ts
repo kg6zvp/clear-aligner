@@ -23,8 +23,9 @@ export class VirtualTableLinks extends VirtualTable {
     }
     try {
       const newLink: Link = {
-        ...link,
         id: link.id ?? uuidv4(),
+        sources: link.sources.map(BCVWP.sanitize),
+        targets: link.targets.map(BCVWP.sanitize)
       };
       this.links.set(newLink.id!, newLink);
       this._indexLink(newLink);

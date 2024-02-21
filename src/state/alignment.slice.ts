@@ -4,6 +4,7 @@ import { AlignmentMode } from './alignmentState';
 import { AppState } from './app.slice';
 import { TextSegmentState } from './textSegmentHover.slice';
 import { StateWithHistory } from 'redux-undo';
+import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 export interface AlignmentState {
   inProgressLink: Link | null;
@@ -60,8 +61,8 @@ const alignmentSlice = createSlice({
         if (relatedLink) {
           state.inProgressLink = {
             id: relatedLink.id,
-            sources: relatedLink.sources,
-            targets: relatedLink.targets,
+            sources: relatedLink.sources.map(BCVWP.sanitize),
+            targets: relatedLink.targets.map(BCVWP.sanitize),
           };
           return;
         } else {
@@ -71,6 +72,7 @@ const alignmentSlice = createSlice({
           };
         }
       }
+
       // There is a partial in-progress link.
       switch (action.payload.word.side) {
         case 'sources':

@@ -4,7 +4,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { Word, LanguageInfo } from 'structs';
+import { LanguageInfo, Word } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
@@ -13,6 +13,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -43,7 +44,7 @@ const computeDecoration = (
   isMemberOfMultipleAlignments: boolean
 ): string => {
   let decoration = '';
-  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Create) {
+  if (mode === AlignmentMode.Edit || mode === AlignmentMode.Create || mode === AlignmentMode.PartialCreate || mode === AlignmentMode.PartialEdit) {
     if (isLinked) {
       // Prevents previously linked segments being added to other links.
       decoration += ' locked';
@@ -125,11 +126,11 @@ export const TextSegment = ({
     switch (word.side) {
       case 'sources':
         return !!state.alignment.present.inProgressLink?.sources.includes(
-          word.id
+          BCVWP.sanitize(word.id)
         );
       case 'targets':
         return !!state.alignment.present.inProgressLink?.targets.includes(
-          word.id
+          BCVWP.sanitize(word.id)
         );
     }
     return false;
@@ -169,10 +170,7 @@ export const TextSegment = ({
 
   const isInvolved = useAppSelector(
     (state) =>
-      !!state.alignment.present.inProgressLink &&
-      foundRelatedLinks
-        .map(({ id }) => id)
-        .includes(state.alignment.present.inProgressLink.id)
+      !!state.alignment.present.inProgressLink
   );
 
   if (!word) {
