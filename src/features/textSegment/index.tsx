@@ -9,8 +9,9 @@ import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import { LimitedToLinks } from '../corpus/verseDisplay';
 
-export interface TextSegmentProps {
+export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
   word: Word;
   languageInfo?: LanguageInfo;
@@ -72,6 +73,7 @@ export const TextSegment = ({
   readonly,
   word,
   languageInfo,
+  onlyLinkIds,
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -100,6 +102,9 @@ export const TextSegment = ({
 
   const isSelected = Boolean(
     useAppSelector((state) => {
+      if (readonly || onlyLinkIds) {
+        return false;
+      }
       return (
         (word.side === 'sources' &&
           state.alignment.present.inProgressLink?.sources.some(
@@ -115,6 +120,9 @@ export const TextSegment = ({
 
   const isInProgressLinkMember = Boolean(
     useAppSelector((state) => {
+      if (readonly || onlyLinkIds) {
+        return false;
+      }
       return (
         (word.side === 'sources' &&
           state.alignment.present.inProgressLink?.sources.includes(word.id)) ||
@@ -132,6 +140,9 @@ export const TextSegment = ({
         );
 
         const relatedLink = relatedAlignment?.links.filter((link: Link) => {
+          if (onlyLinkIds && link.id && !onlyLinkIds.includes(link.id)) {
+            return false;
+          }
           return (
             (word.side === 'sources' && link.sources.includes(word.id)) ||
             (word.side === 'targets' && link.targets.includes(word.id))
@@ -159,7 +170,9 @@ export const TextSegment = ({
             (word.side === 'sources' && link.sources.includes(word.id)) ||
             (word.side === 'targets' && link.targets.includes(word.id))
           ) {
-            foundLink = link;
+            if (!onlyLinkIds || !link.id || onlyLinkIds.includes(link.id)) {
+              foundLink = link;
+            }
           }
         }
       }
@@ -174,7 +187,9 @@ export const TextSegment = ({
               (word.side === 'sources' && link.sources.includes(word.id)) ||
               (word.side === 'targets' && link.targets.includes(word.id))
             ) {
-              foundLink = link;
+              if (!onlyLinkIds || !link.id || onlyLinkIds.includes(link.id)) {
+                foundLink = link;
+              }
             }
           }
         }

@@ -73,6 +73,7 @@ export const VerseCell = (
         return (
           <VerseDisplay
             key={verse?.bcvId?.toReferenceString() ?? ''}
+            onlyLinkIds={row.row.id ? [ row.row.id ] : []}
             readonly
             verse={verse}
             languageInfo={languageInfo}
