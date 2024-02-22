@@ -1,4 +1,3 @@
-import { ActionCreators } from 'redux-undo';
 import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
 import {
   Button,
@@ -10,20 +9,13 @@ import {
   AddLink,
   LinkOff,
   RestartAlt,
-  Redo,
-  Undo,
-  SyncLock,
   FileDownload,
   FileUpload,
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import {
-  addCorpusViewport
-} from 'state/app.slice';
 import { resetTextSegments } from 'state/alignment.slice';
-import { toggleScrollLock } from 'state/app.slice';
-import { CorpusContainer, Link } from '../../structs';
+import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
@@ -70,15 +62,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
-   useEffect(() => {
-     if(corporaWithoutViewport.length>0){
-       dispatch(addCorpusViewport({
-             availableCorpora: corporaWithoutViewport.map(
-               (corpus) => corpus.id
-             ),
-           }))
-     }
-   }, [dispatch, corporaWithoutViewport]);
 
   return (
     <Stack
