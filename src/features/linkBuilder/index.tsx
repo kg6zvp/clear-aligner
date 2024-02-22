@@ -166,7 +166,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               paddingBottom: '0.5rem',
               color: cssVar('font-color', theme),
             }}
-          >{corpusAtRef?.name}
+          >
             <Typography variant="h6" style={{ textAlign: 'right' }}>
               {corpusAtRef?.name}
             </Typography>
@@ -191,7 +191,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                     }
                   }
                   return (
-                    <span key={`selected_${wordId}`}> {wordId}
+                    <span key={`selected_${wordId}`}>
                       <WordDisplay
                         readonly={true}
                         key={wordId}
