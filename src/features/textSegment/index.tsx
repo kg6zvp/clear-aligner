@@ -208,6 +208,9 @@ export const TextSegment = ({
             ? undefined
             : () => {
                 dispatch(hover(word));
+                if (word.text === 'and') {
+                  console.log('position', word.id);
+                }
               }
         }
         onMouseLeave={

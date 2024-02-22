@@ -1,4 +1,4 @@
-import { Link, DisplayableLink, Verse, CorpusContainer } from '../../structs';
+import { Link, DisplayableLink, Verse, CorpusContainer, AlignmentSide } from '../../structs';
 import {
   DataGrid,
   GridColDef,
@@ -9,7 +9,6 @@ import {
 import { IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import { VerseDisplay } from '../corpus/verseDisplay';
-import { WordSource } from './concordanceView';
 import { createContext, useContext, useMemo } from 'react';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import _ from 'lodash';
@@ -24,7 +23,7 @@ import {
 } from '../../styles/dataGridFixes';
 
 export interface AlignmentTableContextProps {
-  wordSource: WordSource;
+  wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord | null;
 }
@@ -40,11 +39,11 @@ export const VerseCell = (
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const container =
-    tableCtx.wordSource === 'source'
+    tableCtx.wordSource === 'sources'
       ? row.row?.sourceContainer
       : row.row?.targetContainer;
   const verses: Verse[] = _.uniqWith(
-    (tableCtx.wordSource === 'source' ? row.row?.sources : row.row?.targets)
+    (tableCtx.wordSource === 'sources' ? row.row?.sources : row.row?.targets)
       ?.filter(BCVWP.isValidString)
       .map(BCVWP.parseFromString)
       .map((ref) => ref.toTruncatedReferenceString(BCVWPField.Verse)),
@@ -148,7 +147,7 @@ const columns: GridColDef[] = [
 
 export interface AlignmentTableProps {
   sort: GridSortItem | null;
-  wordSource: WordSource;
+  wordSource: AlignmentSide;
   sourceContainer: CorpusContainer | null;
   targetContainer: CorpusContainer | null;
   pivotWord?: PivotWord | null;

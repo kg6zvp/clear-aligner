@@ -65,6 +65,8 @@ const BCVNavigation = ({
     setAvailableBooks(referenceList ?? []);
   };
 
+  //console.log('currentPosition', currentPosition?.toHumanReadableString(), currentPosition?.toReferenceString());
+
   /**
    * asynchronously initialize the book->chapter->verse listings from the given word list
    */

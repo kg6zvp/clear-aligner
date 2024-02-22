@@ -1,68 +1,93 @@
 import { AlignmentSide, CorpusContainer, Link, Word } from '../../structs';
 import {
-  AlignedWord,
+  AlignedWord, FullyResolvedLink,
   LocalizedWordEntry,
-  NormalizedTextToAlignmentLink,
-  NormalizedTextToPivotWord,
-  NormalizedWordsToFrequencyAndLocalization,
-  PivotWord,
+  PivotWord, ResolvedWordEntry
 } from './structs';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import findWord from '../../helpers/findWord';
-import { WordSource } from './concordanceView';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
+import { VirtualTableLinks } from '../../state/links/tableManager';
 
-/**
- * generate words and frequencies from a word source
- * @param wordSource word source to generate words keyed to frequencies and correct language info
- */
-export const generateAllWordsAndFrequencies = (
-  wordSource?: CorpusContainer
-): NormalizedWordsToFrequencyAndLocalization | undefined =>
-  wordSource?.corpora
-    ?.flatMap((corpus) => {
-      return corpus.words
-        .map((word) => word.text)
-        .filter((value) => !!value)
-        .map((text) => ({
-          text,
-          languageInfo: corpus.language,
-        }));
-    })
-    .reduce((accumulator, currentValue) => {
-      const key = currentValue.text.toLowerCase();
-      if (!accumulator[key]) {
-        accumulator[key] = {
-          count: 0,
-          languageInfo: currentValue.languageInfo,
+const fullyResolveLink = (
+  link: Link,
+  sourceContainer: CorpusContainer,
+  targetContainer: CorpusContainer): FullyResolvedLink => {
+  return {
+    ...link,
+    sourceResolvedWords: new Set<ResolvedWordEntry>(
+      link.sources.map((bcvId: string): ResolvedWordEntry|undefined => {
+        const ref = BCVWP.parseFromString(bcvId);
+        const corpus = sourceContainer.corpusAtReference(ref);
+        if (!corpus) return undefined;
+        const word = findWord([ corpus ], ref);
+        if (!word) return undefined;
+        return {
+          word: word,
+          localized: {
+            text: word.text.toLowerCase(),
+            position: word.id,
+            languageInfo: corpus.language
+          }
         };
-      }
-      ++accumulator[key].count;
-      return accumulator;
-    }, {} as NormalizedWordsToFrequencyAndLocalization);
+      })
+      .filter(v => !!v)
+      .map(v => v as ResolvedWordEntry)),
+    targetResolvedWords: new Set<ResolvedWordEntry>(
+      link.targets.map((bcvId: string): ResolvedWordEntry|undefined => {
+        const ref = BCVWP.parseFromString(bcvId);
+        const corpus = targetContainer.corpusAtReference(ref);
+        if (!corpus) return undefined;
+        const word = findWord([ corpus ], ref);
+        if (!word) return undefined;
+        return {
+          word: word,
+          localized: {
+            text: word.text.toLowerCase(),
+            position: word.id,
+            languageInfo: corpus.language
+          }
+        };
+      })
+      .filter(v => !!v)
+      .map(v => v as ResolvedWordEntry))
+  };
+};
 
-/**
- * generate a map of normalized pivot word text to the corresponding pivot words, used to generate the data displayed
- * in tables in the concordance view
- * @param wordsAndFrequencies
- */
+const getLinksForPivotWord = (
+  linksTable: VirtualTableLinks,
+  pivotWord: PivotWord
+): PivotWord => {
+  pivotWord.alignmentLinks = pivotWord.instances
+    .flatMap((instance) => linksTable.findByWord(pivotWord.side, instance));
+  return pivotWord;
+}
+
 export const generatePivotWordsMap = (
-  wordsAndFrequencies: NormalizedWordsToFrequencyAndLocalization
-): NormalizedTextToPivotWord =>
-  Object.keys(wordsAndFrequencies)
-    .filter((key) => !!wordsAndFrequencies[key])
-    .map((key) => {
-      return {
-        normalizedText: key,
-        frequency: wordsAndFrequencies[key].count,
-        languageInfo: wordsAndFrequencies[key].languageInfo,
-      } as PivotWord;
-    })
-    .reduce((accumulator, currentValue) => {
-      accumulator[currentValue.normalizedText] = currentValue;
-      return accumulator;
-    }, {} as NormalizedTextToPivotWord);
+  linksTable: VirtualTableLinks,
+  sourceContainer: CorpusContainer,
+  targetContainer: CorpusContainer,
+  side: AlignmentSide
+): Map<string, PivotWord> => {
+  const wordMap = new Map<string, PivotWord>();
+
+  const container = side === 'sources' ? sourceContainer : targetContainer;
+
+  container.corpora
+    .forEach((corpus) => {
+      corpus.wordLocation.forEach((value, key) => {
+        wordMap.set(key, getLinksForPivotWord(linksTable, {
+          normalizedText: key,
+          side,
+          instances: Array.from(value),
+          languageInfo: corpus.language,
+        } as PivotWord));
+      });
+    });
+
+  return wordMap;
+}
 
 /**
  * generate list (alphabetical) of word texts from alignment link, container and side directive
@@ -84,171 +109,90 @@ const generateWordListFromCorpusContainerAndLink = (
   );
 };
 
-/**
- * gnerate a map of normalized text to alignment links
- * @param alignmentState application state
- * @param sourceContainer corpus container for sources
- * @param targetContainer corpus container for targets
- */
-export const generateAlignedWordsMap = (
-  links: Link[],
-  sourceContainer: CorpusContainer,
-  targetContainer: CorpusContainer
-): NormalizedTextToAlignmentLink => {
-  const linkMap = links.reduce((accumulator, singleAlignment) => {
-    const srcWordsList = _.uniqWith(
-      generateWordListFromCorpusContainerAndLink(
-        sourceContainer,
-        singleAlignment,
-        'sources'
-      ),
-      _.isEqual
-    ).sort();
-    const tgtWordsList = _.uniqWith(
-      generateWordListFromCorpusContainerAndLink(
-        targetContainer,
-        singleAlignment,
-        'targets'
-      ),
-      _.isEqual
-    ).sort();
-    const uniqueAlignedWords = [...srcWordsList, ...tgtWordsList];
-
-    const alignedWordsString = uniqueAlignedWords.sort().join(',');
-
-    if (!accumulator[alignedWordsString]) {
-      accumulator[alignedWordsString] = [];
-    }
-
-    accumulator[alignedWordsString].push(singleAlignment);
-    return accumulator;
-  }, {} as { [key: string]: Link[] });
-
-  const accumulator = {} as NormalizedTextToAlignmentLink;
-
-  Object.keys(linkMap)
-    .filter((key) => !!linkMap[key] && Array.isArray(linkMap[key]))
-    .forEach((key) => {
-      if (!accumulator[key]) {
-        accumulator[key] = linkMap[key];
-      } else {
-        linkMap[key].forEach((link) => accumulator[key].push(link));
-      }
-    });
-  return accumulator;
-};
-
-/**
- * generates a list of pivot words with aligned words and alignment links
- * @param pivotWordsMap map of word text to pivot words
- * @param sourceContainer source corpora
- * @param targetContainer target corpora
- * @param normalizedTextToAlignmentLinks text to alignment link map
- * @param wordSource 'source' or 'target'
- */
-export const generateListOfNavigablePivotWords = (
-  pivotWordsMap: NormalizedTextToPivotWord,
+export const hydratePivotWord = (
+  pivotWord: PivotWord,
   sourceContainer: CorpusContainer,
   targetContainer: CorpusContainer,
-  normalizedTextToAlignmentLinks: NormalizedTextToAlignmentLink,
-  wordSource: WordSource
-): PivotWord[] => {
+  wordSource: AlignmentSide
+): PivotWord => {
   const sourceTextId = sourceContainer.id;
   const targetTextId = targetContainer.id;
+  const frequency = pivotWord.alignmentLinks?.length || 0;
 
-  Object.keys(normalizedTextToAlignmentLinks)
-    .filter((key) => !!normalizedTextToAlignmentLinks[key])
-    .map((key: string): AlignedWord => {
-      const frequency = normalizedTextToAlignmentLinks[key].length;
+  const initialAccumulator = {
+    sourceWords: [] as LocalizedWordEntry[],
+      targetWords: [] as LocalizedWordEntry[],
+  };
 
-      const sourceAndTargetWords = normalizedTextToAlignmentLinks[key]
-        .map((value: Link) => {
-          const sourceWords = value.sources
-            .map(BCVWP.parseFromString)
-            .map((ref: BCVWP) => {
-              const wort = findWord(sourceContainer.corpora, ref);
-              const languageInfo =
-                sourceContainer.corpusAtReference(ref)?.language;
-              if (!wort) return undefined;
-              return {
-                text: wort.text.toLowerCase(),
-                position: wort.id,
-                languageInfo,
-              };
-            })
-            .filter((v) => !!v);
-          const targetWords = value.targets
-            .map(BCVWP.parseFromString)
-            .map((ref: BCVWP) => {
-              const wort = findWord(targetContainer.corpora, ref);
-              const languageInfo =
-                targetContainer.corpusAtReference(ref)?.language;
-              if (!wort) return undefined;
-              return {
-                text: wort.text.toLowerCase(),
-                position: wort.id,
-                languageInfo,
-              };
-            })
-            .filter((v) => !!v);
+  const sourceAndTargetWords = pivotWord.alignmentLinks
+    ?.map((value: Link): {
+      sourceWords: LocalizedWordEntry[],
+      targetWords: LocalizedWordEntry[]
+    } => {
+      const sourceWords = value.sources
+        .map(BCVWP.parseFromString)
+        .map((ref: BCVWP) => {
+          const wort = findWord(sourceContainer.corpora, ref);
+          const languageInfo =
+            sourceContainer.corpusAtReference(ref)?.language;
+          if (!wort) return undefined;
           return {
-            sourceWords,
-            targetWords,
-          } as {
-            sourceWords: LocalizedWordEntry[];
-            targetWords: LocalizedWordEntry[];
+            text: wort.text.toLowerCase(),
+            position: wort.id,
+            languageInfo,
           };
         })
-        .reduce(
-          (accumulator, currentValue) => {
-            currentValue.sourceWords.forEach((current) =>
-              accumulator.sourceWords.push(current)
-            );
-            currentValue.targetWords.forEach((current) =>
-              accumulator.targetWords.push(current)
-            );
-            return accumulator;
-          },
-          {
-            sourceWords: [] as LocalizedWordEntry[],
-            targetWords: [] as LocalizedWordEntry[],
-          }
-        );
-
+        .filter((v) => !!v);
+      const targetWords = value.targets
+        .map(BCVWP.parseFromString)
+        .map((ref: BCVWP) => {
+          const wort = findWord(targetContainer.corpora, ref);
+          const languageInfo =
+            targetContainer.corpusAtReference(ref)?.language;
+          if (!wort) return undefined;
+          return {
+            text: wort.text.toLowerCase(),
+            position: wort.id,
+            languageInfo,
+          };
+        })
+        .filter((v) => !!v);
       return {
-        id: key,
-        frequency,
-        sourceTextId,
-        targetTextId,
-        sourceWordTexts: _.uniqWith(
-          sourceAndTargetWords.sourceWords,
-          (a, b): boolean => a.text === b.text
-        ).sort(),
-        targetWordTexts: _.uniqWith(
-          sourceAndTargetWords.targetWords,
-          (a, b): boolean => a.text === b.text
-        ).sort(),
-        alignments: normalizedTextToAlignmentLinks[key],
+        sourceWords,
+        targetWords,
+      } as {
+        sourceWords: LocalizedWordEntry[];
+        targetWords: LocalizedWordEntry[];
       };
     })
-    .forEach((alignedWord: AlignedWord) => {
-      (wordSource === 'source'
-        ? alignedWord.sourceWordTexts
-        : alignedWord.targetWordTexts
-      ).forEach((wordEntry: LocalizedWordEntry) => {
-        if (!pivotWordsMap[wordEntry.text]) {
-          return;
-        }
-        if (!pivotWordsMap[wordEntry.text].alignedWords) {
-          pivotWordsMap[wordEntry.text].alignedWords = [];
-        }
-        if (
-          !pivotWordsMap[wordEntry.text].alignedWords!.includes(alignedWord)
-        ) {
-          pivotWordsMap[wordEntry.text].alignedWords!.push(alignedWord);
-        }
-      });
-    });
+    .reduce((accumulator, currentValue) => {
+        currentValue.sourceWords.forEach((current) =>
+          accumulator.sourceWords.push(current)
+        );
+        currentValue.targetWords.forEach((current) =>
+          accumulator.targetWords.push(current)
+        );
+        return accumulator;
+      },
+      initialAccumulator) ?? initialAccumulator;
 
-  return Object.values(pivotWordsMap);
-};
+  const alignedWord: AlignedWord = {
+    id: pivotWord.normalizedText,
+      frequency,
+      sourceTextId,
+      targetTextId,
+      sourceWordTexts: _.uniqWith(
+    sourceAndTargetWords.sourceWords,
+    (a, b): boolean => a.text === b.text
+  ).sort(),
+    targetWordTexts: _.uniqWith(
+    sourceAndTargetWords.targetWords,
+    (a, b): boolean => a.text === b.text
+  ).sort(),
+    alignments: pivotWord.alignmentLinks ?? [],
+  };
+
+  return pivotWord;
+}
+
+

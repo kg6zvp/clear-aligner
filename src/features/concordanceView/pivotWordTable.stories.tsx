@@ -15,7 +15,8 @@ export default meta;
 
 const pivotWords: PivotWord[] = [
   {
-    frequency: 73_611,
+    instances: [],
+    side: 'targets',
     normalizedText: 'the',
     alignedWords: [
       {
@@ -44,7 +45,8 @@ const pivotWords: PivotWord[] = [
     ],
   },
   {
-    frequency: 60_382,
+    instances: [],
+    side: 'targets',
     normalizedText: 'and',
     alignedWords: [
       {
@@ -73,27 +75,32 @@ const pivotWords: PivotWord[] = [
     ],
   },
   {
-    frequency: 40_029,
+    instances: [],
+    side: 'targets',
     normalizedText: 'of',
     alignedWords: [],
   },
   {
-    frequency: 16_372,
+    instances: [],
+    side: 'targets',
     normalizedText: 'to',
     alignedWords: [],
   },
   {
-    frequency: 5_000,
+    instances: [],
+    side: 'targets',
     normalizedText: 'thus',
     alignedWords: [],
   },
   {
-    frequency: 4_999,
+    instances: [],
+    side: 'targets',
     normalizedText: 'so',
     alignedWords: [],
   },
   {
-    frequency: 4_998,
+    instances: [],
+    side: 'targets',
     normalizedText: 'as',
     alignedWords: [],
   },

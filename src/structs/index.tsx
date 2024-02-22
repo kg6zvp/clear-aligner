@@ -60,6 +60,7 @@ export interface Corpus {
   language: LanguageInfo;
   words: Word[];
   wordsByVerse: Record<string, Verse>;
+  wordLocation: Map<string, Set<BCVWP>>;
   books: {
     [key: number]: {
       // book object containing chapters

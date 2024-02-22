@@ -16,11 +16,7 @@ export class VirtualTableLinks extends VirtualTable {
   }
 
   save = (link: Link, suppressOnUpdate?: boolean): Link | undefined => {
-    const exists = this.exists(link.id);
-    if (exists) {
-      // remove existing link, sources and targets
-      this.remove(link.id);
-    }
+    this.remove(link.id); // idempotent operation
     try {
       const newLink: Link = {
         id: link.id ?? uuidv4(),

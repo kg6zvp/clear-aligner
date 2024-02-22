@@ -44,35 +44,38 @@ const parseTsvByFileType = async (
   refCorpus: Corpus,
   side: AlignmentSide,
   fileType: CorpusFileFormat
-): Promise<Partial<Corpus>> => {
+): Promise<Corpus> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
-  const wordsByVerse: Record<string, Verse> = {};
+  if (!refCorpus.wordsByVerse) {
+    refCorpus.wordsByVerse = {} as Record<string, Verse>;
+  }
 
   header.split('\t').forEach((header, idx) => {
     headerMap[header] = idx;
   });
 
-  const reducedWords = rows.reduce((accumulator, row) => {
+  rows.forEach((row) => {
     const values = row.split('\t');
 
-    let id, pos, word: Word, verse;
+    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse;
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
         if (punctuationFilter.includes(values[headerMap['text']])) {
           // skip punctuation
-          return accumulator;
+          return;
         }
 
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['identifier']];
         if (!BCVWP.isValidString(id)) {
-          return accumulator;
+          return;
         }
+        wordRef = BCVWP.parseFromString(id);
         pos = +id.substring(8, 11); // grab word position
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -82,14 +85,20 @@ const parseTsvByFileType = async (
           position: pos,
         };
 
-        verse = wordsByVerse[id.substring(0, 8)] || {};
-        wordsByVerse[id.substring(0, 8)] = {
+        wordKey = word.text.toLowerCase();
+        if (refCorpus.wordLocation.has(wordKey)) {
+          refCorpus.wordLocation.get(wordKey)?.add(wordRef);
+        } else {
+          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([ wordRef ]));
+        }
+        verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
+        refCorpus.wordsByVerse[id.substring(0, 8)] = {
           ...verse,
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
         };
-        accumulator.push(word);
+        refCorpus.words.push(word);
         break;
 
       case CorpusFileFormat.TSV_MACULA:
@@ -106,23 +115,27 @@ const parseTsvByFileType = async (
           position: pos,
         } as Word;
 
-        verse = wordsByVerse[id.substring(0, 8)] || {};
-        wordsByVerse[id.substring(0, 8)] = {
+        wordRef = BCVWP.parseFromString(id);
+        wordKey = word.text.toLowerCase();
+        if (refCorpus.wordLocation.has(wordKey)) {
+          refCorpus.wordLocation.get(wordKey)?.add(wordRef);
+        } else {
+          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([ wordRef ]));
+        }
+
+        verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
+        refCorpus.wordsByVerse[id.substring(0, 8)] = {
           ...verse,
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
         };
-        accumulator.push(word);
+        refCorpus.words.push(word);
         break;
     }
+  });
 
-    return accumulator;
-  }, [] as Word[]);
-  return {
-    words: reducedWords,
-    wordsByVerse: wordsByVerse,
-  };
+  return refCorpus;
 };
 
 const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
@@ -166,6 +179,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
     const maculaHebOTWords = await parseTsvByFileType(
@@ -191,6 +205,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
     const wlcYltOtWords = await parseTsvByFileType(
@@ -216,6 +231,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
 
@@ -241,6 +257,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
 
