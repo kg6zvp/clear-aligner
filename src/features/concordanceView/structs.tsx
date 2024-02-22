@@ -10,7 +10,7 @@ export interface PivotWord {
   side: AlignmentSide;
   languageInfo?: LanguageInfo;
   alignedWords?: AlignedWord[];
-  alignmentLinks?: Link[]|null;
+  alignmentLinks?: Link[] | null;
 }
 
 /**

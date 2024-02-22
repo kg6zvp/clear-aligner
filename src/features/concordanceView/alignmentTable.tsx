@@ -1,4 +1,10 @@
-import { Link, DisplayableLink, Verse, CorpusContainer, AlignmentSide } from '../../structs';
+import {
+  Link,
+  DisplayableLink,
+  Verse,
+  CorpusContainer,
+  AlignmentSide,
+} from '../../structs';
 import {
   DataGrid,
   GridColDef,

@@ -89,7 +89,7 @@ const parseTsvByFileType = async (
         if (refCorpus.wordLocation.has(wordKey)) {
           refCorpus.wordLocation.get(wordKey)?.add(wordRef);
         } else {
-          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([ wordRef ]));
+          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([wordRef]));
         }
         verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
         refCorpus.wordsByVerse[id.substring(0, 8)] = {
@@ -120,7 +120,7 @@ const parseTsvByFileType = async (
         if (refCorpus.wordLocation.has(wordKey)) {
           refCorpus.wordLocation.get(wordKey)?.add(wordRef);
         } else {
-          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([ wordRef ]));
+          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([wordRef]));
         }
 
         verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};

@@ -7,7 +7,8 @@ import {
   GridColDef,
   GridRenderCellParams,
   GridRowParams,
-  GridSortItem, GridValueGetterParams
+  GridSortItem,
+  GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
   DataGridResizeAnimationFixes,
@@ -20,7 +21,8 @@ const columns: GridColDef[] = [
     field: 'instances.length',
     headerName: 'Frequency',
     flex: 1,
-    valueGetter: ( row: GridValueGetterParams<PivotWord> ) => row.row.instances.length
+    valueGetter: (row: GridValueGetterParams<PivotWord>) =>
+      row.row.instances.length,
   },
   {
     field: 'normalizedText',
