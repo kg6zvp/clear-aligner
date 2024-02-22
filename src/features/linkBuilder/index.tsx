@@ -1,14 +1,13 @@
 import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
-import { Divider, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 
 import { CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
-import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {
   containers: CorpusContainer[];
@@ -107,13 +106,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         height: '100%',
       }}
     >
-      {Object.keys(selectedWords).map((textId: string): ReactElement => {
+      {Object.keys(selectedWords).map((textId: string, index:number): ReactElement => {
         const container = containers.find(
           (corpusContainer: CorpusContainer) => {
             return corpusContainer.id === textId;
           }
         );
-        if (!container) return <div />;
+        if (!container) return <div key={index}/>;
 
         const selectedPartsForText = selectedWords[textId];
         const sortedSelectedPartsForText = selectedPartsForText.sort(
@@ -166,49 +165,49 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               paddingBottom: '0.5rem',
               color: cssVar('font-color', theme),
             }}
-          >
-            <Typography variant="h6" style={{ textAlign: 'right' }}>
-              {corpusAtRef?.name}
-            </Typography>
-            <div style={{ marginBottom: '8px' }}>
-              <Divider />
-            </div>
-            <div>
-              <span>&nbsp;</span>
-              {partsAsWords
-                .filter((word) => word.length > 0)
-                .map((selectedWord, index: number): ReactElement => {
-                  const wordId = BCVWP.parseFromString(
-                    selectedWord.at(0)!.id
-                  ).toTruncatedReferenceString(BCVWPField.Word);
-                  let nextIsSequential: boolean = true;
-                  const next = partsAsWords[index + 1];
-                  if (next) {
-                    const sequenceDiff =
-                      next.at(0)!.position - selectedWord.at(0)!.position;
-                    if (sequenceDiff > 1) {
-                      nextIsSequential = false;
-                    }
-                  }
-                  return (
-                    <span key={`selected_${wordId}`}>
-                      <WordDisplay
-                        readonly={true}
-                        key={wordId}
-                        parts={selectedWord}
-                        languageInfo={corpusAtRef?.language}
-                      />
+          >{corpusAtRef?.name} | {corpusAtRef?.name}{index}
+            {/*<Typography variant="h6" style={{ textAlign: 'right' }}>*/}
+            {/*  {corpusAtRef?.name}*/}
+            {/*</Typography>*/}
+            {/*<div style={{ marginBottom: '8px' }}>*/}
+            {/*  <Divider />*/}
+            {/*</div>*/}
+            {/*<div>*/}
+            {/*  <span>&nbsp;</span>*/}
+            {/*  {partsAsWords*/}
+            {/*    .filter((word) => word.length > 0)*/}
+            {/*    .map((selectedWord, index: number): ReactElement => {*/}
+            {/*      const wordId = BCVWP.parseFromString(*/}
+            {/*        selectedWord.at(0)!.id*/}
+            {/*      ).toTruncatedReferenceString(BCVWPField.Word);*/}
+            {/*      let nextIsSequential: boolean = true;*/}
+            {/*      const next = partsAsWords[index + 1];*/}
+            {/*      if (next) {*/}
+            {/*        const sequenceDiff =*/}
+            {/*          next.at(0)!.position - selectedWord.at(0)!.position;*/}
+            {/*        if (sequenceDiff > 1) {*/}
+            {/*          nextIsSequential = false;*/}
+            {/*        }*/}
+            {/*      }*/}
+            {/*      return (*/}
+            {/*        <span key={`selected_${wordId}`}> {wordId}*/}
+            {/*          <WordDisplay*/}
+            {/*            readonly={true}*/}
+            {/*            key={wordId}*/}
+            {/*            parts={selectedWord}*/}
+            {/*            languageInfo={corpusAtRef?.language}*/}
+            {/*          />*/}
 
-                      {!nextIsSequential ? (
-                        <span key={`selected_${wordId}_ellipsis`}>... </span>
-                      ) : null}
-                    </span>
-                  );
-                })}
-            </div>
-            <div style={{ marginTop: '8px' }}>
-              <Divider />
-            </div>
+            {/*          {!nextIsSequential ? (*/}
+            {/*            <span key={`selected_${wordId}_ellipsis`}>... </span>*/}
+            {/*          ) : null}*/}
+            {/*        </span>*/}
+            {/*      );*/}
+            {/*    })}*/}
+            {/*</div>*/}
+            {/*<div style={{ marginTop: '8px' }}>*/}
+            {/*  <Divider />*/}
+            {/*</div>*/}
           </div>
         );
       })}
