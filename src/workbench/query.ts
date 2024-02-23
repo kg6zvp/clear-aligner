@@ -9,10 +9,6 @@ import {
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
-import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
-// @ts-ignore
-import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
-// @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
 import BSB from 'tsv/target_BSB_new.tsv'
@@ -184,58 +180,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
 
 
-    // SBL GNT
-    // let sblGnt: Corpus = {
-    //   id: 'sbl-gnt',
-    //   name: 'SBLGNT',
-    //   fullName: 'SBL Greek New Testament',
-    //   language: {
-    //     code: 'grc',
-    //     textDirection: 'ltr',
-    //   },
-    //   words: [],
-    //   wordsByVerse: {},
-    //   books: {},
-    // };
-    //
-    // const sblWords = await parseTsvByFileType(
-    //   MACULA_SBLGNT,
-    //   sblGnt,
-    //   'sources',
-    //   CorpusFileFormat.TSV_MACULA
-    // );
-    // sblGnt = {
-    //   ...sblGnt,
-    //   ...sblWords,
-    // };
-    // putVersesInCorpus(sblGnt);
-
-    // let na27Ylt: Corpus = {
-    //   id: 'na27-YLT',
-    //   name: 'YLT',
-    //   fullName: "Young's Literal Translation text New Testament",
-    //   language: {
-    //     code: 'eng',
-    //     textDirection: 'ltr',
-    //   },
-    //   words: [],
-    //   wordsByVerse: {},
-    //   books: {},
-    // };
-    //
-    // const na27Words = await parseTsvByFileType(
-    //   NA27_YLT,
-    //   na27Ylt,
-    //   'targets',
-    //   CorpusFileFormat.TSV_TARGET
-    // );
-    // na27Ylt = {
-    //   ...na27Ylt,
-    //   ...na27Words,
-    // };
-    //putVersesInCorpus(na27Ylt);
-
-    let bsbCorp: Corpus = {
+        let bsbCorp: Corpus = {
       id: 'bsb',
       name: 'BSB',
       fullName: "BSB",
@@ -264,11 +209,8 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
-      //sblGnt,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-     // wlcYltOt,
-       //na27Ylt,
       bsbCorp
     ]);
 
