@@ -7,7 +7,7 @@ import React, {
   useState,
 } from 'react';
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
-import { Add, InfoOutlined, Remove, Settings } from '@mui/icons-material';
+import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
 import CorpusSettings from 'features/corpusSettings';
 import { Corpus, CorpusContainer, Verse } from 'structs';
@@ -99,7 +99,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     if (!verse) return [];
     return [verse].filter((v) => v);
   }, [viewCorpora, position]);
-
   const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
   const [showSettings, setShowSettings] = useState(false);
   const verseKeys = useMemo(
@@ -252,14 +251,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           >
             <InfoOutlined />
           </Tooltip>
-          <IconButton
-            onClick={() => {
-              setShowSettings(!showSettings);
-            }}
-          >
-            <Settings />
-          </IconButton>
-        </Grid>
+         </Grid>
       </Grid>
 
       {showSettings && (
