@@ -8,6 +8,7 @@ import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { useSearchParams } from 'react-router-dom';
 import { AppContext } from '../../App';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 const defaultDocumentTitle = 'ClearAligner';
 

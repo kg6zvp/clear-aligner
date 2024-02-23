@@ -5,8 +5,8 @@ import {
   GridRowParams,
   GridSortItem,
 } from '@mui/x-data-grid';
-import { AlignedWord, LocalizedWordEntry } from './structs';
-import { TableContainer } from '@mui/material';
+import { AlignedWord, LocalizedWordEntry, PivotWord } from './structs';
+import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
@@ -16,6 +16,8 @@ import {
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
+import { Box } from '@mui/system';
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
@@ -91,7 +93,7 @@ const columnsWithGloss: GridColDef[] = [
 
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
-  alignedWords: AlignedWord[];
+  pivotWord: PivotWord | null;
   chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
@@ -107,22 +109,39 @@ export interface AlignedWordTableProps {
  */
 export const AlignedWordTable = ({
   sort,
-  alignedWords,
+  pivotWord,
   chosenAlignedWord,
   onChooseAlignedWord,
   onChangeSort,
 }: AlignedWordTableProps) => {
+  const alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loading: boolean = useMemo(() => !!pivotWord && !alignedWords, [pivotWord, alignedWords, alignedWords?.length]);
+
   const hasGlossData = useMemo(
-    () => alignedWords.some((alignedWord: AlignedWord) => !!alignedWord.gloss),
-    [alignedWords]
+    () => {
+      if (!alignedWords) return false;
+      return alignedWords.some((alignedWord: AlignedWord) => !!alignedWord.gloss);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ alignedWords, alignedWords?.length ]
   );
   const initialPage = useMemo(() => {
-    if (chosenAlignedWord && alignedWords) {
+    if (chosenAlignedWord && alignedWords && alignedWords.length > 0) {
       return alignedWords.indexOf(chosenAlignedWord) / 20;
     }
     return 0;
-  }, [chosenAlignedWord, alignedWords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chosenAlignedWord, alignedWords, alignedWords?.length]);
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', margin: 'auto' }}>
+        <CircularProgress sx={{ margin: 'auto' }} />
+      </Box>
+    );
+  }
   return (
     <TableContainer
       sx={{
@@ -133,6 +152,11 @@ export const AlignedWordTable = ({
         },
       }}
     >
+      {loading ?
+        <Box sx={{ display: 'flex', margin: 'auto' }}>
+          <CircularProgress sx={{ margin: 'auto' }} />
+        </Box>
+      :
       <DataGrid
         sx={{
           width: '100%',
@@ -144,7 +168,7 @@ export const AlignedWordTable = ({
         rowSelectionModel={
           chosenAlignedWord?.id ? [chosenAlignedWord.id] : undefined
         }
-        rows={alignedWords}
+        rows={alignedWords ?? []}
         columns={hasGlossData ? columnsWithGloss : columns}
         getRowId={(row) => row.id}
         sortModel={sort ? [sort] : []}
@@ -171,7 +195,7 @@ export const AlignedWordTable = ({
           !!alignments && (alignments?.length || 0) > 0
         }
         getRowHeight={() => 'auto'}
-      />
+      />}
     </TableContainer>
   );
 };

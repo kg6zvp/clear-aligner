@@ -154,8 +154,8 @@ const columns: GridColDef[] = [
 export interface AlignmentTableProps {
   sort: GridSortItem | null;
   wordSource: AlignmentSide;
-  sourceContainer: CorpusContainer | null;
-  targetContainer: CorpusContainer | null;
+  sourceContainer?: CorpusContainer | null;
+  targetContainer?: CorpusContainer | null;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord | null;
   alignments: Link[];

@@ -118,9 +118,9 @@ export const PivotWordTable = ({
           }
         }}
         isRowSelectable={({
-          row: { alignedWords },
+          row: { alignmentLinks },
         }: GridRowParams<PivotWord>) =>
-          !!alignedWords && (alignedWords?.length || 0) > 0
+          !!alignmentLinks && (alignmentLinks?.length ?? 0) > 0
         }
       />
     </TableContainer>

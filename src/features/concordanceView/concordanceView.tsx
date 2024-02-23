@@ -1,14 +1,12 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import {
   AlignmentSide,
-  CorpusContainer,
   DisplayableLink,
   Link,
 } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
-import { getAvailableCorporaContainers } from '../../workbench/query';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { PivotWordTable } from './pivotWordTable';
 import { AlignedWordTable } from './alignedWordTable';
@@ -19,6 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import { generatePivotWordsMap } from './concordanceViewHelpers';
 import { AppContext } from '../../App';
 import _ from 'lodash';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 export type WordFilter = 'aligned' | 'all';
 
@@ -26,12 +25,9 @@ export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const { projectState } = useContext(AppContext);
   const [loading, setLoading] = useState(true);
-  const [sourceContainer, setSourceContainer] = useState(
-    null as CorpusContainer | null
-  );
-  const [targetContainer, setTargetContainer] = useState(
-    null as CorpusContainer | null
-  );
+
+  const { sourceContainer, targetContainer } = useCorpusContainers();
+
   const [selectedPivotWord, setSelectedPivotWord] = useState(
     null as PivotWord | null
   );
@@ -68,35 +64,7 @@ export const ConcordanceView = () => {
   // when a pivotword is selected, indicate that it's loading or load pivotWords
   useEffect(() => {
     handleUpdateSelectedAlignedWord(null);
-    if (!selectedPivotWord) {
-      return;
-    }
-    if (
-      !selectedPivotWord.alignedWords ||
-      (selectedPivotWord.alignedWords?.length < 1 &&
-        selectedPivotWord.alignmentLinks &&
-        selectedPivotWord.alignmentLinks.length > 0)
-    ) {
-      setLoading(true);
-      const loadAlignmentsIntoAlignedWords = async (pivotWord: PivotWord) => {
-        console.log('loading');
-      };
-
-      loadAlignmentsIntoAlignedWords(selectedPivotWord)
-        .catch((x) => {
-          console.error('error', x);
-        })
-        .finally(() => {
-          console.log('done');
-          setLoading(false);
-        });
-    }
-  }, [
-    selectedPivotWord,
-    ...(selectedPivotWord?.alignedWords ?? []),
-    ...(selectedPivotWord?.alignmentLinks ?? []),
-    setLoading,
-  ]);
+  }, [ handleUpdateSelectedAlignedWord ]);
 
   useEffect(() => {
     if (!loading) {
@@ -132,26 +100,10 @@ export const ConcordanceView = () => {
       pivotWordsPromise.then((pivotWords) => {
         setPivotWords(pivotWords);
         setPivotWordsPromise(null);
+        setLoading(false);
       });
     }
   }, [pivotWordsPromise, setPivotWords, setPivotWordsPromise]);
-
-  useEffect(() => {
-    const loadCorpora = async () => {
-      const containers: CorpusContainer[] =
-        await getAvailableCorporaContainers();
-
-      containers.forEach((container) => {
-        if (container.id === 'source') {
-          setSourceContainer(container);
-        } else if (container.id === 'target') {
-          setTargetContainer(container);
-        }
-      });
-    };
-
-    void loadCorpora();
-  }, [setSourceContainer, setTargetContainer]);
 
   /**
    * create navigable tree structure of pivot words with alignment links as the leaf nodes
@@ -160,28 +112,21 @@ export const ConcordanceView = () => {
     () => {
       const loadPivotWordData = async () => {
         if (!sourceContainer || !targetContainer || !projectState?.linksTable) {
-          setLoading(false);
-          return;
+          return [];
         }
 
-        console.log('generate map of pivot words...');
-        const pivotWordsMap: Map<string, PivotWord> = generatePivotWordsMap(
+        const pivotWordsMap: Map<string, PivotWord> = await generatePivotWordsMap(
           projectState.linksTable,
           sourceContainer,
           targetContainer,
           wordSource
         );
-        console.log('done', pivotWordsMap);
 
-        setSrcPivotWords(Array.from(pivotWordsMap.values()));
-
-        console.log('done');
-        setLoading(false);
+        return Array.from(pivotWordsMap.values());
       };
 
       if (sourceContainer && targetContainer && wordSource) {
-        setLoading(true);
-        void loadPivotWordData();
+        setPivotWordsPromise(loadPivotWordData());
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -402,7 +347,7 @@ export const ConcordanceView = () => {
           >
             <AlignedWordTable
               sort={alignedWordSortData}
-              alignedWords={selectedPivotWord?.alignedWords ?? []}
+              pivotWord={selectedPivotWord}
               chosenAlignedWord={selectedAlignedWord}
               onChooseAlignedWord={(alignedWord) =>
                 handleUpdateSelectedAlignedWord(
