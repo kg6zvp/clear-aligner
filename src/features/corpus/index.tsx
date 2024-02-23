@@ -93,31 +93,23 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     () => (computedPosition ? viewCorpora.verseByReference(computedPosition) : undefined),
     [computedPosition, viewCorpora]
   );
+  useEffect(() => {
+    setComputedPosition(props.position)
+    if(viewCorpora.id==='source') {
+            const targetCorpora = corpora[1];
+            const verseString = props.position?.toTruncatedReferenceString(8)
 
-  useEffect(()=>{
-    console.log('dont go changin')
-      if(viewCorpora.id==='source') {
-        const targetCorpora = corpora[1];
-        let sourceCorpora = viewCorpora.corpora[viewportIndex]
-        const verseString = computedPosition?.referenceString?.trim()
-        // @ts-ignore
-        if (verseString) {
+            if (verseString) {
+              // @ts-ignore
+              let verse = targetCorpora.wordsByVerse[verseString]
+              if (verse?.sourceVerse) {
+                setComputedPosition(BCVWP.parseFromString(verse.sourceVerse))
+              }
+            }
 
-          let verse = targetCorpora.wordsByVerse[verseString]
-          console.log(verse)
-          if (verse.sourceVerse) {
-            setComputedPosition(BCVWP.parseFromString(verse.sourceVerse))
-            console.log(verse)
-//test
-          }
-        }
-        console.log(sourceCorpora.wordsByVerse )
+    }
+  }, [props, viewCorpora,corpora]);
 
-        // console.log(targetCorpora.wordsByVerse[verseString])
-        console.log(computedPosition)
-      }
-    },
-    [viewCorpora])
 
   const initialVerses = useMemo(() => {
     if (!computedPosition || !viewCorpora) return [];
@@ -138,7 +130,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
 
   useEffect(() => {
     setVisibleVerses(initialVerses);
-    console.log(initialVerses)
   }, [initialVerses]);
 
   const addBcvId = useCallback(() => {
