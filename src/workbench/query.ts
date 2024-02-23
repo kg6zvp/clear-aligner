@@ -54,7 +54,6 @@ const parseTsvByFileType = async (
   header.split('\t').forEach((header, idx) => {
          headerMap[header] = idx;
   });
-  console.log(fileType)
 
   const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
@@ -74,9 +73,7 @@ const parseTsvByFileType = async (
         if (!BCVWP.isValidString(id)) {
           return accumulator;
         }
-        console.log("id",id)
         pos = +id.substring(8, 11); // grab word position
-        console.log(pos)
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
@@ -86,7 +83,6 @@ const parseTsvByFileType = async (
 
         };
         verse = wordsByVerse[id.substring(0, 8)] || {};
-       // console.log(verse)
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
           sourceVerse:values[headerMap['source_verse']],
