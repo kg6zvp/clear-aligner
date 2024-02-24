@@ -36,4 +36,4 @@ export const useCorpusContainers = (): Containers => {
     sourceContainer: sourceContainer ?? undefined,
     targetContainer: targetContainer ?? undefined,
   };
-}
+};

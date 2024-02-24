@@ -55,41 +55,87 @@ export const fullyResolveLink = (
   };
 };
 
-export const getLinksForPivotWord = (
+/**
+ * populate hasAlignmentLinks property of pivotWord
+ * @param linksTable datasource
+ * @param pivotWord pivotWord
+ */
+export const pivotWordInjectHasAlignmentLinks = (
   linksTable: VirtualTableLinks,
   pivotWord: PivotWord
 ): PivotWord => {
+  pivotWord.hasAlignmentLinks = pivotWord.instances.some((instance) =>
+    linksTable.hasLinkByWord(pivotWord.side, instance)
+  );
+  return pivotWord;
+};
+
+/**
+ * populate alignmentLinks property of given pivotWord
+ * @param linksTable datasource
+ * @param pivotWord pivotWord to populate
+ */
+export const getLinksForPivotWord = async (
+  linksTable: VirtualTableLinks,
+  pivotWord: PivotWord
+): Promise<PivotWord> => {
   pivotWord.alignmentLinks = pivotWord.instances.flatMap((instance) =>
     linksTable.findByWord(pivotWord.side, instance)
   );
   return pivotWord;
 };
 
-export const generatePivotWordsMap = async (
+/**
+ * generate map of pivotWords without links or alignedWords populated
+ * @param linksTable
+ * @param sourceContainer
+ * @param targetContainer
+ * @param side
+ */
+export const generatePivotWordsList = async (
   linksTable: VirtualTableLinks,
   sourceContainer: CorpusContainer,
   targetContainer: CorpusContainer,
   side: AlignmentSide
-): Promise<Map<string, PivotWord>> => {
-  const wordMap = new Map<string, PivotWord>();
-
+): Promise<PivotWord[]> => {
   const container = side === 'sources' ? sourceContainer : targetContainer;
 
-  container.corpora.forEach((corpus) => {
-    corpus.wordLocation.forEach((value, key) => {
-      wordMap.set(
-        key,
-        getLinksForPivotWord(linksTable, {
-          normalizedText: key,
-          side,
-          instances: Array.from(value),
-          languageInfo: corpus.language,
-        } as PivotWord)
-      );
-    });
-  });
+  const pivotWordPromises = container.corpora.flatMap((corpus) =>
+    Array.from(corpus.wordLocation.entries()).map(async ([key, value]) =>
+      pivotWordInjectHasAlignmentLinks(linksTable, {
+        normalizedText: key,
+        side,
+        instances: Array.from(value),
+        languageInfo: corpus.language,
+      } as PivotWord)
+    )
+  );
 
-  return wordMap;
+  const pivotWords: PivotWord[] = [];
+
+  for (const pivotWordPromise of pivotWordPromises) {
+    const pivotWord = await pivotWordPromise;
+    pivotWords.push(pivotWord);
+  }
+
+  const pivotWordsMap = pivotWords.reduce((accumulator, currentValue) => {
+    if (
+      !accumulator.has(currentValue.normalizedText) ||
+      !accumulator.get(currentValue.normalizedText)?.alignmentLinks
+    ) {
+      // create it
+      accumulator.set(currentValue.normalizedText, currentValue);
+    } else {
+      // mutate it
+      const pivotWord = accumulator.get(currentValue.normalizedText)!;
+      currentValue.alignmentLinks?.forEach((link) =>
+        pivotWord.alignmentLinks!.push(link)
+      );
+    }
+    return accumulator;
+  }, new Map<string, PivotWord>());
+
+  return Array.from(pivotWordsMap.values());
 };
 
 /**
@@ -101,12 +147,12 @@ export const generateWordListFromCorpusContainerAndLink = (
   link: FullyResolvedLink,
   side: AlignmentSide
 ): string[] => {
-  const partsList = Array.from(side === 'sources' ? link.sourceResolvedWords : link.targetResolvedWords)
+  const partsList = Array.from(
+    side === 'sources' ? link.sourceResolvedWords : link.targetResolvedWords
+  )
     .map((word) => word.word)
     .filter((word) => !!word) as Word[];
   return groupPartsIntoWords(partsList)
     .map((parts) => parts.map(({ text }) => text.trim().toLowerCase()).join(''))
     .sort();
 };
-
-

@@ -118,10 +118,8 @@ export const PivotWordTable = ({
           }
         }}
         isRowSelectable={({
-          row: { alignmentLinks },
-        }: GridRowParams<PivotWord>) =>
-          !!alignmentLinks && (alignmentLinks?.length ?? 0) > 0
-        }
+          row: { hasAlignmentLinks },
+        }: GridRowParams<PivotWord>) => !!hasAlignmentLinks}
       />
     </TableContainer>
   );

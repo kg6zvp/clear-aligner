@@ -77,6 +77,27 @@ export class VirtualTableLinks extends VirtualTable {
     }
   };
 
+  /**
+   * check if the given word has a link
+   * @param side
+   * @param wordId
+   */
+  hasLinkByWord = (side: AlignmentSide, wordId: BCVWP): boolean => {
+    const refString = wordId.toReferenceString();
+    switch (side) {
+      case 'sources':
+        return (
+          this.sourcesIndex.has(refString) &&
+          (this.sourcesIndex.get(refString)?.length ?? 0) > 0
+        );
+      case 'targets':
+        return (
+          this.targetsIndex.has(refString) &&
+          (this.sourcesIndex.get(refString)?.length ?? 0) > 0
+        );
+    }
+  };
+
   findLinkIdsByWord = (side: AlignmentSide, wordId: BCVWP): string[] => {
     const refString = wordId.toReferenceString();
     const linkIds: string[] = [];

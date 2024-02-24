@@ -1,9 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
-import {
-  AlignmentSide,
-  DisplayableLink,
-  Link,
-} from '../../structs';
+import { AlignmentSide, DisplayableLink, Link } from '../../structs';
 import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
@@ -14,7 +10,7 @@ import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
-import { generatePivotWordsMap } from './concordanceViewHelpers';
+import { generatePivotWordsList } from './concordanceViewHelpers';
 import { AppContext } from '../../App';
 import _ from 'lodash';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
@@ -28,9 +24,9 @@ export const ConcordanceView = () => {
 
   const { sourceContainer, targetContainer } = useCorpusContainers();
 
-  const [selectedPivotWord, setSelectedPivotWord] = useState(
-    null as PivotWord | null
-  );
+  const [selectedPivotWord, setSelectedPivotWord] = useState<
+    PivotWord | undefined
+  >();
   const [alignedWordSortData, setAlignedWordSortData] = useState({
     field: 'frequency',
     sort: 'desc',
@@ -55,7 +51,7 @@ export const ConcordanceView = () => {
   );
   const handleUpdateSelectedPivotWord = useMemo(
     () => (pivotWord: PivotWord | null) => {
-      setSelectedPivotWord(pivotWord);
+      setSelectedPivotWord(pivotWord ?? undefined);
       handleUpdateSelectedAlignedWord(null);
     },
     [setSelectedPivotWord, handleUpdateSelectedAlignedWord]
@@ -64,7 +60,7 @@ export const ConcordanceView = () => {
   // when a pivotword is selected, indicate that it's loading or load pivotWords
   useEffect(() => {
     handleUpdateSelectedAlignedWord(null);
-  }, [ handleUpdateSelectedAlignedWord ]);
+  }, [handleUpdateSelectedAlignedWord]);
 
   useEffect(() => {
     if (!loading) {
@@ -115,14 +111,12 @@ export const ConcordanceView = () => {
           return [];
         }
 
-        const pivotWordsMap: Map<string, PivotWord> = await generatePivotWordsMap(
+        return await generatePivotWordsList(
           projectState.linksTable,
           sourceContainer,
           targetContainer,
           wordSource
         );
-
-        return Array.from(pivotWordsMap.values());
       };
 
       if (sourceContainer && targetContainer && wordSource) {
@@ -301,17 +295,13 @@ export const ConcordanceView = () => {
               pivotWords={
                 wordFilter === 'all'
                   ? pivotWords
-                  : pivotWords.filter(
-                      (w) =>
-                        (w.alignedWords?.length ?? 0) > 0 ||
-                        (w.alignmentLinks?.length ?? 0) > 0
-                    )
+                  : pivotWords.filter((w) => w.hasAlignmentLinks)
               }
               chosenWord={selectedPivotWord}
               onChooseWord={(word) =>
                 handleUpdateSelectedPivotWord(
                   (word.alignedWords && word.alignedWords.length > 0) ||
-                    (word.alignmentLinks && word.alignmentLinks.length > 0)
+                    word.hasAlignmentLinks
                     ? word
                     : null
                 )
