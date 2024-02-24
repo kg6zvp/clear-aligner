@@ -141,8 +141,8 @@ export const AlignedWordTable = ({
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex' }}>
-        <CircularProgress />
+      <Box sx={{ display: 'flex', margin: 'auto' }}>
+        <CircularProgress sx={{ display: 'flex' }} />
       </Box>
     );
   }

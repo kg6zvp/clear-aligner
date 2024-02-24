@@ -215,17 +215,6 @@ export const ConcordanceView = () => {
 
   return (
     <div style={{ position: 'relative' }}>
-      <Backdrop
-        open={loading}
-        sx={{
-          position: 'absolute',
-          marginTop: '-1em',
-          marginBottom: '-1em',
-          zIndex: (theme) => theme.zIndex.drawer - 1,
-        }}
-      >
-        <CircularProgress color={'inherit'} />
-      </Backdrop>
       <Box
         sx={{
           flex: 1,

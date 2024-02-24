@@ -101,13 +101,19 @@ export const generatePivotWordsList = async (
   const container = side === 'sources' ? sourceContainer : targetContainer;
 
   const pivotWordPromises = container.corpora.flatMap((corpus) =>
-    Array.from(corpus.wordLocation.entries()).map(async ([key, value]) =>
-      pivotWordInjectHasAlignmentLinks(linksTable, {
-        normalizedText: key,
-        side,
-        instances: Array.from(value),
-        languageInfo: corpus.language,
-      } as PivotWord)
+    Array.from(corpus.wordLocation.entries()).map(async ([key, value]) => {
+      return new Promise<PivotWord>((resolve) => {
+        setTimeout(() => {
+          const pivotWord = pivotWordInjectHasAlignmentLinks(linksTable, {
+            normalizedText: key,
+            side,
+            instances: Array.from(value),
+            languageInfo: corpus.language
+          } as PivotWord);
+          resolve(pivotWord);
+        }, 2);
+      });
+      }
     )
   );
 
