@@ -9,9 +9,11 @@ import {
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
+import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
+// @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
-import BSB from 'tsv/target_BSB_new.tsv'
+import BSB from 'tsv/target_BSB_new.tsv';
 
 let isInitialized: boolean = false;
 
@@ -48,7 +50,11 @@ const parseTsvByFileType = async (
   const wordsByVerse: Record<string, Verse> = {};
 
   header.split('\t').forEach((header, idx) => {
-         headerMap[header] = idx;
+    // if (headerMap['id']) {
+    //   headerMap['identifier'] = idx;
+    // } else {
+      headerMap[header] = idx;
+    //}
   });
 
   const reducedWords = rows.reduce((accumulator, row) => {
@@ -57,15 +63,13 @@ const parseTsvByFileType = async (
     let id, pos, word: Word, verse;
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
-
         // filter out punctuation in content
-         if (punctuationFilter.includes(values[headerMap['token']])) {
+        if (punctuationFilter.includes(values[headerMap['token']])) {
           // skip punctuation
           return accumulator;
         }
-        // debugger;
         // remove redundant 'o'/'n' qualifier
-        id = values[headerMap['identifier']]?values[headerMap['identifier']]:values[headerMap['id']];
+        id = values[headerMap['identifier']];
         if (!BCVWP.isValidString(id)) {
           return accumulator;
         }
@@ -76,12 +80,11 @@ const parseTsvByFileType = async (
           corpusId: refCorpus.id,
           text: values[headerMap['text']],
           position: pos,
-
         };
         verse = wordsByVerse[id.substring(0, 8)] || {};
         wordsByVerse[id.substring(0, 8)] = {
           ...verse,
-          sourceVerse:values[headerMap['source_verse']],
+          sourceVerse: values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
@@ -178,12 +181,36 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(maculaHebOT);
 
+    // SBL GNT
+    let sblGnt: Corpus = {
+      id: 'sbl-gnt',
+      name: 'SBLGNT',
+      fullName: 'SBL Greek New Testament',
+      language: {
+        code: 'grc',
+        textDirection: 'ltr',
+      },
+      words: [],
+      wordsByVerse: {},
+      books: {},
+    };
 
+    const sblWords = await parseTsvByFileType(
+      MACULA_SBLGNT,
+      sblGnt,
+      'sources',
+      CorpusFileFormat.TSV_MACULA
+    );
+    sblGnt = {
+      ...sblGnt,
+      ...sblWords,
+    };
+    putVersesInCorpus(sblGnt);
 
-        let bsbCorp: Corpus = {
+    let bsbCorp: Corpus = {
       id: 'bsb',
       name: 'BSB',
-      fullName: "BSB",
+      fullName: 'BSB',
       language: {
         code: 'eng',
         textDirection: 'ltr',
@@ -209,9 +236,10 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
+     // sblGnt,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      bsbCorp
+      bsbCorp,
     ]);
 
     availableCorpora.push(sourceContainer);
