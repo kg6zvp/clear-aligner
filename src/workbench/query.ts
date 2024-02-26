@@ -233,7 +233,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
-      // sblGnt,
+      sblGnt,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
       bsbCorp,
