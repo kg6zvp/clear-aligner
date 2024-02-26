@@ -1,10 +1,5 @@
 import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Tooltip,
-  Stack,
-} from '@mui/material';
+import { Button, ButtonGroup, Tooltip, Stack } from '@mui/material';
 import {
   AddLink,
   LinkOff,
@@ -71,7 +66,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       alignItems="baseline"
       style={{ marginTop: '16px', marginBottom: '16px' }}
     >
-           <ButtonGroup>
+      <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button

@@ -50,11 +50,8 @@ const parseTsvByFileType = async (
   const wordsByVerse: Record<string, Verse> = {};
 
   header.split('\t').forEach((header, idx) => {
-    // if (headerMap['id']) {
-    //   headerMap['identifier'] = idx;
-    // } else {
-      headerMap[header] = idx;
-    //}
+    header = header === 'identifier' ? 'id' : header; //Standard for header in files will be id
+    headerMap[header] = idx;
   });
 
   const reducedWords = rows.reduce((accumulator, row) => {
@@ -69,7 +66,7 @@ const parseTsvByFileType = async (
           return accumulator;
         }
         // remove redundant 'o'/'n' qualifier
-        id = values[headerMap['identifier']];
+        id = values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
           return accumulator;
         }
@@ -236,7 +233,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       maculaHebOT,
-     // sblGnt,
+      // sblGnt,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
       bsbCorp,

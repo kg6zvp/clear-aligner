@@ -55,7 +55,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
           const container = containers.find(
             (c) => c.id === corpusViewport.containerId
           );
-          if (!container) return <Grid key={key}/>;
+          if (!container) return <Grid key={key} />;
           return (
             <Card
               onScroll={(e) => {

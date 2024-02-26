@@ -97,12 +97,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     [computedPosition, viewCorpora]
   );
 
-  // useEffect(() => {
-  //   setComputedPosition(props.position);
-  // }, [props.position]);
-
   useEffect(() => {
     setComputedPosition(props.position);
+  }, [props.position]);
+
+  useEffect(() => {
     if (viewCorpora.id === 'source') {
       const targetCorpora = corpora[1];
       const verseString = props.position?.toTruncatedReferenceString(8);
@@ -279,7 +278,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           >
             <InfoOutlined />
           </Tooltip>
-         </Grid>
+        </Grid>
       </Grid>
 
       {showSettings && (
