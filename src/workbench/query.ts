@@ -35,6 +35,9 @@ const punctuationFilter = [
   '(',
   ')',
   'TRUE',
+  '"',
+  '“',
+  '”',
 ];
 
 const parseTsvByFileType = async (
@@ -61,10 +64,14 @@ const parseTsvByFileType = async (
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (punctuationFilter.includes(values[headerMap['token']])) {
+        if (
+          punctuationFilter.includes(values[headerMap['token']]) ||
+          punctuationFilter.includes(values[headerMap['text']])
+        ) {
           // skip punctuation
           return accumulator;
         }
+
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
@@ -92,6 +99,7 @@ const parseTsvByFileType = async (
       case CorpusFileFormat.TSV_MACULA:
       default: // grab word position
         // remove redundant 'o'/'n' qualifier
+        //console.log(headerMap)
         id = values[headerMap['xml:id']].slice(1);
         pos = +id.substring(8, 11);
         word = {
@@ -232,8 +240,8 @@ export const getAvailableCorporaContainers = async (): Promise<
     putVersesInCorpus(bsbCorp);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
-      maculaHebOT,
       sblGnt,
+      maculaHebOT,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
       bsbCorp,

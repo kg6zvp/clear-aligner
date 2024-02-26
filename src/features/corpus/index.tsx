@@ -105,15 +105,15 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   useEffect(() => {
     if (viewCorpora.id === 'source') {
       const targetCorpora = corpora[1];
-      for (let targetCorpora of corpora){
-      const verseString = props.position?.toTruncatedReferenceString(8);
-      if (verseString) {
-        let verse = targetCorpora.wordsByVerse[verseString];
-        if (verse?.sourceVerse) {
-          setComputedPosition(BCVWP.parseFromString(verse.sourceVerse));
+      for (let targetCorpora of corpora) {
+        const verseString = props.position?.toTruncatedReferenceString(8);
+        if (verseString) {
+          let verse = targetCorpora.wordsByVerse[verseString];
+          if (verse?.sourceVerse) {
+            setComputedPosition(BCVWP.parseFromString(verse.sourceVerse));
+          }
         }
       }
-    }
     }
   }, [props, viewCorpora, corpora]);
 
