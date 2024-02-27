@@ -32,11 +32,6 @@ export const WordDisplay = ({
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
 
-  const getTextAlignment = React.useCallback((wordStr?: string): 'center' | 'left' | 'right' => {
-    const textDirection = languageInfo?.textDirection === TextDirection.LTR ? 'left' : 'right';
-    return /-/.test(wordStr || "-") ? 'center' : textDirection;
-  }, [languageInfo]);
-
   return (
     <>
       <Typography
@@ -69,19 +64,21 @@ export const WordDisplay = ({
                             languageInfo={languageInfo}
                             showAfter={!suppressAfter}
                           />
-                          <Box sx={{ height: '20px', display: 'flex', justifyContent: getTextAlignment(wordPart.gloss) }}>
+                          <Grid container justifyContent={/-/.test(wordPart.gloss || "-") ? 'center' : 'flex-start'} sx={{ height: '20px' }}>
                             <LocalizedTextDisplay
                               languageInfo={languageInfo}
                               variant="caption"
-                              sx={theme => ({color: (theme as Record<string, any>).typography.unlinked.color })}
+                              sx={theme => ({
+                                color: (theme as Record<string, any>).typography.unlinked.color,
+                              })}
                             >
                               {wordPart.gloss || "-"}
                             </LocalizedTextDisplay>
-                          </Box>
+                          </Grid>
                         </Box>
                         {
                           idx !== ((parts || []).length - 1) && (
-                            <Divider flexItem orientation="vertical" sx={{ borderStyle: 'dashed', width: '2px', mx: .5 }} />
+                            <Divider flexItem orientation="vertical" sx={{ borderStyle: 'dashed', borderWidth: '2px', width: '2px', mx: 1 }} />
                           )
                         }
                       </React.Fragment>
