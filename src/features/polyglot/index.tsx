@@ -85,9 +85,10 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 key={corpusId}
                 viewCorpora={container}
                 viewportIndex={index}
-                corpora={
-                  containers.flatMap((container) => container.corpora) ?? []
-                }
+                containers={{
+                  source: containers?.find(c => c.id === 'source'),
+                  target: containers?.find(c => c.id === 'target')
+                }}
                 position={position}
               />
             </Card>

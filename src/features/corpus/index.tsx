@@ -9,8 +9,7 @@ import React, {
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import CorpusSettings from 'features/corpusSettings';
-import { Corpus, CorpusContainer, Verse } from 'structs';
+import { CorpusContainer, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { VerseDisplay } from './verseDisplay';
 import {
@@ -19,13 +18,15 @@ import {
   findPreviousNavigableVerse,
   getReferenceListFromWords,
 } from '../bcvNavigation/structs';
-import { tagInternalFilter } from '@mui/x-data-grid/internals';
 
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
   viewportIndex: number;
-  corpora: Corpus[];
   position: BCVWP | null;
+  containers: {
+    source?: CorpusContainer,
+    target?: CorpusContainer
+  }
 }
 
 const determineCorpusView = (
@@ -86,9 +87,19 @@ const determineCorpusView = (
 
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
-  const { viewCorpora, viewportIndex, corpora } = props;
-  const [computedPosition, setComputedPosition] = useState(props.position);
+  const { viewCorpora, containers } = props;
   useDebug('TextComponent');
+
+  const computedPosition = useMemo(() => {
+    if (viewCorpora.id === 'target') {
+      return props.position ?? null;
+    }
+    // displaying source
+    if (!props.position || !containers.target) return null;
+    const verseString = containers.target.verseByReference(props.position)?.sourceVerse;
+    if (verseString) return BCVWP.parseFromString(verseString);
+    return props.position;
+  }, [viewCorpora.id, props.position, containers.target]);
 
   const verseAtPosition: Verse | undefined = useMemo(
     () =>
@@ -98,25 +109,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     [computedPosition, viewCorpora]
   );
 
-  useEffect(() => {
-    setComputedPosition(props.position);
-  }, [props.position]);
-
-  useEffect(() => {
-    if (viewCorpora.id === 'source') {
-      const targetCorpora = corpora[1];
-      for (let targetCorpora of corpora) {
-        const verseString = props.position?.toTruncatedReferenceString(8);
-        if (verseString) {
-          let verse = targetCorpora.wordsByVerse[verseString];
-          if (verse?.sourceVerse) {
-            setComputedPosition(BCVWP.parseFromString(verse.sourceVerse));
-          }
-        }
-      }
-    }
-  }, [props, viewCorpora, corpora]);
-
   const initialVerses = useMemo(() => {
     if (!computedPosition || !viewCorpora) return [];
     const verse = viewCorpora.verseByReference(computedPosition);
@@ -125,7 +117,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   }, [viewCorpora, computedPosition]);
 
   const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
-  const [showSettings, setShowSettings] = useState(false);
   const verseKeys = useMemo(
     () =>
       viewCorpora.corpora
@@ -236,13 +227,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         sx={{ py: 1, px: 2 }}
       >
         <Grid container sx={{ flex: 1 }}>
-          {!showSettings && (
-            <CorpusAction
-              add={addBcvId}
-              remove={removeBcvId}
-              disabled={corpusActionEnableState}
-            />
-          )}
+          <CorpusAction
+            add={addBcvId}
+            remove={removeBcvId}
+            disabled={corpusActionEnableState}
+          />
         </Grid>
         <Grid
           container
@@ -283,26 +272,17 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         </Grid>
       </Grid>
 
-      {showSettings && (
-        <CorpusSettings
-          currentCorpusId={viewCorpora.id}
-          viewportIndex={viewportIndex}
-          corpora={corpora}
-        />
-      )}
-      {!showSettings && (
-        <Grid
-          ref={textContainerRef}
-          container
-          sx={{ pl: 4, flex: 8, overflow: 'auto' }}
-        >
-          {verseAtPosition || visibleVerses.length > 0 ? (
-            determineCorpusView(viewCorpora, visibleVerses, computedPosition)
-          ) : (
-            <Typography>No verse data for this reference.</Typography>
-          )}
-        </Grid>
-      )}
+      <Grid
+        ref={textContainerRef}
+        container
+        sx={{ pl: 4, flex: 8, overflow: 'auto' }}
+      >
+        {verseAtPosition || visibleVerses.length > 0 ? (
+          determineCorpusView(viewCorpora, visibleVerses, computedPosition)
+        ) : (
+          <Typography>No verse data for this reference.</Typography>
+        )}
+      </Grid>
     </Grid>
   );
 };
