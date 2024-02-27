@@ -72,7 +72,7 @@ const parseTsvByFileType = async (
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['text']],
+          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           position: pos
         };
 
@@ -99,7 +99,7 @@ const parseTsvByFileType = async (
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           side,
-          text: values[headerMap['text']],
+          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           after: values[headerMap['after']],
           position: pos,
           gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
