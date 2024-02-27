@@ -1,4 +1,4 @@
-import { LanguageInfo, Verse, Word } from '../../structs';
+import { Corpus, LanguageInfo, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -12,7 +12,7 @@ export interface LimitedToLinks {
 
 export interface VerseDisplayProps extends LimitedToLinks {
   readonly?: boolean;
-  languageInfo?: LanguageInfo;
+  corpus?: Corpus;
   verse: Verse;
 }
 
@@ -20,13 +20,13 @@ export interface VerseDisplayProps extends LimitedToLinks {
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
  * which doesn't edit alignments
  * @param readonly optional property to specify if the verse should be displayed in read-only mode
- * @param languageInfo language information to determine how the verse should be displayed
+ * @param corpus Corpus containing language information to determine how the verse should be displayed
  * @param verse verse to be displayed
  * @constructor
  */
 export const VerseDisplay = ({
   readonly,
-  languageInfo,
+  corpus,
   verse,
   onlyLinkIds,
 }: VerseDisplayProps) => {
@@ -43,7 +43,7 @@ export const VerseDisplay = ({
             key={`${index}/${token.at(0)?.id}`}
             readonly={readonly}
             onlyLinkIds={onlyLinkIds}
-            languageInfo={languageInfo}
+            corpus={corpus}
             parts={token}
           />
         )

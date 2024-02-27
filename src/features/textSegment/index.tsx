@@ -19,6 +19,7 @@ export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
   word: Word;
   languageInfo?: LanguageInfo;
+  showAfter?: boolean;
 }
 
 const computeVariant = (
@@ -83,6 +84,7 @@ export const TextSegment = ({
   word,
   languageInfo,
   onlyLinkIds,
+  showAfter = false
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -224,7 +226,7 @@ export const TextSegment = ({
         }
       >
         <LocalizedTextDisplay languageInfo={languageInfo}>
-          {word.text}
+          {word.text}{showAfter ? (word.after || "").trim() : ""}
         </LocalizedTextDisplay>
       </Typography>
     </React.Fragment>

@@ -16,6 +16,8 @@ export interface AppContextProps {
   setCurrentReference: (currentPosition: BCVWP | null) => void;
   projectState: ProjectState;
   setProjectState: (state: ProjectState) => void;
+  preferences: Record<string, unknown>;
+  setPreferences: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }
 
 export const AppContext = createContext({} as AppContextProps);
@@ -25,6 +27,7 @@ const App = () => {
     null as BCVWP | null
   );
   const [state, setState] = useState({} as ProjectState);
+  const [preferences, setPreferences] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     if (!state.linksTable) {
@@ -42,6 +45,8 @@ const App = () => {
         setCurrentReference,
         projectState: state,
         setProjectState: setState,
+        preferences,
+        setPreferences
       }}
     >
       <Provider store={store}>

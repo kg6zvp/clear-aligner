@@ -1,11 +1,4 @@
-import {
-  AlignmentSide,
-  Corpus,
-  CorpusContainer,
-  CorpusFileFormat,
-  Verse,
-  Word,
-} from 'structs';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, TextDirection, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
@@ -55,7 +48,8 @@ const parseTsvByFileType = async (
     headerMap[header] = idx;
   });
 
-  const reducedWords = rows.reduce((accumulator, row) => {
+  const glossHeader = headerMap["gloss"] ?? headerMap["english"];
+  const reducedWords = rows.slice(0, 100).reduce((accumulator, row) => {
     const values = row.split('\t');
 
     let id, pos, word: Word, verse;
@@ -79,7 +73,7 @@ const parseTsvByFileType = async (
           side,
           corpusId: refCorpus.id,
           text: values[headerMap['text']],
-          position: pos,
+          position: pos
         };
 
         verse = wordsByVerse[id.substring(0, 8)] || {};
@@ -104,6 +98,9 @@ const parseTsvByFileType = async (
           text: values[headerMap['text']],
           after: values[headerMap['after']],
           position: pos,
+          gloss: (new RegExp(/^(.+\..+)+$/)).test(values[glossHeader] ?? "")
+            ? (values[glossHeader] ?? "").replaceAll(".", " ")
+            : values[glossHeader] ?? ""
         } as Word;
 
         verse = wordsByVerse[id.substring(0, 8)] || {};
@@ -121,7 +118,8 @@ const parseTsvByFileType = async (
   }, [] as Word[]);
   return {
     words: reducedWords,
-    wordsByVerse: wordsByVerse,
+    wordsByVerse,
+    hasGloss: !!glossHeader
   };
 };
 
@@ -161,7 +159,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'Macula Hebrew Old Testament',
       language: {
         code: 'heb',
-        textDirection: 'rtl',
+        textDirection: TextDirection.RTL,
         fontFamily: 'sbl-hebrew',
       },
       words: [],
@@ -187,7 +185,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'YLT Old Testament',
       language: {
         code: 'en',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},
@@ -212,7 +210,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'SBL Greek New Testament',
       language: {
         code: 'grc',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},
@@ -237,7 +235,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: "Young's Literal Translation text New Testament",
       language: {
         code: 'eng',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},

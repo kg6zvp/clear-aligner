@@ -1,4 +1,4 @@
-import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
+import {ReactElement, useContext, useMemo, useRef, useState} from 'react';
 import {
   Button,
   ButtonGroup,
@@ -11,25 +11,29 @@ import {
   RestartAlt,
   FileDownload,
   FileUpload,
+  Translate
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import {useAppDispatch, useAppSelector} from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { resetTextSegments } from 'state/alignment.slice';
-import { CorpusContainer } from '../../structs';
-import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import { AppContext } from '../../App';
-import { VirtualTableLinks } from '../../state/links/tableManager';
+import {resetTextSegments} from 'state/alignment.slice';
+import {CorpusContainer} from '../../structs';
+import {AlignmentFile, AlignmentRecord} from '../../structs/alignmentFile';
+import {AppContext} from '../../App';
+import {VirtualTableLinks} from '../../state/links/tableManager';
 import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
+import { ThemeMode } from '../themed';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
+  position: BCVWP;
 }
 
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { projectState, setProjectState } = useContext(AppContext);
+  const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -63,15 +67,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     setFormats(formats.concat(['scroll-lock']));
   }
 
+  console.log("projectState: ", projectState)
+
   return (
     <Stack
       direction="row"
       spacing={2}
       justifyContent="center"
       alignItems="baseline"
-      style={{ marginTop: '16px', marginBottom: '16px' }}
+      style={{marginTop: '16px', marginBottom: '16px'}}
     >
-           <ButtonGroup>
+      <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
@@ -85,7 +91,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <AddLink />
+              <AddLink/>
             </Button>
           </span>
         </Tooltip>
@@ -105,7 +111,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 }
               }}
             >
-              <LinkOff />
+              <LinkOff/>
             </Button>
           </span>
         </Tooltip>
@@ -118,7 +124,38 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <RestartAlt />
+              <RestartAlt/>
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title="Toggle Glosses" arrow describeChild>
+          <span>
+            <Button
+              variant="contained"
+              disabled={!props.containers.some(container => container.corpusAtReference(props.position)?.hasGloss)}
+              sx={theme => (!preferences.showGloss ? {
+                ...(theme.palette.mode === ThemeMode.LIGHT
+                  ? {
+                    color: "rgba(0, 0, 0, 0.26)",
+                    boxShadow: "none",
+                    backgroundColor: "rgba(0, 0, 0, 0.12)",
+                  } : {
+                    color: "rgba(255, 255, 255, 0.3)",
+                    boxShadow: "none",
+                    backgroundColor: "rgba(255, 255, 255, 0.12)",
+                  }),
+                "&:hover": {
+                  "backgroundColor": theme.palette.mode === ThemeMode.LIGHT
+                    ? "rgba(0, 0, 0, 0.12)"
+                    : "rgba(255, 255, 255, 0.12)"
+                }
+              } : {})}
+              onClick={() => setPreferences(p => ({
+                ...p,
+                showGloss: !p.showGloss
+              }))}
+            >
+              <Translate/>
             </Button>
           </span>
         </Tooltip>
@@ -182,7 +219,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 fileInputRef?.current?.click();
               }}
             >
-              <FileUpload />
+              <FileUpload/>
             </Button>
           </span>
         </Tooltip>
@@ -263,7 +300,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 URL.revokeObjectURL(url);
               }}
             >
-              <FileDownload />
+              <FileDownload/>
             </Button>
           </span>
         </Tooltip>
