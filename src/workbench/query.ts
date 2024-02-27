@@ -93,7 +93,8 @@ const parseTsvByFileType = async (
         pos = +id.substring(8, 11);
         // Gloss is defined at this level since both english and gloss headers can exist.
         // Either could be null within the TSV file.
-        const gloss = values[headerMap["english"]] || values[headerMap["gloss"]] || "-"
+        const gloss = values[headerMap["english"]] || values[headerMap["gloss"]] || "-";
+
         word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,

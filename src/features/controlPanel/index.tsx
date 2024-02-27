@@ -3,7 +3,7 @@ import {
   Button,
   ButtonGroup,
   Tooltip,
-  Stack,
+  Stack, Box
 } from '@mui/material';
 import {
   AddLink,
@@ -67,8 +67,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     setFormats(formats.concat(['scroll-lock']));
   }
 
-  console.log("projectState: ", projectState)
-
   return (
     <Stack
       direction="row"
@@ -77,6 +75,24 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       alignItems="baseline"
       style={{marginTop: '16px', marginBottom: '16px'}}
     >
+      <Box sx={{width: 43}} />
+      <ButtonGroup>
+        <Tooltip title="Toggle Glosses" arrow describeChild>
+          <span>
+            <Button
+              variant={preferences.showGloss ? 'contained' : 'outlined'}
+              disabled={!props.containers.some(container => container.corpusAtReference(props.position)?.hasGloss)}
+              onClick={() => setPreferences(p => ({
+                ...p,
+                showGloss: !p.showGloss
+              }))}
+            >
+              <Translate/>
+            </Button>
+          </span>
+        </Tooltip>
+      </ButtonGroup>
+
       <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
@@ -125,37 +141,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               }}
             >
               <RestartAlt/>
-            </Button>
-          </span>
-        </Tooltip>
-        <Tooltip title="Toggle Glosses" arrow describeChild>
-          <span>
-            <Button
-              variant="contained"
-              disabled={!props.containers.some(container => container.corpusAtReference(props.position)?.hasGloss)}
-              sx={theme => (!preferences.showGloss ? {
-                ...(theme.palette.mode === ThemeMode.LIGHT
-                  ? {
-                    color: "rgba(0, 0, 0, 0.26)",
-                    boxShadow: "none",
-                    backgroundColor: "rgba(0, 0, 0, 0.12)",
-                  } : {
-                    color: "rgba(255, 255, 255, 0.3)",
-                    boxShadow: "none",
-                    backgroundColor: "rgba(255, 255, 255, 0.12)",
-                  }),
-                "&:hover": {
-                  "backgroundColor": theme.palette.mode === ThemeMode.LIGHT
-                    ? "rgba(0, 0, 0, 0.12)"
-                    : "rgba(255, 255, 255, 0.12)"
-                }
-              } : {})}
-              onClick={() => setPreferences(p => ({
-                ...p,
-                showGloss: !p.showGloss
-              }))}
-            >
-              <Translate/>
             </Button>
           </span>
         </Tooltip>

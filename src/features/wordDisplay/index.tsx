@@ -49,13 +49,13 @@ export const WordDisplay = ({
       >
         {
           (hasGloss && preferences.showGloss) ? (
-            <Paper variant="outlined" sx={{ display: 'inline-block', p: 1, m: .25 }}>
+            <Paper variant="outlined" sx={{ display: 'inline-block', p: 1, m: .25, borderColor: 'rgba(0, 0, 0, 0.5)' }}>
               <Grid container>
                 {
                   (parts || []).map((wordPart: Word, idx: number) => {
                     return (
                       <React.Fragment key={wordPart.id}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
                           <TextSegment
                             key={wordPart.id}
                             readonly={readonly}
@@ -63,13 +63,14 @@ export const WordDisplay = ({
                             word={wordPart}
                             languageInfo={languageInfo}
                             showAfter={!suppressAfter}
+                            alignment={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'}
                           />
-                          <Grid container justifyContent={/-/.test(wordPart.gloss || "-") ? 'center' : 'flex-start'} sx={{ height: '20px' }}>
+                          <Grid container justifyContent={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'} sx={{ height: '20px' }}>
                             <LocalizedTextDisplay
                               languageInfo={languageInfo}
                               variant="caption"
                               sx={theme => ({
-                                color: (theme as Record<string, any>).typography.unlinked.color,
+                                color: 'rgba(0, 0, 0, 0.75)',
                               })}
                             >
                               {wordPart.gloss || "-"}
@@ -78,7 +79,7 @@ export const WordDisplay = ({
                         </Box>
                         {
                           idx !== ((parts || []).length - 1) && (
-                            <Divider flexItem orientation="vertical" sx={{ borderStyle: 'dashed', borderWidth: '2px', width: '2px', mx: 1 }} />
+                            <Divider flexItem orientation="vertical" sx={{ borderStyle: 'dashed', borderWidth: '2px', width: '2px', mx: .5, borderColor: 'rgba(0, 0, 0, 0.35)' }} />
                           )
                         }
                       </React.Fragment>
