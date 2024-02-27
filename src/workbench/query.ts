@@ -47,8 +47,8 @@ const parseTsvByFileType = async (
   header.split('\t').forEach((header, idx) => {
     headerMap[header] = idx;
   });
+  const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
 
-  const glossHeader = headerMap["gloss"] ?? headerMap["english"];
   const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
@@ -91,6 +91,9 @@ const parseTsvByFileType = async (
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['xml:id']].slice(1);
         pos = +id.substring(8, 11);
+        // Gloss is defined at this level since both english and gloss headers can exist.
+        // Either could be null within the TSV file.
+        const gloss = values[headerMap["english"]] || values[headerMap["gloss"]] || "-"
         word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
@@ -98,9 +101,9 @@ const parseTsvByFileType = async (
           text: values[headerMap['text']],
           after: values[headerMap['after']],
           position: pos,
-          gloss: (new RegExp(/^(.+\..+)+$/)).test(values[glossHeader] ?? "")
-            ? (values[glossHeader] ?? "").replaceAll(".", " ")
-            : values[glossHeader] ?? ""
+          gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
+            ? gloss.replaceAll(".", " ")
+            : gloss
         } as Word;
 
         verse = wordsByVerse[id.substring(0, 8)] || {};
@@ -119,7 +122,7 @@ const parseTsvByFileType = async (
   return {
     words: reducedWords,
     wordsByVerse,
-    hasGloss: !!glossHeader
+    hasGloss
   };
 };
 
