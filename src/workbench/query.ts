@@ -49,7 +49,7 @@ const parseTsvByFileType = async (
   });
 
   const glossHeader = headerMap["gloss"] ?? headerMap["english"];
-  const reducedWords = rows.slice(0, 100).reduce((accumulator, row) => {
+  const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
 
     let id, pos, word: Word, verse;
