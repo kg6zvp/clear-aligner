@@ -55,7 +55,7 @@ const parseTsvByFileType = async (
     headerMap[header] = idx;
   });
 
-  const reducedWords = rows.reduce((accumulator, row) => {
+  const reducedWords = rows.splice(0, 100).reduce((accumulator, row) => {
     const values = row.split('\t');
 
     let id, pos, word: Word, verse;

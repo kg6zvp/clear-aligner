@@ -10,6 +10,7 @@ import { Provider } from 'react-redux';
 import BCVWP from './features/bcvwp/BCVWPSupport';
 import { ProjectState } from './state/databaseManagement';
 import { VirtualTableLinks } from './state/links/tableManager';
+import { UserPreferenceTable } from './state/preferences/tableManager';
 
 export interface AppContextProps {
   currentReference: BCVWP | null;
@@ -27,10 +28,11 @@ const App = () => {
   const [state, setState] = useState({} as ProjectState);
 
   useEffect(() => {
-    if (!state.linksTable) {
+    if (!state.linksTable || !state.userPreferences) {
       setState({
         ...state,
         linksTable: new VirtualTableLinks(),
+        userPreferences: new UserPreferenceTable()
       });
     }
   }, [state, state.linksTable, setState]);
