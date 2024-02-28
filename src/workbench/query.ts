@@ -229,7 +229,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       books: {},
     };
 
-    const bsbWords = await parseTsvByFileType(
+    const ytlWords = await parseTsvByFileType(
       YLT,
       yltCorp,
       'targets',
@@ -238,7 +238,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     yltCorp = {
       ...yltCorp,
-      ...bsbWords,
+      ...ytlWords,
     };
 
     putVersesInCorpus(yltCorp);
