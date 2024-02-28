@@ -184,14 +184,19 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   }
                 );
 
-                secondaryIndices.sourcesIndex.setLoadingOperation(secondaryIndices.sourcesIndex.initialize(linksTable));
+                const initializeAndIndexSources = async () => {
+                  await secondaryIndices.sourcesIndex.initialize(linksTable);
+                  await linksTable.registerSecondaryIndex(secondaryIndices.sourcesIndex);
+                }
+                secondaryIndices.sourcesIndex.setLoadingOperation(initializeAndIndexSources());
                 await secondaryIndices.sourcesIndex.loading;
-                secondaryIndices.targetsIndex.setLoadingOperation(secondaryIndices.targetsIndex.initialize(linksTable));
-                await secondaryIndices.targetsIndex.loading;
 
-                secondaryIndices.sourcesIndex.setLoadingOperation(linksTable.registerSecondaryIndex(secondaryIndices.sourcesIndex));
-                await secondaryIndices.sourcesIndex.loading;
-                secondaryIndices.targetsIndex.setLoadingOperation(linksTable.registerSecondaryIndex(secondaryIndices.targetsIndex));
+                const initializeAndIndexTargets = async () => {
+                  await secondaryIndices.targetsIndex.initialize(linksTable);
+                  await linksTable.registerSecondaryIndex(secondaryIndices.targetsIndex);
+                }
+
+                secondaryIndices.targetsIndex.setLoadingOperation(initializeAndIndexTargets());
                 await secondaryIndices.targetsIndex.loading;
 
                 linksTable._onUpdate(); // modify variable to indicate that an update has occurred
