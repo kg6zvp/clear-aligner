@@ -10,12 +10,13 @@ import { Provider } from 'react-redux';
 import BCVWP from './features/bcvwp/BCVWPSupport';
 import { ProjectState } from './state/databaseManagement';
 import { VirtualTableLinks } from './state/links/tableManager';
+import { UserPreferenceTable } from './state/preferences/tableManager';
 
 export interface AppContextProps {
   currentReference: BCVWP | null;
   setCurrentReference: (currentPosition: BCVWP | null) => void;
   projectState: ProjectState;
-  setProjectState: (state: ProjectState) => void;
+  setProjectState: React.Dispatch<React.SetStateAction<ProjectState>>;
   preferences: Record<string, unknown>;
   setPreferences: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }
@@ -30,12 +31,15 @@ const App = () => {
   const [preferences, setPreferences] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
-    if (!state.linksTable) {
+    const preferenceTable = new UserPreferenceTable();
+    if (!state.linksTable || !state.userPreferences) {
       setState({
         ...state,
         linksTable: new VirtualTableLinks(),
+        userPreferences: state.userPreferences ?? preferenceTable
       });
     }
+    setPreferences(p => Object.keys(p).length ? p : Object.fromEntries(preferenceTable.getPreferences().entries()));
   }, [state, state.linksTable, setState]);
 
   return (

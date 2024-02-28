@@ -1,27 +1,26 @@
-import {ReactElement, useContext, useMemo, useRef, useState} from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Tooltip,
-  Stack, Box
-} from '@mui/material';
+import { ReactElement, useContext, useMemo, useRef, useState, useCallback } from 'react';
+import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import {
   AddLink,
-  LinkOff,
-  RestartAlt,
   FileDownload,
   FileUpload,
+  LinkOff,
+  RestartAlt,
+  SwapHoriz,
+  SwapVert,
   Translate
 } from '@mui/icons-material';
-import {useAppDispatch, useAppSelector} from 'app/hooks';
+import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import {resetTextSegments} from 'state/alignment.slice';
-import {CorpusContainer} from '../../structs';
-import {AlignmentFile, AlignmentRecord} from '../../structs/alignmentFile';
-import {AppContext} from '../../App';
-import {VirtualTableLinks} from '../../state/links/tableManager';
+import { resetTextSegments } from 'state/alignment.slice';
+import { CorpusContainer } from '../../structs';
+import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
+import { AppContext } from '../../App';
+import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
+import { ProjectState } from '../../state/databaseManagement';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -62,9 +61,28 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     ]
   );
 
+  const saveControlPanelFormat = useCallback(() => {
+    const updatedUserPreference = projectState.userPreferences?.save({
+      name: PreferenceKey.CONTROL_PANEL_FORMAT,
+      value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
+        ? ControlPanelFormat.VERTICAL
+        : ControlPanelFormat.HORIZONTAL
+    });
+    if(updatedUserPreference) {
+      setPreferences(p => ({
+        ...p,
+        [updatedUserPreference.name]: updatedUserPreference
+      }));
+    }
+  }, [preferences, projectState.userPreferences, setPreferences]);
+
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
+
+  const controlPanelFormat = useMemo(() => (
+    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
+  )?.value, [preferences]);
 
   return (
     <Stack
@@ -74,7 +92,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       alignItems="baseline"
       style={{marginTop: '16px', marginBottom: '16px'}}
     >
-      <Box sx={{width: 43}} />
       <ButtonGroup>
         <Tooltip title="Toggle Glosses" arrow describeChild>
           <span>
@@ -87,6 +104,20 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               }))}
             >
               <Translate/>
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={`Swap to ${controlPanelFormat === ControlPanelFormat.VERTICAL ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
+          <span>
+            <Button
+              variant="contained"
+              onClick={saveControlPanelFormat}
+            >
+              {
+                controlPanelFormat === ControlPanelFormat.HORIZONTAL
+                  ? <SwapVert/>
+                  : <SwapHoriz/>
+              }
             </Button>
           </span>
         </Tooltip>
@@ -166,10 +197,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const content = await file.text();
                 const linksTable: VirtualTableLinks = new VirtualTableLinks();
 
-                setProjectState({
-                  ...projectState,
+                setProjectState((ps: ProjectState) => ({
+                  ...ps,
                   linksTable,
-                });
+                }));
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
