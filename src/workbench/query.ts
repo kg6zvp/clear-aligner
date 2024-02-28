@@ -31,9 +31,6 @@ const punctuationFilter = [
   '"',
   '“',
   '”',
-  "،",
-  "؟",
-  "؛"
 ];
 
 const parseTsvByFileType = async (
