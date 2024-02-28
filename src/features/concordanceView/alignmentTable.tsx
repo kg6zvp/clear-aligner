@@ -62,7 +62,7 @@ export const VerseCell = (
     .sort((a, b) => BCVWP.compare(a.bcvId, b.bcvId));
 
   const anyVerse = verses.find((v) => !!v.bcvId);
-  const languageInfo = container?.languageAtReference(anyVerse?.bcvId!);
+  const languageInfo = container?.languageAtReferenceString(anyVerse?.bcvId!.toReferenceString()!);
 
   return (
     <div
@@ -74,7 +74,7 @@ export const VerseCell = (
       }}
     >
       {verses.map((verse: Verse) => {
-        const languageInfo = container?.languageAtReference(verse.bcvId);
+        const languageInfo = container?.languageAtReferenceString(verse.bcvId.toReferenceString());
         return (
           <VerseDisplay
             key={verse?.bcvId?.toReferenceString() ?? ''}

@@ -1,7 +1,6 @@
 import { AlignmentSide, CorpusContainer, Link, Word } from '../../structs';
 import { FullyResolvedLink, PivotWord, ResolvedWordEntry } from './structs';
-import BCVWP from '../bcvwp/BCVWPSupport';
-import findWord, { findWordByString } from '../../helpers/findWord';
+import { findWordByString } from '../../helpers/findWord';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { VirtualTableLinks } from '../../state/links/tableManager';
 
@@ -15,8 +14,7 @@ export const fullyResolveLink = (
     sourceResolvedWords: new Set<ResolvedWordEntry>(
       link.sources
         .map((bcvId: string): ResolvedWordEntry | undefined => {
-          const ref = BCVWP.parseFromString(bcvId);
-          const corpus = sourceContainer.corpusAtReference(ref);
+          const corpus = sourceContainer.corpusAtReferenceString(bcvId);
           if (!corpus) return undefined;
           const word = findWordByString([corpus], bcvId);
           if (!word) return undefined;
@@ -35,10 +33,9 @@ export const fullyResolveLink = (
     targetResolvedWords: new Set<ResolvedWordEntry>(
       link.targets
         .map((bcvId: string): ResolvedWordEntry | undefined => {
-          const ref = BCVWP.parseFromString(bcvId);
-          const corpus = targetContainer.corpusAtReference(ref);
+          const corpus = targetContainer.corpusAtReferenceString(bcvId);
           if (!corpus) return undefined;
-          const word = findWord([corpus], ref);
+          const word = findWordByString([corpus], bcvId);
           if (!word) return undefined;
           return {
             word: word,
@@ -88,17 +85,14 @@ export const getLinksForPivotWord = async (
 /**
  * generate map of pivotWords without links or alignedWords populated
  * @param linksTable
- * @param sourceContainer
- * @param targetContainer
+ * @param container
  * @param side
  */
 export const generatePivotWordsList = async (
   linksTable: VirtualTableLinks,
-  sourceContainer: CorpusContainer,
-  targetContainer: CorpusContainer,
+  container: CorpusContainer,
   side: AlignmentSide
-): Promise<PivotWord[]> => {
-  const container = side === 'sources' ? sourceContainer : targetContainer;
+): Promise<Map<string, PivotWord>> => {
 
   const pivotWordPromises = container.corpora.flatMap((corpus) =>
     Array.from(corpus.wordLocation.entries()).map(async ([key, value]) => {
@@ -111,7 +105,7 @@ export const generatePivotWordsList = async (
             languageInfo: corpus.language
           } as PivotWord);
           resolve(pivotWord);
-        }, 2);
+        }, 10);
       });
       }
     )
@@ -141,7 +135,7 @@ export const generatePivotWordsList = async (
     return accumulator;
   }, new Map<string, PivotWord>());
 
-  return Array.from(pivotWordsMap.values());
+  return pivotWordsMap;
 };
 
 /**

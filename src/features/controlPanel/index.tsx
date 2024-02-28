@@ -21,6 +21,8 @@ import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
 
+import { WordsIndex } from '../../state/links/wordsIndex';
+
 interface ControlPanelProps {
   containers: CorpusContainer[];
 }
@@ -145,9 +147,18 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const content = await file.text();
                 const linksTable: VirtualTableLinks = new VirtualTableLinks();
 
+                const sourceContainer = props.containers.find((container) => container.id === 'source')!;
+                const targetContainer = props.containers.find((container) => container.id === 'target')!;
+
+                const secondaryIndices = {
+                  sourcesIndex: new WordsIndex(sourceContainer, 'sources'),
+                  targetsIndex: new WordsIndex(targetContainer, 'targets')
+                };
+
                 setProjectState({
                   ...projectState,
                   linksTable,
+                  linksIndexes: secondaryIndices
                 });
 
                 // convert into an appropriate object
@@ -172,7 +183,18 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                     }
                   }
                 );
-                linksTable.onUpdate(); // modify variable to indicate that an update has occurred
+
+                secondaryIndices.sourcesIndex.setLoadingOperation(secondaryIndices.sourcesIndex.initialize(linksTable));
+                await secondaryIndices.sourcesIndex.loading;
+                secondaryIndices.targetsIndex.setLoadingOperation(secondaryIndices.targetsIndex.initialize(linksTable));
+                await secondaryIndices.targetsIndex.loading;
+
+                secondaryIndices.sourcesIndex.setLoadingOperation(linksTable.registerSecondaryIndex(secondaryIndices.sourcesIndex));
+                await secondaryIndices.sourcesIndex.loading;
+                secondaryIndices.targetsIndex.setLoadingOperation(linksTable.registerSecondaryIndex(secondaryIndices.targetsIndex));
+                await secondaryIndices.targetsIndex.loading;
+
+                linksTable._onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
             <Button

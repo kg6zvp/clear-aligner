@@ -1,0 +1,102 @@
+import { AlignmentSide, CorpusContainer, Link } from '../../structs';
+import { PivotWord } from '../../features/concordanceView/structs';
+import { VirtualTableLinks } from './tableManager';
+import { generatePivotWordsList } from '../../features/concordanceView/concordanceViewHelpers';
+import { findWordByString } from '../../helpers/findWord';
+import { IndexedChangeType, SecondaryIndex } from '../databaseManagement';
+import _ from 'lodash';
+
+export class WordsIndex implements SecondaryIndex<Link> {
+  container: CorpusContainer;
+  side: AlignmentSide;
+  pivotWords: Map<string, PivotWord>;
+  linkIdsToPivotWordNormalizedTexts: Map<string, string[]>;
+  lastUpdate: number;
+  loading?: Promise<any>;
+
+  constructor(container: CorpusContainer, side: AlignmentSide) {
+    this.container = container;
+    this.side = side;
+    this.pivotWords = new Map<string, PivotWord>();
+    this.linkIdsToPivotWordNormalizedTexts = new Map<string, string[]>();
+    this.lastUpdate = 0;
+  }
+
+  isLoading = (): boolean => {
+    return !!this.loading;
+  };
+
+  setLoadingOperation = (loadingOperation: Promise<any>): void => {
+    this.loading = loadingOperation;
+    this.loading
+      .finally(() => this.loading = undefined);
+  };
+
+  initialize = async (table: VirtualTableLinks): Promise<void> => {
+    this.pivotWords = await generatePivotWordsList(table, this.container, this.side);
+  };
+
+  getPivotWords = (): PivotWord[] => Array.from(this.pivotWords.values());
+
+  id = (): string => {
+    return this.side;
+  };
+
+  onChange = async (type: IndexedChangeType, payload: Link): Promise<void> => {
+    setTimeout(async () => {
+      switch (type) {
+        case IndexedChangeType.SAVE:
+          await this._indexSave(payload);
+          break;
+        case IndexedChangeType.REMOVE:
+          await this._indexRemove(payload);
+          break;
+      }
+      this.lastUpdate = Date.now().valueOf();
+    }, 5);
+  };
+
+  _indexSave = async (payload: Link): Promise<void> => {
+    if (!payload.id) return;
+    const pivotWordNormalizedTexts = (this.side === 'sources' ? payload.sources : payload.targets)
+      .map((bcvId) => findWordByString(this.container.corpora, bcvId)?.text.trim().toLowerCase())
+      .filter((text) => !!text) as string[];
+    this.linkIdsToPivotWordNormalizedTexts.set(payload.id, _.uniqWith(pivotWordNormalizedTexts, _.isEqual));
+    for (const normalizedText of pivotWordNormalizedTexts) {
+      const pivotWord = this.pivotWords.get(normalizedText);
+      if (!pivotWord) break;
+      if (!pivotWord.alignmentLinks) {
+        pivotWord.alignmentLinks = [];
+      }
+      pivotWord.alignmentLinks.push(payload);
+      if (pivotWord.alignedWords) {
+        delete pivotWord.alignedWords;
+      }
+      pivotWord.hasAlignmentLinks = (pivotWord.alignmentLinks.length > 0);
+    }
+  };
+
+  _indexRemove = async (payload: Link): Promise<void> => {
+    if (!payload.id) return;
+    const pivotWordNormalizedTexts = this.linkIdsToPivotWordNormalizedTexts.get(payload.id);
+    if (!pivotWordNormalizedTexts) return;
+    for (const normalizedText of pivotWordNormalizedTexts) {
+      const pivotWord = this.pivotWords.get(normalizedText);
+      if (!pivotWord) break;
+      if (pivotWord.alignmentLinks) {
+        // remove the link from the list
+        _.remove(pivotWord.alignmentLinks, (link) => link.id === payload.id);
+        pivotWord.hasAlignmentLinks = (pivotWord.alignmentLinks.length > 0);
+      }
+      if (pivotWord.alignedWords) {
+        _.remove(pivotWord.alignedWords, (alignedWord) => {
+          if (!alignedWord.alignments) return true; // remove because this word has no alignments
+          _.remove(alignedWord.alignments, (link) => link.id === payload.id);
+          alignedWord.frequency = alignedWord.alignments.length;
+          return (alignedWord.alignments.length < 1); // remove alignedWord if it has no links
+        });
+      }
+    }
+    this.linkIdsToPivotWordNormalizedTexts.delete(payload.id);
+  };
+}

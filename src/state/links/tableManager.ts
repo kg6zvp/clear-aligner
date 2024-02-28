@@ -1,9 +1,9 @@
 import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
-import { VirtualTable } from '../databaseManagement';
+import { IndexedChangeType, SecondaryIndex, VirtualTable } from '../databaseManagement';
 import { v4 as uuidv4 } from 'uuid';
 
-export class VirtualTableLinks extends VirtualTable {
+export class VirtualTableLinks extends VirtualTable<Link> {
   links: Map<string, Link>;
   sourcesIndex: Map<string, string[]>;
   targetsIndex: Map<string, string[]>;
@@ -25,11 +25,12 @@ export class VirtualTableLinks extends VirtualTable {
       };
       this.links.set(newLink.id!, newLink);
       this._indexLink(newLink);
+      void this._updateSecondaryIndices(IndexedChangeType.SAVE, newLink);
       return newLink;
     } catch (e) {
       return undefined;
     } finally {
-      this.onUpdate(suppressOnUpdate);
+      this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -73,7 +74,7 @@ export class VirtualTableLinks extends VirtualTable {
     } catch (x) {
       console.error('error persisting in bulk', x);
     } finally {
-      this.onUpdate(suppressOnUpdate);
+      this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -137,7 +138,8 @@ export class VirtualTableLinks extends VirtualTable {
 
     this.links.delete(link?.id!);
 
-    this.onUpdate(suppressOnUpdate);
+    this._onUpdate(suppressOnUpdate);
+    void this._updateSecondaryIndices(IndexedChangeType.REMOVE, link);
   };
 
   /**
@@ -172,4 +174,18 @@ export class VirtualTableLinks extends VirtualTable {
       }
     });
   };
+
+  catchupNewIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
+    const indicesPromises: Promise<void>[] = [];
+    for (const link of this.links.values()) {
+      indicesPromises.push(new Promise<void>((resolve) => {
+        setTimeout(() => {
+          index.onChange(IndexedChangeType.SAVE, link);
+          resolve();
+        }, 3);
+      }));
+    }
+
+    await Promise.all(indicesPromises);
+  }
 }

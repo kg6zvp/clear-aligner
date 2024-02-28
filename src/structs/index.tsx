@@ -96,15 +96,13 @@ export class CorpusContainer {
     return this.corpora.find((corpus) => corpus.id === corpusId);
   }
 
-  corpusAtReference(reference: BCVWP): Corpus | undefined {
-    if (!reference.hasFields(BCVWPField.Book)) {
-      return undefined;
-    }
-    return this.corpora.find((corpus) => corpus.books[reference.book!]);
+  corpusAtReferenceString(refString: string): Corpus | undefined {
+    const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse)
+    return this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
   }
 
-  languageAtReference(reference: BCVWP): LanguageInfo | undefined {
-    return this.corpusAtReference(reference)?.language;
+  languageAtReferenceString(refString: string): LanguageInfo | undefined {
+    return this.corpusAtReferenceString(refString)?.language;
   }
 
   verseByReference(reference: BCVWP): Verse | undefined {
@@ -117,7 +115,7 @@ export class CorpusContainer {
     ) {
       return undefined;
     }
-    const corpus = this.corpusAtReference(reference);
+    const corpus = this.corpusAtReferenceString(reference.toReferenceString());
     return corpus?.books[reference.book!]?.[reference.chapter!]?.[
       reference.verse!
     ];
@@ -128,15 +126,6 @@ export class CorpusContainer {
       return undefined;
     }
     return this.verseByReference(BCVWP.parseFromString(refString));
-  }
-
-  wordByReference(reference: BCVWP): Word | undefined {
-    if (!reference.hasFields(BCVWPField.Word)) {
-      return undefined;
-    }
-    return this.verseByReference(reference)?.words?.find(
-      (word) => BCVWP.parseFromString(word.id)?.word === reference.word
-    );
   }
 
   static fromIdAndCorpora = (

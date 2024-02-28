@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { AlignmentSide, DisplayableLink, Link } from '../../structs';
-import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
@@ -10,7 +10,6 @@ import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
-import { generatePivotWordsList } from './concordanceViewHelpers';
 import { AppContext } from '../../App';
 import _ from 'lodash';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
@@ -107,16 +106,18 @@ export const ConcordanceView = () => {
   useEffect(
     () => {
       const loadPivotWordData = async () => {
-        if (!sourceContainer || !targetContainer || !projectState?.linksTable) {
+        if (!sourceContainer || !targetContainer || !projectState?.linksTable || !projectState.linksIndexes) {
           return [];
         }
 
-        return await generatePivotWordsList(
-          projectState.linksTable,
-          sourceContainer,
-          targetContainer,
-          wordSource
-        );
+        const source = wordSource === 'sources' ? projectState.linksIndexes.sourcesIndex
+          : projectState.linksIndexes.targetsIndex;
+
+        if (source.loading) {
+          await source.loading;
+        }
+
+        return source.getPivotWords();
       };
 
       if (sourceContainer && targetContainer && wordSource) {
@@ -127,6 +128,10 @@ export const ConcordanceView = () => {
     [
       projectState?.linksTable,
       projectState?.linksTable?.lastUpdate,
+      projectState?.linksIndexes?.sourcesIndex.lastUpdate,
+      projectState?.linksIndexes?.sourcesIndex.loading,
+      projectState?.linksIndexes?.targetsIndex.lastUpdate,
+      projectState?.linksIndexes?.targetsIndex.loading,
       wordSource,
       sourceContainer,
       targetContainer,
