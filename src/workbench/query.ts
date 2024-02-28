@@ -11,9 +11,11 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
+import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
+// @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
-import BSB from 'tsv/target_BSB_new.tsv';
+import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
 
 let isInitialized: boolean = false;
 
@@ -186,6 +188,31 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(maculaHebOT);
 
+    // YLT Old Testament
+    let wlcYltOt: Corpus = {
+      id: 'wlc-ylt',
+      name: 'YLT',
+      fullName: 'YLT Old Testament',
+      language: {
+        code: 'en',
+        textDirection: 'ltr',
+      },
+      words: [],
+      wordsByVerse: {},
+      books: {},
+    };
+    const wlcYltOtWords = await parseTsvByFileType(
+      WLC_OT_YLT_TSV,
+      wlcYltOt,
+      'targets',
+      CorpusFileFormat.TSV_TARGET
+    );
+    wlcYltOt = {
+      ...wlcYltOt,
+      ...wlcYltOtWords,
+    };
+    putVersesInCorpus(wlcYltOt);
+
     // SBL GNT
     let sblGnt: Corpus = {
       id: 'sbl-gnt',
@@ -212,10 +239,10 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(sblGnt);
 
-    let bsbCorp: Corpus = {
-      id: 'bsb',
-      name: 'BSB',
-      fullName: 'BSB',
+    let na27Ylt: Corpus = {
+      id: 'na27-YLT',
+      name: 'YLT',
+      fullName: "Young's Literal Translation text New Testament",
       language: {
         code: 'eng',
         textDirection: 'ltr',
@@ -225,26 +252,25 @@ export const getAvailableCorporaContainers = async (): Promise<
       books: {},
     };
 
-    const bsbWords = await parseTsvByFileType(
-      BSB,
-      bsbCorp,
+    const na27Words = await parseTsvByFileType(
+      NA27_YLT,
+      na27Ylt,
       'targets',
       CorpusFileFormat.TSV_TARGET
     );
-
-    bsbCorp = {
-      ...bsbCorp,
-      ...bsbWords,
+    na27Ylt = {
+      ...na27Ylt,
+      ...na27Words,
     };
-
-    putVersesInCorpus(bsbCorp);
+    putVersesInCorpus(na27Ylt);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
       sblGnt,
       maculaHebOT,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      bsbCorp,
+      wlcYltOt,
+      na27Ylt,
     ]);
 
     availableCorpora.push(sourceContainer);
