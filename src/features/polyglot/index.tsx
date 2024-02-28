@@ -34,11 +34,15 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     [containers, containers.length]
   );
 
+  const controlPanelFormat = useMemo(() => (
+    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
+  )?.value, [preferences]);
+
   return (
     <Stack
-      direction={(preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference)?.value === ControlPanelFormat.HORIZONTAL ? "row" : "column"}
+      direction={controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "row" : "column"}
       spacing={2}
-      style={{ height: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference)?.value === ControlPanelFormat.HORIZONTAL ? "17rem" : '30rem' }}
+      style={{ height: controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "17rem" : '30rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >

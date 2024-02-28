@@ -79,6 +79,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     setFormats(formats.concat(['scroll-lock']));
   }
 
+  const controlPanelFormat = useMemo(() => (
+    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
+  )?.value, [preferences]);
+
   return (
     <Stack
       direction="row"
@@ -100,12 +104,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             >
               <Translate/>
             </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={`Swap to ${controlPanelFormat ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
+          <span>
             <Button
               variant="contained"
               onClick={saveControlPanelFormat}
             >
               {
-                (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
+                controlPanelFormat === ControlPanelFormat.HORIZONTAL
                   ? <SwapVert/>
                   : <SwapHoriz/>
               }
