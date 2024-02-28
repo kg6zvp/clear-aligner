@@ -74,7 +74,7 @@ const determineCorpusView = (
                 paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay languageInfo={languageInfo} verse={verse} />
+              <VerseDisplay corpus={viewCorpora.corpusAtReference(verse.bcvId)} verse={verse} />
             </Typography>
           </Grid>
         </Grid>

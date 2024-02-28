@@ -19,6 +19,8 @@ export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
   word: Word;
   languageInfo?: LanguageInfo;
+  showAfter?: boolean;
+  alignment?: 'flex-end' | 'flex-start' | 'center';
 }
 
 const computeVariant = (
@@ -83,6 +85,8 @@ export const TextSegment = ({
   word,
   languageInfo,
   onlyLinkIds,
+  alignment,
+  showAfter = false
 }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
@@ -187,6 +191,7 @@ export const TextSegment = ({
         paragraph={false}
         component="span"
         variant={computeVariant(isSelectedInEditedLink, isLinked)}
+        sx={alignment ? {display: 'flex', justifyContent: alignment} : {}}
         className={`text-segment${
           readonly ? '.readonly' : ''
         } ${computeDecoration(
@@ -224,7 +229,7 @@ export const TextSegment = ({
         }
       >
         <LocalizedTextDisplay languageInfo={languageInfo}>
-          {word.text}
+          {word.text}{showAfter ? (word.after || "").trim() : ""}
         </LocalizedTextDisplay>
       </Typography>
     </React.Fragment>

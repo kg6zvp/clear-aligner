@@ -36,11 +36,13 @@ export class UserPreferenceTable extends VirtualTable {
   save = (userPreference: UserPreference, suppressOnUpdate?: boolean): UserPreference | undefined => {
     try {
       this.preferences.set(userPreference.name, userPreference);
+      console.log("updated preferences to: ", this.preferences, userPreference)
     } catch (e) {
       return undefined;
     } finally {
       this.onUpdate(suppressOnUpdate);
     }
+    return userPreference;
   };
 
   remove = (preferenceKey: PreferenceKey): boolean => {

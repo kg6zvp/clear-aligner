@@ -1,16 +1,17 @@
-import { LanguageInfo, Word } from '../../structs';
-import { Typography } from '@mui/material';
+import { Corpus, TextDirection, Word } from '../../structs';
+import { Box, Divider, Grid, Paper, Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
+import { AppContext } from '../../App';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
   suppressAfter?: boolean;
   parts?: Word[];
-  languageInfo?: LanguageInfo;
+  corpus?: Corpus;
 }
 
 /**
@@ -21,13 +22,16 @@ export interface WordDisplayProps extends LimitedToLinks {
  * @param languageInfo language info for display
  */
 export const WordDisplay = ({
-  readonly,
-  suppressAfter,
-  onlyLinkIds,
-  parts,
-  languageInfo,
-}: WordDisplayProps) => {
+                              readonly,
+                              suppressAfter,
+                              onlyLinkIds,
+                              parts,
+                              corpus
+                            }: WordDisplayProps) => {
+  const { language: languageInfo, hasGloss } = corpus ?? { languageInfo: null, hasGloss: false };
+  const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
+
   return (
     <>
       <Typography
@@ -35,38 +39,84 @@ export const WordDisplay = ({
         key={`${
           ref
             ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
-                BCVWPField.Word
-              )
+              BCVWPField.Word
+            )
             : ''
         }-${languageInfo?.code}`}
         style={{
-          padding: '1px',
+          padding: '1px'
         }}
       >
-        {parts?.map((part) => (
-          <React.Fragment key={part?.id}>
-            <TextSegment
-              key={part.id}
-              readonly={readonly}
-              onlyLinkIds={onlyLinkIds}
-              word={part}
-              languageInfo={languageInfo}
-            />
-            {!suppressAfter && (
-              <>
-                {part.after && (
-                  <LocalizedTextDisplay
-                    key={`${part.id}-after`}
+        {
+          (hasGloss && preferences.showGloss) ? (
+            <Paper variant="outlined" sx={{ display: 'inline-block', p: 1, m: .25, borderColor: 'rgba(0, 0, 0, 0.5)' }}>
+              <Grid container>
+                {
+                  (parts || []).map((wordPart: Word, idx: number) => {
+                    return (
+                      <React.Fragment key={wordPart.id}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+                          <TextSegment
+                            key={wordPart.id}
+                            readonly={readonly}
+                            onlyLinkIds={onlyLinkIds}
+                            word={wordPart}
+                            languageInfo={languageInfo}
+                            showAfter={!suppressAfter}
+                            alignment={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'}
+                          />
+                          <Grid container justifyContent={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'} sx={{ height: '20px' }}>
+                            <LocalizedTextDisplay
+                              languageInfo={languageInfo}
+                              variant="caption"
+                              sx={theme => ({
+                                color: 'rgba(0, 0, 0, 0.75)',
+                              })}
+                            >
+                              {wordPart.gloss || "-"}
+                            </LocalizedTextDisplay>
+                          </Grid>
+                        </Box>
+                        {
+                          idx !== ((parts || []).length - 1) && (
+                            <Divider flexItem orientation="vertical" sx={{ borderStyle: 'dashed', borderWidth: '2px', width: '2px', mx: .5, borderColor: 'rgba(0, 0, 0, 0.35)' }} />
+                          )
+                        }
+                      </React.Fragment>
+                    )
+                  })
+                }
+              </Grid>
+            </Paper>
+          ) : (
+            <>
+              {parts?.map((part) => (
+                <React.Fragment key={part?.id}>
+                  <TextSegment
+                    key={part.id}
+                    readonly={readonly}
+                    onlyLinkIds={onlyLinkIds}
+                    word={part}
                     languageInfo={languageInfo}
-                  >
-                    {part.after}
-                  </LocalizedTextDisplay>
-                )}
-              </>
-            )}
-          </React.Fragment>
-        ))}
-        <span> </span>
+                  />
+                  {!suppressAfter && (
+                    <>
+                      {part.after && (
+                        <LocalizedTextDisplay
+                          key={`${part.id}-after`}
+                          languageInfo={languageInfo}
+                        >
+                          {part.after}
+                        </LocalizedTextDisplay>
+                      )}
+                    </>
+                  )}
+                </React.Fragment>
+              ))}
+              <span> </span>
+            </>
+          )
+        }
       </Typography>
     </>
   );

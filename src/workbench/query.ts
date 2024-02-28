@@ -1,11 +1,4 @@
-import {
-  AlignmentSide,
-  Corpus,
-  CorpusContainer,
-  CorpusFileFormat,
-  Verse,
-  Word,
-} from 'structs';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, TextDirection, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
@@ -54,6 +47,7 @@ const parseTsvByFileType = async (
   header.split('\t').forEach((header, idx) => {
     headerMap[header] = idx;
   });
+  const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
 
   const reducedWords = rows.splice(0, 100).reduce((accumulator, row) => {
     const values = row.split('\t');
@@ -78,8 +72,8 @@ const parseTsvByFileType = async (
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['text']],
-          position: pos,
+          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
+          position: pos
         };
 
         verse = wordsByVerse[id.substring(0, 8)] || {};
@@ -97,13 +91,20 @@ const parseTsvByFileType = async (
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['xml:id']].slice(1);
         pos = +id.substring(8, 11);
+        // Gloss is defined at this level since both english and gloss headers can exist.
+        // Either could be null within the TSV file.
+        const gloss = values[headerMap["english"]] || values[headerMap["gloss"]] || "-";
+
         word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           side,
-          text: values[headerMap['text']],
+          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           after: values[headerMap['after']],
           position: pos,
+          gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
+            ? gloss.replaceAll(".", " ")
+            : gloss
         } as Word;
 
         verse = wordsByVerse[id.substring(0, 8)] || {};
@@ -121,7 +122,8 @@ const parseTsvByFileType = async (
   }, [] as Word[]);
   return {
     words: reducedWords,
-    wordsByVerse: wordsByVerse,
+    wordsByVerse,
+    hasGloss
   };
 };
 
@@ -161,7 +163,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'Macula Hebrew Old Testament',
       language: {
         code: 'heb',
-        textDirection: 'rtl',
+        textDirection: TextDirection.RTL,
         fontFamily: 'sbl-hebrew',
       },
       words: [],
@@ -187,7 +189,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'YLT Old Testament',
       language: {
         code: 'en',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},
@@ -212,7 +214,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'SBL Greek New Testament',
       language: {
         code: 'grc',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},
@@ -237,7 +239,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: "Young's Literal Translation text New Testament",
       language: {
         code: 'eng',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},
