@@ -19,7 +19,7 @@ import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { ControlPanelFormat, PreferenceKey } from '../../state/preferences/tableManager';
+import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -63,15 +63,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   const saveControlPanelFormat = useCallback(() => {
     const updatedUserPreference = projectState.userPreferences?.save({
       name: PreferenceKey.CONTROL_PANEL_FORMAT,
-      value: controlPanelFormat === ControlPanelFormat.HORIZONTAL
+      value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
         ? ControlPanelFormat.VERTICAL
         : ControlPanelFormat.HORIZONTAL
     });
-    setPreferences(p => ({
-      ...p,
-
-    }));
-  }, [projectState.userPreferences, controlPanelFormat]);
+    if(updatedUserPreference) {
+      setPreferences(p => ({
+        ...p,
+        [updatedUserPreference.name]: updatedUserPreference
+      }));
+    }
+  }, [preferences, projectState.userPreferences, setPreferences]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
@@ -103,7 +105,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               onClick={saveControlPanelFormat}
             >
               {
-                controlPanelFormat === ControlPanelFormat.HORIZONTAL
+                (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
                   ? <SwapVert/>
                   : <SwapHoriz/>
               }

@@ -75,6 +75,7 @@ export const VerseCell = (
           readonly
           verse={verse}
           corpus={container?.corpusAtReference(verse.bcvId)}
+          allowGloss={false}
         />
       ))}
     </div>

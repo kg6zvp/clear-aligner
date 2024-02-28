@@ -9,7 +9,7 @@ export enum PreferenceKey {
   CONTROL_PANEL_FORMAT = "controlPanelFormat"
 }
 
-interface UserPreference {
+export interface UserPreference {
   name: PreferenceKey;
   value: unknown;
 }
@@ -29,14 +29,12 @@ export class UserPreferenceTable extends VirtualTable {
       name: PreferenceKey.CONTROL_PANEL_FORMAT,
       value: ControlPanelFormat.HORIZONTAL
     });
-
     return initialPreferences;
   }
 
   save = (userPreference: UserPreference, suppressOnUpdate?: boolean): UserPreference | undefined => {
     try {
       this.preferences.set(userPreference.name, userPreference);
-      console.log("updated preferences to: ", this.preferences, userPreference)
     } catch (e) {
       return undefined;
     } finally {

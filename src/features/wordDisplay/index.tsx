@@ -6,12 +6,14 @@ import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
+import { ThemeMode } from '../themed';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
   suppressAfter?: boolean;
   parts?: Word[];
   corpus?: Corpus;
+  allowGloss?: boolean;
 }
 
 /**
@@ -20,13 +22,15 @@ export interface WordDisplayProps extends LimitedToLinks {
  * @param suppressAfter suppress after string at the end of the word
  * @param parts parts to display as a single word
  * @param languageInfo language info for display
+ * @param allowGloss boolean denoting whether to display gloss information if available.
  */
 export const WordDisplay = ({
                               readonly,
                               suppressAfter,
                               onlyLinkIds,
                               parts,
-                              corpus
+                              corpus,
+                              allowGloss = true
                             }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = corpus ?? { languageInfo: null, hasGloss: false };
   const { preferences } = React.useContext(AppContext);
@@ -48,8 +52,16 @@ export const WordDisplay = ({
         }}
       >
         {
-          (hasGloss && preferences.showGloss) ? (
-            <Paper variant="outlined" sx={{ display: 'inline-block', p: 1, m: .25, borderColor: 'rgba(0, 0, 0, 0.5)' }}>
+          (hasGloss && preferences.showGloss && allowGloss) ? (
+            <Paper variant="outlined" sx={theme => ({
+              display: 'inline-block',
+              p: 1,
+              m: .25,
+              borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+              ...(theme.palette.mode === ThemeMode.DARK ? {
+                background: 'transparent'
+              } : {})
+            })}>
               <Grid container>
                 {
                   (parts || []).map((wordPart: Word, idx: number) => {
@@ -70,7 +82,7 @@ export const WordDisplay = ({
                               languageInfo={languageInfo}
                               variant="caption"
                               sx={theme => ({
-                                color: 'rgba(0, 0, 0, 0.75)',
+                                color: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.75)',
                               })}
                             >
                               {wordPart.gloss || "-"}
@@ -79,7 +91,13 @@ export const WordDisplay = ({
                         </Box>
                         {
                           idx !== ((parts || []).length - 1) && (
-                            <Divider flexItem orientation="vertical" sx={{ borderStyle: 'dashed', borderWidth: '2px', width: '2px', mx: .5, borderColor: 'rgba(0, 0, 0, 0.35)' }} />
+                            <Divider flexItem orientation="vertical" sx={theme => ({
+                              borderStyle: 'dashed',
+                              borderWidth: '2px',
+                              width: '2px',
+                              mx: .5,
+                              borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)'
+                            })} />
                           )
                         }
                       </React.Fragment>

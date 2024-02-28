@@ -31,13 +31,15 @@ const App = () => {
   const [preferences, setPreferences] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
+    const preferenceTable = new UserPreferenceTable();
     if (!state.linksTable || !state.userPreferences) {
       setState({
         ...state,
         linksTable: new VirtualTableLinks(),
-        userPreferences: new UserPreferenceTable()
+        userPreferences: preferenceTable
       });
     }
+    setPreferences(Object.fromEntries(preferenceTable.getPreferences().entries()));
   }, [state, state.linksTable, setState]);
 
   return (
