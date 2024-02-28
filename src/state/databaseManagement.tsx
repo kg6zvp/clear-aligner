@@ -1,4 +1,5 @@
 import { VirtualTableLinks } from './links/tableManager';
+import { UserPreferenceTable } from './preferences/tableManager';
 
 /**
  * intended to provide a single place to keep track of
@@ -6,6 +7,7 @@ import { VirtualTableLinks } from './links/tableManager';
  */
 export interface ProjectState {
   linksTable?: VirtualTableLinks;
+  userPreferences?: UserPreferenceTable;
 }
 
 /**

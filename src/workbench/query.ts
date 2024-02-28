@@ -1,11 +1,4 @@
-import {
-  AlignmentSide,
-  Corpus,
-  CorpusContainer,
-  CorpusFileFormat,
-  Verse,
-  Word,
-} from 'structs';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, TextDirection, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 // @ts-ignore
@@ -39,7 +32,8 @@ const punctuationFilter = [
   '“',
   '”',
   "،",
-  "؟"
+  "؟",
+  "؛"
 ];
 
 const parseTsvByFileType = async (
@@ -58,6 +52,7 @@ const parseTsvByFileType = async (
     header = header === 'identifier' ? 'id' : header; //Standard for header in files will be id
     headerMap[header] = idx;
   });
+  const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
 
   const reducedWords = rows.reduce((accumulator, row) => {
     const values = row.split('\t');
@@ -84,8 +79,8 @@ const parseTsvByFileType = async (
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['text']],
-          position: pos,
+          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
+          position: pos
         };
         verse = wordsByVerse[id.substring(0, 8)] || {};
         wordsByVerse[id.substring(0, 8)] = {
@@ -101,16 +96,22 @@ const parseTsvByFileType = async (
       case CorpusFileFormat.TSV_MACULA:
       default: // grab word position
         // remove redundant 'o'/'n' qualifier
-        //console.log(headerMap)
         id = values[headerMap['xml:id']].slice(1);
         pos = +id.substring(8, 11);
+        // Gloss is defined at this level since both english and gloss headers can exist.
+        // Either could be null within the TSV file.
+        const gloss = values[headerMap["english"]] || values[headerMap["gloss"]] || "-";
+
         word = {
           id: id, // standardize n40001001002 to  40001001002
           corpusId: refCorpus.id,
           side,
-          text: values[headerMap['text']],
+          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           after: values[headerMap['after']],
           position: pos,
+          gloss: (new RegExp(/^(.+\..+)+$/)).test(gloss)
+            ? gloss.replaceAll(".", " ")
+            : gloss
         } as Word;
 
         verse = wordsByVerse[id.substring(0, 8)] || {};
@@ -128,7 +129,8 @@ const parseTsvByFileType = async (
   }, [] as Word[]);
   return {
     words: reducedWords,
-    wordsByVerse: wordsByVerse,
+    wordsByVerse,
+    hasGloss
   };
 };
 
@@ -168,7 +170,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'Macula Hebrew Old Testament',
       language: {
         code: 'heb',
-        textDirection: 'rtl',
+        textDirection: TextDirection.RTL,
         fontFamily: 'sbl-hebrew',
       },
       words: [],
@@ -195,7 +197,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'SBL Greek New Testament',
       language: {
         code: 'grc',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},
@@ -220,7 +222,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       fullName: 'YLT',
       language: {
         code: 'eng',
-        textDirection: 'ltr',
+        textDirection: TextDirection.LTR,
       },
       words: [],
       wordsByVerse: {},

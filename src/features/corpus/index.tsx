@@ -69,6 +69,7 @@ const determineCorpusView = (
             }}
           >
             <Typography
+              component={'span'}
               lang={languageInfo?.code}
               style={{
                 paddingBottom: '0.5rem',
@@ -76,7 +77,7 @@ const determineCorpusView = (
                 paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay languageInfo={languageInfo} verse={verse} />
+              <VerseDisplay corpus={viewCorpora.corpusAtReference(verse.bcvId)} verse={verse} allowGloss />
             </Typography>
           </Grid>
         </Grid>

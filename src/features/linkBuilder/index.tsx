@@ -199,7 +199,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                           readonly={true}
                           key={wordId}
                           parts={selectedWord}
-                          languageInfo={corpusAtRef?.language}
+                          corpus={corpusAtRef}
                         />
 
                         {!nextIsSequential ? (
