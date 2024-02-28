@@ -59,7 +59,7 @@ export const WordDisplay = ({
                     key={`${part.id}-after`}
                     languageInfo={languageInfo}
                   >
-                    {part.after}
+                    {(part.after || "").trim()}
                   </LocalizedTextDisplay>
                 )}
               </>

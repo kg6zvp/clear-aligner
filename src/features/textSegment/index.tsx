@@ -224,7 +224,7 @@ export const TextSegment = ({
         }
       >
         <LocalizedTextDisplay languageInfo={languageInfo}>
-          {word.text}
+          {(word.text || "").trim()}
         </LocalizedTextDisplay>
       </Typography>
     </React.Fragment>

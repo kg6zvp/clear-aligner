@@ -155,6 +155,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             ? container?.corpusAtReference(refInWords)
             : undefined;
 
+          if (!corpusAtRef?.name) return <div key={index} />;
+
           return (
             <div
               key={`linkBuilder_${corpusAtRef?.name}`}
