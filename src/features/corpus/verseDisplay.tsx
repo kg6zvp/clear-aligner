@@ -14,6 +14,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
   readonly?: boolean;
   corpus?: Corpus;
   verse: Verse;
+  allowGloss?: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ export const VerseDisplay = ({
   corpus,
   verse,
   onlyLinkIds,
+  allowGloss = true
 }: VerseDisplayProps) => {
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
@@ -45,6 +47,7 @@ export const VerseDisplay = ({
             onlyLinkIds={onlyLinkIds}
             corpus={corpus}
             parts={token}
+            allowGloss={allowGloss}
           />
         )
       )}

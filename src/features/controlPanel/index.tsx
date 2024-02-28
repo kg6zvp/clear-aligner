@@ -22,7 +22,6 @@ import {AppContext} from '../../App';
 import {VirtualTableLinks} from '../../state/links/tableManager';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { ThemeMode } from '../themed';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
