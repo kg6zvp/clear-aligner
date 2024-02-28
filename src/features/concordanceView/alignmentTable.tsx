@@ -10,9 +10,9 @@ import _ from 'lodash';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
-import { createSearchParams, useNavigate } from 'react-router-dom';
 import findWord from '../../helpers/findWord';
 import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
+import WorkbenchDialog from './workbenchDialog';
 
 export interface AlignmentTableContextProps {
   wordSource: WordSource;
@@ -81,64 +81,19 @@ export const RefCell = (
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this DisplayableLink entry
+ * @param onClick Callback used to open an alignment view dialog
  */
-export const LinkCell = (
-  row: GridRenderCellParams<DisplayableLink, any, any>
-) => {
-  const navigate = useNavigate();
+export const LinkCell = ({row, onClick}: {
+  row: GridRenderCellParams<DisplayableLink, any, any>,
+  onClick: (tableCtx: AlignmentTableContextProps, displayableLink: DisplayableLink) => void;
+}) => {
   const tableCtx = useContext(AlignmentTableContext);
   return (
-    <IconButton
-      onClick={() =>
-        navigate({
-          pathname: '/',
-          search: createSearchParams({
-            ref:
-              findFirstRefFromLink(row.row, WordSource.TARGET)?.toTruncatedReferenceString(
-                BCVWPField.Verse
-              ) ?? '',
-            pivotWord: tableCtx?.pivotWord?.normalizedText || '',
-            alignedWord: tableCtx?.alignedWord?.id || '',
-            alignmentLink: row.row.id ?? '',
-          }).toString(),
-        })
-      }
-    >
+    <IconButton onClick={() => onClick(tableCtx, row.row)}>
       <Launch />
     </IconButton>
   );
 };
-
-const columns: GridColDef[] = [
-  {
-    field: 'state',
-    headerName: 'State',
-  },
-  {
-    field: 'sources',
-    headerName: 'Ref',
-    renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
-      <RefCell {...row} />
-    ),
-  },
-  {
-    field: 'verse',
-    headerName: 'Verse Text',
-    flex: 1,
-    sortable: false,
-    renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
-      <VerseCell {...row} />
-    ),
-  },
-  {
-    field: 'id',
-    headerName: 'Link',
-    sortable: false,
-    renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
-      <LinkCell {...row} />
-    ),
-  },
-];
 
 export interface AlignmentTableProps {
   sort: GridSortItem | null;
@@ -180,6 +135,39 @@ export const AlignmentTable = ({
   chosenAlignmentLink,
   onChooseAlignmentLink,
 }: AlignmentTableProps) => {
+  const [openAlignmentDialog, setOpenAlignmentDialog] = useState<boolean>(false);
+
+  const columns: GridColDef[] = useMemo(() => [
+    {
+      field: 'state',
+      headerName: 'State',
+    },
+    {
+      field: 'sources',
+      headerName: 'Ref',
+      renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
+        <RefCell {...row} />
+      ),
+    },
+    {
+      field: 'verse',
+      headerName: 'Verse Text',
+      flex: 1,
+      sortable: false,
+      renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
+        <VerseCell {...row} />
+      ),
+    },
+    {
+      field: 'id',
+      headerName: 'Link',
+      sortable: false,
+      renderCell: (row: GridRenderCellParams<DisplayableLink, any, any>) => (
+        <LinkCell row={row} onClick={() => setOpenAlignmentDialog(true)} />
+      ),
+    },
+  ], []);
+
   const displayableLinks: DisplayableLink[] = useMemo(() => {
     return alignments && sourceContainer && targetContainer
       ? alignments.map(
@@ -261,6 +249,7 @@ export const AlignmentTable = ({
           }}
         />
       </TableContainer>
+      <WorkbenchDialog open={openAlignmentDialog} setOpen={setOpenAlignmentDialog} />
     </AlignmentTableContext.Provider>
   );
 };
