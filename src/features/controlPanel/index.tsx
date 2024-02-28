@@ -1,9 +1,9 @@
-import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
+import {ReactElement, useContext, useMemo, useRef, useState} from 'react';
 import {
   Button,
   ButtonGroup,
   Tooltip,
-  Stack,
+  Stack, Box
 } from '@mui/material';
 import {
   AddLink,
@@ -11,25 +11,28 @@ import {
   RestartAlt,
   FileDownload,
   FileUpload,
+  Translate
 } from '@mui/icons-material';
-import { useAppDispatch, useAppSelector } from 'app/hooks';
+import {useAppDispatch, useAppSelector} from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { resetTextSegments } from 'state/alignment.slice';
-import { CorpusContainer } from '../../structs';
-import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import { AppContext } from '../../App';
-import { VirtualTableLinks } from '../../state/links/tableManager';
+import {resetTextSegments} from 'state/alignment.slice';
+import {CorpusContainer} from '../../structs';
+import {AlignmentFile, AlignmentRecord} from '../../structs/alignmentFile';
+import {AppContext} from '../../App';
+import {VirtualTableLinks} from '../../state/links/tableManager';
 import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
+  position: BCVWP;
 }
 
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { projectState, setProjectState } = useContext(AppContext);
+  const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,9 +72,27 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       spacing={2}
       justifyContent="center"
       alignItems="baseline"
-      style={{ marginTop: '16px', marginBottom: '16px' }}
+      style={{marginTop: '16px', marginBottom: '16px'}}
     >
-           <ButtonGroup>
+      <Box sx={{width: 43}} />
+      <ButtonGroup>
+        <Tooltip title="Toggle Glosses" arrow describeChild>
+          <span>
+            <Button
+              variant={preferences.showGloss ? 'contained' : 'outlined'}
+              disabled={!props.containers.some(container => container.corpusAtReference(props.position)?.hasGloss)}
+              onClick={() => setPreferences(p => ({
+                ...p,
+                showGloss: !p.showGloss
+              }))}
+            >
+              <Translate/>
+            </Button>
+          </span>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
@@ -85,7 +106,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <AddLink />
+              <AddLink/>
             </Button>
           </span>
         </Tooltip>
@@ -105,7 +126,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 }
               }}
             >
-              <LinkOff />
+              <LinkOff/>
             </Button>
           </span>
         </Tooltip>
@@ -118,7 +139,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <RestartAlt />
+              <RestartAlt/>
             </Button>
           </span>
         </Tooltip>
@@ -182,7 +203,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 fileInputRef?.current?.click();
               }}
             >
-              <FileUpload />
+              <FileUpload/>
             </Button>
           </span>
         </Tooltip>
@@ -263,7 +284,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 URL.revokeObjectURL(url);
               }}
             >
-              <FileDownload />
+              <FileDownload/>
             </Button>
           </span>
         </Tooltip>

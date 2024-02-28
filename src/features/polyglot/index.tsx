@@ -35,7 +35,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     <Stack
       direction="row"
       spacing={2}
-      style={{ height: '16rem' }}
+      style={{ height: '17rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >
