@@ -1,4 +1,4 @@
-import { Corpus, LanguageInfo, Verse, Word } from '../../structs';
+import { Corpus, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
@@ -30,7 +30,7 @@ export const VerseDisplay = ({
   corpus,
   verse,
   onlyLinkIds,
-  allowGloss = true
+  allowGloss = false
 }: VerseDisplayProps) => {
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),

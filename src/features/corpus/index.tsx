@@ -75,7 +75,7 @@ const determineCorpusView = (
                 paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReference(verse.bcvId)} verse={verse} />
+              <VerseDisplay corpus={viewCorpora.corpusAtReference(verse.bcvId)} verse={verse} allowGloss />
             </Typography>
           </Grid>
         </Grid>
@@ -101,7 +101,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     return [verse].filter((v) => v);
   }, [viewCorpora, position]);
   const [visibleVerses, setVisibleVerses] = useState<Verse[]>(initialVerses);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showSettings] = useState(false);
   const verseKeys = useMemo(
     () =>
       viewCorpora.corpora

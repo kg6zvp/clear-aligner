@@ -30,7 +30,7 @@ export const WordDisplay = ({
                               onlyLinkIds,
                               parts,
                               corpus,
-                              allowGloss = true
+                              allowGloss = false
                             }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = corpus ?? { languageInfo: null, hasGloss: false };
   const { preferences } = React.useContext(AppContext);
