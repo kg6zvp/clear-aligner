@@ -16,7 +16,7 @@ export interface AppContextProps {
   currentReference: BCVWP | null;
   setCurrentReference: (currentPosition: BCVWP | null) => void;
   projectState: ProjectState;
-  setProjectState: (state: ProjectState) => void;
+  setProjectState: React.Dispatch<React.SetStateAction<ProjectState>>;
   preferences: Record<string, unknown>;
   setPreferences: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 }
@@ -36,10 +36,10 @@ const App = () => {
       setState({
         ...state,
         linksTable: new VirtualTableLinks(),
-        userPreferences: preferenceTable
+        userPreferences: state.userPreferences ?? preferenceTable
       });
     }
-    setPreferences(Object.fromEntries(preferenceTable.getPreferences().entries()));
+    setPreferences(p => Object.keys(p).length ? p : Object.fromEntries(preferenceTable.getPreferences().entries()));
   }, [state, state.linksTable, setState]);
 
   return (

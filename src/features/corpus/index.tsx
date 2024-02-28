@@ -67,6 +67,7 @@ const determineCorpusView = (
             }}
           >
             <Typography
+              component={'span'}
               lang={languageInfo?.code}
               style={{
                 paddingBottom: '0.5rem',

@@ -20,6 +20,7 @@ import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
+import { ProjectState } from '../../state/databaseManagement';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -106,7 +107,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             </Button>
           </span>
         </Tooltip>
-        <Tooltip title={`Swap to ${controlPanelFormat ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
+        <Tooltip title={`Swap to ${controlPanelFormat === ControlPanelFormat.VERTICAL ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -196,10 +197,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const content = await file.text();
                 const linksTable: VirtualTableLinks = new VirtualTableLinks();
 
-                setProjectState({
-                  ...projectState,
+                setProjectState((ps: ProjectState) => ({
+                  ...ps,
                   linksTable,
-                });
+                }));
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
