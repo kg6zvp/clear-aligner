@@ -184,13 +184,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   }
                 );
 
-                const initializeAndIndexSources = async () => {
-                  await secondaryIndices.sourcesIndex.initialize(linksTable);
-                  await linksTable.registerSecondaryIndex(secondaryIndices.sourcesIndex);
-                }
-                secondaryIndices.sourcesIndex.setLoadingOperation(initializeAndIndexSources());
-                await secondaryIndices.sourcesIndex.loading;
-
                 const initializeAndIndexTargets = async () => {
                   await secondaryIndices.targetsIndex.initialize(linksTable);
                   await linksTable.registerSecondaryIndex(secondaryIndices.targetsIndex);
@@ -198,6 +191,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 secondaryIndices.targetsIndex.setLoadingOperation(initializeAndIndexTargets());
                 await secondaryIndices.targetsIndex.loading;
+
+                const initializeAndIndexSources = async () => {
+                  await secondaryIndices.sourcesIndex.initialize(linksTable);
+                  await linksTable.registerSecondaryIndex(secondaryIndices.sourcesIndex);
+                }
+                secondaryIndices.sourcesIndex.setLoadingOperation(initializeAndIndexSources());
+                await secondaryIndices.sourcesIndex.loading;
 
                 linksTable._onUpdate(); // modify variable to indicate that an update has occurred
               }}
