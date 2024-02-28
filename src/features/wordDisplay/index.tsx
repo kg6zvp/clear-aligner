@@ -1,12 +1,12 @@
-import { Corpus, TextDirection, Word } from '../../structs';
-import { Box, Divider, Grid, Paper, Typography } from '@mui/material';
+import { Corpus, Word } from '../../structs';
+import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
-import { ThemeMode } from '../themed';
+import GlossSegment from '../textSegment/glossSegment';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
@@ -53,59 +53,14 @@ export const WordDisplay = ({
       >
         {
           (hasGloss && preferences.showGloss && allowGloss) ? (
-            <Paper variant="outlined" sx={theme => ({
-              display: 'inline-block',
-              p: 1,
-              m: .25,
-              borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
-              ...(theme.palette.mode === ThemeMode.DARK ? {
-                background: 'transparent'
-              } : {})
-            })}>
-              <Grid container>
-                {
-                  (parts || []).map((wordPart: Word, idx: number) => {
-                    return (
-                      <React.Fragment key={wordPart.id}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                          <TextSegment
-                            key={wordPart.id}
-                            readonly={readonly}
-                            onlyLinkIds={onlyLinkIds}
-                            word={wordPart}
-                            languageInfo={languageInfo}
-                            showAfter={!suppressAfter}
-                            alignment={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'}
-                          />
-                          <Grid container justifyContent={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'} sx={{ height: '20px' }}>
-                            <LocalizedTextDisplay
-                              languageInfo={languageInfo}
-                              variant="caption"
-                              sx={theme => ({
-                                color: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.75)',
-                              })}
-                            >
-                              {wordPart.gloss || "-"}
-                            </LocalizedTextDisplay>
-                          </Grid>
-                        </Box>
-                        {
-                          idx !== ((parts || []).length - 1) && (
-                            <Divider flexItem orientation="vertical" sx={theme => ({
-                              borderStyle: 'dashed',
-                              borderWidth: '2px',
-                              width: '2px',
-                              mx: .5,
-                              borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)'
-                            })} />
-                          )
-                        }
-                      </React.Fragment>
-                    )
-                  })
-                }
-              </Grid>
-            </Paper>
+            <GlossSegment
+              readonly={readonly}
+              suppressAfter={suppressAfter}
+              parts={parts}
+              corpus={corpus}
+              allowGloss={allowGloss}
+              languageInfo={languageInfo}
+            />
           ) : (
             <>
               {parts?.map((part) => (
