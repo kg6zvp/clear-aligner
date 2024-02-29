@@ -10,18 +10,13 @@ import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
-import { AppContext } from '../../App';
 import _ from 'lodash';
-import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { usePivotWords } from './usePivotWords';
 
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
-  const { projectState } = useContext(AppContext);
-
-  const { sourceContainer, targetContainer } = useCorpusContainers();
 
   /**
    * pivot words
@@ -34,6 +29,7 @@ export const ConcordanceView = () => {
     sort: 'desc',
   } as GridSortItem | null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loading = useMemo(() => !!srcPivotWords, [ srcPivotWords, srcPivotWords?.length ]);
 
   const pivotWords: PivotWord[]|undefined = useMemo(() => {
@@ -50,14 +46,12 @@ export const ConcordanceView = () => {
         ? aValue - bValue
         : bValue - aValue;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     srcPivotWords,
     srcPivotWords?.length,
     pivotWordSortData,
   ]);
-
-  console.log('concordanceView srcPivotWords', srcPivotWords?.length);
-  console.log('concordanceView pivotWords', pivotWords?.length);
 
   const [selectedPivotWord, setSelectedPivotWord] = useState<
     PivotWord | undefined
@@ -320,8 +314,6 @@ export const ConcordanceView = () => {
               wordSource={wordSource}
               pivotWord={selectedPivotWord}
               alignedWord={selectedAlignedWord}
-              sourceContainer={sourceContainer}
-              targetContainer={targetContainer}
               alignments={selectedAlignedWord?.alignments ?? []}
               onChangeSort={setAlignmentSortData}
               chosenAlignmentLink={selectedAlignmentLink}

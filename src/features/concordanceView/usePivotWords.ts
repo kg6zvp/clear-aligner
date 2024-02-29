@@ -1,7 +1,7 @@
 import { PivotWord } from './structs';
 import { AlignmentSide } from '../../structs';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
-import { useContext, useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../../App';
 import { WordsIndex } from '../../state/links/wordsIndex';
 
@@ -10,14 +10,22 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
   const { sourceContainer, targetContainer } = useCorpusContainers();
 
   const source = useMemo(() => wordSource === 'sources' ? projectState.linksIndexes?.sourcesIndex
-    : projectState.linksIndexes?.targetsIndex, [wordSource, projectState, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
+    : projectState.linksIndexes?.targetsIndex, [wordSource, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
 
-  console.log('usePivotWords: containers', {
-    sourceContainer,
-    targetContainer,
-  });
+  const [ loading, setLoading ] = useState<boolean>(!!source?.loading);
 
-  console.log('source', source);
+  useEffect(() => {
+    setLoading(!!source?.isLoading());
+
+    if (!loading || !source) return;
+
+    const waitForLoad = async () => {
+      await source.waitForTasksToFinish();
+      setLoading(false);
+    }
+
+    void waitForLoad();
+  }, [source, loading, setLoading]);
 
   useEffect(() => {
     if (projectState.linksIndexes || !sourceContainer || !targetContainer) {
@@ -35,7 +43,6 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
       linksIndexes: secondaryIndices
     });
 
-    console.log('initializing');
     secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
     secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
   }, [
@@ -47,13 +54,13 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
   ]);
 
   const pivotWords = useMemo<PivotWord[] | undefined>(() => {
-    if (!source || source.loading) {
+    if (!source || loading) {
       return undefined;
     }
     return source.getPivotWords();
   }, [
     source,
-    source?.loading
+    loading
     ]);
 
   return pivotWords;

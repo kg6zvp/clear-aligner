@@ -69,8 +69,6 @@ export const PivotWordTable = ({
     return 0;
   }, [chosenWord, pivotWords]);
 
-  console.log('pivotWords', pivotWords.length);
-
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>

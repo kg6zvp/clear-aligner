@@ -1,6 +1,6 @@
 import { CorpusContainer } from '../structs';
 import { getAvailableCorporaContainers } from '../workbench/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Containers {
   sourceContainer?: CorpusContainer;
@@ -14,11 +14,6 @@ export const useCorpusContainers = (): Containers => {
   const [targetContainer, setTargetContainer] = useState(
     undefined as CorpusContainer | undefined
   );
-
-  const containers = useMemo<Containers>(() => ({
-    sourceContainer,
-    targetContainer
-  }), [sourceContainer, targetContainer]);
 
   useEffect(() => {
     const loadCorpora = async () => {
@@ -40,7 +35,8 @@ export const useCorpusContainers = (): Containers => {
     void loadCorpora();
   }, [ sourceContainer, setSourceContainer, targetContainer, setTargetContainer]);
 
-  console.log('useCorpusContainers: containers', containers);
-
-  return containers;
+  return {
+    sourceContainer,
+    targetContainer
+  };
 };

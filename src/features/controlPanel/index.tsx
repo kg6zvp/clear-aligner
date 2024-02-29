@@ -167,6 +167,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                     linksTable,
                     linksIndexes: secondaryIndices
                   });
+                } else {
+                  setProjectState({
+                    ...projectState,
+                    linksTable
+                  });
                 }
 
                 // convert into an appropriate object

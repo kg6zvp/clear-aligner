@@ -1,6 +1,5 @@
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { PivotWord } from '../../features/concordanceView/structs';
-import { VirtualTableLinks } from './tableManager';
 import { generatePivotWordsList } from '../../features/concordanceView/concordanceViewHelpers';
 import { findWordByString } from '../../helpers/findWord';
 import { IndexedChangeType, SecondaryIndex } from '../databaseManagement';
@@ -29,23 +28,27 @@ export class WordsIndex implements SecondaryIndex<Link> {
       interval: 10
     });
     this.indexingTasks.on('start', () => {
-      console.log('indexing', this.id(), '...');
       this.loading = true;
     });
     this.indexingTasks.on('end', () => {
-      console.log('indexing', this.id(), '...done');
       this.loading = false;
       this.lastUpdate = Date.now().valueOf();
     });
   }
 
   isLoading = (): boolean => {
-    return !!this.loading;
+    return this.loading;
   };
 
   initialize = async (): Promise<void> => {
     this.pivotWords = await generatePivotWordsList(this.container, this.side);
   };
+
+  waitForTasksToFinish = async (): Promise<void> => {
+    while (this.loading) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
 
   getPivotWords = (): PivotWord[] => Array.from(this.pivotWords.values());
 

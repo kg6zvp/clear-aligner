@@ -2,7 +2,6 @@ import {
   Link,
   DisplayableLink,
   Verse,
-  CorpusContainer,
   AlignmentSide,
 } from '../../structs';
 import {
@@ -27,6 +26,7 @@ import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
 } from '../../styles/dataGridFixes';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -154,8 +154,6 @@ const columns: GridColDef[] = [
 export interface AlignmentTableProps {
   sort: GridSortItem | null;
   wordSource: AlignmentSide;
-  sourceContainer?: CorpusContainer | null;
-  targetContainer?: CorpusContainer | null;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord | null;
   alignments: Link[];
@@ -169,8 +167,6 @@ export interface AlignmentTableProps {
  * alignment editor
  * @param sort current sort model for Material UI DataGrid
  * @param wordSource current word source
- * @param sourceContainer container with the source corpora
- * @param targetContainer container with the target corpora
  * @param pivotWord the pivot word that's currently selected, corresponds to the alignment rows being displayed and the
  * currently selected aligned word
  * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
@@ -182,8 +178,6 @@ export interface AlignmentTableProps {
 export const AlignmentTable = ({
   sort,
   wordSource,
-  sourceContainer,
-  targetContainer,
   pivotWord,
   alignedWord,
   alignments,
@@ -191,6 +185,7 @@ export const AlignmentTable = ({
   chosenAlignmentLink,
   onChooseAlignmentLink,
 }: AlignmentTableProps) => {
+  const { sourceContainer, targetContainer } = useCorpusContainers();
   const displayableLinks: DisplayableLink[] = useMemo(() => {
     return alignments && sourceContainer && targetContainer
       ? alignments.map(

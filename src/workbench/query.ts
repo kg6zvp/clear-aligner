@@ -17,7 +17,13 @@ import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
 import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
 
-let isInitialized: boolean = false;
+enum InitializationStates {
+  UNINITIALiZED,
+  INITIALIZING,
+  INITIALIZED
+}
+
+let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
 
 const availableCorpora: CorpusContainer[] = [];
 
@@ -162,11 +168,17 @@ const putVersesInCorpus = (corpus: Corpus) => {
   );
 };
 
+const waitForInitialization = async () => {
+  while (initializationState !== InitializationStates.INITIALIZED) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+}
+
 export const getAvailableCorporaContainers = async (): Promise<
   CorpusContainer[]
 > => {
-  if (!isInitialized) {
-    isInitialized = true;
+  if (initializationState === InitializationStates.UNINITIALiZED) {
+    initializationState = InitializationStates.INITIALIZING;
     // Macula Hebrew OT
     let maculaHebOT: Corpus = {
       id: 'wlc-hebot',
@@ -284,6 +296,9 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     availableCorpora.push(sourceContainer);
     availableCorpora.push(targetContainer);
+    initializationState = InitializationStates.INITIALIZED;
+  } else if (initializationState === InitializationStates.INITIALIZING) {
+    await waitForInitialization();
   }
 
   return availableCorpora;
@@ -291,7 +306,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
   return (
-    isInitialized ? availableCorpora : await getAvailableCorporaContainers()
+    initializationState ? availableCorpora : await getAvailableCorporaContainers()
   ).map((corpus) => {
     return corpus.id;
   });
