@@ -13,15 +13,51 @@ import { useSearchParams } from 'react-router-dom';
 import { AppContext } from '../../App';
 import _ from 'lodash';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
+import { usePivotWords } from './usePivotWords';
 
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const { projectState } = useContext(AppContext);
-  const [loading, setLoading] = useState(true);
 
   const { sourceContainer, targetContainer } = useCorpusContainers();
+
+  /**
+   * pivot words
+   */
+  const [wordSource, setWordSource] = useState('targets' as AlignmentSide);
+  const [wordFilter, setWordFilter] = useState('all' as WordFilter);
+  const srcPivotWords = usePivotWords(wordSource);
+  const [pivotWordSortData, setPivotWordSortData] = useState({
+    field: 'instances.length',
+    sort: 'desc',
+  } as GridSortItem | null);
+
+  const loading = useMemo(() => !!srcPivotWords, [ srcPivotWords, srcPivotWords?.length ]);
+
+  const pivotWords: PivotWord[]|undefined = useMemo(() => {
+    if (!srcPivotWords) {
+      return undefined;
+    }
+    if (!pivotWordSortData) {
+      return [...srcPivotWords];
+    }
+    return [...srcPivotWords].sort((a, b) => {
+      const aValue = _.get(a as any, pivotWordSortData.field);
+      const bValue = _.get(b as any, pivotWordSortData.field);
+      return pivotWordSortData.sort === 'asc'
+        ? aValue - bValue
+        : bValue - aValue;
+    });
+  }, [
+    srcPivotWords,
+    srcPivotWords?.length,
+    pivotWordSortData,
+  ]);
+
+  console.log('concordanceView srcPivotWords', srcPivotWords?.length);
+  console.log('concordanceView pivotWords', pivotWords?.length);
 
   const [selectedPivotWord, setSelectedPivotWord] = useState<
     PivotWord | undefined
@@ -70,75 +106,6 @@ export const ConcordanceView = () => {
       );
     }
   }, [layoutCtx, loading]);
-
-  /**
-   * pivot words
-   */
-  const [pivotWordsPromise, setPivotWordsPromise] = useState(
-    null as Promise<PivotWord[]> | null
-  );
-  const [wordSource, setWordSource] = useState('targets' as AlignmentSide);
-  const [wordFilter, setWordFilter] = useState('all' as WordFilter);
-  const [srcPivotWords, setSrcPivotWords] = useState([] as PivotWord[]);
-  const [pivotWords, setPivotWords] = useState([] as PivotWord[]);
-  const [pivotWordSortData, setPivotWordSortData] = useState({
-    field: 'instances.length',
-    sort: 'desc',
-  } as GridSortItem | null);
-
-  const pivotWordsLoading = useMemo(() => {
-    return !!pivotWordsPromise;
-  }, [pivotWordsPromise]);
-
-  useEffect(() => {
-    if (!!pivotWordsPromise) {
-      pivotWordsPromise.then((pivotWords) => {
-        setPivotWords(pivotWords);
-        setPivotWordsPromise(null);
-        setLoading(false);
-      });
-    }
-  }, [pivotWordsPromise, setPivotWords, setPivotWordsPromise]);
-
-  /**
-   * create navigable tree structure of pivot words with alignment links as the leaf nodes
-   */
-  useEffect(
-    () => {
-      const loadPivotWordData = async () => {
-        if (!sourceContainer || !targetContainer || !projectState?.linksTable || !projectState.linksIndexes) {
-          return [];
-        }
-
-        const source = wordSource === 'sources' ? projectState.linksIndexes.sourcesIndex
-          : projectState.linksIndexes.targetsIndex;
-
-        if (source.loading) {
-          await source.loading;
-        }
-
-        return source.getPivotWords();
-      };
-
-      if (sourceContainer && targetContainer && wordSource) {
-        setPivotWordsPromise(loadPivotWordData());
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      projectState?.linksTable,
-      projectState?.linksTable?.lastUpdate,
-      projectState?.linksIndexes?.sourcesIndex.lastUpdate,
-      projectState?.linksIndexes?.sourcesIndex.loading,
-      projectState?.linksIndexes?.targetsIndex.lastUpdate,
-      projectState?.linksIndexes?.targetsIndex.loading,
-      wordSource,
-      sourceContainer,
-      targetContainer,
-      setLoading,
-      setSrcPivotWords,
-    ]
-  );
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -196,27 +163,6 @@ export const ConcordanceView = () => {
     setSelectedAlignmentLink,
     selectedAlignmentLink,
   ]);
-
-  useEffect(() => {
-    const performSort = async (srcPivotWords: PivotWord[]) => {
-      if (!pivotWordSortData) {
-        return [...srcPivotWords];
-      }
-      return [...srcPivotWords].sort((a, b) => {
-        const aValue = _.get(a as any, pivotWordSortData.field);
-        const bValue = _.get(b as any, pivotWordSortData.field);
-        return pivotWordSortData.sort === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
-      });
-    };
-
-    if (srcPivotWords.length < 1) {
-      // don't sort on nothing
-      return;
-    }
-    setPivotWordsPromise(performSort(srcPivotWords));
-  }, [srcPivotWords, pivotWordSortData, setPivotWordsPromise]);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -284,12 +230,12 @@ export const ConcordanceView = () => {
             }}
           >
             <PivotWordTable
-              loading={pivotWordsLoading}
+              loading={!pivotWords}
               sort={pivotWordSortData}
               pivotWords={
-                wordFilter === 'all'
+                (wordFilter === 'all'
                   ? pivotWords
-                  : pivotWords.filter((w) => w.hasAlignmentLinks)
+                  : pivotWords?.filter((w) => w.hasAlignmentLinks)) ?? []
               }
               chosenWord={selectedPivotWord}
               onChooseWord={(word) =>

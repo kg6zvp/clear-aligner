@@ -150,16 +150,24 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const sourceContainer = props.containers.find((container) => container.id === 'source')!;
                 const targetContainer = props.containers.find((container) => container.id === 'target')!;
 
-                const secondaryIndices = {
-                  sourcesIndex: new WordsIndex(sourceContainer, 'sources'),
-                  targetsIndex: new WordsIndex(targetContainer, 'targets')
-                };
+                const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
+                const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
 
-                setProjectState({
-                  ...projectState,
-                  linksTable,
-                  linksIndexes: secondaryIndices
-                });
+                if (!projectState.linksIndexes) {
+                  const secondaryIndices = {
+                    sourcesIndex,
+                    targetsIndex
+                  };
+
+                  secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
+                  secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
+
+                  setProjectState({
+                    ...projectState,
+                    linksTable,
+                    linksIndexes: secondaryIndices
+                  });
+                }
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;
@@ -184,20 +192,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   }
                 );
 
-                const initializeAndIndexTargets = async () => {
-                  await secondaryIndices.targetsIndex.initialize(linksTable);
-                  await linksTable.registerSecondaryIndex(secondaryIndices.targetsIndex);
-                }
+                sourcesIndex.indexingTasks.enqueue(async () => {
+                  await linksTable.registerSecondaryIndex(sourcesIndex);
+                });
 
-                secondaryIndices.targetsIndex.setLoadingOperation(initializeAndIndexTargets());
-                await secondaryIndices.targetsIndex.loading;
-
-                const initializeAndIndexSources = async () => {
-                  await secondaryIndices.sourcesIndex.initialize(linksTable);
-                  await linksTable.registerSecondaryIndex(secondaryIndices.sourcesIndex);
-                }
-                secondaryIndices.sourcesIndex.setLoadingOperation(initializeAndIndexSources());
-                await secondaryIndices.sourcesIndex.loading;
+                targetsIndex.indexingTasks.enqueue(async () => {
+                  await linksTable.registerSecondaryIndex(targetsIndex);
+                });
 
                 linksTable._onUpdate(); // modify variable to indicate that an update has occurred
               }}

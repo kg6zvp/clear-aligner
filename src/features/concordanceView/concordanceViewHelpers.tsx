@@ -53,21 +53,6 @@ export const fullyResolveLink = (
 };
 
 /**
- * populate hasAlignmentLinks property of pivotWord
- * @param linksTable datasource
- * @param pivotWord pivotWord
- */
-export const pivotWordInjectHasAlignmentLinks = (
-  linksTable: VirtualTableLinks,
-  pivotWord: PivotWord
-): PivotWord => {
-  pivotWord.hasAlignmentLinks = pivotWord.instances.some((instance) =>
-    linksTable.hasLinkByWord(pivotWord.side, instance)
-  );
-  return pivotWord;
-};
-
-/**
  * populate alignmentLinks property of given pivotWord
  * @param linksTable datasource
  * @param pivotWord pivotWord to populate
@@ -89,23 +74,22 @@ export const getLinksForPivotWord = async (
  * @param side
  */
 export const generatePivotWordsList = async (
-  linksTable: VirtualTableLinks,
   container: CorpusContainer,
   side: AlignmentSide
 ): Promise<Map<string, PivotWord>> => {
+  console.time(`generating pivot words for ${side}`);
 
   const pivotWordPromises = container.corpora.flatMap((corpus) =>
     Array.from(corpus.wordLocation.entries()).map(async ([key, value]) => {
       return new Promise<PivotWord>((resolve) => {
         setTimeout(() => {
-          const pivotWord = pivotWordInjectHasAlignmentLinks(linksTable, {
-            normalizedText: key,
-            side,
-            instances: Array.from(value),
-            languageInfo: corpus.language
-          } as PivotWord);
-          resolve(pivotWord);
-        }, 10);
+            resolve({
+              normalizedText: key,
+              side,
+              instances: Array.from(value),
+              languageInfo: corpus.language
+            } as PivotWord);
+          }, 10);
       });
       }
     )
@@ -135,6 +119,7 @@ export const generatePivotWordsList = async (
     return accumulator;
   }, new Map<string, PivotWord>());
 
+  console.timeEnd(`generating pivot words for ${side}`);
   return pivotWordsMap;
 };
 

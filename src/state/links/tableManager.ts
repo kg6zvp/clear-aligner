@@ -180,7 +180,7 @@ export class VirtualTableLinks extends VirtualTable<Link> {
     for (const link of this.links.values()) {
       indicesPromises.push(new Promise<void>((resolve) => {
         setTimeout(() => {
-          index.onChange(IndexedChangeType.SAVE, link);
+          index.onChange(IndexedChangeType.SAVE, link, true);
           resolve();
         }, 3);
       }));

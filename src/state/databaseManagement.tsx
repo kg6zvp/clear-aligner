@@ -30,11 +30,11 @@ export type SecondaryIndex<T> = {
    * receive change action
    * @param type change type
    * @param payload item being removed or added
+   * @param suppressLastUpdate don't update the last updated time during this indexing operation (used for bulk operations)
    */
-  onChange(type: IndexedChangeType, payload: T): Promise<void>;
+  onChange(type: IndexedChangeType, payload: T, suppressLastUpdate?: boolean): Promise<void>;
 
   isLoading(): boolean;
-  setLoadingOperation(loadingOperation: Promise<any>): void
 }
 
 /**

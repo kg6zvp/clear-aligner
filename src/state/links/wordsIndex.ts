@@ -5,6 +5,7 @@ import { generatePivotWordsList } from '../../features/concordanceView/concordan
 import { findWordByString } from '../../helpers/findWord';
 import { IndexedChangeType, SecondaryIndex } from '../databaseManagement';
 import _ from 'lodash';
+import Queue from 'queue-promise';
 
 export class WordsIndex implements SecondaryIndex<Link> {
   container: CorpusContainer;
@@ -12,7 +13,8 @@ export class WordsIndex implements SecondaryIndex<Link> {
   pivotWords: Map<string, PivotWord>;
   linkIdsToPivotWordNormalizedTexts: Map<string, string[]>;
   lastUpdate: number;
-  loading?: Promise<any>;
+  loading: boolean;
+  indexingTasks: Queue;
 
   constructor(container: CorpusContainer, side: AlignmentSide) {
     this.container = container;
@@ -20,20 +22,29 @@ export class WordsIndex implements SecondaryIndex<Link> {
     this.pivotWords = new Map<string, PivotWord>();
     this.linkIdsToPivotWordNormalizedTexts = new Map<string, string[]>();
     this.lastUpdate = 0;
+    this.loading = false;
+
+    this.indexingTasks = new Queue({
+      concurrent: 1,
+      interval: 10
+    });
+    this.indexingTasks.on('start', () => {
+      console.log('indexing', this.id(), '...');
+      this.loading = true;
+    });
+    this.indexingTasks.on('end', () => {
+      console.log('indexing', this.id(), '...done');
+      this.loading = false;
+      this.lastUpdate = Date.now().valueOf();
+    });
   }
 
   isLoading = (): boolean => {
     return !!this.loading;
   };
 
-  setLoadingOperation = (loadingOperation: Promise<any>): void => {
-    this.loading = loadingOperation;
-    this.loading
-      .finally(() => this.loading = undefined);
-  };
-
-  initialize = async (table: VirtualTableLinks): Promise<void> => {
-    this.pivotWords = await generatePivotWordsList(table, this.container, this.side);
+  initialize = async (): Promise<void> => {
+    this.pivotWords = await generatePivotWordsList(this.container, this.side);
   };
 
   getPivotWords = (): PivotWord[] => Array.from(this.pivotWords.values());
@@ -42,7 +53,7 @@ export class WordsIndex implements SecondaryIndex<Link> {
     return this.side;
   };
 
-  onChange = async (type: IndexedChangeType, payload: Link): Promise<void> => {
+  onChange = async (type: IndexedChangeType, payload: Link, suppressLastUpdate?: boolean): Promise<void> => {
     setTimeout(async () => {
       switch (type) {
         case IndexedChangeType.SAVE:
@@ -52,7 +63,9 @@ export class WordsIndex implements SecondaryIndex<Link> {
           await this._indexRemove(payload);
           break;
       }
-      this.lastUpdate = Date.now().valueOf();
+      if (!suppressLastUpdate) {
+        this.lastUpdate = Date.now().valueOf();
+      }
     }, 5);
   };
 
