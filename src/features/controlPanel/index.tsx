@@ -1,16 +1,14 @@
-import { ReactElement, useContext, useMemo, useRef, useState } from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Tooltip,
-  Stack,
-} from '@mui/material';
+import { ReactElement, useContext, useMemo, useRef, useState, useCallback } from 'react';
+import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import {
   AddLink,
-  LinkOff,
-  RestartAlt,
   FileDownload,
   FileUpload,
+  LinkOff,
+  RestartAlt,
+  SwapHoriz,
+  SwapVert,
+  Translate
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
@@ -20,18 +18,22 @@ import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
+import BCVWP from '../bcvwp/BCVWPSupport';
+import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
+import { ProjectState } from '../../state/databaseManagement';
 
 import { WordsIndex } from '../../state/links/wordsIndex';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
+  position: BCVWP;
 }
 
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
-  const { projectState, setProjectState } = useContext(AppContext);
+  const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,9 +63,28 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     ]
   );
 
+  const saveControlPanelFormat = useCallback(() => {
+    const updatedUserPreference = projectState.userPreferences?.save({
+      name: PreferenceKey.CONTROL_PANEL_FORMAT,
+      value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
+        ? ControlPanelFormat.VERTICAL
+        : ControlPanelFormat.HORIZONTAL
+    });
+    if(updatedUserPreference) {
+      setPreferences(p => ({
+        ...p,
+        [updatedUserPreference.name]: updatedUserPreference
+      }));
+    }
+  }, [preferences, projectState.userPreferences, setPreferences]);
+
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
+
+  const controlPanelFormat = useMemo(() => (
+    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
+  )?.value, [preferences]);
 
   return (
     <Stack
@@ -71,9 +92,40 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       spacing={2}
       justifyContent="center"
       alignItems="baseline"
-      style={{ marginTop: '16px', marginBottom: '16px' }}
+      style={{marginTop: '16px', marginBottom: '16px'}}
     >
-           <ButtonGroup>
+      <ButtonGroup>
+        <Tooltip title="Toggle Glosses" arrow describeChild>
+          <span>
+            <Button
+              variant={preferences.showGloss ? 'contained' : 'outlined'}
+              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position.toReferenceString())?.hasGloss)}
+              onClick={() => setPreferences(p => ({
+                ...p,
+                showGloss: !p.showGloss
+              }))}
+            >
+              <Translate/>
+            </Button>
+          </span>
+        </Tooltip>
+        <Tooltip title={`Swap to ${controlPanelFormat === ControlPanelFormat.VERTICAL ? 'horizontal' : 'vertical'} view mode`} arrow describeChild>
+          <span>
+            <Button
+              variant="contained"
+              onClick={saveControlPanelFormat}
+            >
+              {
+                controlPanelFormat === ControlPanelFormat.HORIZONTAL
+                  ? <SwapVert/>
+                  : <SwapHoriz/>
+              }
+            </Button>
+          </span>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ButtonGroup>
         <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
@@ -87,7 +139,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <AddLink />
+              <AddLink/>
             </Button>
           </span>
         </Tooltip>
@@ -107,7 +159,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 }
               }}
             >
-              <LinkOff />
+              <LinkOff/>
             </Button>
           </span>
         </Tooltip>
@@ -120,7 +172,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 dispatch(resetTextSegments());
               }}
             >
-              <RestartAlt />
+              <RestartAlt/>
             </Button>
           </span>
         </Tooltip>
@@ -162,16 +214,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
                   secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
 
-                  setProjectState({
-                    ...projectState,
+                  setProjectState((ps: ProjectState) => ({
+                    ...ps,
                     linksTable,
                     linksIndexes: secondaryIndices
-                  });
+                  }));
                 } else {
-                  setProjectState({
-                    ...projectState,
-                    linksTable
-                  });
+                  setProjectState((ps: ProjectState) => ({
+                    ...ps,
+                    linksTable,
+                  }));
                 }
 
                 // convert into an appropriate object
@@ -216,7 +268,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 fileInputRef?.current?.click();
               }}
             >
-              <FileUpload />
+              <FileUpload/>
             </Button>
           </span>
         </Tooltip>
@@ -297,7 +349,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 URL.revokeObjectURL(url);
               }}
             >
-              <FileDownload />
+              <FileDownload/>
             </Button>
           </span>
         </Tooltip>

@@ -8,6 +8,8 @@ import { CorpusContainer, CorpusViewport } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AppContext } from '../../App';
+import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 
 interface PolyglotProps {
   containers: CorpusContainer[];
@@ -16,6 +18,7 @@ interface PolyglotProps {
 
 export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   useDebug('PolyglotComponent');
+  const {preferences} = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
@@ -31,11 +34,15 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     [containers, containers.length]
   );
 
+  const controlPanelFormat = useMemo(() => (
+    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
+  )?.value, [preferences]);
+
   return (
     <Stack
-      direction="row"
+      direction={controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "row" : "column"}
       spacing={2}
-      style={{ height: '16rem' }}
+      style={{ height: controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "17rem" : '30rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >

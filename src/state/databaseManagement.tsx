@@ -1,5 +1,6 @@
 import { VirtualTableLinks } from './links/tableManager';
 import { WordsIndex } from './links/wordsIndex';
+import { UserPreferenceTable } from './preferences/tableManager';
 
 /**
  * denotes the type of change being made to a database
@@ -15,6 +16,7 @@ export enum IndexedChangeType {
  */
 export interface ProjectState {
   linksTable?: VirtualTableLinks;
+  userPreferences?: UserPreferenceTable;
   linksIndexes?: {
     sourcesIndex: WordsIndex;
     targetsIndex: WordsIndex;

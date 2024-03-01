@@ -11,13 +11,15 @@ import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridSetMinRowHeightToDefault,
+  DataGridSetMinRowHeightToDefault
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { TextDirection } from '../../structs';
 import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { Box } from '@mui/system';
+
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
@@ -36,7 +38,7 @@ const renderWords = (words: LocalizedWordEntry[]) => {
   return (
     <span
       style={{
-        ...(languageInfo?.textDirection === 'rtl'
+        ...(languageInfo?.textDirection === TextDirection.RTL
           ? { direction: languageInfo.textDirection! }
           : {}),
       }}
