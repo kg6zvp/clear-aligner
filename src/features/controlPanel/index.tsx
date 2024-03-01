@@ -139,7 +139,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant={preferences.showGloss ? 'contained' : 'outlined'}
-              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position.toReferenceString())?.hasGloss)}
+              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? "")?.hasGloss)}
               onClick={() => setPreferences(p => ({
                 ...p,
                 showGloss: !p.showGloss

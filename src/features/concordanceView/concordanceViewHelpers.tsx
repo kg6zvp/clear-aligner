@@ -77,7 +77,6 @@ export const generatePivotWordsList = async (
   container: CorpusContainer,
   side: AlignmentSide
 ): Promise<Map<string, PivotWord>> => {
-  console.time(`generating pivot words for ${side}`);
 
   const pivotWordPromises = container.corpora.flatMap((corpus) =>
     Array.from(corpus.wordLocation.entries()).map(async ([key, value]) => {
@@ -119,7 +118,6 @@ export const generatePivotWordsList = async (
     return accumulator;
   }, new Map<string, PivotWord>());
 
-  console.timeEnd(`generating pivot words for ${side}`);
   return pivotWordsMap;
 };
 
