@@ -4,6 +4,7 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../../App';
 import { WordsIndex } from '../../state/links/wordsIndex';
+import { ProjectState } from 'state/databaseManagement';
 
 export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefined => {
   const { projectState, setProjectState } = useContext(AppContext);
@@ -38,10 +39,10 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
       targetsIndex: new WordsIndex(targetContainer, 'targets')
     };
 
-    setProjectState({
-      ...projectState,
+    setProjectState((ps: ProjectState) => ({
+      ...ps,
       linksIndexes: secondaryIndices
-    });
+    }));
 
     secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
     secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);

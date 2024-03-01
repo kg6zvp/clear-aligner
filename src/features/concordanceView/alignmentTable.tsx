@@ -184,7 +184,7 @@ export const AlignmentTable = ({
 }: AlignmentTableProps) => {
   const { sourceContainer, targetContainer } = useCorpusContainers();
   const displayableLinks: DisplayableLink[] = useMemo(() => {
-    return alignments && sourceContainer && targetContainer
+    const links = alignments && sourceContainer && targetContainer
       ? alignments.map(
           (link) =>
             ({
@@ -200,6 +200,9 @@ export const AlignmentTable = ({
             } as DisplayableLink)
         )
       : [];
+    const linkMap: Record<string, DisplayableLink> = {};
+    links.forEach(l => linkMap[l.id ?? ""] = l);
+    return Object.values(linkMap);
   }, [alignments, sourceContainer, targetContainer]);
 
   const initialPage = useMemo(() => {

@@ -88,7 +88,7 @@ export abstract class VirtualTable<T> {
 
   _updateSecondaryIndices = async (type: IndexedChangeType, payload: T): Promise<void> => {
     const indexingPromises: Promise<void>[] = [];
-    for(const index of this.secondaryIndexes.values()) {
+    for(const index of [...this.secondaryIndexes.values()]) {
       indexingPromises.push(index.onChange(type, payload));
     }
 

@@ -116,6 +116,7 @@ export const ConcordanceView = () => {
       if (pivotWord) {
         handleUpdateSelectedPivotWord(pivotWord);
       }
+
       if (searchParams.has('alignedWord') && (pivotWord || selectedPivotWord)) {
         const alignedWordId = searchParams.get('alignedWord')!;
         const alignedWord = (pivotWord ??
@@ -229,7 +230,8 @@ export const ConcordanceView = () => {
               pivotWords={
                 (wordFilter === 'all'
                   ? pivotWords
-                  : pivotWords?.filter((w) => w.hasAlignmentLinks)) ?? []
+                  : pivotWords?.filter((w) => w.hasAlignmentLinks)
+                ) ?? []
               }
               chosenWord={selectedPivotWord}
               onChooseWord={(word) =>

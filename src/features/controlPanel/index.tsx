@@ -86,6 +86,46 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
   )?.value, [preferences]);
 
+
+  const createLink = useCallback(() => {
+    if (!projectState.linksTable || !inProgressLink) {
+      return;
+    }
+
+    const sourceContainer = props.containers.find((container) => container.id === 'source')!;
+    const targetContainer = props.containers.find((container) => container.id === 'target')!;
+
+    const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
+    const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
+
+    if (!projectState.linksIndexes) {
+      const secondaryIndices = {
+        sourcesIndex,
+        targetsIndex
+      };
+
+      secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
+      secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
+
+      setProjectState((ps: ProjectState) => ({
+        ...ps,
+        linksIndexes: secondaryIndices
+      }));
+    }
+
+    sourcesIndex.indexingTasks.enqueue(async () => {
+      await projectState.linksTable!.registerSecondaryIndex(sourcesIndex);
+    });
+
+    targetsIndex.indexingTasks.enqueue(async () => {
+      await projectState.linksTable!.registerSecondaryIndex(targetsIndex);
+    });
+
+    projectState.linksTable!.save(inProgressLink);
+
+    dispatch(resetTextSegments());
+  }, [projectState, inProgressLink, props, dispatch, setProjectState]);
+
   return (
     <Stack
       direction="row"
@@ -131,13 +171,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             <Button
               variant="contained"
               disabled={!linkHasBothSides}
-              onClick={() => {
-                if (!projectState.linksTable || !inProgressLink) {
-                  return;
-                }
-                projectState.linksTable.save(inProgressLink);
-                dispatch(resetTextSegments());
-              }}
+              onClick={() => createLink()}
             >
               <AddLink/>
             </Button>
