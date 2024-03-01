@@ -72,6 +72,13 @@ export abstract class VirtualTable<T> {
     this.secondaryIndexes.delete(index);
   }
 
+  /**
+   * whether the given index has already been registered
+   * @param secondaryIndex
+   */
+  isSecondaryIndexRegistered = (secondaryIndex: SecondaryIndex<T>): boolean =>
+    !!this.findSecondaryIndexByIdentifier(secondaryIndex.id());
+
   findSecondaryIndexByIdentifier = (id: string): SecondaryIndex<T>|undefined => {
     return [...this.secondaryIndexes.values()].find(idx => idx.id() === id);
   }

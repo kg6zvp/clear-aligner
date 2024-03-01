@@ -23,6 +23,7 @@ import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/p
 import { ProjectState } from '../../state/databaseManagement';
 
 import { WordsIndex } from '../../state/links/wordsIndex';
+import { usePivotWords } from '../concordanceView/usePivotWords';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -32,6 +33,8 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
+
+  const _initializeTargetPivotWords = usePivotWords('targets');
 
   const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
 
@@ -92,39 +95,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       return;
     }
 
-    const sourceContainer = props.containers.find((container) => container.id === 'source')!;
-    const targetContainer = props.containers.find((container) => container.id === 'target')!;
-
-    const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
-    const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
-
-    if (!projectState.linksIndexes) {
-      const secondaryIndices = {
-        sourcesIndex,
-        targetsIndex
-      };
-
-      secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
-      secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
-
-      setProjectState((ps: ProjectState) => ({
-        ...ps,
-        linksIndexes: secondaryIndices
-      }));
-    }
-
-    sourcesIndex.indexingTasks.enqueue(async () => {
-      await projectState.linksTable!.registerSecondaryIndex(sourcesIndex);
-    });
-
-    targetsIndex.indexingTasks.enqueue(async () => {
-      await projectState.linksTable!.registerSecondaryIndex(targetsIndex);
-    });
-
-    projectState.linksTable!.save(inProgressLink);
+    projectState.linksTable.save(inProgressLink);
 
     dispatch(resetTextSegments());
-  }, [projectState, inProgressLink, props, dispatch, setProjectState]);
+  }, [projectState, inProgressLink, dispatch]);
 
   return (
     <Stack
@@ -239,26 +213,19 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
                 const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
 
-                if (!projectState.linksIndexes) {
-                  const secondaryIndices = {
-                    sourcesIndex,
-                    targetsIndex
-                  };
+                const linksIndexes = {
+                  sourcesIndex,
+                  targetsIndex
+                };
 
-                  secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
-                  secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
+                linksIndexes.sourcesIndex.indexingTasks.enqueue(linksIndexes.sourcesIndex.initialize);
+                linksIndexes.targetsIndex.indexingTasks.enqueue(linksIndexes.targetsIndex.initialize);
 
-                  setProjectState((ps: ProjectState) => ({
-                    ...ps,
-                    linksTable,
-                    linksIndexes: secondaryIndices
-                  }));
-                } else {
-                  setProjectState((ps: ProjectState) => ({
-                    ...ps,
-                    linksTable,
-                  }));
-                }
+                setProjectState((ps: ProjectState) => ({
+                  ...ps,
+                  linksTable,
+                  linksIndexes
+                }));
 
                 // convert into an appropriate object
                 const alignmentFile = JSON.parse(content) as AlignmentFile;

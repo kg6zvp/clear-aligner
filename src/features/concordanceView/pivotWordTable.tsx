@@ -15,6 +15,29 @@ import {
   DataGridScrollbarDisplayFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
+import { TextDirection } from '../../structs';
+
+interface PivotWordTextCellProps {
+  pivotWord: PivotWord;
+}
+const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
+  const alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+  return (
+    <span
+      key={pivotWord.normalizedText}
+      style={{
+        ...(pivotWord.languageInfo?.textDirection === TextDirection.RTL
+          ? { direction: pivotWord.languageInfo.textDirection! }
+          : {}),
+      }}
+    >
+      <LocalizedTextDisplay languageInfo={pivotWord.languageInfo}>
+        {pivotWord.normalizedText}
+      </LocalizedTextDisplay>
+      {pivotWord.hasAlignmentLinks && !alignedWords && <CircularProgress size={'.75em'} sx={{ margin: 'auto' }} />}
+    </span>);
+}
 
 const columns: GridColDef[] = [
   {
@@ -29,9 +52,7 @@ const columns: GridColDef[] = [
     headerName: 'Pivot Word',
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
-      <LocalizedTextDisplay languageInfo={row.languageInfo}>
-        {row.normalizedText}
-      </LocalizedTextDisplay>
+      <PivotWordTextCell pivotWord={row} />
     ),
   },
 ];
@@ -72,7 +93,12 @@ export const PivotWordTable = ({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{ margin: 'auto' }} />
+        <CircularProgress sx={{
+          margin: 'auto',
+          '.MuiLinearProgress-bar': {
+            transition: 'none'
+          },
+        }} />
       </Box>
     );
   }

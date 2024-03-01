@@ -5,6 +5,7 @@ import { useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../../App';
 import { WordsIndex } from '../../state/links/wordsIndex';
 import { ProjectState } from 'state/databaseManagement';
+import { useInterval } from 'usehooks-ts';
 
 export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefined => {
   const { projectState, setProjectState } = useContext(AppContext);
@@ -15,25 +16,37 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
 
   const [ loading, setLoading ] = useState<boolean>(!!source?.loading);
 
-  useEffect(() => {
-    setLoading(!!source?.isLoading());
-
-    if (!loading || !source) return;
-
-    const waitForLoad = async () => {
-      await source.waitForTasksToFinish();
-      setLoading(false);
+  // when source is changed, set the loading state to match the new source
+  useInterval(() => {
+    if (loading !== !!source?.isLoading()) {
+      setLoading(!!source?.isLoading()); // change the status to match the source
     }
+  }, 500);
 
-    void waitForLoad();
-  }, [source, loading, setLoading]);
-
+  // initialize indices if they don't exist or if linksTable changes
   useEffect(() => {
-    if (projectState.linksIndexes || !sourceContainer || !targetContainer) {
+    if (!sourceContainer || !targetContainer) {
       return;
     }
-    // initialize
 
+    if (
+      projectState.linksTable
+      && projectState.linksIndexes
+      && (projectState.linksTable.isSecondaryIndexRegistered(projectState.linksIndexes.sourcesIndex) || projectState.linksIndexes.sourcesIndex.isLoading())
+      && (projectState.linksTable.isSecondaryIndexRegistered(projectState.linksIndexes.targetsIndex) || projectState.linksIndexes.targetsIndex.isLoading())) {
+      // if indexes are already registered, no need to replace them
+      return;
+    }
+
+    // cleanup old indexes if they are already there
+    if (projectState.linksIndexes) {
+      projectState.linksIndexes.sourcesIndex.indexingTasks.stop();
+      projectState.linksIndexes.sourcesIndex.indexingTasks.clear();
+      projectState.linksIndexes.targetsIndex.indexingTasks.stop();
+      projectState.linksIndexes.targetsIndex.indexingTasks.clear();
+    }
+
+    // initialize
     const secondaryIndices = {
       sourcesIndex: new WordsIndex(sourceContainer, 'sources'),
       targetsIndex: new WordsIndex(targetContainer, 'targets')
@@ -46,8 +59,12 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
 
     secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
     secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
+    if (projectState.linksTable) {
+      secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex))
+      secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex))
+    }
   }, [
-    projectState,
+    projectState.linksTable,
     projectState.linksIndexes,
     setProjectState,
     sourceContainer,

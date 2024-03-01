@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AlignmentSide, DisplayableLink, Link } from '../../structs';
 import { Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
@@ -71,8 +71,7 @@ export const ConcordanceView = () => {
     null as Link | null
   );
 
-  const handleUpdateSelectedAlignedWord = useMemo(
-    () => (alignedWord: AlignedWord | null) => {
+  const handleUpdateSelectedAlignedWord = useCallback((alignedWord: AlignedWord | null) => {
       setSelectedAlignedWord(alignedWord);
       setSelectedAlignmentLink(null);
     },
