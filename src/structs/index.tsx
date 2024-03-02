@@ -156,16 +156,6 @@ export interface Link {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
-/**
- * Link containing information to assist in displaying it without requiring other context (UI model only)
- */
-export interface DisplayableLink extends Link {
-  sourceContainer: CorpusContainer;
-  targetContainer: CorpusContainer;
-  sourceWords: string[]; // as text
-  targetWords: string[]; // as text
-}
-
 // Extension of Link, use in tracking
 // state of 'inProgress' links.
 export interface InProgressLink extends Link {

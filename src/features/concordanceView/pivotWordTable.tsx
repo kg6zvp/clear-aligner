@@ -22,7 +22,8 @@ interface PivotWordTextCellProps {
   pivotWord: PivotWord;
 }
 const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
-  const alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _alignedWords = useAlignedWordsFromPivotWord(pivotWord);
   return (
     <span
       key={pivotWord.normalizedText}
@@ -35,7 +36,6 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
       <LocalizedTextDisplay languageInfo={pivotWord.languageInfo}>
         {pivotWord.normalizedText}
       </LocalizedTextDisplay>
-      {pivotWord.hasAlignmentLinks && !alignedWords && <CircularProgress size={'.75em'} sx={{ margin: 'auto' }} />}
     </span>);
 }
 

@@ -41,6 +41,7 @@ const renderWords = (words: LocalizedWordEntry[]) => {
         ...(languageInfo?.textDirection === TextDirection.RTL
           ? { direction: languageInfo.textDirection! }
           : {}),
+        width: '100%'
       }}
     >
       {partsByWord?.map((word, idx) => (

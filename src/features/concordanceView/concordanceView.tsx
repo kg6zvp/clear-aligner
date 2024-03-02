@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { AlignmentSide, DisplayableLink, Link } from '../../structs';
+import { AlignmentSide, Link } from '../../structs';
 import { Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
@@ -318,9 +318,7 @@ export const ConcordanceView = () => {
               alignments={selectedAlignedWord?.alignments ?? []}
               onChangeSort={setAlignmentSortData}
               chosenAlignmentLink={selectedAlignmentLink}
-              onChooseAlignmentLink={(alignmentLink: DisplayableLink) =>
-                setSelectedAlignmentLink(alignmentLink)
-              }
+              onChooseAlignmentLink={setSelectedAlignmentLink}
             />
           </Paper>
         </Box>

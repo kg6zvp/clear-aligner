@@ -34,6 +34,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _initializeTargetPivotWords = usePivotWords('targets');
 
   const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
