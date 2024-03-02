@@ -32,10 +32,10 @@ const determineCorpusView = (
   verses: Verse[],
   bcvId: BCVWP | null
 ) => {
-  const corpus = bcvId ? viewCorpora.corpusAtReference(bcvId) : undefined;
+  const corpus = bcvId ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString()) : undefined;
   if (!corpus) return <></>;
   return verses.map((verse) => {
-    const languageInfo = viewCorpora.languageAtReference(verse.bcvId);
+    const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
     return (
       <Grid
         container
@@ -75,7 +75,7 @@ const determineCorpusView = (
                 paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReference(verse.bcvId)} verse={verse} allowGloss />
+              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())} verse={verse} allowGloss />
             </Typography>
           </Grid>
         </Grid>
@@ -225,7 +225,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           sx={{ flex: 1 }}
         >
           <Typography variant="h6" sx={{ mr: 1 }}>
-            {position ? viewCorpora.corpusAtReference(position)?.name : ''}
+            {position ? viewCorpora.corpusAtReferenceString(position.toReferenceString())?.name : ''}
           </Typography>
 
           <Tooltip
@@ -233,18 +233,18 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
               <>
                 <Typography variant="h6">
                   {position
-                    ? viewCorpora.corpusAtReference(position)?.fullName
+                    ? viewCorpora.corpusAtReferenceString(position.toReferenceString())?.fullName
                     : ''}
                 </Typography>
                 <Typography>
                   {position
-                    ? viewCorpora.corpusAtReference(position)?.name
+                    ? viewCorpora.corpusAtReferenceString(position.toReferenceString())?.name
                     : ''}
                 </Typography>
                 <Typography>
                   Language:{' '}
                   {position
-                    ? viewCorpora.languageAtReference(position)?.code
+                    ? viewCorpora.languageAtReferenceString(position.toReferenceString())?.code
                     : ''}
                 </Typography>
               </>

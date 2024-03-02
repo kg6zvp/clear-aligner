@@ -147,11 +147,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         const wordInDisplayGroup = partsAsWords
           .find(({ length }) => length > 0)
           ?.find((word) => word.id);
-        const refInWords = wordInDisplayGroup
-          ? BCVWP.parseFromString(wordInDisplayGroup.id)
-          : undefined;
-        const corpusAtRef = refInWords
-          ? container?.corpusAtReference(refInWords)
+        const corpusAtRef = wordInDisplayGroup
+          ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
           : undefined;
 
         return (
