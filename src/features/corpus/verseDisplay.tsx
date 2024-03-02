@@ -1,8 +1,7 @@
-import { Corpus, TextDirection, Verse, Word } from '../../structs';
+import { Corpus, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display

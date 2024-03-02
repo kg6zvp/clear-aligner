@@ -103,7 +103,7 @@ export const ConcordanceView = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    if (loading || !srcPivotWords || srcPivotWords.length < 1) {
+    if (!pivotWords || !srcPivotWords || srcPivotWords.length < 1) {
       return;
     }
     if (searchParams.has('pivotWord')) {
@@ -115,38 +115,33 @@ export const ConcordanceView = () => {
       if (pivotWord) {
         handleUpdateSelectedPivotWord(pivotWord);
       }
-
-      if (searchParams.has('alignedWord') && (pivotWord || selectedPivotWord)) {
-        const alignedWordId = searchParams.get('alignedWord')!;
-        const alignedWord = (pivotWord ??
-          selectedPivotWord)!.alignedWords?.find(
-          (alignedWord) => alignedWord.id === alignedWordId
-        );
-
-        if (alignedWord) {
-          setSelectedAlignedWord(alignedWord);
-        }
-        if (
-          searchParams.has('alignmentLink') &&
-          (alignedWord || selectedAlignedWord)
-        ) {
-          const alignmentLinkId = searchParams.get('alignmentLink');
-          const alignmentLink = (
-            alignedWord ?? selectedAlignedWord
-          )?.alignments?.find((link) => link.id === alignmentLinkId);
-
-          if (alignmentLink) {
-            setSelectedAlignmentLink(alignmentLink);
-          }
-          searchParams.delete('alignmentLink');
-        }
-        searchParams.delete('alignedWord');
-      }
       searchParams.delete('pivotWord');
+    } else if (searchParams.has('alignedWord') && (selectedPivotWord)) {
+      const alignedWordId = searchParams.get('alignedWord')!;
+      const alignedWord = (selectedPivotWord)!.alignedWords?.find(
+        (alignedWord) => alignedWord.id === alignedWordId
+      );
+
+      if (alignedWord) {
+        setSelectedAlignedWord(alignedWord);
+      }
+      searchParams.delete('alignedWord');
+    } else if (
+      searchParams.has('alignmentLink') &&
+      (selectedAlignedWord)
+    ) {
+      const alignmentLinkId = searchParams.get('alignmentLink');
+      const alignmentLink = (selectedAlignedWord
+      )?.alignments?.find((link) => link.id === alignmentLinkId);
+
+      if (alignmentLink) {
+        setSelectedAlignmentLink(alignmentLink);
+      }
+      searchParams.delete('alignmentLink');
     }
     setSearchParams(searchParams);
   }, [
-    loading,
+    pivotWords,
     srcPivotWords,
     searchParams,
     setSearchParams,
