@@ -1,6 +1,12 @@
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { AlignedWord, LocalizedWordEntry } from './structs';
-import { TableContainer } from '@mui/material';
+import {
+  DataGrid,
+  GridColDef,
+  GridRenderCellParams,
+  GridRowParams,
+  GridSortItem,
+} from '@mui/x-data-grid';
+import { AlignedWord, LocalizedWordEntry, PivotWord } from './structs';
+import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
@@ -11,6 +17,9 @@ import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { groupLocalizedPartsByWord } from '../../helpers/groupPartsIntoWords';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { TextDirection } from '../../structs';
+import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
+import { Box } from '@mui/system';
+
 
 /**
  * Render an individual word or list of words with the appropriate display for their language
@@ -32,6 +41,7 @@ const renderWords = (words: LocalizedWordEntry[]) => {
         ...(languageInfo?.textDirection === TextDirection.RTL
           ? { direction: languageInfo.textDirection! }
           : {}),
+        width: '100%'
       }}
     >
       {partsByWord?.map((word, idx) => (
@@ -86,7 +96,7 @@ const columnsWithGloss: GridColDef[] = [
 
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
-  alignedWords: AlignedWord[];
+  pivotWord?: PivotWord;
   chosenAlignedWord?: AlignedWord | null;
   onChooseAlignedWord: (alignedWord: AlignedWord) => void;
   onChangeSort: (sortData: GridSortItem | null) => void;
@@ -102,22 +112,48 @@ export interface AlignedWordTableProps {
  */
 export const AlignedWordTable = ({
   sort,
-  alignedWords,
+  pivotWord,
   chosenAlignedWord,
   onChooseAlignedWord,
   onChangeSort,
 }: AlignedWordTableProps) => {
+  const alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+
+  const loading: boolean = useMemo(
+    () => !!pivotWord && !alignedWords,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  [pivotWord, alignedWords, alignedWords?.length]);
+
   const hasGlossData = useMemo(
-    () => alignedWords.some((alignedWord: AlignedWord) => !!alignedWord.gloss),
-    [alignedWords]
+    () => {
+      if (!alignedWords) return false;
+      return alignedWords.some(
+        (alignedWord: AlignedWord) => !!alignedWord.gloss
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [alignedWords, alignedWords?.length]
   );
   const initialPage = useMemo(() => {
-    if (chosenAlignedWord && alignedWords) {
+    if (chosenAlignedWord && alignedWords && alignedWords.length > 0) {
       return alignedWords.indexOf(chosenAlignedWord) / 20;
     }
     return 0;
-  }, [chosenAlignedWord, alignedWords]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chosenAlignedWord, alignedWords, alignedWords?.length]);
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', margin: 'auto' }}>
+        <CircularProgress sx={{
+          display: 'flex',
+          '.MuiLinearProgress-bar': {
+            transition: 'none'
+          },
+        }} />
+      </Box>
+    );
+  }
   return (
     <TableContainer
       sx={{
@@ -128,45 +164,51 @@ export const AlignedWordTable = ({
         },
       }}
     >
-      <DataGrid
-        sx={{
-          width: '100%',
-          ...DataGridSetMinRowHeightToDefault,
-          ...DataGridScrollbarDisplayFix,
-          ...DataGridResizeAnimationFixes,
-        }}
-        rowSelection={true}
-        rowSelectionModel={
-          chosenAlignedWord?.id ? [chosenAlignedWord.id] : undefined
-        }
-        rows={alignedWords}
-        columns={hasGlossData ? columnsWithGloss : columns}
-        getRowId={(row) => row.id}
-        sortModel={sort ? [sort] : []}
-        onSortModelChange={(newSort) => {
-          if (!newSort || newSort.length < 1) {
-            onChangeSort(sort);
+      {loading ? (
+        <Box sx={{ display: 'flex', margin: 'auto' }}>
+          <CircularProgress sx={{ margin: 'auto' }} />
+        </Box>
+      ) : (
+        <DataGrid
+          sx={{
+            width: '100%',
+            ...DataGridSetMinRowHeightToDefault,
+            ...DataGridScrollbarDisplayFix,
+            ...DataGridResizeAnimationFixes,
+          }}
+          rowSelection={true}
+          rowSelectionModel={
+            chosenAlignedWord?.id ? [chosenAlignedWord.id] : undefined
           }
-          onChangeSort(newSort[0] /*only single sort is supported*/);
-        }}
-        initialState={{
-          pagination: {
-            paginationModel: { page: initialPage, pageSize: 20 },
-          },
-        }}
-        pageSizeOptions={[20, 50]}
-        onRowClick={(clickEvent: GridRowParams<AlignedWord>) => {
-          if (onChooseAlignedWord) {
-            onChooseAlignedWord(clickEvent.row);
+          rows={alignedWords ?? []}
+          columns={hasGlossData ? columnsWithGloss : columns}
+          getRowId={(row) => row.id}
+          sortModel={sort ? [sort] : []}
+          onSortModelChange={(newSort) => {
+            if (!newSort || newSort.length < 1) {
+              onChangeSort(sort);
+            }
+            onChangeSort(newSort[0] /*only single sort is supported*/);
+          }}
+          initialState={{
+            pagination: {
+              paginationModel: { page: initialPage, pageSize: 20 },
+            },
+          }}
+          pageSizeOptions={[20, 50]}
+          onRowClick={(clickEvent: GridRowParams<AlignedWord>) => {
+            if (onChooseAlignedWord) {
+              onChooseAlignedWord(clickEvent.row);
+            }
+          }}
+          isRowSelectable={({
+            row: { alignments },
+          }: GridRowParams<AlignedWord>) =>
+            !!alignments && (alignments?.length || 0) > 0
           }
-        }}
-        isRowSelectable={({
-          row: { alignments },
-        }: GridRowParams<AlignedWord>) =>
-          !!alignments && (alignments?.length || 0) > 0
-        }
-        getRowHeight={() => 'auto'}
-      />
+          getRowHeight={() => 'auto'}
+        />
+      )}
     </TableContainer>
   );
 };

@@ -1,4 +1,4 @@
-import { VirtualTable } from '../databaseManagement';
+import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 
 export enum ControlPanelFormat {
   VERTICAL,
@@ -15,7 +15,7 @@ export interface UserPreference {
 }
 
 
-export class UserPreferenceTable extends VirtualTable {
+export class UserPreferenceTable extends VirtualTable<UserPreference> {
   private readonly preferences: Map<PreferenceKey, UserPreference>;
 
   constructor() {
@@ -38,7 +38,7 @@ export class UserPreferenceTable extends VirtualTable {
     } catch (e) {
       return undefined;
     } finally {
-      this.onUpdate(suppressOnUpdate);
+      this._onUpdate(suppressOnUpdate);
     }
     return userPreference;
   };
@@ -54,4 +54,5 @@ export class UserPreferenceTable extends VirtualTable {
   getPreference = (preferenceKey: PreferenceKey): UserPreference | undefined => {
     return this.preferences.get(preferenceKey);
   }
+  catchupNewIndex = async (_index: SecondaryIndex<UserPreference>) => {};
 }

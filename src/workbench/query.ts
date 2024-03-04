@@ -8,7 +8,13 @@ import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
 import YLT from 'tsv/ylt-new.tsv';
 
-let isInitialized: boolean = false;
+enum InitializationStates {
+  UNINITIALiZED,
+  INITIALIZING,
+  INITIALIZED
+}
+
+let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
 
 const availableCorpora: CorpusContainer[] = [];
 
@@ -41,12 +47,14 @@ const parseTsvByFileType = async (
   refCorpus: Corpus,
   side: AlignmentSide,
   fileType: CorpusFileFormat
-): Promise<Partial<Corpus>> => {
+): Promise<Corpus> => {
   const fetchedTsv = await fetch(tsv);
   const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
-  const wordsByVerse: Record<string, Verse> = {};
+  if (!refCorpus.wordsByVerse) {
+    refCorpus.wordsByVerse = {} as Record<string, Verse>;
+  }
 
   header.split('\t').forEach((header, idx) => {
     header = header === 'identifier' ? 'id' : header; //Standard for header in files will be id
@@ -54,10 +62,11 @@ const parseTsvByFileType = async (
   });
   const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
 
-  const reducedWords = rows.reduce((accumulator, row) => {
+  rows.forEach((row) => {
     const values = row.split('\t');
 
-    let id, pos, word: Word, verse;
+    let id, wordKey, wordRef: BCVWP, pos, word: Word, verse;
+
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
@@ -66,14 +75,15 @@ const parseTsvByFileType = async (
           punctuationFilter.includes(values[headerMap['text']])
         ) {
           // skip punctuation
-          return accumulator;
+          return;
         }
 
         // remove redundant 'o'/'n' qualifier
         id = values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
-          return accumulator;
+          return;
         }
+        wordRef = BCVWP.parseFromString(id);
         pos = +id.substring(8, 11); // grab word position
         word = {
           id: id, // standardize n40001001002 to  40001001002
@@ -82,15 +92,22 @@ const parseTsvByFileType = async (
           text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           position: pos
         };
-        verse = wordsByVerse[id.substring(0, 8)] || {};
-        wordsByVerse[id.substring(0, 8)] = {
+
+        wordKey = word.text.toLowerCase();
+        if (refCorpus.wordLocation.has(wordKey)) {
+          refCorpus.wordLocation.get(wordKey)?.add(wordRef);
+        } else {
+          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([wordRef]));
+        }
+        verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
+        refCorpus.wordsByVerse[id.substring(0, 8)] = {
           ...verse,
           sourceVerse: values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
         };
-        accumulator.push(word);
+        refCorpus.words.push(word);
         break;
 
       case CorpusFileFormat.TSV_MACULA:
@@ -114,22 +131,28 @@ const parseTsvByFileType = async (
             : gloss
         } as Word;
 
-        verse = wordsByVerse[id.substring(0, 8)] || {};
-        wordsByVerse[id.substring(0, 8)] = {
+        wordRef = BCVWP.parseFromString(id);
+        wordKey = word.text.toLowerCase();
+        if (refCorpus.wordLocation.has(wordKey)) {
+          refCorpus.wordLocation.get(wordKey)?.add(wordRef);
+        } else {
+          refCorpus.wordLocation.set(wordKey, new Set<BCVWP>([wordRef]));
+        }
+
+        verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
+        refCorpus.wordsByVerse[id.substring(0, 8)] = {
           ...verse,
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
         };
-        accumulator.push(word);
+        refCorpus.words.push(word);
         break;
     }
+  });
 
-    return accumulator;
-  }, [] as Word[]);
   return {
-    words: reducedWords,
-    wordsByVerse,
+    ...refCorpus,
     hasGloss
   };
 };
@@ -158,11 +181,17 @@ const putVersesInCorpus = (corpus: Corpus) => {
   );
 };
 
+const waitForInitialization = async () => {
+  while (initializationState !== InitializationStates.INITIALIZED) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+}
+
 export const getAvailableCorporaContainers = async (): Promise<
   CorpusContainer[]
 > => {
-  if (!isInitialized) {
-    isInitialized = true;
+  if (initializationState === InitializationStates.UNINITIALiZED) {
+    initializationState = InitializationStates.INITIALIZING;
     // Macula Hebrew OT
     let maculaHebOT: Corpus = {
       id: 'wlc-hebot',
@@ -175,6 +204,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
     const maculaHebOTWords = await parseTsvByFileType(
@@ -190,6 +220,32 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(maculaHebOT);
 
+    // YLT Old Testament
+    let wlcYltOt: Corpus = {
+      id: 'wlc-ylt',
+      name: 'YLT',
+      fullName: 'YLT Old Testament',
+      language: {
+        code: 'en',
+        textDirection: TextDirection.LTR,
+      },
+      words: [],
+      wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
+      books: {},
+    };
+    const wlcYltOtWords = await parseTsvByFileType(
+      WLC_OT_YLT_TSV,
+      wlcYltOt,
+      'targets',
+      CorpusFileFormat.TSV_TARGET
+    );
+    wlcYltOt = {
+      ...wlcYltOt,
+      ...wlcYltOtWords,
+    };
+    putVersesInCorpus(wlcYltOt);
+
     // SBL GNT
     let sblGnt: Corpus = {
       id: 'sbl-gnt',
@@ -201,6 +257,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
 
@@ -226,6 +283,7 @@ export const getAvailableCorporaContainers = async (): Promise<
       },
       words: [],
       wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
       books: {},
     };
 
@@ -253,6 +311,9 @@ export const getAvailableCorporaContainers = async (): Promise<
 
     availableCorpora.push(sourceContainer);
     availableCorpora.push(targetContainer);
+    initializationState = InitializationStates.INITIALIZED;
+  } else if (initializationState === InitializationStates.INITIALIZING) {
+    await waitForInitialization();
   }
 
   return availableCorpora;
@@ -260,7 +321,7 @@ export const getAvailableCorporaContainers = async (): Promise<
 
 export const getAvailableCorporaIds = async (): Promise<string[]> => {
   return (
-    isInitialized ? availableCorpora : await getAvailableCorporaContainers()
+    initializationState ? availableCorpora : await getAvailableCorporaContainers()
   ).map((corpus) => {
     return corpus.id;
   });

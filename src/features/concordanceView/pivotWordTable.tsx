@@ -8,27 +8,51 @@ import {
   GridRenderCellParams,
   GridRowParams,
   GridSortItem,
+  GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
+import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
+import { TextDirection } from '../../structs';
+
+interface PivotWordTextCellProps {
+  pivotWord: PivotWord;
+}
+const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _alignedWords = useAlignedWordsFromPivotWord(pivotWord);
+  return (
+    <span
+      key={pivotWord.normalizedText}
+      style={{
+        ...(pivotWord.languageInfo?.textDirection === TextDirection.RTL
+          ? { direction: pivotWord.languageInfo.textDirection! }
+          : {}),
+      }}
+    >
+      <LocalizedTextDisplay languageInfo={pivotWord.languageInfo}>
+        {pivotWord.normalizedText}
+      </LocalizedTextDisplay>
+    </span>);
+}
 
 const columns: GridColDef[] = [
   {
-    field: 'frequency',
+    field: 'instances.length',
     headerName: 'Frequency',
     flex: 1,
+    valueGetter: (row: GridValueGetterParams<PivotWord>) =>
+      row.row.instances.length,
   },
   {
     field: 'normalizedText',
     headerName: 'Pivot Word',
     flex: 1,
     renderCell: ({ row }: GridRenderCellParams<PivotWord, any, any>) => (
-      <LocalizedTextDisplay languageInfo={row.languageInfo}>
-        {row.normalizedText}
-      </LocalizedTextDisplay>
+      <PivotWordTextCell pivotWord={row} />
     ),
   },
 ];
@@ -65,10 +89,16 @@ export const PivotWordTable = ({
     }
     return 0;
   }, [chosenWord, pivotWords]);
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{ margin: 'auto' }} />
+        <CircularProgress sx={{
+          margin: 'auto',
+          '.MuiLinearProgress-bar': {
+            transition: 'none'
+          },
+        }} />
       </Box>
     );
   }
@@ -115,10 +145,8 @@ export const PivotWordTable = ({
           }
         }}
         isRowSelectable={({
-          row: { alignedWords },
-        }: GridRowParams<PivotWord>) =>
-          !!alignedWords && (alignedWords?.length || 0) > 0
-        }
+          row: { hasAlignmentLinks },
+        }: GridRowParams<PivotWord>) => !!hasAlignmentLinks}
       />
     </TableContainer>
   );

@@ -122,6 +122,10 @@ export default class BCVWP {
     return !!trimmed.match(/^[onON]\d/) ? trimmed.substring(1) : trimmed;
   }
 
+  static truncateTo(reference: string, field: BCVWPField): string {
+    return BCVWP.sanitize(reference).substring(0, field);
+  }
+
   static parseFromString(reference: string): BCVWP {
     if (!BCVWP.isValidString(reference)) {
       throw new Error(`Illegal reference string given to parser: ${reference}`);

@@ -13,7 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { resetTextSegments } from 'state/alignment.slice';
-import { CorpusContainer } from '../../structs';
+import { CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
@@ -21,6 +21,9 @@ import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 import { ProjectState } from '../../state/databaseManagement';
+
+import { WordsIndex } from '../../state/links/wordsIndex';
+import { usePivotWords } from '../concordanceView/usePivotWords';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -30,6 +33,9 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _initializeTargetPivotWords = usePivotWords('targets');
 
   const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
 
@@ -84,6 +90,17 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
   )?.value, [preferences]);
 
+
+  const createLink = useCallback(() => {
+    if (!projectState.linksTable || !inProgressLink) {
+      return;
+    }
+
+    projectState.linksTable.save(inProgressLink);
+
+    dispatch(resetTextSegments());
+  }, [projectState, inProgressLink, dispatch]);
+
   return (
     <Stack
       direction="row"
@@ -97,7 +114,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant={preferences.showGloss ? 'contained' : 'outlined'}
-              disabled={!props.containers.some(container => container.corpusAtReference(props.position)?.hasGloss)}
+              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? "")?.hasGloss)}
               onClick={() => setPreferences(p => ({
                 ...p,
                 showGloss: !p.showGloss
@@ -129,13 +146,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             <Button
               variant="contained"
               disabled={!linkHasBothSides}
-              onClick={() => {
-                if (!projectState.linksTable || !inProgressLink) {
-                  return;
-                }
-                projectState.linksTable.save(inProgressLink);
-                dispatch(resetTextSegments());
-              }}
+              onClick={() => createLink()}
             >
               <AddLink/>
             </Button>
@@ -197,9 +208,24 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const content = await file.text();
                 const linksTable: VirtualTableLinks = new VirtualTableLinks();
 
+                const sourceContainer = props.containers.find((container) => container.id === 'source')!;
+                const targetContainer = props.containers.find((container) => container.id === 'target')!;
+
+                const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
+                const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
+
+                const linksIndexes = {
+                  sourcesIndex,
+                  targetsIndex
+                };
+
+                linksIndexes.sourcesIndex.indexingTasks.enqueue(linksIndexes.sourcesIndex.initialize);
+                linksIndexes.targetsIndex.indexingTasks.enqueue(linksIndexes.targetsIndex.initialize);
+
                 setProjectState((ps: ProjectState) => ({
                   ...ps,
                   linksTable,
+                  linksIndexes
                 }));
 
                 // convert into an appropriate object
@@ -209,13 +235,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // override the alignments from alignment file
                 _.chunk(alignmentFile.records, chunkSize).forEach(
                   (chunk, chunkIdx) => {
-                    const links = chunk.map((record, recordIdx) => ({
-                      id:
-                        record.id ??
-                        `record-${chunkIdx * chunkSize + (recordIdx + 1)}`,
-                      sources: record.source,
-                      targets: record.target,
-                    }));
+                    const links = chunk.map((record, recordIdx): Link => {
+                      return {
+                        // @ts-ignore
+                        id: record.id ?? record?.meta?.id ?? `record-${chunkIdx * chunkSize + (recordIdx + 1)}`,
+                        sources: record.source,
+                        targets: record.target,
+                      };
+                    });
                     try {
                       linksTable.saveAll(links, true);
                     } catch (e) {
@@ -223,7 +250,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                     }
                   }
                 );
-                linksTable.onUpdate(); // modify variable to indicate that an update has occurred
+
+                sourcesIndex.indexingTasks.enqueue(async () => {
+                  await linksTable.registerSecondaryIndex(sourcesIndex);
+                });
+
+                targetsIndex.indexingTasks.enqueue(async () => {
+                  await linksTable.registerSecondaryIndex(targetsIndex);
+                });
+
+                linksTable._onUpdate(); // modify variable to indicate that an update has occurred
               }}
             />
             <Button
