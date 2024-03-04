@@ -133,13 +133,6 @@ export const AlignmentTable = ({
     return 0;
   }, [chosenAlignmentLink, alignments]);
 
-
-  const memoizedAlignments = useMemo(() => {
-    const alignmentMap: Record<string, Link> = {};
-    alignments.forEach(a => { if(a.id) alignmentMap[a.id] = a });
-    return Object.values(alignmentMap);
-  }, [alignments]);
-
   return (
     <AlignmentTableContext.Provider
       value={{
@@ -164,11 +157,11 @@ export const AlignmentTable = ({
             ...DataGridResizeAnimationFixes,
           }}
           rowSelection={true}
-          rowCount={memoizedAlignments.length}
+          rowCount={alignments.length}
           rowSelectionModel={
             chosenAlignmentLink?.id ? [chosenAlignmentLink.id] : undefined
           }
-          rows={memoizedAlignments}
+          rows={alignments}
           columns={columns}
           getRowId={(row) => row.id}
           getRowHeight={(_) => 'auto'}
