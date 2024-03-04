@@ -32,6 +32,7 @@ export const RefCell = (
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this Link entry
+ * @param onClick Callback on button click
  */
 export const LinkCell = ({row, onClick}: {
   row: GridRenderCellParams<Link, any, any>,
@@ -80,7 +81,7 @@ export const AlignmentTable = ({
   chosenAlignmentLink,
   onChooseAlignmentLink,
 }: AlignmentTableProps) => {
-  const [openAlignmentDialog, setOpenAlignmentDialog] = useState(false);
+  const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const initialPage = useMemo(() => {
     if (chosenAlignmentLink) {
       return (
@@ -118,7 +119,9 @@ export const AlignmentTable = ({
       headerName: 'Link',
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <LinkCell row={row} onClick={() => setOpenAlignmentDialog(true)} />
+        <LinkCell row={row} onClick={(tableCtx, link) => {
+          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, tableCtx.wordSource) ?? ""))
+        }} />
       ),
     },
   ];
@@ -175,7 +178,7 @@ export const AlignmentTable = ({
           }}
         />
       </TableContainer>
-      <WorkbenchDialog open={openAlignmentDialog} setOpen={setOpenAlignmentDialog} />
+      <WorkbenchDialog alignment={selectedAligment} setAlignment={setSelectedAlignment} chosenAlignmentLink={chosenAlignmentLink} />
     </AlignmentTableContext.Provider>
   );
 };
