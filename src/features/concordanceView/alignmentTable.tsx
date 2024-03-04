@@ -19,6 +19,15 @@ export interface AlignmentTableContextProps {
 
 export const AlignmentTableContext = createContext({} as AlignmentTableContextProps);
 
+export const RefCell = (
+  row: GridRenderCellParams<Link, any, any>
+) => {
+  const tableCtx = useContext(AlignmentTableContext);
+  const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
+  return (
+    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
+  );}
+
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this Link entry
@@ -28,7 +37,7 @@ export const LinkCell = (
 ) => {
   const navigate = useNavigate();
   const tableCtx = useContext(AlignmentTableContext);
-  const refString = findFirstRefFromLink(row.row);
+  const refString = findFirstRefFromLink(row.row, AlignmentSide.TARGET);
   return (
     <IconButton
       onClick={() =>
@@ -56,12 +65,9 @@ const columns: GridColDef[] = [
   {
     field: 'sources',
     headerName: 'Ref',
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => {
-      const refString = findFirstRefFromLink(row.row);
-      return (
-        <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
-      );
-    },
+    renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+      <RefCell {...row} />
+    ),
   },
   {
     field: 'verse',

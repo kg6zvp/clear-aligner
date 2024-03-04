@@ -4,11 +4,9 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 // @ts-ignore
 import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
 // @ts-ignore
-import NA27_YLT from 'tsv/target_NA27-YLT.tsv';
-// @ts-ignore
 import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 // @ts-ignore
-import WLC_OT_YLT_TSV from 'tsv/target_ot_WLC-YLT.tsv';
+import YLT from 'tsv/ylt-new.tsv';
 
 enum InitializationStates {
   UNINITIALiZED,
@@ -19,24 +17,6 @@ enum InitializationStates {
 let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
 
 const availableCorpora: CorpusContainer[] = [];
-
-const punctuationFilter = [
-  ',',
-  '.',
-  '[',
-  ']',
-  ':',
-  '‘',
-  '’',
-  '—',
-  '?',
-  '!',
-  ';',
-  'FALSE',
-  '(',
-  ')',
-  'TRUE',
-];
 
 const parseTsvByFileType = async (
   tsv: RequestInfo,
@@ -53,6 +33,7 @@ const parseTsvByFileType = async (
   }
 
   header.split('\t').forEach((header, idx) => {
+    header = header === 'identifier' ? 'id' : header; //Standard for header in files will be id
     headerMap[header] = idx;
   });
   const hasGloss = !!(headerMap["english"] ?? headerMap["gloss"]);
@@ -65,13 +46,17 @@ const parseTsvByFileType = async (
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (punctuationFilter.includes(values[headerMap['text']])) {
+        if ([
+          values[headerMap['token']],
+          values[headerMap['text']]
+        ].some(v => !!(v ?? "").match(/^\p{P}$/gu))
+        ) {
           // skip punctuation
           return;
         }
 
         // remove redundant 'o'/'n' qualifier
-        id = values[headerMap['identifier']];
+        id = values[headerMap['id']];
         if (!BCVWP.isValidString(id)) {
           return;
         }
@@ -94,6 +79,7 @@ const parseTsvByFileType = async (
         verse = refCorpus.wordsByVerse[id.substring(0, 8)] || {};
         refCorpus.wordsByVerse[id.substring(0, 8)] = {
           ...verse,
+          sourceVerse: values[headerMap['source_verse']],
           bcvId: BCVWP.parseFromString(id.substring(0, 8)),
           citation: `${+id.substring(2, 5)}:${+id.substring(5, 8)}`,
           words: (verse.words || []).concat([word]),
@@ -201,40 +187,15 @@ export const getAvailableCorporaContainers = async (): Promise<
     const maculaHebOTWords = await parseTsvByFileType(
       MACULA_HEBOT_TSV,
       maculaHebOT,
-      'sources',
+      AlignmentSide.SOURCE,
       CorpusFileFormat.TSV_MACULA
     );
+
     maculaHebOT = {
       ...maculaHebOT,
       ...maculaHebOTWords,
     };
     putVersesInCorpus(maculaHebOT);
-
-    // YLT Old Testament
-    let wlcYltOt: Corpus = {
-      id: 'wlc-ylt',
-      name: 'YLT',
-      fullName: 'YLT Old Testament',
-      language: {
-        code: 'en',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
-    };
-    const wlcYltOtWords = await parseTsvByFileType(
-      WLC_OT_YLT_TSV,
-      wlcYltOt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    wlcYltOt = {
-      ...wlcYltOt,
-      ...wlcYltOtWords,
-    };
-    putVersesInCorpus(wlcYltOt);
 
     // SBL GNT
     let sblGnt: Corpus = {
@@ -254,7 +215,7 @@ export const getAvailableCorporaContainers = async (): Promise<
     const sblWords = await parseTsvByFileType(
       MACULA_SBLGNT,
       sblGnt,
-      'sources',
+      AlignmentSide.SOURCE,
       CorpusFileFormat.TSV_MACULA
     );
     sblGnt = {
@@ -263,10 +224,10 @@ export const getAvailableCorporaContainers = async (): Promise<
     };
     putVersesInCorpus(sblGnt);
 
-    let na27Ylt: Corpus = {
-      id: 'na27-YLT',
+    let yltCorp: Corpus = {
+      id: 'ylt',
       name: 'YLT',
-      fullName: "Young's Literal Translation text New Testament",
+      fullName: 'YLT',
       language: {
         code: 'eng',
         textDirection: TextDirection.LTR,
@@ -277,25 +238,26 @@ export const getAvailableCorporaContainers = async (): Promise<
       books: {},
     };
 
-    const na27Words = await parseTsvByFileType(
-      NA27_YLT,
-      na27Ylt,
-      'targets',
+    const ytlWords = await parseTsvByFileType(
+      YLT,
+      yltCorp,
+      AlignmentSide.TARGET,
       CorpusFileFormat.TSV_TARGET
     );
-    na27Ylt = {
-      ...na27Ylt,
-      ...na27Words,
+
+    yltCorp = {
+      ...yltCorp,
+      ...ytlWords,
     };
-    putVersesInCorpus(na27Ylt);
+
+    putVersesInCorpus(yltCorp);
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source', [
-      maculaHebOT,
       sblGnt,
+      maculaHebOT,
     ]);
     const targetContainer = CorpusContainer.fromIdAndCorpora('target', [
-      wlcYltOt,
-      na27Ylt,
+      yltCorp,
     ]);
 
     availableCorpora.push(sourceContainer);

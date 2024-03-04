@@ -131,7 +131,7 @@ export const generateWordListFromCorpusContainerAndLink = (
   side: AlignmentSide
 ): string[] => {
   const partsList = Array.from(
-    side === 'sources' ? link.sourceResolvedWords : link.targetResolvedWords
+    side === AlignmentSide.SOURCE ? link.sourceResolvedWords : link.targetResolvedWords
   )
     .map((word) => word.word)
     .filter((word) => !!word) as Word[];

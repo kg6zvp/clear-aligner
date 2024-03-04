@@ -1,4 +1,4 @@
-import { ReactElement, useContext, useMemo, useRef, useState, useCallback } from 'react';
+import { ReactElement, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import {
   AddLink,
@@ -13,7 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { resetTextSegments } from 'state/alignment.slice';
-import { CorpusContainer, Link } from '../../structs';
+import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
 import { VirtualTableLinks } from '../../state/links/tableManager';
@@ -35,7 +35,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   const dispatch = useAppDispatch();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _initializeTargetPivotWords = usePivotWords('targets');
+  const _initializeTargetPivotWords = usePivotWords(AlignmentSide.TARGET);
 
   const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
 
@@ -211,8 +211,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const sourceContainer = props.containers.find((container) => container.id === 'source')!;
                 const targetContainer = props.containers.find((container) => container.id === 'target')!;
 
-                const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, 'sources');
-                const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, 'targets');
+                const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, AlignmentSide.SOURCE);
+                const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, AlignmentSide.TARGET);
 
                 const linksIndexes = {
                   sourcesIndex,

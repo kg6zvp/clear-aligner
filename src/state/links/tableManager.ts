@@ -86,12 +86,12 @@ export class VirtualTableLinks extends VirtualTable<Link> {
   hasLinkByWord = (side: AlignmentSide, wordId: BCVWP): boolean => {
     const refString = wordId.toReferenceString();
     switch (side) {
-      case 'sources':
+      case AlignmentSide.SOURCE:
         return (
           this.sourcesIndex.has(refString) &&
           (this.sourcesIndex.get(refString)?.length ?? 0) > 0
         );
-      case 'targets':
+      case AlignmentSide.TARGET:
         return (
           this.targetsIndex.has(refString) &&
           (this.sourcesIndex.get(refString)?.length ?? 0) > 0

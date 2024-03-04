@@ -5,6 +5,7 @@ import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../structs';
 
 const meta: Meta<typeof PivotWordTable> = {
   title: 'Concordance View/PivotWordTable',
@@ -16,7 +17,7 @@ export default meta;
 const pivotWords: PivotWord[] = [
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'the',
     alignedWords: [
       {
@@ -46,7 +47,7 @@ const pivotWords: PivotWord[] = [
   },
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'and',
     alignedWords: [
       {
@@ -76,31 +77,31 @@ const pivotWords: PivotWord[] = [
   },
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'of',
     alignedWords: [],
   },
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'to',
     alignedWords: [],
   },
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'thus',
     alignedWords: [],
   },
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'so',
     alignedWords: [],
   },
   {
     instances: [],
-    side: 'targets',
+    side: AlignmentSide.TARGET,
     normalizedText: 'as',
     alignedWords: [],
   },

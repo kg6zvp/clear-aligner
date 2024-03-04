@@ -38,6 +38,7 @@ export interface CorpusViewport {
 
 export interface Verse {
   bcvId: BCVWP;
+  sourceVerse?: string;
   citation: string; // ${chapter}:${verse}
   words: Word[];
 }
@@ -163,7 +164,10 @@ export interface InProgressLink extends Link {
   target: string;
 }
 
-export type AlignmentSide = 'sources' | 'targets';
+export enum AlignmentSide {
+  SOURCE = 'sources',
+  TARGET = 'targets'
+};
 
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';

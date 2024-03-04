@@ -1,4 +1,4 @@
-import { Link, Word } from 'structs';
+import { AlignmentSide, Link, Word } from 'structs';
 
 const removeFromArray = (originArray: string[], id: string): string[] => {
   const _array = originArray.concat([]);
@@ -9,10 +9,10 @@ const removeFromArray = (originArray: string[], id: string): string[] => {
 
 const removeSegmentFromLink = (wordToRemove: Word, link: Link): Link => {
   switch (wordToRemove.side) {
-    case 'sources':
+    case AlignmentSide.SOURCE:
       link.sources = removeFromArray(link.sources, wordToRemove.id);
       break;
-    case 'targets':
+    case AlignmentSide.TARGET:
       link.targets = removeFromArray(link.targets, wordToRemove.id);
       break;
   }
