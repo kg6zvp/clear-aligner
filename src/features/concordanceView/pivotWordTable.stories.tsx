@@ -5,6 +5,7 @@ import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../structs';
 
 const meta: Meta<typeof PivotWordTable> = {
   title: 'Concordance View/PivotWordTable',
@@ -15,7 +16,8 @@ export default meta;
 
 const pivotWords: PivotWord[] = [
   {
-    frequency: 73_611,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'the',
     alignedWords: [
       {
@@ -44,7 +46,8 @@ const pivotWords: PivotWord[] = [
     ],
   },
   {
-    frequency: 60_382,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'and',
     alignedWords: [
       {
@@ -73,27 +76,32 @@ const pivotWords: PivotWord[] = [
     ],
   },
   {
-    frequency: 40_029,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'of',
     alignedWords: [],
   },
   {
-    frequency: 16_372,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'to',
     alignedWords: [],
   },
   {
-    frequency: 5_000,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'thus',
     alignedWords: [],
   },
   {
-    frequency: 4_999,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'so',
     alignedWords: [],
   },
   {
-    frequency: 4_998,
+    instances: [],
+    side: AlignmentSide.TARGET,
     normalizedText: 'as',
     alignedWords: [],
   },

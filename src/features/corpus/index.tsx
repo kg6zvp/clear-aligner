@@ -34,10 +34,10 @@ const determineCorpusView = (
   verses: Verse[],
   bcvId: BCVWP | null
 ) => {
-  const corpus = bcvId ? viewCorpora.corpusAtReference(bcvId) : undefined;
+  const corpus = bcvId ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString()) : undefined;
   if (!corpus) return <></>;
   return verses.map((verse) => {
-    const languageInfo = viewCorpora.languageAtReference(verse.bcvId);
+    const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
     return (
       <Grid
         container
@@ -77,7 +77,7 @@ const determineCorpusView = (
                 paddingRight: '0.7rem',
               }}
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReference(verse.bcvId)} verse={verse} allowGloss />
+              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())} verse={verse} allowGloss />
             </Typography>
           </Grid>
         </Grid>
@@ -241,9 +241,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           sx={{ flex: 1 }}
         >
           <Typography variant="h6" sx={{ mr: 1 }}>
-            {computedPosition
-              ? viewCorpora.corpusAtReference(computedPosition)?.name
-              : ''}
+            {computedPosition ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name : ''}
           </Typography>
 
           <Tooltip
@@ -251,18 +249,18 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
               <>
                 <Typography variant="h6">
                   {computedPosition
-                    ? viewCorpora.corpusAtReference(computedPosition)?.fullName
+                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.fullName
                     : ''}
                 </Typography>
                 <Typography>
                   {computedPosition
-                    ? viewCorpora.corpusAtReference(computedPosition)?.name
+                    ? viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())?.name
                     : ''}
                 </Typography>
                 <Typography>
                   Language:{' '}
                   {computedPosition
-                    ? viewCorpora.languageAtReference(computedPosition)?.code
+                    ? viewCorpora.languageAtReferenceString(computedPosition.toReferenceString())?.code
                     : ''}
                 </Typography>
               </>

@@ -1,9 +1,8 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
-import { CorpusContainer, DisplayableLink, Link } from '../../structs';
-import { Backdrop, CircularProgress, Paper, Typography } from '@mui/material';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { AlignmentSide, Link } from '../../structs';
+import { Paper, Typography } from '@mui/material';
 import { Box } from '@mui/system';
-import { AlignedWord, NormalizedTextToPivotWord, PivotWord } from './structs';
-import { getAvailableCorporaContainers } from '../../workbench/query';
+import { AlignedWord, PivotWord } from './structs';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { PivotWordTable } from './pivotWordTable';
 import { AlignedWordTable } from './alignedWordTable';
@@ -11,33 +10,52 @@ import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
-import {
-  generateAlignedWordsMap,
-  generateAllWordsAndFrequencies,
-  generateListOfNavigablePivotWords,
-  generatePivotWordsMap,
-} from './concordanceViewHelpers';
-import { AppContext } from '../../App';
+import _ from 'lodash';
+import { usePivotWords } from './usePivotWords';
 
-export enum WordSource {
-  SOURCE='source',
-  TARGET='target'
-}
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
-  const { projectState } = useContext(AppContext);
-  const [loading, setLoading] = useState(true);
-  const [sourceContainer, setSourceContainer] = useState(
-    null as CorpusContainer | null
-  );
-  const [targetContainer, setTargetContainer] = useState(
-    null as CorpusContainer | null
-  );
-  const [selectedPivotWord, setSelectedPivotWord] = useState(
-    null as PivotWord | null
-  );
+
+  /**
+   * pivot words
+   */
+  const [wordSource, setWordSource] = useState('targets' as AlignmentSide);
+  const [wordFilter, setWordFilter] = useState('all' as WordFilter);
+  const srcPivotWords = usePivotWords(wordSource);
+  const [pivotWordSortData, setPivotWordSortData] = useState({
+    field: 'instances.length',
+    sort: 'desc',
+  } as GridSortItem | null);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const loading = useMemo(() => !!srcPivotWords, [ srcPivotWords, srcPivotWords?.length ]);
+
+  const pivotWords: PivotWord[]|undefined = useMemo(() => {
+    if (!srcPivotWords) {
+      return undefined;
+    }
+    if (!pivotWordSortData) {
+      return [...srcPivotWords];
+    }
+    return [...srcPivotWords].sort((a, b) => {
+      const aValue = _.get(a as any, pivotWordSortData.field);
+      const bValue = _.get(b as any, pivotWordSortData.field);
+      return pivotWordSortData.sort === 'asc'
+        ? aValue - bValue
+        : bValue - aValue;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    srcPivotWords,
+    srcPivotWords?.length,
+    pivotWordSortData,
+  ]);
+
+  const [selectedPivotWord, setSelectedPivotWord] = useState<
+    PivotWord | undefined
+  >();
   const [alignedWordSortData, setAlignedWordSortData] = useState({
     field: 'frequency',
     sort: 'desc',
@@ -53,8 +71,7 @@ export const ConcordanceView = () => {
     null as Link | null
   );
 
-  const handleUpdateSelectedAlignedWord = useMemo(
-    () => (alignedWord: AlignedWord | null) => {
+  const handleUpdateSelectedAlignedWord = useCallback((alignedWord: AlignedWord | null) => {
       setSelectedAlignedWord(alignedWord);
       setSelectedAlignmentLink(null);
     },
@@ -62,11 +79,16 @@ export const ConcordanceView = () => {
   );
   const handleUpdateSelectedPivotWord = useMemo(
     () => (pivotWord: PivotWord | null) => {
-      setSelectedPivotWord(pivotWord);
+      setSelectedPivotWord(pivotWord ?? undefined);
       handleUpdateSelectedAlignedWord(null);
     },
     [setSelectedPivotWord, handleUpdateSelectedAlignedWord]
   );
+
+  // when a pivotword is selected, indicate that it's loading or load pivotWords
+  useEffect(() => {
+    handleUpdateSelectedAlignedWord(null);
+  }, [handleUpdateSelectedAlignedWord]);
 
   useEffect(() => {
     if (!loading) {
@@ -78,114 +100,10 @@ export const ConcordanceView = () => {
     }
   }, [layoutCtx, loading]);
 
-  /**
-   * pivot words
-   */
-  const [pivotWordsPromise, setPivotWordsPromise] = useState(
-    null as Promise<PivotWord[]> | null
-  );
-  const [wordSource, setWordSource] = useState(WordSource.TARGET);
-  const [wordFilter, setWordFilter] = useState('all' as WordFilter);
-  const [srcPivotWords, setSrcPivotWords] = useState([] as PivotWord[]);
-  const [pivotWords, setPivotWords] = useState([] as PivotWord[]);
-  const [pivotWordSortData, setPivotWordSortData] = useState({
-    field: 'frequency',
-    sort: 'desc',
-  } as GridSortItem | null);
-
-  const pivotWordsLoading = useMemo(() => {
-    return !!pivotWordsPromise;
-  }, [pivotWordsPromise]);
-
-  useEffect(() => {
-    if (!!pivotWordsPromise) {
-      pivotWordsPromise.then((pivotWords) => {
-        setPivotWords(pivotWords);
-        setPivotWordsPromise(null);
-      });
-    }
-  }, [pivotWordsPromise, setPivotWords, setPivotWordsPromise]);
-
-  useEffect(() => {
-    const loadCorpora = async () => {
-      const containers: CorpusContainer[] =
-        await getAvailableCorporaContainers();
-
-      containers.forEach((container) => {
-        if (container.id === 'source') {
-          setSourceContainer(container);
-        } else if (container.id === 'target') {
-          setTargetContainer(container);
-        }
-      });
-    };
-
-    void loadCorpora();
-  }, [setSourceContainer, setTargetContainer]);
-
-  /**
-   * create navigable tree structure of pivot words with alignment links as the leaf nodes
-   */
-  useEffect(
-    () => {
-      const loadPivotWordData = async () => {
-        if (!sourceContainer || !targetContainer) {
-          setLoading(false);
-          return;
-        }
-
-        const allWordsAndFrequencies = generateAllWordsAndFrequencies(
-          wordSource === WordSource.SOURCE ? sourceContainer : targetContainer
-        );
-
-        if (!allWordsAndFrequencies) {
-          setLoading(false);
-          return;
-        }
-
-        const pivotWordsMap: NormalizedTextToPivotWord = generatePivotWordsMap(
-          allWordsAndFrequencies
-        );
-
-        const normalizedTextToAlignmentLinks = generateAlignedWordsMap(
-          projectState?.linksTable?.getAll() ?? [],
-          sourceContainer,
-          targetContainer
-        );
-
-        setSrcPivotWords(
-          generateListOfNavigablePivotWords(
-            pivotWordsMap,
-            sourceContainer,
-            targetContainer,
-            normalizedTextToAlignmentLinks,
-            wordSource
-          )
-        );
-        setLoading(false);
-      };
-
-      if (sourceContainer && targetContainer && wordSource) {
-        setLoading(true);
-        void loadPivotWordData();
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      projectState?.linksTable,
-      projectState?.linksTable?.lastUpdate,
-      wordSource,
-      sourceContainer,
-      targetContainer,
-      setLoading,
-      setSrcPivotWords,
-    ]
-  );
-
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
-    if (loading || !srcPivotWords || srcPivotWords.length < 1) {
+    if (!pivotWords || !srcPivotWords || srcPivotWords.length < 1) {
       return;
     }
     if (searchParams.has('pivotWord')) {
@@ -195,43 +113,39 @@ export const ConcordanceView = () => {
       );
 
       if (pivotWord) {
-        setSelectedPivotWord(pivotWord);
-      }
-      if (searchParams.has('alignedWord') && (pivotWord || selectedPivotWord)) {
-        const alignedWordId = searchParams.get('alignedWord')!;
-        const alignedWord = (pivotWord ??
-          selectedPivotWord)!.alignedWords?.find(
-          (alignedWord) => alignedWord.id === alignedWordId
-        );
-
-        if (alignedWord) {
-          setSelectedAlignedWord(alignedWord);
-        }
-        if (
-          searchParams.has('alignmentLink') &&
-          (alignedWord || selectedAlignedWord)
-        ) {
-          const alignmentLinkId = searchParams.get('alignmentLink');
-          const alignmentLink = (
-            alignedWord ?? selectedAlignedWord
-          )?.alignments?.find((link) => link.id === alignmentLinkId);
-
-          if (alignmentLink) {
-            setSelectedAlignmentLink(alignmentLink);
-          }
-          searchParams.delete('alignmentLink');
-        }
-        searchParams.delete('alignedWord');
+        handleUpdateSelectedPivotWord(pivotWord);
       }
       searchParams.delete('pivotWord');
+    } else if (searchParams.has('alignedWord') && (selectedPivotWord)) {
+      const alignedWordId = searchParams.get('alignedWord')!;
+      const alignedWord = (selectedPivotWord)!.alignedWords?.find(
+        (alignedWord) => alignedWord.id === alignedWordId
+      );
+
+      if (alignedWord) {
+        setSelectedAlignedWord(alignedWord);
+      }
+      searchParams.delete('alignedWord');
+    } else if (
+      searchParams.has('alignmentLink') &&
+      (selectedAlignedWord)
+    ) {
+      const alignmentLinkId = searchParams.get('alignmentLink');
+      const alignmentLink = (selectedAlignedWord
+      )?.alignments?.find((link) => link.id === alignmentLinkId);
+
+      if (alignmentLink) {
+        setSelectedAlignmentLink(alignmentLink);
+      }
+      searchParams.delete('alignmentLink');
     }
     setSearchParams(searchParams);
   }, [
-    loading,
+    pivotWords,
     srcPivotWords,
     searchParams,
     setSearchParams,
-    setSelectedPivotWord,
+    handleUpdateSelectedPivotWord,
     selectedPivotWord,
     setSelectedAlignedWord,
     selectedAlignedWord,
@@ -239,40 +153,8 @@ export const ConcordanceView = () => {
     selectedAlignmentLink,
   ]);
 
-  useEffect(() => {
-    const performSort = async (srcPivotWords: PivotWord[]) => {
-      if (!pivotWordSortData) {
-        return [...srcPivotWords];
-      }
-      return [...srcPivotWords].sort((a, b) => {
-        const aValue = (a as any)[pivotWordSortData.field];
-        const bValue = (b as any)[pivotWordSortData.field];
-        return pivotWordSortData.sort === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
-      });
-    };
-
-    if (srcPivotWords.length < 1) {
-      // don't sort on nothing
-      return;
-    }
-    setPivotWordsPromise(performSort(srcPivotWords));
-  }, [srcPivotWords, pivotWordSortData, setPivotWordsPromise]);
-
   return (
     <div style={{ position: 'relative' }}>
-      <Backdrop
-        open={loading}
-        sx={{
-          position: 'absolute',
-          marginTop: '-1em',
-          marginBottom: '-1em',
-          zIndex: (theme) => theme.zIndex.drawer - 1,
-        }}
-      >
-        <CircularProgress color={'inherit'} />
-      </Backdrop>
       <Box
         sx={{
           flex: 1,
@@ -302,15 +184,15 @@ export const ConcordanceView = () => {
             value={wordSource}
             items={[
               {
-                value: 'source',
+                value: 'sources',
                 label: 'Source',
               },
               {
-                value: 'target',
+                value: 'targets',
                 label: 'Target',
               },
             ]}
-            onSelect={(value) => setWordSource(value as WordSource)}
+            onSelect={(value) => setWordSource(value as AlignmentSide)}
           />
           <SingleSelectButtonGroup
             value={wordFilter}
@@ -337,17 +219,19 @@ export const ConcordanceView = () => {
             }}
           >
             <PivotWordTable
-              loading={pivotWordsLoading}
+              loading={!pivotWords}
               sort={pivotWordSortData}
               pivotWords={
-                wordFilter === 'all'
+                (wordFilter === 'all'
                   ? pivotWords
-                  : pivotWords.filter((w) => w.alignedWords)
+                  : pivotWords?.filter((w) => w.hasAlignmentLinks)
+                ) ?? []
               }
               chosenWord={selectedPivotWord}
               onChooseWord={(word) =>
                 handleUpdateSelectedPivotWord(
-                  word.alignedWords && word.alignedWords.length > 0
+                  (word.alignedWords && word.alignedWords.length > 0) ||
+                    word.hasAlignmentLinks
                     ? word
                     : null
                 )
@@ -383,7 +267,7 @@ export const ConcordanceView = () => {
           >
             <AlignedWordTable
               sort={alignedWordSortData}
-              alignedWords={selectedPivotWord?.alignedWords ?? []}
+              pivotWord={selectedPivotWord}
               chosenAlignedWord={selectedAlignedWord}
               onChooseAlignedWord={(alignedWord) =>
                 handleUpdateSelectedAlignedWord(
@@ -426,14 +310,10 @@ export const ConcordanceView = () => {
               wordSource={wordSource}
               pivotWord={selectedPivotWord}
               alignedWord={selectedAlignedWord}
-              sourceContainer={sourceContainer}
-              targetContainer={targetContainer}
               alignments={selectedAlignedWord?.alignments ?? []}
               onChangeSort={setAlignmentSortData}
               chosenAlignmentLink={selectedAlignmentLink}
-              onChooseAlignmentLink={(alignmentLink: DisplayableLink) =>
-                setSelectedAlignmentLink(alignmentLink)
-              }
+              onChooseAlignmentLink={setSelectedAlignmentLink}
             />
           </Paper>
         </Box>

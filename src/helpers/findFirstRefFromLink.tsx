@@ -1,29 +1,24 @@
-import { DisplayableLink } from '../structs';
-import BCVWP from '../features/bcvwp/BCVWPSupport';
+import { AlignmentSide, Link } from '../structs';
 import _ from 'lodash';
-import { WordSource } from '../features/concordanceView/concordanceView';
 
 export const findFirstRefFromLink = (
-  row: DisplayableLink,
-  wordSource?: WordSource
-): BCVWP | undefined => {
+  row: Link,
+  wordSource?: AlignmentSide
+): string | undefined => {
   let rowByWordSource: string[];
   switch(wordSource) {
-    case WordSource.SOURCE:
+    case AlignmentSide.SOURCE:
       rowByWordSource = row.sources;
       break;
-    case WordSource.TARGET:
+    case AlignmentSide.TARGET:
       rowByWordSource = row.targets;
       break;
     default:
       rowByWordSource = [...row.sources, ...row.targets];
       break;
   }
-  const refString = _.uniqWith(rowByWordSource, _.isEqual)
+
+  return _.uniqWith(rowByWordSource, _.isEqual)
     .sort()
     .find((value) => value);
-  if (!refString) {
-    return undefined;
-  }
-  return BCVWP.parseFromString(refString);
-};
+}

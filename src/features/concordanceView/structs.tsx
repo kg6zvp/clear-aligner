@@ -1,21 +1,25 @@
-import { LanguageInfo, Link } from '../../structs';
+import { AlignmentSide, LanguageInfo, Link, Word } from '../../structs';
+import BCVWP from '../bcvwp/BCVWPSupport';
 
 /**
  * represents rows displayed in the pivot word table in the concordance view
  */
 export interface PivotWord {
-  frequency: number; // number of times this pivot word appears in the text
-  normalizedText: string; // normalized text of the pivot word being represented
+  instances: BCVWP[]; // instances of this pivot word appearing in the text
+  normalizedText: string; // normalized text of the pivot word being representeda
+  side: AlignmentSide;
   languageInfo?: LanguageInfo;
   alignedWords?: AlignedWord[];
+  alignmentLinks?: Link[];
+  hasAlignmentLinks?: boolean;
 }
 
 /**
  * text with corresponding language information for display
  */
 export interface LocalizedWordEntry {
-  text: string;
-  position: string;
+  text: string; // actual text of the word
+  position: string; // BCVWP string
   languageInfo?: LanguageInfo;
 }
 
@@ -34,30 +38,18 @@ export interface AlignedWord {
 }
 
 /**
- * index of alignment Links by normalized pivot word text, an intermediate data structure used by the concordance view
- * for display
+ * ties together the Word from the corpus and all display information so as not to require lookups for display
  */
-export interface NormalizedTextToAlignmentLink {
-  [key: string]: Link[];
+export interface ResolvedWordEntry {
+  word: Word;
+  localized: LocalizedWordEntry;
 }
 
 /**
- * index of pivot words by normalized pivot word text, an intermediate data structure used to generate the table data displayed
- * in the concordance view
+ * a Link hydrated with enough information that no additional lookups should be required to display or otherwise work
+ * with this Link in the code
  */
-export interface NormalizedTextToPivotWord {
-  [text: string]: PivotWord;
-}
-
-/**
- * intermediate data structure used by the concordance view in generating data for tables
- * represents count of occurrences of a word in a text and the language information indexed
- * by word
- */
-export interface NormalizedWordsToFrequencyAndLocalization {
-  [key: string]: {
-    // key is pivot word text
-    count: number;
-    languageInfo: LanguageInfo;
-  };
+export interface FullyResolvedLink extends Link {
+  sourceResolvedWords: Set<ResolvedWordEntry>;
+  targetResolvedWords: Set<ResolvedWordEntry>;
 }
