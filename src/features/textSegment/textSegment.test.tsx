@@ -1,7 +1,7 @@
 import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
 import TextSegment from 'features/textSegment';
-import { AlignmentMode } from '../../state/alignmentState';
+import { AlignmentSide } from '../../structs';
 
 const testState: RootState = {
   ...preloadedState,
@@ -22,7 +22,7 @@ describe('TextSegment', () => {
         word={{
           id: 'test_1',
           corpusId: 'test',
-          side: 'targets',
+          side: AlignmentSide.TARGET,
           text: 'mikey',
           position: 0,
         }}
@@ -37,7 +37,7 @@ describe('TextSegment', () => {
         word={{
           id: 'sbl_0',
           corpusId: 'sbl',
-          side: 'sources',
+          side: AlignmentSide.SOURCE,
           text: 'mikey',
           position: 0,
         }}

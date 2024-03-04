@@ -11,7 +11,7 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
   const { projectState, setProjectState } = useContext(AppContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
 
-  const source = useMemo(() => wordSource === 'sources' ? projectState.linksIndexes?.sourcesIndex
+  const source = useMemo(() => wordSource === AlignmentSide.SOURCE ? projectState.linksIndexes?.sourcesIndex
     : projectState.linksIndexes?.targetsIndex, [wordSource, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
 
   const [ loading, setLoading ] = useState<boolean>(!!source?.loading);
@@ -48,8 +48,8 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
 
     // initialize
     const secondaryIndices = {
-      sourcesIndex: new WordsIndex(sourceContainer, 'sources'),
-      targetsIndex: new WordsIndex(targetContainer, 'targets')
+      sourcesIndex: new WordsIndex(sourceContainer, AlignmentSide.SOURCE),
+      targetsIndex: new WordsIndex(targetContainer, AlignmentSide.TARGET)
     };
 
     setProjectState((ps: ProjectState) => ({

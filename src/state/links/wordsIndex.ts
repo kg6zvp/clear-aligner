@@ -74,7 +74,7 @@ export class WordsIndex implements SecondaryIndex<Link> {
 
   _indexSave = async (payload: Link): Promise<void> => {
     if (!payload.id) return;
-    const pivotWordNormalizedTexts = (this.side === 'sources' ? payload.sources : payload.targets)
+    const pivotWordNormalizedTexts = (this.side === AlignmentSide.SOURCE ? payload.sources : payload.targets)
       .map((bcvId) => findWordByString(this.container.corpora, bcvId)?.text.trim().toLowerCase())
       .filter((text) => !!text) as string[];
     this.linkIdsToPivotWordNormalizedTexts.set(payload.id, _.uniqWith(pivotWordNormalizedTexts, _.isEqual));

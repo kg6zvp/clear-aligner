@@ -18,30 +18,6 @@ let initializationState: InitializationStates = InitializationStates.UNINITIALiZ
 
 const availableCorpora: CorpusContainer[] = [];
 
-const punctuationFilter = [
-  ',',
-  '.',
-  '[',
-  ']',
-  ':',
-  '‘',
-  '’',
-  '—',
-  '?',
-  '!',
-  ';',
-  'FALSE',
-  '(',
-  ')',
-  'TRUE',
-  '"',
-  '“',
-  '”',
-  "،",
-  "؟",
-  "؛"
-];
-
 const parseTsvByFileType = async (
   tsv: RequestInfo,
   refCorpus: Corpus,
@@ -70,9 +46,10 @@ const parseTsvByFileType = async (
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
         // filter out punctuation in content
-        if (
-          punctuationFilter.includes(values[headerMap['token']]) ||
-          punctuationFilter.includes(values[headerMap['text']])
+        if ([
+          values[headerMap['token']],
+          values[headerMap['text']]
+        ].some(v => !!(v ?? "").match(/^\p{P}$/gu))
         ) {
           // skip punctuation
           return;
@@ -210,7 +187,7 @@ export const getAvailableCorporaContainers = async (): Promise<
     const maculaHebOTWords = await parseTsvByFileType(
       MACULA_HEBOT_TSV,
       maculaHebOT,
-      'sources',
+      AlignmentSide.SOURCE,
       CorpusFileFormat.TSV_MACULA
     );
 
@@ -219,32 +196,6 @@ export const getAvailableCorporaContainers = async (): Promise<
       ...maculaHebOTWords,
     };
     putVersesInCorpus(maculaHebOT);
-
-    // YLT Old Testament
-    let wlcYltOt: Corpus = {
-      id: 'wlc-ylt',
-      name: 'YLT',
-      fullName: 'YLT Old Testament',
-      language: {
-        code: 'en',
-        textDirection: TextDirection.LTR,
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
-    };
-    const wlcYltOtWords = await parseTsvByFileType(
-      WLC_OT_YLT_TSV,
-      wlcYltOt,
-      'targets',
-      CorpusFileFormat.TSV_TARGET
-    );
-    wlcYltOt = {
-      ...wlcYltOt,
-      ...wlcYltOtWords,
-    };
-    putVersesInCorpus(wlcYltOt);
 
     // SBL GNT
     let sblGnt: Corpus = {
@@ -264,7 +215,7 @@ export const getAvailableCorporaContainers = async (): Promise<
     const sblWords = await parseTsvByFileType(
       MACULA_SBLGNT,
       sblGnt,
-      'sources',
+      AlignmentSide.SOURCE,
       CorpusFileFormat.TSV_MACULA
     );
     sblGnt = {
@@ -290,7 +241,7 @@ export const getAvailableCorporaContainers = async (): Promise<
     const ytlWords = await parseTsvByFileType(
       YLT,
       yltCorp,
-      'targets',
+      AlignmentSide.TARGET,
       CorpusFileFormat.TSV_TARGET
     );
 

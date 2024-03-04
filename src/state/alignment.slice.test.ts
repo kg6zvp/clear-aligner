@@ -1,32 +1,28 @@
-import { Word, Alignment, PrimaryAlignmentPolarity } from 'structs';
+import { Alignment, AlignmentSide, PrimaryAlignmentPolarity, Word } from 'structs';
 
-import alignmentSliceReducer, {
-  toggleTextSegment,
-  initialState,
-} from 'state/alignment.slice';
-import { AlignmentMode } from './alignmentState';
+import alignmentSliceReducer, { initialState, toggleTextSegment } from 'state/alignment.slice';
 
 const englishAlignment: Alignment = {
   links: [],
   polarity: {
     type: 'primary',
-    syntaxSide: 'sources',
-    nonSyntaxSide: 'targets',
+    syntaxSide: AlignmentSide.SOURCE,
+    nonSyntaxSide: AlignmentSide.TARGET,
   },
 };
 const spanishAlignment: Alignment = {
   links: [],
   polarity: {
     type: 'primary',
-    syntaxSide: 'sources',
-    nonSyntaxSide: 'targets',
+    syntaxSide: AlignmentSide.SOURCE,
+    nonSyntaxSide: AlignmentSide.TARGET,
   },
 };
 
 const sourceWord1: Word = {
   id: 'sbl_0',
   corpusId: 'sbl',
-  side: 'sources',
+  side: AlignmentSide.SOURCE,
   text: '',
   position: 0,
 };
@@ -34,14 +30,14 @@ const sourceWord1: Word = {
 const targetWord1: Word = {
   id: 'leb_1',
   corpusId: 'leb',
-  side: 'targets',
+  side: AlignmentSide.TARGET,
   text: '',
   position: 1,
 };
 const targetWord2: Word = {
   id: 'leb_2',
   corpusId: 'leb',
-  side: 'targets',
+  side: AlignmentSide.TARGET,
   text: '',
   position: 2,
 };
@@ -252,8 +248,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -281,8 +277,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -316,8 +312,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
           {
@@ -328,8 +324,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -343,7 +339,7 @@ describe('alignmentSlice reducer', () => {
           word: {
             id: 'leb_4',
             corpusId: 'leb',
-            side: 'targets',
+            side: AlignmentSide.TARGET,
             text: 'some word',
             position: 4,
           },
@@ -366,8 +362,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
           {
@@ -378,8 +374,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -394,7 +390,7 @@ describe('alignmentSlice reducer', () => {
             word: {
               id: 'nvi_6',
               corpusId: 'nvi',
-              side: 'sources',
+              side: AlignmentSide.SOURCE,
               text: 'some word',
               position: 6,
             },
@@ -425,8 +421,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -439,7 +435,7 @@ describe('alignmentSlice reducer', () => {
           word: {
             id: 'sbl_2',
             corpusId: 'sbl',
-            side: 'targets',
+            side: AlignmentSide.TARGET,
             // role: CorpusRole.Target,
             text: 'asdf',
             position: 3,
@@ -493,8 +489,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -524,8 +520,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -557,8 +553,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -581,8 +577,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -624,8 +620,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],
@@ -656,8 +652,8 @@ describe('alignmentSlice reducer', () => {
             ],
             polarity: {
               type: 'primary',
-              syntaxSide: 'sources',
-              nonSyntaxSide: 'targets',
+              syntaxSide: AlignmentSide.SOURCE,
+              nonSyntaxSide: AlignmentSide.TARGET,
             } as PrimaryAlignmentPolarity,
           },
         ],

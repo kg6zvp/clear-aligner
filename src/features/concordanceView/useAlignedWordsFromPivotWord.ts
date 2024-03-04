@@ -2,9 +2,12 @@ import { AlignedWord, PivotWord } from './structs';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import {
-  fullyResolveLink, generateWordListFromCorpusContainerAndLink, getLinksForPivotWord
+  fullyResolveLink,
+  generateWordListFromCorpusContainerAndLink,
+  getLinksForPivotWord
 } from './concordanceViewHelpers';
 import { AppContext } from '../../App';
+import { AlignmentSide } from '../../structs';
 
 export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord[] | undefined => {
   const {
@@ -44,7 +47,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
           const links = pivotWord.alignmentLinks!.map((link) => fullyResolveLink(link, sourceContainer, targetContainer));
 
           const alignedWordsPromises = links.map(async (link): Promise<AlignedWord> => {
-            const key = [...generateWordListFromCorpusContainerAndLink(link, 'sources'), ...generateWordListFromCorpusContainerAndLink(link, 'targets')].join(',');
+            const key = [...generateWordListFromCorpusContainerAndLink(link, AlignmentSide.SOURCE), ...generateWordListFromCorpusContainerAndLink(link, AlignmentSide.TARGET)].join(',');
             return {
               id: key,
               frequency: 1,

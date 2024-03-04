@@ -1,4 +1,4 @@
-import { Link } from '../structs';
+import { AlignmentSide, Link } from '../structs';
 import _ from 'lodash';
 
 export const findFirstRefFromLink = (
@@ -7,17 +7,18 @@ export const findFirstRefFromLink = (
 ): string | undefined => {
   let rowByWordSource: string[];
   switch(wordSource) {
-    case WordSource.SOURCE:
+    case AlignmentSide.SOURCE:
       rowByWordSource = row.sources;
       break;
-    case WordSource.TARGET:
+    case AlignmentSide.TARGET:
       rowByWordSource = row.targets;
       break;
     default:
       rowByWordSource = [...row.sources, ...row.targets];
       break;
   }
-  _.uniqWith(rowByWordSource, _.isEqual)
+
+  return _.uniqWith(rowByWordSource, _.isEqual)
     .sort()
     .find((value) => value);
 }

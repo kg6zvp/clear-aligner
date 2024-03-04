@@ -164,7 +164,10 @@ export interface InProgressLink extends Link {
   target: string;
 }
 
-export type AlignmentSide = 'sources' | 'targets';
+export enum AlignmentSide {
+  SOURCE = 'sources',
+  TARGET = 'targets'
+};
 
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';

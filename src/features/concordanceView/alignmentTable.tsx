@@ -2,14 +2,14 @@ import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
 import { IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
-import { createContext, useContext, useMemo } from 'react';
-import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import { createContext, useContext, useMemo, useState } from 'react';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
-import { createSearchParams, useNavigate } from 'react-router-dom';
 import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
+import WorkbenchDialog from './workbenchDialog';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -20,18 +20,22 @@ export interface AlignmentTableContextProps {
 export const AlignmentTableContext = createContext({} as AlignmentTableContextProps);
 
 export const RefCell = (
-  row: GridRenderCellParams<DisplayableLink, any, any>
+  row: GridRenderCellParams<Link, any, any>
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
-  return <BCVDisplay currentPosition={findFirstRefFromLink(row.row, tableCtx.wordSource)} />;
+  const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
+  return (
+    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
+  );
 }
+
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this Link entry
  */
 export const LinkCell = ({row, onClick}: {
   row: GridRenderCellParams<Link, any, any>,
-  onClick: (tableCtx: AlignmentTableContextProps, displayableLink: DisplayableLink) => void;
+  onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
 }) => {
   const tableCtx = useContext(AlignmentTableContext);
   return (
@@ -41,39 +45,6 @@ export const LinkCell = ({row, onClick}: {
   );
 };
 
-const columns: GridColDef[] = [
-  {
-    field: 'state',
-    headerName: 'State',
-  },
-  {
-    field: 'sources',
-    headerName: 'Ref',
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => {
-      const refString = findFirstRefFromLink(row.row);
-      return (
-        <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
-      );
-    },
-  },
-  {
-    field: 'verse',
-    headerName: 'Verse Text',
-    flex: 1,
-    sortable: false,
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-      <VerseCell {...row} />
-    ),
-  },
-  {
-    field: 'id',
-    headerName: 'Link',
-    sortable: false,
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-      <LinkCell {...row} />
-    ),
-  },
-];
 
 export interface AlignmentTableProps {
   sort: GridSortItem | null;
@@ -109,6 +80,7 @@ export const AlignmentTable = ({
   chosenAlignmentLink,
   onChooseAlignmentLink,
 }: AlignmentTableProps) => {
+  const [openAlignmentDialog, setOpenAlignmentDialog] = useState(false);
   const initialPage = useMemo(() => {
     if (chosenAlignmentLink) {
       return (
@@ -119,6 +91,37 @@ export const AlignmentTable = ({
     }
     return 0;
   }, [chosenAlignmentLink, alignments]);
+
+  const columns: GridColDef[] = [
+    {
+      field: 'state',
+      headerName: 'State',
+    },
+    {
+      field: 'sources',
+      headerName: 'Ref',
+      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+        <RefCell {...row} />
+      ),
+    },
+    {
+      field: 'verse',
+      headerName: 'Verse Text',
+      flex: 1,
+      sortable: false,
+      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+        <VerseCell {...row} />
+      ),
+    },
+    {
+      field: 'id',
+      headerName: 'Link',
+      sortable: false,
+      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+        <LinkCell row={row} onClick={() => setOpenAlignmentDialog(true)} />
+      ),
+    },
+  ];
 
   return (
     <AlignmentTableContext.Provider

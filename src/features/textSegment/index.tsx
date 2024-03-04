@@ -4,7 +4,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { LanguageInfo, Word } from 'structs';
+import { AlignmentSide, LanguageInfo, Word } from 'structs';
 import findRelatedAlignments from 'helpers/findRelatedAlignments';
 
 import './textSegment.style.css';
@@ -133,11 +133,11 @@ export const TextSegment = ({
 
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (word.side) {
-      case 'sources':
+      case AlignmentSide.SOURCE:
         return !!state.alignment.present.inProgressLink?.sources.includes(
           BCVWP.sanitize(word.id)
         );
-      case 'targets':
+      case AlignmentSide.TARGET:
         return !!state.alignment.present.inProgressLink?.targets.includes(
           BCVWP.sanitize(word.id)
         );

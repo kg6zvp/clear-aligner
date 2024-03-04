@@ -1,5 +1,5 @@
 import { GridRenderCellParams } from '@mui/x-data-grid';
-import { Link, Verse } from '../../../structs';
+import { AlignmentSide, Link, Verse } from '../../../structs';
 import { useContext } from 'react';
 import _ from 'lodash';
 import BCVWP, { BCVWPField } from '../../bcvwp/BCVWPSupport';
@@ -17,11 +17,11 @@ export const VerseCell = (
   const tableCtx = useContext(AlignmentTableContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
   const container =
-    tableCtx.wordSource === 'sources'
+    tableCtx.wordSource === AlignmentSide.SOURCE
       ? sourceContainer
       : targetContainer;
   const verses: Verse[] = _.uniqWith(
-    (tableCtx.wordSource === 'sources' ? row.row?.sources : row.row?.targets)
+    (tableCtx.wordSource === AlignmentSide.SOURCE ? row.row?.sources : row.row?.targets)
       ?.filter(BCVWP.isValidString)
       .map((ref) => BCVWP.truncateTo(ref, BCVWPField.Verse)),
     _.isEqual
