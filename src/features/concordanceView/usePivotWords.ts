@@ -1,18 +1,22 @@
 import { PivotWord } from './structs';
 import { AlignmentSide } from '../../structs';
-import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { AppContext } from '../../App';
 import { WordsIndex } from '../../state/links/wordsIndex';
-import { ProjectState } from 'state/databaseManagement';
+import { AppState } from 'state/databaseManagement';
 import { useInterval } from 'usehooks-ts';
+import { Project } from '../../state/projects/tableManager';
 
 export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefined => {
-  const { projectState, setProjectState } = useContext(AppContext);
-  const { sourceContainer, targetContainer } = useCorpusContainers();
+  const { appState, setAppState } = useContext(AppContext);
+  const {currentProject} = appState;
+  const { sourceContainer, targetContainer } = {
+    sourceContainer: appState.sourceCorpora,
+    targetContainer: currentProject?.targetCorpora
+  }
 
-  const source = useMemo(() => wordSource === AlignmentSide.SOURCE ? projectState.linksIndexes?.sourcesIndex
-    : projectState.linksIndexes?.targetsIndex, [wordSource, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
+  const source = useMemo(() => wordSource === AlignmentSide.SOURCE ? currentProject?.linksIndexes?.sourcesIndex
+    : currentProject?.linksIndexes?.targetsIndex, [wordSource, currentProject?.linksIndexes?.sourcesIndex, currentProject?.linksIndexes?.targetsIndex]);
 
   const [ loading, setLoading ] = useState<boolean>(!!source?.loading);
 
@@ -30,20 +34,20 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     }
 
     if (
-      projectState.linksTable
-      && projectState.linksIndexes
-      && (projectState.linksTable.isSecondaryIndexRegistered(projectState.linksIndexes.sourcesIndex) || projectState.linksIndexes.sourcesIndex.isLoading())
-      && (projectState.linksTable.isSecondaryIndexRegistered(projectState.linksIndexes.targetsIndex) || projectState.linksIndexes.targetsIndex.isLoading())) {
+      currentProject?.linksTable
+      && currentProject?.linksIndexes
+      && (currentProject?.linksTable.isSecondaryIndexRegistered(currentProject?.linksIndexes.sourcesIndex) || currentProject?.linksIndexes.sourcesIndex.isLoading())
+      && (currentProject?.linksTable.isSecondaryIndexRegistered(currentProject?.linksIndexes.targetsIndex) || currentProject?.linksIndexes.targetsIndex.isLoading())) {
       // if indexes are already registered, no need to replace them
       return;
     }
 
     // cleanup old indexes if they are already there
-    if (projectState.linksIndexes) {
-      projectState.linksIndexes.sourcesIndex.indexingTasks.stop();
-      projectState.linksIndexes.sourcesIndex.indexingTasks.clear();
-      projectState.linksIndexes.targetsIndex.indexingTasks.stop();
-      projectState.linksIndexes.targetsIndex.indexingTasks.clear();
+    if (currentProject?.linksIndexes) {
+      currentProject?.linksIndexes.sourcesIndex.indexingTasks.stop();
+      currentProject?.linksIndexes.sourcesIndex.indexingTasks.clear();
+      currentProject?.linksIndexes.targetsIndex.indexingTasks.stop();
+      currentProject?.linksIndexes.targetsIndex.indexingTasks.clear();
     }
 
     // initialize
@@ -52,21 +56,24 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
       targetsIndex: new WordsIndex(targetContainer, AlignmentSide.TARGET)
     };
 
-    setProjectState((ps: ProjectState) => ({
-      ...ps,
-      linksIndexes: secondaryIndices
+    setAppState((as: AppState) => ({
+      ...as,
+      currentProject: {
+        ...(as.currentProject ?? {}),
+        linksIndexes: secondaryIndices
+      } as Project
     }));
 
     secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
     secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
-    if (projectState.linksTable) {
-      secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex))
-      secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex))
+    if (currentProject?.linksTable) {
+      secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await currentProject?.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex))
+      secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await currentProject?.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex))
     }
   }, [
-    projectState.linksTable,
-    projectState.linksIndexes,
-    setProjectState,
+    currentProject?.linksTable,
+    currentProject?.linksIndexes,
+    setAppState,
     sourceContainer,
     targetContainer
   ]);

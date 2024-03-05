@@ -1,6 +1,5 @@
 import { AlignedWord, PivotWord } from './structs';
 import { useContext, useEffect, useRef, useState } from 'react';
-import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import {
   fullyResolveLink,
   generateWordListFromCorpusContainerAndLink,
@@ -10,10 +9,13 @@ import { AppContext } from '../../App';
 import { AlignmentSide } from '../../structs';
 
 export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord[] | undefined => {
-  const {
-    projectState: { linksTable }
-  } = useContext(AppContext);
-  const { sourceContainer, targetContainer } = useCorpusContainers();
+  const { appState } = useContext(AppContext);
+  const { currentProject } = appState;
+  const { sourceContainer, targetContainer } = {
+    targetContainer: currentProject?.targetCorpora,
+    sourceContainer: appState.sourceCorpora
+  };
+
   const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(pivotWord?.alignedWords);
   const setAlignedWordsRef = useRef(setAlignedWords);
 
@@ -35,13 +37,13 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
     const loadAlignedWords = async () => {
       return new Promise<void>((resolve) => {
         setTimeout(async () => {
-          if (!sourceContainer || !targetContainer || !pivotWord || !linksTable) {
+          if (!sourceContainer || !targetContainer || !pivotWord || !currentProject?.linksTable) {
             resolve();
             return;
           }
 
           if (!pivotWord.alignmentLinks) {
-            await getLinksForPivotWord(linksTable, pivotWord);
+            await getLinksForPivotWord(currentProject?.linksTable, pivotWord);
           }
 
           const links = pivotWord.alignmentLinks!.map((link) => fullyResolveLink(link, sourceContainer, targetContainer));
@@ -78,7 +80,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
     };
 
     void loadAlignedWords();
-  }, [pivotWord, linksTable, sourceContainer, targetContainer, setAlignedWordsRef]);
+  }, [pivotWord, currentProject?.linksTable, sourceContainer, targetContainer, setAlignedWordsRef]);
 
   return alignedWords;
 };

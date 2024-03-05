@@ -20,10 +20,11 @@ import { VirtualTableLinks } from '../../state/links/tableManager';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
-import { ProjectState } from '../../state/databaseManagement';
+import { AppState } from '../../state/databaseManagement';
 
 import { WordsIndex } from '../../state/links/wordsIndex';
 import { usePivotWords } from '../concordanceView/usePivotWords';
+import { Project } from '../../state/projects/tableManager';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -37,7 +38,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _initializeTargetPivotWords = usePivotWords(AlignmentSide.TARGET);
 
-  const {projectState, setProjectState, preferences, setPreferences} = useContext(AppContext);
+  const {appState, setAppState, preferences, setPreferences} = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -68,7 +69,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const saveControlPanelFormat = useCallback(() => {
-    const updatedUserPreference = projectState.userPreferences?.save({
+    const updatedUserPreference = appState.userPreferences?.save({
       name: PreferenceKey.CONTROL_PANEL_FORMAT,
       value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
         ? ControlPanelFormat.VERTICAL
@@ -80,7 +81,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         [updatedUserPreference.name]: updatedUserPreference
       }));
     }
-  }, [preferences, projectState.userPreferences, setPreferences]);
+  }, [preferences, appState.userPreferences, setPreferences]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
@@ -92,14 +93,14 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
 
   const createLink = useCallback(() => {
-    if (!projectState.linksTable || !inProgressLink) {
+    if (!appState.currentProject?.linksTable || !inProgressLink) {
       return;
     }
 
-    projectState.linksTable.save(inProgressLink);
+    appState.currentProject?.linksTable.save(inProgressLink);
 
     dispatch(resetTextSegments());
-  }, [projectState, inProgressLink, dispatch]);
+  }, [appState.currentProject, inProgressLink, dispatch]);
 
   return (
     <Stack
@@ -158,11 +159,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               variant="contained"
               disabled={!inProgressLink?.id}
               onClick={() => {
-                if (!projectState.linksTable || !inProgressLink) {
+                if (!appState.currentProject?.linksTable || !inProgressLink) {
                   return;
                 }
                 if (inProgressLink?.id) {
-                  const linksTable = projectState.linksTable;
+                  const linksTable = appState.currentProject?.linksTable;
                   linksTable.remove(inProgressLink.id);
                   dispatch(resetTextSegments());
                 }
@@ -211,8 +212,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 const sourceContainer = props.containers.find((container) => container.id === 'source')!;
                 const targetContainer = props.containers.find((container) => container.id === 'target')!;
 
-                const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, AlignmentSide.SOURCE);
-                const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, AlignmentSide.TARGET);
+                const sourcesIndex = appState.currentProject?.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, AlignmentSide.SOURCE);
+                const targetsIndex = appState.currentProject?.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, AlignmentSide.TARGET);
 
                 const linksIndexes = {
                   sourcesIndex,
@@ -222,10 +223,13 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 linksIndexes.sourcesIndex.indexingTasks.enqueue(linksIndexes.sourcesIndex.initialize);
                 linksIndexes.targetsIndex.indexingTasks.enqueue(linksIndexes.targetsIndex.initialize);
 
-                setProjectState((ps: ProjectState) => ({
-                  ...ps,
-                  linksTable,
-                  linksIndexes
+                setAppState((as: AppState) => ({
+                  ...as,
+                  currentProject: {
+                    ...as.currentProject,
+                    linksTable,
+                    linksIndexes
+                  } as Project
                 }));
 
                 // convert into an appropriate object
@@ -290,14 +294,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   records: [],
                 };
 
-                if (!projectState.linksTable) {
+                if (!appState.currentProject?.linksTable) {
                   return;
                 }
 
-                projectState.linksTable
-                  .getAll()
-                  .map(
-                    (link) =>
+                (appState.currentProject?.linksTable?.getAll?.() ?? [])
+                  .map((link) =>
                       ({
                         id: link.id,
                         source: link.sources,

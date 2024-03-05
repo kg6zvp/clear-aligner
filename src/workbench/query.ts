@@ -9,12 +9,12 @@ import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 import YLT from 'tsv/ylt-new.tsv';
 
 enum InitializationStates {
-  UNINITIALiZED,
+  UNINITIALIZED,
   INITIALIZING,
   INITIALIZED
 }
 
-let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
+let initializationState: InitializationStates = InitializationStates.UNINITIALIZED;
 
 const availableCorpora: CorpusContainer[] = [];
 
@@ -167,7 +167,7 @@ const waitForInitialization = async () => {
 export const getAvailableCorporaContainers = async (): Promise<
   CorpusContainer[]
 > => {
-  if (initializationState === InitializationStates.UNINITIALiZED) {
+  if (initializationState === InitializationStates.UNINITIALIZED) {
     initializationState = InitializationStates.INITIALIZING;
     // Macula Hebrew OT
     let maculaHebOT: Corpus = {
@@ -268,12 +268,4 @@ export const getAvailableCorporaContainers = async (): Promise<
   }
 
   return availableCorpora;
-};
-
-export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (
-    initializationState ? availableCorpora : await getAvailableCorporaContainers()
-  ).map((corpus) => {
-    return corpus.id;
-  });
 };
