@@ -119,8 +119,8 @@ export const AlignmentTable = ({
       headerName: 'Link',
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <LinkCell row={row} onClick={(tableCtx, link) => {
-          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, tableCtx.wordSource) ?? ""))
+        <LinkCell row={row} onClick={() => {
+          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ""))
         }} />
       ),
     },
