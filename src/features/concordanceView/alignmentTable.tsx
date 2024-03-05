@@ -56,6 +56,7 @@ export interface AlignmentTableProps {
   onChangeSort: (sortData: GridSortItem | null) => void;
   chosenAlignmentLink: Link | null;
   onChooseAlignmentLink: (alignmentLink: Link) => void;
+  updateAlignments: (resetState: boolean) => void;
 }
 
 /**
@@ -80,6 +81,7 @@ export const AlignmentTable = ({
   onChangeSort,
   chosenAlignmentLink,
   onChooseAlignmentLink,
+  updateAlignments
 }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const initialPage = useMemo(() => {
@@ -178,7 +180,11 @@ export const AlignmentTable = ({
           }}
         />
       </TableContainer>
-      <WorkbenchDialog alignment={selectedAligment} setAlignment={setSelectedAlignment} chosenAlignmentLink={chosenAlignmentLink} />
+      <WorkbenchDialog
+        alignment={selectedAligment}
+        setAlignment={setSelectedAlignment}
+        updateAlignments={updateAlignments}
+      />
     </AlignmentTableContext.Provider>
   );
 };

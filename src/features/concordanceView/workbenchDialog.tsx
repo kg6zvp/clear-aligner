@@ -10,15 +10,19 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 interface WorkbenchDialogProps {
   alignment: BCVWP | null;
   setAlignment: React.Dispatch<React.SetStateAction<BCVWP | null>>;
-  chosenAlignmentLink: Link | null;
+  updateAlignments: (resetState: boolean) => void;
 }
 
-const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({alignment, setAlignment, chosenAlignmentLink}) => {
+const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({alignment, setAlignment, updateAlignments}) => {
   const appCtx = React.useContext(AppContext);
 
   const handleClose = React.useCallback(() => {
+    const resetState = !Array.from(appCtx.projectState?.linksTable?.links?.values?.() ?? [])
+      .flatMap((v: { sources: string[]; targets: string[]; }) => [...(v.sources || []), ...(v.targets || [])])
+      .includes(alignment?.toReferenceString() ?? "");
+      updateAlignments(resetState);
     setAlignment(null);
-  }, [setAlignment]);
+  }, [appCtx.projectState.linksTable, alignment, setAlignment, updateAlignments]);
 
   React.useEffect(() => {
     if(alignment) {

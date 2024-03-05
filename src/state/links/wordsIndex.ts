@@ -101,13 +101,13 @@ export class WordsIndex implements SecondaryIndex<Link> {
       if (!pivotWord) break;
       if (pivotWord.alignmentLinks) {
         // remove the link from the list
-        _.remove(pivotWord.alignmentLinks, (link) => link.id === payload.id);
+        pivotWord.alignmentLinks = _.filter(pivotWord.alignmentLinks, (link) => link.id === payload.id);
         pivotWord.hasAlignmentLinks = (pivotWord.alignmentLinks.length > 0);
       }
       if (pivotWord.alignedWords) {
-        _.remove(pivotWord.alignedWords, (alignedWord) => {
+        pivotWord.alignedWords = _.filter(pivotWord.alignedWords, (alignedWord) => {
           if (!alignedWord.alignments) return true; // remove because this word has no alignments
-          _.remove(alignedWord.alignments, (link) => link.id === payload.id);
+          alignedWord.alignments = _.filter(alignedWord.alignments, (link) => link.id === payload.id);
           alignedWord.frequency = alignedWord.alignments.length;
           return (alignedWord.alignments.length < 1); // remove alignedWord if it has no links
         });

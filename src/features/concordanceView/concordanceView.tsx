@@ -23,7 +23,7 @@ export const ConcordanceView = () => {
    */
   const [wordSource, setWordSource] = useState('targets' as AlignmentSide);
   const [wordFilter, setWordFilter] = useState('all' as WordFilter);
-  const srcPivotWords = usePivotWords(wordSource);
+  const {pivotWords: srcPivotWords, refetch } = usePivotWords(wordSource);
   const [pivotWordSortData, setPivotWordSortData] = useState({
     field: 'instances.length',
     sort: 'desc',
@@ -314,6 +314,16 @@ export const ConcordanceView = () => {
               onChangeSort={setAlignmentSortData}
               chosenAlignmentLink={selectedAlignmentLink}
               onChooseAlignmentLink={setSelectedAlignmentLink}
+              updateAlignments={(resetState: boolean) => {
+                refetch();
+                if(resetState) {
+                  setSelectedPivotWord(undefined);
+                  setSelectedAlignedWord(null);
+                  setSelectedAlignmentLink(null);
+                } else {
+                  setSelectedPivotWord(pw => (pivotWords || []).find(w => w.alignmentLinks === selectedPivotWord?.alignmentLinks) ?? pw);
+                }
+              }}
             />
           </Paper>
         </Box>
