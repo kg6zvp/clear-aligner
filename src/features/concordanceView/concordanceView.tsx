@@ -12,11 +12,14 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
 import _ from 'lodash';
 import { usePivotWords } from './usePivotWords';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { useAppDispatch } from '../../app';
 
 export type WordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
+  const dispatch = useAppDispatch();
 
   /**
    * pivot words
@@ -315,13 +318,12 @@ export const ConcordanceView = () => {
               chosenAlignmentLink={selectedAlignmentLink}
               onChooseAlignmentLink={setSelectedAlignmentLink}
               updateAlignments={(resetState: boolean) => {
-                refetch();
+                dispatch(resetTextSegments());
                 if(resetState) {
-                  setSelectedPivotWord(undefined);
                   setSelectedAlignedWord(null);
                   setSelectedAlignmentLink(null);
-                } else {
-                  setSelectedPivotWord(pw => (pivotWords || []).find(w => w.alignmentLinks === selectedPivotWord?.alignmentLinks) ?? pw);
+                  setSelectedPivotWord(undefined);
+                  refetch();
                 }
               }}
             />
