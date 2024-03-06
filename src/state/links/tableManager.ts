@@ -1132,8 +1132,6 @@ export const useCheckDatabase = (checkKey?: string) => {
 
 /**
  * Database status hook.
- *<p>
- * @param checkKey Unique key to control check operation (optional; undefined = will check).
  */
 export const useDatabaseStatus = () => {
   const [status, setStatus] =
