@@ -4,7 +4,6 @@ import { Dialog, DialogTitle, DialogContent, Grid, IconButton, Typography } from
 import { AlignmentEditor } from '../alignmentEditor/alignmentEditor';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { Close } from '@mui/icons-material';
-import { Link } from '../../structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface WorkbenchDialogProps {
