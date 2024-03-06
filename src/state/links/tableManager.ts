@@ -856,7 +856,6 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
     const endStatus = {
       ...status,
       isPending: false,
-      existsKey: workExistsKey,
       result: !!projectState?.linksTable?.exists(linkId)
     };
     setStatus(endStatus);
@@ -943,7 +942,6 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
     const endStatus = {
       ...status,
       isPending: false,
-      findKey: workFindKey,
       result: projectState?.linksTable?.findByWord(side, wordId)
     };
     setStatus(endStatus);
@@ -981,7 +979,6 @@ export const useGetAllLinks = (getKey?: string) => {
     const endStatus = {
       ...status,
       isPending: false,
-      getKey,
       result: projectState?.linksTable?.getAll()
     };
     setStatus(endStatus);
@@ -1021,7 +1018,6 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
     const endStatus = {
       ...status,
       isPending: false,
-      getKey: workGetKey,
       result: projectState?.linksTable?.get(linkId)
     };
     setStatus(endStatus);
