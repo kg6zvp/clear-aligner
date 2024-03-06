@@ -5,12 +5,15 @@ import { CorpusContainer, Word } from '../../structs';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
-import { useSearchParams } from 'react-router-dom';
 import { AppContext } from '../../App';
 
 const defaultDocumentTitle = 'ClearAligner';
 
-export const AlignmentEditor = () => {
+interface AlignmentEditorProps {
+  showNavigation?: boolean;
+}
+
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation = true}) => {
   const layoutCtx = useContext(LayoutContext);
   const [availableWords, setAvailableWords] = useState([] as Word[]);
   const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
@@ -50,29 +53,22 @@ export const AlignmentEditor = () => {
     );
   }, [layoutCtx, appCtx.currentReference]);
 
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  useEffect(() => {
-    if (searchParams.has('ref')) {
-      const newPosition = BCVWP.parseFromString(searchParams.get('ref')!);
-      appCtx.setCurrentReference(newPosition);
-      searchParams.delete('ref');
-      setSearchParams(searchParams);
-    }
-  }, [searchParams, appCtx, appCtx.setCurrentReference, setSearchParams]);
-
   return (
     <>
-      <div style={{ display: 'grid', justifyContent: 'center' }}>
-        <br />
-        <BCVNavigation
-          horizontal
-          disabled={!availableWords || availableWords.length < 1}
-          words={availableWords}
-          currentPosition={appCtx.currentReference ?? undefined}
-          onNavigate={appCtx.setCurrentReference}
-        />
-      </div>
+      {
+        showNavigation && (
+          <div style={{ display: 'grid', justifyContent: 'center' }}>
+            <br />
+            <BCVNavigation
+              horizontal
+              disabled={!availableWords || availableWords.length < 1}
+              words={availableWords}
+              currentPosition={appCtx.currentReference ?? undefined}
+              onNavigate={appCtx.setCurrentReference}
+            />
+          </div>
+        )
+      }
       <Workbench
         corpora={selectedCorporaContainers}
         currentPosition={appCtx.currentReference}

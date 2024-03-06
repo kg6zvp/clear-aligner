@@ -92,6 +92,23 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     dispatch(resetTextSegments());
   }, [appState.currentProject, inProgressLink, dispatch]);
 
+
+  const enableToggle = useMemo(() => {
+    const positions = props.containers.map(viewCorpora => {
+      let bcvwp = props.position;
+      if (viewCorpora.id !== 'target') {
+        const target = props.containers.find(c => c.id === "target");
+        if (!props.position || !target) return null;
+        const verseString = target.verseByReference(props.position)?.sourceVerse;
+        if (verseString) {
+          bcvwp = BCVWP.parseFromString(verseString);
+        }
+      }
+      return viewCorpora.corpusAtReferenceString(bcvwp.toReferenceString())?.hasGloss
+    });
+    return positions.some(p => p);
+  }, [props]);
+
   return (
     <Stack
       direction="row"
@@ -105,7 +122,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           <span>
             <Button
               variant={preferences.showGloss ? 'contained' : 'outlined'}
-              disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? "")?.hasGloss)}
+              disabled={!enableToggle}
               onClick={() => setPreferences(p => ({
                 ...p,
                 showGloss: !p.showGloss

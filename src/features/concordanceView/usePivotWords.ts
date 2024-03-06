@@ -7,7 +7,11 @@ import { AppState } from 'state/databaseManagement';
 import { useInterval } from 'usehooks-ts';
 import { Project } from '../../state/projects/tableManager';
 
-export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefined => {
+export const usePivotWords = (wordSource: AlignmentSide): {
+  pivotWords: PivotWord[] | undefined;
+  refetch: () => void;
+} => {
+  const [initializeIndices, setInitializeIndices] = useState(false);
   const { appState, setAppState } = useContext(AppContext);
   const {currentProject} = appState;
   const { sourceContainer, targetContainer } = {
@@ -34,7 +38,8 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     }
 
     if (
-      currentProject?.linksTable
+      !initializeIndices
+      && currentProject?.linksTable
       && currentProject?.linksIndexes
       && (currentProject?.linksTable.isSecondaryIndexRegistered(currentProject?.linksIndexes.sourcesIndex) || currentProject?.linksIndexes.sourcesIndex.isLoading())
       && (currentProject?.linksTable.isSecondaryIndexRegistered(currentProject?.linksIndexes.targetsIndex) || currentProject?.linksIndexes.targetsIndex.isLoading())) {
@@ -70,12 +75,14 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
       secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await currentProject?.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex))
       secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await currentProject?.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex))
     }
+    setInitializeIndices(false);
   }, [
     currentProject?.linksTable,
     currentProject?.linksIndexes,
     setAppState,
     sourceContainer,
-    targetContainer
+    targetContainer,
+    initializeIndices
   ]);
 
   const pivotWords = useMemo<PivotWord[] | undefined>(() => {
@@ -88,5 +95,7 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     loading
     ]);
 
-  return pivotWords;
+  return { pivotWords, refetch: () => {
+      setInitializeIndices(true)
+    }};
 };
