@@ -54,5 +54,5 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
   getPreference = (preferenceKey: PreferenceKey): UserPreference | undefined => {
     return this.preferences.get(preferenceKey);
   }
-  catchupNewIndex = async (_index: SecondaryIndex<UserPreference>) => {};
+  catchUpIndex = async (_index: SecondaryIndex<UserPreference>) => {};
 }

@@ -1,5 +1,15 @@
 import React, { useMemo, useRef } from 'react';
-import { Card, CircularProgress, Stack, Grid, Typography, Dialog, DialogContent, Box, DialogContentText } from '@mui/material';
+import {
+  Box,
+  Card,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  Grid,
+  Stack,
+  Typography
+} from '@mui/material';
 
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
@@ -10,7 +20,7 @@ import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
-import { useDatabaseStatus } from '../../state/links/tableManager';
+import { DatabaseBusyInfo, useDatabaseStatus } from '../../state/links/tableManager';
 
 interface PolyglotProps {
   containers: CorpusContainer[];
@@ -19,37 +29,52 @@ interface PolyglotProps {
 
 export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   useDebug('PolyglotComponent');
-  const {preferences} = React.useContext(AppContext);
+  const { preferences } = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const databaseStatus = useDatabaseStatus(true);
+  const { result: databaseStatus } = useDatabaseStatus(true);
 
   const corpusViewports: CorpusViewport[] | null = useMemo(
     () =>
       containers?.map(
         (container): CorpusViewport => ({
-          containerId: container.id,
+          containerId: container.id
         })
       ) ?? null,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [containers, containers.length]
+    [containers]
   );
+  const {
+    isBusy: dbIsBusy,
+    userText: dbUserText,
+    progressCtr: dbProgressCtr,
+    progressMax: dbProgressMax
+  } = useMemo<DatabaseBusyInfo>(() => {
+    const busyInfo = databaseStatus?.busyInfo;
+    if (!busyInfo) {
+      return {
+        isBusy: false,
+        userText: undefined,
+        progressCtr: 0,
+        progressMax: 0
+      };
+    }
+    return { ...busyInfo };
+  }, [databaseStatus?.busyInfo]);
   const spinnerParams = useMemo<{
     isBusy?: boolean,
     text?: string,
     variant?: 'determinate' | 'indeterminate',
     value?: number
   }>(() => {
-    const busyInfo = databaseStatus.busyInfo;
-    if (busyInfo.isBusy) {
-      const progressCtr = busyInfo.progressCtr ?? 0;
-      const progressMax = busyInfo.progressMax ?? 0;
+    if (dbIsBusy) {
+      const progressCtr = dbProgressCtr ?? 0;
+      const progressMax = dbProgressMax ?? 0;
       if (progressMax > 0
         && progressMax >= progressCtr) {
         const percentProgress = Math.round((progressCtr / progressMax) * 100.0);
         return {
           isBusy: true,
-          text: busyInfo.userText ?? 'The database is busy...',
+          text: dbUserText ?? 'The database is busy...',
           variant: 'determinate',
           value: percentProgress < 100 ? percentProgress : undefined
         };
@@ -70,7 +95,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       variant: 'indeterminate',
       value: undefined
     };
-  }, [corpusViewports, databaseStatus.busyInfo]);
+  }, [corpusViewports, dbIsBusy, dbProgressCtr, dbProgressMax, dbUserText]);
 
   const controlPanelFormat = useMemo(() => (
     preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
@@ -78,9 +103,9 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
 
   return (
     <Stack
-      direction={controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "row" : "column"}
+      direction={controlPanelFormat === ControlPanelFormat.HORIZONTAL ? 'row' : 'column'}
       spacing={2}
-      style={{ height: controlPanelFormat === ControlPanelFormat.HORIZONTAL ? "17rem" : '30rem' }}
+      style={{ height: controlPanelFormat === ControlPanelFormat.HORIZONTAL ? '17rem' : '30rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >
@@ -141,7 +166,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 flexGrow: '1',
                 flexBasis: '0',
                 minWidth: '16rem',
-                position: 'relative',
+                position: 'relative'
               }}
             >
               <CorpusComponent

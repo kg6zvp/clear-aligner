@@ -1,4 +1,3 @@
-import { Link } from 'structs';
 import { LinksTable } from './links/tableManager';
 import { WordsIndex } from './links/wordsIndex';
 import { UserPreferenceTable } from './preferences/tableManager';
@@ -21,7 +20,7 @@ export interface ProjectState {
   linksIndexes?: {
     sourcesIndex: WordsIndex;
     targetsIndex: WordsIndex;
-  }
+  };
 }
 
 export type SecondaryIndex<Link> = {
@@ -61,7 +60,7 @@ export abstract class VirtualTable<T> {
    * @param index
    */
   registerSecondaryIndex = async (index: SecondaryIndex<T>): Promise<void> => {
-    await this.catchupNewIndex(index);
+    await this.catchUpIndex(index);
     this.secondaryIndexes.add(index);
   };
 
@@ -71,7 +70,7 @@ export abstract class VirtualTable<T> {
    */
   unregisterSecondaryIndex = async (index: SecondaryIndex<T>): Promise<void> => {
     this.secondaryIndexes.delete(index);
-  }
+  };
 
   /**
    * whether the given index has already been registered
@@ -80,34 +79,49 @@ export abstract class VirtualTable<T> {
   isSecondaryIndexRegistered = (secondaryIndex: SecondaryIndex<T>): boolean =>
     !!this.findSecondaryIndexByIdentifier(secondaryIndex.id());
 
-  findSecondaryIndexByIdentifier = (id: string): SecondaryIndex<T>|undefined => {
+  findSecondaryIndexByIdentifier = (id: string): SecondaryIndex<T> | undefined => {
     return [...this.secondaryIndexes.values()].find(idx => idx.id() === id);
-  }
+  };
 
   /**
    * internal function to be called when performing a mutating operation
    * @param suppressOnUpdate
    */
-  _onUpdate = (suppressOnUpdate?: boolean) => {
+  protected _onUpdate = (suppressOnUpdate = false) => {
     if (!suppressOnUpdate) {
       this.lastUpdate = Date.now();
     }
+    this._onUpdateImpl(suppressOnUpdate);
+  };
+
+  protected _onUpdateImpl = (suppressOnUpdate = false) => {
   };
 
   _updateSecondaryIndices = async (type: IndexedChangeType, payload: T): Promise<void> => {
     const indexingPromises: Promise<void>[] = [];
-    for(const index of [...this.secondaryIndexes.values()]) {
+    for (const index of [...this.secondaryIndexes.values()]) {
       indexingPromises.push(index.onChange(type, payload));
     }
 
     await Promise.all(indexingPromises);
-  }
+  };
+
+  /**
+   * catches up all registered indexes.
+   */
+  catchUpAllIndexes = async (): Promise<void> => {
+    const promises = [];
+    for (const index of [...this.secondaryIndexes.values()]) {
+      promises.push(this.catchUpIndex(index));
+    }
+    await Promise.all(promises);
+  };
 
   /**
    * implement this function to catch up newly registered indexes to the current table state
    * @param index
    */
-  abstract catchupNewIndex(index: SecondaryIndex<T>): Promise<void>;
+  abstract catchUpIndex(index: SecondaryIndex<T>): Promise<void>;
 }
 
 // Table factories
