@@ -16,14 +16,14 @@ interface WorkbenchDialogProps {
 const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({alignment, setAlignment, updateAlignments}) => {
   const appCtx = React.useContext(AppContext);
   const initialUpdateTime = React.useMemo(() => (
-    appCtx.currentProject?.linksTable?.lastUpdate
+    appCtx.appState.currentProject?.linksTable?.lastUpdate
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [alignment]);
 
   const handleClose = React.useCallback(() => {
-    updateAlignments(initialUpdateTime !== appCtx.currentProject?.linksTable?.lastUpdate);
+    updateAlignments(initialUpdateTime !== appCtx.appState.currentProject?.linksTable?.lastUpdate);
     setAlignment(null);
-  }, [initialUpdateTime, appCtx.currentProject?.linksTable?.lastUpdate, updateAlignments, setAlignment]);
+  }, [initialUpdateTime, appCtx.appState.currentProject?.linksTable?.lastUpdate, updateAlignments, setAlignment]);
 
   React.useEffect(() => {
     if(alignment) {
