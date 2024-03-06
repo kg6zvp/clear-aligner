@@ -37,7 +37,7 @@ export class ProjectTable extends VirtualTable<Project> {
       abbreviation: "YLT",
       languageCode: "eng",
       textDirection: "LTR",
-      fileName: "target_NA27-YLT.tsv",
+      fileName: "ylt-new.tsv",
       linksTable: new VirtualTableLinks(),
       targetCorpora
     });
