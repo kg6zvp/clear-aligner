@@ -69,7 +69,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
     && project.abbreviation.length
     && project.languageCode.length
     && Object.keys(TextDirection).includes(project.textDirection)
-  ), [project, uploadErrors]);
+  ), [fileContent.length, project.abbreviation.length, project.languageCode.length, project.name.length, project.textDirection, uploadErrors.length]);
 
   const handleSubmit = React.useCallback(async () => {
     setCurrentReference(null);
