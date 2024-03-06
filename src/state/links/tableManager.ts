@@ -142,6 +142,16 @@ export class VirtualTableLinks extends VirtualTable<Link> {
     void this._updateSecondaryIndices(IndexedChangeType.REMOVE, link);
   };
 
+  removeAll = (suppressOnUpdate?: boolean) => {
+    try {
+      this.links.forEach((link) => this.remove(link.id, true));
+    } catch (x) {
+      console.error('error removing in bulk', x);
+    } finally {
+      this._onUpdate(suppressOnUpdate);
+    }
+  };
+
   /**
    * remove the indexes created for a given link
    * @param link

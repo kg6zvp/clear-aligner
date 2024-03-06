@@ -26,6 +26,8 @@ import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../
 import { parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppState } from '../../state/databaseManagement';
+import { useAppDispatch } from '../../app';
+import { resetTextSegments } from '../../state/alignment.slice';
 
 
 enum TextDirection {
@@ -50,6 +52,7 @@ const getInitialProjectState = (): Project => ({
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, projectId}) => {
+  const dispatch = useAppDispatch();
   const {appState, setAppState, setCurrentReference} = React.useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
@@ -64,40 +67,46 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
-    && fileContent.length
+    && project.fileName.length
     && project.name.length
     && project.abbreviation.length
     && project.languageCode.length
     && Object.keys(TextDirection).includes(project.textDirection)
-  ), [fileContent.length, project.abbreviation.length, project.languageCode.length, project.name.length, project.textDirection, uploadErrors.length]);
+  ), [project.abbreviation.length, project.fileName.length, project.languageCode.length, project.name.length, project.textDirection, uploadErrors.length]);
 
   const handleSubmit = React.useCallback(async () => {
-    setCurrentReference(null);
-    const refCorpus = {
-      id: project.id,
-      name: project.abbreviation,
-      fullName: project.name,
-      language: {
-        code: project.languageCode,
-        textDirection: project.textDirection.toLowerCase(),
-      },
-      words: [],
-      wordsByVerse: {},
-      wordLocation: new Map<string, Set<BCVWP>>(),
-      books: {},
-    } as Corpus;
-    const parsedTsvCorpus = await parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-    putVersesInCorpus({...refCorpus, ...parsedTsvCorpus});
-    const updateProject = appState.projects.save({
+    const projectToUpdate = {
       ...project,
-      targetCorpora: CorpusContainer.fromIdAndCorpora("target", [parsedTsvCorpus]),
       id: project.id ?? uuidv4()
-    });
-    if(updateProject) {
-      setAppState(as => ({...as, currentProject: updateProject}));
+    }
+
+    if(fileContent) {
+      dispatch(resetTextSegments());
+      setCurrentReference(null);
+      const refCorpus = {
+        id: project.id,
+        name: project.abbreviation,
+        fullName: project.name,
+        language: {
+          code: project.languageCode,
+          textDirection: project.textDirection.toLowerCase(),
+        },
+        words: [],
+        wordsByVerse: {},
+        wordLocation: new Map<string, Set<BCVWP>>(),
+        books: {},
+      } as Corpus;
+      const parsedTsvCorpus = await parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
+      putVersesInCorpus({...refCorpus, ...parsedTsvCorpus});
+      projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora("target", [parsedTsvCorpus]);
+    }
+
+    const updatedProject = appState.projects.save(projectToUpdate);
+    if(updatedProject) {
+      setAppState(as => ({...as, currentProject: updatedProject}));
     }
     handleClose();
-  }, [setCurrentReference, project, fileContent, appState.projects, handleClose, setAppState]);
+  }, [project, fileContent, appState.projects, handleClose, dispatch, setCurrentReference, setAppState]);
 
   const handleDelete = React.useCallback(() => {
     if(projectId) {
@@ -155,21 +164,20 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                     size="small"
                     fullWidth
                     disablePortal
-                    options={Object.keys(ISO6393).map((key: string) => ({label: ISO6393[key as keyof typeof ISO6393], id: key}))}
-                    renderInput={(params: any) => <TextField {...params} />}
+                    options={["", ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]}
                     ListboxProps={{
                       style: {
                         maxHeight: 250
                       }
                     }}
                     sx={{mb: 2}}
-                    value={{label: ISO6393[project.languageCode as keyof typeof ISO6393], id: project.languageCode}}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    onChange={(_, languageCode) =>
+                    value={ISO6393[project.languageCode as keyof typeof ISO6393] || ""}
+                    onChange={(_, language) =>
                       setProject(p => ({
                         ...p,
-                        languageCode: languageCode?.id ?? ""
+                        languageCode: Object.keys(ISO6393).find(k => ISO6393[k as keyof typeof ISO6393] === language) ?? ""
                       }))}
+                    renderInput={(params) => <TextField {...params} />}
                   />
                 </FormControl>
                 <FormControl>
