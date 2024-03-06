@@ -18,14 +18,12 @@ let initializationState: InitializationStates = InitializationStates.UNINITIALIZ
 
 const availableCorpora: CorpusContainer[] = [];
 
-const parseTsvByFileType = async (
-  tsv: RequestInfo,
+export const parseTsv = async (
+  response: string,
   refCorpus: Corpus,
   side: AlignmentSide,
   fileType: CorpusFileFormat
 ): Promise<Corpus> => {
-  const fetchedTsv = await fetch(tsv);
-  const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
   if (!refCorpus.wordsByVerse) {
@@ -134,6 +132,18 @@ const parseTsvByFileType = async (
   };
 };
 
+
+const parseTsvByFileType = async (
+  tsv: RequestInfo,
+  refCorpus: Corpus,
+  side: AlignmentSide,
+  fileType: CorpusFileFormat
+): Promise<Corpus> => {
+  const fetchedTsv = await fetch(tsv);
+  const response = await fetchedTsv.text();
+  return await parseTsv(response, refCorpus, side, fileType);
+};
+
 const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   if (!(verse.bcvId.book && verse.bcvId.chapter && verse.bcvId.verse)) {
     return;
@@ -152,7 +162,7 @@ const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   chapterRef[verse.bcvId.verse] = verse;
 };
 
-const putVersesInCorpus = (corpus: Corpus) => {
+export const putVersesInCorpus = (corpus: Corpus) => {
   Object.values(corpus.wordsByVerse).forEach((verse) =>
     putVerseInCorpus(corpus, verse)
   );

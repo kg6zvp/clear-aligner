@@ -1,18 +1,20 @@
 import React from 'react';
 import {
   Autocomplete,
+  Box,
   Button,
-  Dialog, DialogActions,
+  Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   FormGroup,
   Grid,
-  IconButton, MenuItem,
-  TextField,
-  Typography,
+  IconButton,
+  MenuItem,
   Select,
-  FormControl,
-  Box, Modal
+  TextField,
+  Typography
 } from '@mui/material';
 import { Close, DeleteOutline } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
@@ -20,6 +22,10 @@ import { VirtualTableLinks } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
+import { parseTsv, putVersesInCorpus } from '../../workbench/query';
+import BCVWP from '../bcvwp/BCVWPSupport';
+import { AppState } from '../../state/databaseManagement';
 
 
 enum TextDirection {
@@ -39,14 +45,16 @@ const getInitialProjectState = (): Project => ({
   abbreviation: "",
   languageCode: "eng",
   textDirection: "LTR",
-  fileName: ""
+  fileName: "",
+  linksTable: new VirtualTableLinks()
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, projectId}) => {
-  const {appState} = React.useContext(AppContext);
+  const {appState, setAppState, setCurrentReference} = React.useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
   const [uploadError, setUploadError] = React.useState("");
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
+  const [fileContent, setFileContent] = React.useState("");
 
   const handleClose = React.useCallback(() => {
     setProject(getInitialProjectState());
@@ -61,30 +69,53 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
     && Object.keys(TextDirection).includes(project.textDirection)
   ), [project, uploadError]);
 
-  const handleSubmit = React.useCallback(() => {
-    appState.projects.save({
+  const handleSubmit = React.useCallback(async () => {
+    setCurrentReference(null);
+    const refCorpus = {
+      id: project.id,
+      name: project.abbreviation,
+      fullName: project.name,
+      language: {
+        code: project.languageCode,
+        textDirection: project.textDirection.toLowerCase(),
+      },
+      words: [],
+      wordsByVerse: {},
+      wordLocation: new Map<string, Set<BCVWP>>(),
+      books: {},
+    } as Corpus;
+    const parsedTsvCorpus = await parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
+    putVersesInCorpus(parsedTsvCorpus);
+    const updateProject = appState.projects.save({
       ...project,
+      targetCorpora: CorpusContainer.fromIdAndCorpora("target", [parsedTsvCorpus]),
       id: project.id ?? uuidv4()
-    })
-  }, [appState.projects, project]);
+    });
+    if(updateProject) {
+      setAppState(as => ({...as, currentProject: updateProject}));
+    }
+    handleClose();
+  }, [setCurrentReference, project, fileContent, appState.projects, handleClose, setAppState]);
 
   const handleDelete = React.useCallback(() => {
     if(projectId) {
       appState.projects.remove(projectId);
+      setAppState(as => ({
+        ...as,
+        currentProject: undefined
+      } as AppState));
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [projectId, appState.projects, setOpenConfirmDelete, handleClose]);
+  }, [projectId, appState.projects, setOpenConfirmDelete, handleClose, setAppState]);
 
   React.useEffect(() => {
-    console.log("appState.projects.getProjects().values(): ", appState.projects.getProjects().values(), projectId)
     const foundProject = Array.from(appState.projects.getProjects().values()).find(p => p.id === projectId);
     if(foundProject) {
       setProject(foundProject);
     }
   }, [projectId, appState.projects, setProject, project.id]);
 
-  console.log("selected project: ", project);
 
   return (
     <>
@@ -92,10 +123,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
         open={open}
         onClose={handleClose}
       >
-        <form onSubmit={e => {
-          e.preventDefault();
-          handleSubmit()
-        }}>
           <DialogTitle>
             <Grid container justifyContent="space-between">
               <Typography variant="h6">
@@ -185,56 +212,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
 
                            const content = await file.text();
                            console.log("content: ", content, file)
-
-                           const linksTable: VirtualTableLinks = new VirtualTableLinks();
-
-                           // const sourceContainer = props.containers.find((container) => container.id === 'source')!;
-                           // const targetContainer = props.containers.find((container) => container.id === 'target')!;
-                           //
-                           // const sourcesIndex = projectState.linksIndexes?.sourcesIndex ?? new WordsIndex(sourceContainer, AlignmentSide.SOURCE);
-                           // const targetsIndex = projectState.linksIndexes?.targetsIndex ?? new WordsIndex(targetContainer, AlignmentSide.TARGET);
-                           //
-                           // const linksIndexes = {
-                           //   sourcesIndex,
-                           //   targetsIndex
-                           // };
-                           //
-                           // linksIndexes.sourcesIndex.indexingTasks.enqueue(linksIndexes.sourcesIndex.initialize);
-                           // linksIndexes.targetsIndex.indexingTasks.enqueue(linksIndexes.targetsIndex.initialize);
-                           //
-                           // // convert into an appropriate object
-                           // const alignmentFile = JSON.parse(content) as AlignmentFile;
-                           //
-                           // const chunkSize = 10_000;
-                           // // override the alignments from alignment file
-                           // _.chunk(alignmentFile.records, chunkSize).forEach(
-                           //   (chunk, chunkIdx) => {
-                           //     const links = chunk.map((record, recordIdx): Link => {
-                           //       return {
-                           //         // @ts-ignore
-                           //         id: record.id ?? record?.meta?.id ?? `record-${chunkIdx * chunkSize + (recordIdx + 1)}`,
-                           //         sources: record.source,
-                           //         targets: record.target,
-                           //       };
-                           //     });
-                           //     try {
-                           //       linksTable.saveAll(links, true);
-                           //     } catch (e) {
-                           //       console.error('e', e);
-                           //     }
-                           //   }
-                           // );
-                           //
-                           // sourcesIndex.indexingTasks.enqueue(async () => {
-                           //   await linksTable.registerSecondaryIndex(sourcesIndex);
-                           // });
-                           //
-                           // targetsIndex.indexingTasks.enqueue(async () => {
-                           //   await linksTable.registerSecondaryIndex(targetsIndex);
-                           // });
-                           //
-                           // linksTable._onUpdate(); // modify variable to indicate that an update has occurred
-                           // console.log("linksTable: ", linksTable)
+                           setFileContent(content);
                          }}
                   />
                 </Button>
@@ -253,10 +231,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                   >Delete</Button>
                   : <Box />
               }
-              <Button variant="contained" type="submit" sx={{textTransform: 'none'}} disabled={!enableCreate}>{projectId ? "Update" : "Create"}</Button>
+              <Button variant="contained" onClick={handleSubmit} sx={{textTransform: 'none'}} disabled={!enableCreate}>{projectId ? "Update" : "Create"}</Button>
             </Grid>
           </DialogActions>
-        </form>
       </Dialog>
       <Dialog
         maxWidth="xl"
