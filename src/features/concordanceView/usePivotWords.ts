@@ -7,9 +7,13 @@ import { WordsIndex } from '../../state/links/wordsIndex';
 import { ProjectState } from 'state/databaseManagement';
 import { useInterval } from 'usehooks-ts';
 
-export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefined => {
+export const usePivotWords = (wordSource: AlignmentSide): {
+  pivotWords: PivotWord[] | undefined;
+  refetch: () => void;
+} => {
   const { projectState, setProjectState } = useContext(AppContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
+  const [initializeIndices, setInitializeIndices] = useState(false);
 
   const source = useMemo(() => wordSource === AlignmentSide.SOURCE ? projectState.linksIndexes?.sourcesIndex
     : projectState.linksIndexes?.targetsIndex, [wordSource, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
@@ -30,7 +34,8 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     }
 
     if (
-      projectState.linksTable
+      !initializeIndices
+      && projectState.linksTable
       && projectState.linksIndexes
       && (projectState.linksTable.isSecondaryIndexRegistered(projectState.linksIndexes.sourcesIndex) || projectState.linksIndexes.sourcesIndex.isLoading())
       && (projectState.linksTable.isSecondaryIndexRegistered(projectState.linksIndexes.targetsIndex) || projectState.linksIndexes.targetsIndex.isLoading())) {
@@ -63,12 +68,14 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
       secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex))
       secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex))
     }
+    setInitializeIndices(false);
   }, [
     projectState.linksTable,
     projectState.linksIndexes,
     setProjectState,
     sourceContainer,
-    targetContainer
+    targetContainer,
+    initializeIndices
   ]);
 
   const pivotWords = useMemo<PivotWord[] | undefined>(() => {
@@ -81,5 +88,7 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     loading
     ]);
 
-  return pivotWords;
+  return { pivotWords, refetch: () => {
+      setInitializeIndices(true)
+    }};
 };
