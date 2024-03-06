@@ -52,22 +52,24 @@ const getInitialProjectState = (): Project => ({
 const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, projectId}) => {
   const {appState, setAppState, setCurrentReference} = React.useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
-  const [uploadError, setUploadError] = React.useState("");
+  const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
   const [fileContent, setFileContent] = React.useState("");
 
   const handleClose = React.useCallback(() => {
+    setUploadErrors([]);
     setProject(getInitialProjectState());
     closeCallback();
   }, [closeCallback, setProject]);
 
   const enableCreate = React.useMemo(() => (
-    !uploadError
+    !uploadErrors.length
+    && fileContent.length
     && project.name.length
     && project.abbreviation.length
     && project.languageCode.length
     && Object.keys(TextDirection).includes(project.textDirection)
-  ), [project, uploadError]);
+  ), [project, uploadErrors]);
 
   const handleSubmit = React.useCallback(async () => {
     setCurrentReference(null);
@@ -188,7 +190,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                   </Select>
                 </FormControl>
 
-                <Button variant="contained" component="label" sx={{mt: 2}}>
+                <Button variant="contained" component="label" sx={{mt: 2, textTransform: 'none'}}>
                   Upload File
                   <input type="file" hidden
                          onClick={(event) => {
@@ -201,22 +203,35 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                          onChange={async (event) => {
                            // grab file content
                            const file = event!.target!.files![0];
-
+                           const content = await file.text();
+                           const errorMessages: string[] = [];
                            if(file.type !== "text/tab-separated-values") {
-                             setUploadError("Invalid file type supplied.");
+                             errorMessages.push("Invalid file type supplied.");
+                           }
+                           if (!["text", "id"].every(header => content.split('\n')[0].includes(header))) {
+                             errorMessages.push("TSV must include 'text' and 'id' headers.");
+                           }
+                           if (content.split('\n').filter(v => v).length < 2) {
+                             errorMessages.push("TSV must include at least one row of data.")
+                           }
+                           if(errorMessages.length) {
+                             setUploadErrors(errorMessages);
                              return;
-                           } else {
-                             setUploadError("");
-                             setProject(p => ({...p, fileName: file.name}));
                            }
 
-                           const content = await file.text();
+                           setUploadErrors([]);
+                           setProject(p => ({...p, fileName: file.name}));
                            setFileContent(content);
                          }}
                   />
                 </Button>
-                <Typography variant="subtitle2" sx={{mt: 1}} {...(uploadError ? {color: "error"} : {})}>
-                  {uploadError ? `The file you have selected is not valid: ${uploadError}` : project.fileName}
+                <Typography variant="subtitle2" sx={{mt: 1}} {...(uploadErrors.length ? {color: "error"} : {})}>
+                  {uploadErrors.length ? (
+                    <>
+                      <span style={{display: 'block'}}>The file you have selected is not valid:</span>
+                      {uploadErrors.map(error => <span style={{display: 'block'}}>{error}</span>)}
+                    </>
+                  ) : project.fileName}
                 </Typography>
               </FormGroup>
             </Grid>
