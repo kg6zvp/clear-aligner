@@ -85,7 +85,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
       books: {},
     } as Corpus;
     const parsedTsvCorpus = await parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-    putVersesInCorpus(parsedTsvCorpus);
+    putVersesInCorpus({...refCorpus, ...parsedTsvCorpus});
     const updateProject = appState.projects.save({
       ...project,
       targetCorpora: CorpusContainer.fromIdAndCorpora("target", [parsedTsvCorpus]),
@@ -211,7 +211,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                            }
 
                            const content = await file.text();
-                           console.log("content: ", content, file)
                            setFileContent(content);
                          }}
                   />

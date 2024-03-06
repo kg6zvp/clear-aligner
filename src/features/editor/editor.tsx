@@ -25,7 +25,7 @@ const Editor = (props: EditorProps): ReactElement => {
   return (
     <Container maxWidth={false}>
       {
-        currentProject ? (
+        currentProject || !props.containers.length ? (
           <>
             <Polyglot containers={props.containers} position={props.position} />
             <ControlPanel containers={props.containers} position={props.position} />

@@ -26,7 +26,8 @@ export const RefCell = (
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
   return (
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
-  );}
+  );
+}
 
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
