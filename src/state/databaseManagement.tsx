@@ -1,5 +1,3 @@
-import { VirtualTableLinks } from './links/tableManager';
-import { WordsIndex } from './links/wordsIndex';
 import { UserPreferenceTable } from './preferences/tableManager';
 import { Project, ProjectTable } from './projects/tableManager';
 import { CorpusContainer } from '../structs';

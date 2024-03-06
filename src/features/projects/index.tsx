@@ -3,6 +3,7 @@ import React from 'react';
 import { AppContext } from '../../App';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
+import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 
 interface ProjectsViewProps {
 
@@ -49,12 +50,25 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({project, onClick}) => {
+  const { appState } = React.useContext(AppContext);
+
   return (
     <Card sx={{height: 250, width: 250, m: 2.5, "&:hover": {
       boxShadow: "0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)"
       }, transition: "box-shadow 0.25s ease", '*': {cursor: 'pointer'}}}>
-      <CardContent sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}} onClick={() => onClick(project.id)}>
-        <Typography variant="h6" sx={{textAlign: 'center'}}>{project.name}</Typography>
+      <CardContent sx={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', height: '100%'}} onClick={() => onClick(project.id)}>
+        <Grid container justifyContent="center" alignItems="center">
+          <Typography variant="h6" sx={{textAlign: 'center', mt: 4}}>{project.name}</Typography>
+        </Grid>
+        <Grid container justifyContent="flex-end">
+          <UploadAlignmentGroup
+            size="small"
+            containers={[
+              ...(appState.sourceCorpora ? [appState.sourceCorpora] : []),
+              ...(project.targetCorpora ? [project.targetCorpora] : [])
+            ]}
+          />
+        </Grid>
       </CardContent>
     </Card>
   );

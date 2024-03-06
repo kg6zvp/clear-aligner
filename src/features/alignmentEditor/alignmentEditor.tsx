@@ -42,7 +42,7 @@ export const AlignmentEditor = () => {
     const targetCorpora = appCtx.appState.currentProject?.targetCorpora;
     setSelectedCorporaContainers([targetCorpora, appCtx.appState.sourceCorpora].filter(v => v) as CorpusContainer[]);
     setAvailableWords(targetCorpora?.corpora.flatMap(({ words }) => words) ?? []);
-  }, [appCtx.appState.currentProject]);
+  }, [appCtx.appState]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
