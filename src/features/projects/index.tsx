@@ -56,11 +56,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({project, onClick}) => {
     <Card sx={{height: 250, width: 250, m: 2.5, "&:hover": {
       boxShadow: "0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)"
       }, transition: "box-shadow 0.25s ease", '*': {cursor: 'pointer'}}}>
-      <CardContent sx={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', height: '100%'}} onClick={() => onClick(project.id)}>
-        <Grid container justifyContent="center" alignItems="center">
+      <CardContent sx={{display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-end', height: '100%'}}>
+        <Grid container justifyContent="center" alignItems="center" sx={{height: '100%'}} onClick={() => onClick(project.id)}>
           <Typography variant="h6" sx={{textAlign: 'center', mt: 4}}>{project.name}</Typography>
         </Grid>
-        <Grid container justifyContent="flex-end">
+        <Grid item>
           <UploadAlignmentGroup
             size="small"
             containers={[

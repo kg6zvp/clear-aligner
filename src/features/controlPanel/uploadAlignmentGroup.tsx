@@ -100,8 +100,7 @@ const UploadAlignmentGroup = ({containers, size}: {containers: CorpusContainer[]
               size={size as "medium" | "small" | undefined}
               disabled={containers.length === 0}
               variant="contained"
-              onClick={e => {
-                e.stopPropagation();
+              onClick={() => {
                 // delegate file loading to regular file input
                 fileInputRef?.current?.click();
               }}
@@ -117,8 +116,7 @@ const UploadAlignmentGroup = ({containers, size}: {containers: CorpusContainer[]
               size={size as "medium" | "small" | undefined}
               disabled={containers.length === 0}
               variant="contained"
-              onClick={e => {
-                e.stopPropagation();
+              onClick={() => {
                 // create starting instance
                 const alignmentExport: AlignmentFile = {
                   type: 'translation',
