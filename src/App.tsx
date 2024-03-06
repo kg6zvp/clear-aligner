@@ -1,7 +1,7 @@
 import './App.css';
 import './styles/theme.css';
 import React, { createContext, useEffect, useState } from 'react';
-import { Routes, Route, HashRouter } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
 import { ConcordanceView } from './features/concordanceView/concordanceView';
@@ -9,7 +9,7 @@ import { store } from 'app/store';
 import { Provider } from 'react-redux';
 import BCVWP from './features/bcvwp/BCVWPSupport';
 import { ProjectState } from './state/databaseManagement';
-import { VirtualTableLinks } from './state/links/tableManager';
+import { useCheckDatabase } from './state/links/tableManager';
 import { UserPreferenceTable } from './state/preferences/tableManager';
 
 export interface AppContextProps {
@@ -29,18 +29,20 @@ const App = () => {
   );
   const [state, setState] = useState({} as ProjectState);
   const [preferences, setPreferences] = useState<Record<string, unknown>>({});
+  const { result: linksTable } = useCheckDatabase('App');
 
   useEffect(() => {
-    const preferenceTable = new UserPreferenceTable();
+    const currLinksTable = state.linksTable ?? linksTable;
+    const currPreferenceTable = state.userPreferences ?? new UserPreferenceTable();
     if (!state.linksTable || !state.userPreferences) {
       setState({
         ...state,
-        linksTable: new VirtualTableLinks(),
-        userPreferences: state.userPreferences ?? preferenceTable
+        linksTable: currLinksTable,
+        userPreferences: currPreferenceTable
       });
     }
-    setPreferences(p => Object.keys(p).length ? p : Object.fromEntries(preferenceTable.getPreferences().entries()));
-  }, [state, state.linksTable, setState]);
+    setPreferences(p => Object.keys(p).length ? p : Object.fromEntries(currPreferenceTable.getPreferences().entries()));
+  }, [linksTable, state, state.linksTable, setState]);
 
   return (
     <AppContext.Provider

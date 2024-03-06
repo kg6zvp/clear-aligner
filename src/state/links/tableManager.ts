@@ -1,31 +1,94 @@
-import { AlignmentSide, Link } from '../../structs';
+import { AlignmentSide, BookStats, Link, Project } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { IndexedChangeType, SecondaryIndex, VirtualTable } from '../databaseManagement';
-import { v4 as uuidv4 } from 'uuid';
+import uuid from 'uuid-random';
+import _ from 'lodash';
+import { useContext, useEffect, useState } from 'react';
+import { AppContext } from '../../App';
+import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
+import books from '../../workbench/books';
 
-export class VirtualTableLinks extends VirtualTable<Link> {
-  links: Map<string, Link>;
-  sourcesIndex: Map<string, string[]>;
-  targetsIndex: Map<string, string[]>;
+const DatabaseChunkSize = 10_000;
+const DatbaseStatusRefreshTimeInMs = 500;
+const DatabaseWaitInMs = 1_000;
+const EmptyWordId = '00000000000';
+const DefaultProjectName = 'default';
+const LinkTableName = 'link';
+const ProjectTableName = 'project';
+
+export interface DatabaseLoadState {
+  isLoaded: boolean,
+  isLoading: boolean
+}
+
+export interface TableLoadState extends DatabaseLoadState {
+}
+
+export interface DatabaseBusyInfo {
+  isBusy?: boolean,
+  userText?: string,
+  progressCtr?: number,
+  progressMax?: number,
+}
+
+export interface DatabaseStatus {
+  busyInfo: DatabaseBusyInfo,
+  databaseLoadState: DatabaseLoadState,
+  projectTableLoadState: TableLoadState,
+  linkTableLoadState: TableLoadState,
+  lastUpdateTime?: number,
+}
+
+const InitialDatabaseStatus = {
+  busyInfo: { isBusy: false, progressCtr: 0, progressMax: 0 },
+  databaseLoadState: { isLoaded: false, isLoading: false },
+  projectTableLoadState: { isLoaded: false, isLoading: false },
+  linkTableLoadState: { isLoaded: false, isLoading: false }
+} as DatabaseStatus;
+
+export class LinksTable extends VirtualTable<Link> {
+  private readonly isLoggingTime = true;
+  private readonly linksMap: Map<string, Link>;
+  private readonly sourcesMap: Map<string, string[]>;
+  private readonly targetsMap: Map<string, string[]>;
+  private readonly linksByBookMap: Map<number, number>;
+  private readonly databaseStatus: DatabaseStatus;
+  private databaseBusyCtr = 0;
 
   constructor() {
     super();
-    this.links = new Map<string, Link>();
-    this.sourcesIndex = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
-    this.targetsIndex = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
+    this.linksMap = new Map<string, Link>();
+    this.sourcesMap = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
+    this.targetsMap = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
+    this.linksByBookMap = new Map<number, number>();
+    this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   }
 
-  save = (link: Link, suppressOnUpdate?: boolean): Link | undefined => {
-    this.remove(link.id); // idempotent operation
+  save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<Link | undefined> => {
+    if (!isForced && this._isDatabaseBusy()) {
+      return;
+    }
+
+    this._logDatabaseTime('save()');
+    this._incrDatabaseBusyCtr();
     try {
+      await this.remove(link.id, true);
+
       const newLink: Link = {
-        id: link.id ?? uuidv4(),
+        id: link.id ?? uuid(),
         sources: link.sources.map(BCVWP.sanitize),
-        targets: link.targets.map(BCVWP.sanitize),
+        targets: link.targets.map(BCVWP.sanitize)
       };
-      this.links.set(newLink.id!, newLink);
+
+      this.linksMap.set(newLink.id!, newLink);
       this._indexLink(newLink);
       void this._updateSecondaryIndices(IndexedChangeType.SAVE, newLink);
+
+      await this.checkLinkTable();
+      // @ts-ignore
+      await window.databaseApi.save(LinkTableName, newLink);
+      await this._saveDefaultProject();
+
       return newLink;
     } catch (e) {
       return undefined;
@@ -34,47 +97,120 @@ export class VirtualTableLinks extends VirtualTable<Link> {
     }
   };
 
-  /**
-   * perform indexing on the given link
-   * @param link
-   */
-  _indexLink = (link: Link) => {
-    if (!link.id) {
-      throw new Error('Cannot index link without an id!');
-    }
-    // index sources
-    link.sources.map(BCVWP.sanitize).forEach((normalizedRefString) => {
-      const linksOnSource = this.sourcesIndex.get(normalizedRefString) ?? [];
-      if (linksOnSource.includes(link.id!)) {
-        return;
-      }
-      linksOnSource.push(link.id!);
-      this.sourcesIndex.set(normalizedRefString, linksOnSource);
-    });
-
-    // index targets
-    link.targets.map(BCVWP.sanitize).forEach((normalizedRefString) => {
-      const linksOnTarget = this.targetsIndex.get(normalizedRefString) ?? [];
-      if (linksOnTarget.includes(link.id!)) {
-        return;
-      }
-      linksOnTarget.push(link.id!);
-      this.targetsIndex.set(normalizedRefString, linksOnTarget);
-    });
-  };
-
   exists = (id?: string): boolean => {
     if (!id) return false;
-    return this.links.has(id);
+    return this.linksMap.has(id);
   };
 
-  saveAll = (links: Link[], suppressOnUpdate?: boolean) => {
+  removeAll = async (suppressOnUpdate = false, isForced = false) => {
+    if (!isForced && this._isDatabaseBusy()) {
+      return;
+    }
+
+    this._logDatabaseTime('removeAll()');
+    this._incrDatabaseBusyCtr();
+    this.databaseStatus.busyInfo.userText = 'Removing old links...';
     try {
-      links.forEach((link) => this.save(link, true));
-    } catch (x) {
-      console.error('error persisting in bulk', x);
+      Array.from(this.linksMap.values())
+        .forEach(link => this._updateSecondaryIndices(IndexedChangeType.REMOVE, link));
+
+      this.sourcesMap.clear();
+      this.targetsMap.clear();
+      this.linksMap.clear();
+      this.linksByBookMap.clear();
+
+      await this.checkLinkTable();
+      // @ts-ignore
+      await window.databaseApi.deleteAll(LinkTableName);
+      await this._saveDefaultProject();
+
+      this._onUpdate(suppressOnUpdate);
+    } catch (ex) {
+      console.error('error removing all links', ex);
+    } finally {
+      this._decrDatabaseBusyCtr();
+      this._logDatabaseTimeEnd('removeAll()');
+    }
+  };
+
+  saveAlignmentFile = async (alignmentFile: AlignmentFile,
+                             suppressOnUpdate = false,
+                             isForced = false) =>
+    await this.saveAll(alignmentFile.records.map(
+      record =>
+        ({
+          id: LinksTable.createAlignmentRecordId(record),
+          sources: record.source,
+          targets: record.target
+        } as Link)
+    ), suppressOnUpdate, isForced);
+
+  saveAll = async (inputLinks: Link[],
+                   suppressOnUpdate = false,
+                   isForced = false) => {
+    // reentry is possible because everything is
+    // done in chunks with promises
+    if (!isForced && this._isDatabaseBusy()) {
+      return [] as Link[];
+    }
+
+    this._logDatabaseTime('saveAllLinks(): complete');
+    this._incrDatabaseBusyCtr();
+    this.databaseStatus.busyInfo.userText = `Importing ${inputLinks.length.toLocaleString()} links...`;
+    try {
+      await this.removeAll(true, true);
+      await this.checkLinkTable();
+
+      this.databaseStatus.busyInfo.userText = `Sorting ${inputLinks.length.toLocaleString()} links...`;
+      this._logDatabaseTime('saveAllLinks(): sorted');
+      const outputLinks = inputLinks.map(link => {
+        return {
+          id: link.id ?? LinksTable.createLinkId(link),
+          sources: link.sources.map(BCVWP.sanitize),
+          targets: link.targets.map(BCVWP.sanitize)
+        } as Link;
+      });
+      outputLinks.forEach(link =>
+        link.id = link.id ?? LinksTable.createLinkId(link));
+      outputLinks.sort((l1, l2) =>
+        (l1.id ?? EmptyWordId)
+          .localeCompare(l2.id ?? EmptyWordId));
+      this._logDatabaseTimeEnd('saveAllLinks(): sorted');
+
+      this._logDatabaseTime('saveAllLinks(): saved');
+      const busyInfo = this.databaseStatus.busyInfo;
+      busyInfo.userText = `Saving ${outputLinks.length.toLocaleString()} links...`;
+      busyInfo.progressCtr = 0;
+      busyInfo.progressMax = outputLinks.length;
+      for (const chunk of _.chunk(outputLinks, DatabaseChunkSize)) {
+        // @ts-ignore
+        await window.databaseApi.insert(LinkTableName, chunk);
+        chunk.forEach(outputLink => {
+          this._indexLink(outputLink);
+          void this._updateSecondaryIndices(IndexedChangeType.SAVE, outputLink);
+        });
+        busyInfo.progressCtr += chunk.length;
+
+        const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
+        const toLinkTitle = LinksTable.createLinkTitle(chunk[chunk.length - 1]);
+        busyInfo.userText = chunk.length === busyInfo.progressMax
+          ? `Saved ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} links)...`
+          : `Saved ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} links)...`;
+
+        this._logDatabaseTimeLog('saveAllLinks(): saved', busyInfo.progressCtr, busyInfo.progressMax);
+      }
+      this._logDatabaseTimeEnd('saveAllLinks(): saved');
+
+      busyInfo.userText = `Saving project...`;
+      await this._saveDefaultProject();
+
+      return outputLinks;
+    } catch (ex) {
+      console.error('error saving all links', ex);
     } finally {
       this._onUpdate(suppressOnUpdate);
+      this._decrDatabaseBusyCtr();
+      this._logDatabaseTimeEnd('saveAllLinks(): complete');
     }
   };
 
@@ -87,34 +223,24 @@ export class VirtualTableLinks extends VirtualTable<Link> {
     const refString = wordId.toReferenceString();
     switch (side) {
       case AlignmentSide.SOURCE:
-        return (
-          this.sourcesIndex.has(refString) &&
-          (this.sourcesIndex.get(refString)?.length ?? 0) > 0
-        );
+        return (this.sourcesMap.get(refString) ?? []).length > 0;
       case AlignmentSide.TARGET:
-        return (
-          this.targetsIndex.has(refString) &&
-          (this.sourcesIndex.get(refString)?.length ?? 0) > 0
-        );
+        return (this.targetsMap.get(refString) ?? []).length > 0;
+      default:
+        return false;
     }
   };
 
   findLinkIdsByWord = (side: AlignmentSide, wordId: BCVWP): string[] => {
     const refString = wordId.toReferenceString();
-    const linkIds: string[] = [];
     switch (side) {
-      case 'sources':
-        (this.sourcesIndex.get(refString) ?? new Set<string>()).forEach((id) =>
-          linkIds.push(id)
-        );
-        break;
-      case 'targets':
-        (this.targetsIndex.get(refString) ?? new Set<string>()).forEach((id) =>
-          linkIds.push(id)
-        );
-        break;
+      case AlignmentSide.SOURCE:
+        return (this.sourcesMap.get(refString) ?? []);
+      case AlignmentSide.TARGET:
+        return (this.targetsMap.get(refString) ?? []);
+      default:
+        return [];
     }
-    return linkIds;
   };
 
   findByWord = (side: AlignmentSide, wordId: BCVWP): Link[] =>
@@ -122,70 +248,875 @@ export class VirtualTableLinks extends VirtualTable<Link> {
       .map(this.get)
       .filter((v) => !!v) as Link[];
 
-  getAll = (): Link[] => Array.from(this.links.values());
+  getAll = (): Link[] => Array.from(this.linksMap.values());
 
   get = (id?: string): Link | undefined => {
     if (!id) return undefined;
-
-    return this.links.get(id);
+    return this.linksMap.get(id);
   };
 
-  remove = (id?: string, suppressOnUpdate?: boolean) => {
-    if (!this.exists(id)) return undefined;
-    const link = this.links.get(id!)!;
+  remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
+    if (!isForced && this._isDatabaseBusy()) {
+      return;
+    }
 
-    this._removeIndexes(link);
+    this._logDatabaseTime('remove()');
+    this._incrDatabaseBusyCtr();
+    try {
+      const oldLink = this.linksMap.get(id!);
+      if (!oldLink) return;
 
-    this.links.delete(link?.id!);
+      void this._updateSecondaryIndices(IndexedChangeType.REMOVE, oldLink);
+      this._removeIndexes(oldLink);
+      this.linksMap.delete(oldLink.id ?? '');
 
-    this._onUpdate(suppressOnUpdate);
-    void this._updateSecondaryIndices(IndexedChangeType.REMOVE, link);
+      await this.checkLinkTable();
+      // @ts-ignore
+      await window.databaseApi.deleteByIds(LinkTableName, oldLink.id ?? '');
+      await this._saveDefaultProject();
+
+      this._onUpdate(suppressOnUpdate);
+    } finally {
+      this._decrDatabaseBusyCtr();
+      this._logDatabaseTimeEnd('remove()');
+    }
+  };
+
+  catchupNewIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
+    const indicesPromises: Promise<void>[] = [];
+    for (const link of this.linksMap.values()) {
+      indicesPromises.push(new Promise<void>((resolve) =>
+        setTimeout(() => {
+          index.onChange(IndexedChangeType.SAVE, link, true);
+          resolve();
+        }, 3)));
+    }
+
+    await Promise.all(indicesPromises);
+  };
+
+  getDatabaseStatus = (): DatabaseStatus => ({
+    ..._.cloneDeep(this.databaseStatus)
+  });
+
+  /**
+   * perform indexing on the given link
+   * @param link
+   */
+  private _indexLink = (link: Link) => {
+    if (!link.id) {
+      throw new Error('Cannot index link without an id!');
+    }
+    // index sources
+    link.sources.map(BCVWP.sanitize).forEach((normalizedRefString) => {
+      const linksOnSource = this.sourcesMap.get(normalizedRefString) ?? [];
+      if (linksOnSource.includes(link.id!)) {
+        return;
+      }
+      linksOnSource.push(link.id!);
+      this.sourcesMap.set(normalizedRefString, linksOnSource);
+    });
+
+    // index targets
+    link.targets.map(BCVWP.sanitize).forEach((normalizedRefString) => {
+      const linksOnTarget = this.targetsMap.get(normalizedRefString) ?? [];
+      if (linksOnTarget.includes(link.id!)) {
+        return;
+      }
+      linksOnTarget.push(link.id!);
+      this.targetsMap.set(normalizedRefString, linksOnTarget);
+    });
+  };
+
+  /**
+   * Checks to see if the database is loaded and,
+   * if not, loads it.
+   *
+   * Returns true if the database was loaded in this step,
+   * false otherwise.
+   */
+  public checkDatabase = async (): Promise<boolean> => {
+    const loadState = this.databaseStatus.databaseLoadState;
+    if (loadState.isLoading) {
+      await this._waitForDatabase();
+    }
+    if (loadState.isLoaded) return false;
+
+    this._logDatabaseTime('checkDatabase(): loading');
+    loadState.isLoading = true;
+    try {
+      // @ts-ignore
+      await window.databaseApi.createDataSource();
+      loadState.isLoaded = true;
+
+      return true;
+    } finally {
+      loadState.isLoading = false;
+      this._logDatabaseTimeEnd('checkDatabase(): loading');
+    }
+  };
+
+  /**
+   * Checks to see if the link table is loaded and,
+   * if not, loads it.
+   *
+   * Returns true if the link table was loaded in this step,
+   * false otherwise.
+   */
+  public checkLinkTable = async (): Promise<boolean> => {
+    if (!this._quickCheckDatabase()) {
+      await this.checkDatabase();
+    }
+    const loadState = this.databaseStatus.linkTableLoadState;
+    if (loadState.isLoading) {
+      await this._waitForLinkTable();
+    }
+    if (loadState.isLoaded) {
+      return false;
+    }
+
+    this._logDatabaseTime('checkLinkTable(): loading');
+    loadState.isLoading = true;
+    try {
+      await this.checkProjectTable();
+      await this._rebuildLinkMaps();
+
+      loadState.isLoaded = true;
+    } finally {
+      loadState.isLoading = false;
+      this._logDatabaseTimeEnd('checkLinkTable(): loading');
+    }
+
+    return true;
+  };
+
+  /**
+   * Checks to see if the links DB has been created without using a promise.
+   * Does not guarantee the database is not in the process of being created.
+   */
+  private _quickCheckDatabase = () => this.databaseStatus.databaseLoadState.isLoaded;
+
+  /**
+   * Checks to see if the project table is loaded and,
+   * if not, loads it.
+   *
+   * Returns true if the project table was loaded in this step,
+   * false otherwise.
+   */
+  public checkProjectTable = async () => {
+    if (!this._quickCheckDatabase()) {
+      await this.checkDatabase();
+    }
+    const loadState = this.databaseStatus.projectTableLoadState;
+    if (loadState.isLoading) {
+      await this._waitForProjectTable();
+    }
+    if (loadState.isLoaded) {
+      return false;
+    }
+
+    this._logDatabaseTime('checkProjectTable(): loading');
+    loadState.isLoading = true;
+    try {
+      await this._loadDefaultProject();
+      loadState.isLoaded = true;
+    } finally {
+      loadState.isLoading = false;
+      this._logDatabaseTimeEnd('checkProjectTable(): loading');
+    }
+
+    return true;
+  };
+
+  checkUserTable = async () => {
+    if (!this._quickCheckDatabase()) {
+      await this.checkDatabase();
+    }
+  };
+
+  /**
+   * Checks to see if the database and all tables are loaded and
+   * if not, loads it.
+   *
+   * Returns true if the database or any table was loaded in this step,
+   * false otherwise.
+   */
+  public checkAllTables = async () => {
+    this._logDatabaseTime('checkAllTables(): loading');
+    try {
+      const databaseResult = await this.checkDatabase();
+      const linkTableResult = await this.checkLinkTable();
+      const projectTableResult = await this.checkProjectTable();
+      const userTableResult = await this.checkUserTable();
+      return (databaseResult || linkTableResult || projectTableResult || userTableResult);
+    } finally {
+      this._logDatabaseTimeEnd('checkAllTables(): loading');
+    }
+  };
+
+  private _saveDefaultProject = async () => {
+    this._logDatabaseTime('_saveDefaultProject()');
+    try {
+      const defaultProject = {
+        id: DefaultProjectName,
+        bookStats: Array.from(this.linksByBookMap)
+          .map(([key, value]) =>
+            ({
+              bookNum: key,
+              linkCtr: value
+            } as BookStats))
+      } as Project;
+
+      // @ts-ignore
+      await window.databaseApi.save(ProjectTableName, defaultProject);
+      return defaultProject;
+    } finally {
+      this._logDatabaseTimeEnd('_saveDefaultProject()');
+    }
+  };
+
+  private _loadDefaultProject = async () => {
+    this._logDatabaseTime('_loadDefaultProject()');
+    try {
+      // @ts-ignore
+      const defaultProject = (await window.databaseApi.findOneById(ProjectTableName, DefaultProjectName))
+        ?? (await this._saveDefaultProject());
+
+      this.linksByBookMap.clear();
+      ((defaultProject.bookStats ?? []) as BookStats[])
+        .forEach(bookStats =>
+          this.linksByBookMap.set(bookStats.bookNum, bookStats.linkCtr));
+
+      return defaultProject;
+    } finally {
+      this._logDatabaseTimeEnd('_loadDefaultProject()');
+    }
+  };
+
+  private _isDatabaseBusy = () => this.databaseBusyCtr > 0;
+
+  private _incrDatabaseBusyCtr = () => {
+    this.databaseBusyCtr = Math.max(this.databaseBusyCtr + 1, 0);
+    this.databaseStatus.busyInfo.isBusy = this.databaseBusyCtr > 0;
+  };
+
+  private _decrDatabaseBusyCtr = () => {
+    const busyInfo = this.databaseStatus.busyInfo;
+    const wasBusy = busyInfo.isBusy;
+    this.databaseBusyCtr = Math.max(this.databaseBusyCtr - 1, 0);
+    busyInfo.isBusy = this.databaseBusyCtr > 0;
+    if (wasBusy && !busyInfo.isBusy) {
+      busyInfo.userText = undefined;
+      busyInfo.progressCtr = 0;
+      busyInfo.progressMax = 0;
+    }
+  };
+
+  private _rebuildLinkMaps = async (suppressOnUpdate = false, isForced = false) => {
+    if (!isForced && this._isDatabaseBusy()) {
+      return;
+    }
+
+    this._logDatabaseTime('_rebuildLinkMaps(): indexing');
+    this._incrDatabaseBusyCtr();
+    this.databaseStatus.busyInfo.userText = 'Loading the database...';
+    try {
+      this.sourcesMap.clear();
+      this.targetsMap.clear();
+
+      const oldLinksByBookMap = new Map<number, number>(this.linksByBookMap);
+      this.linksByBookMap.clear();
+
+      this._logDatabaseTimeLog('_rebuildLinkMaps(): indexing', oldLinksByBookMap);
+      const busyInfo = this.databaseStatus.busyInfo;
+      busyInfo.progressCtr = 0;
+      busyInfo.progressMax = oldLinksByBookMap.size;
+      for (const [bookNum, linkCtr] of oldLinksByBookMap.entries()) {
+        busyInfo.progressCtr++;
+        if (linkCtr < 1) {
+          continue;
+        }
+
+        busyInfo.userText = `Loading ${books[bookNum - 1].ParaText} (${busyInfo.progressCtr} of ${busyInfo.progressMax} books)...`;
+        const keyPrefix = `00${bookNum}`.slice(-2);
+        const fromId = `${keyPrefix}000000000-00000000-0000-0000-0000-000000000000`;
+        const toId = `${keyPrefix}999999999-ffffffff-ffff-ffff-ffff-ffffffffffff`;
+
+        // @ts-ignore
+        const bookLinks = ((await window.databaseApi.findBetweenIds(LinkTableName, fromId, toId)) as Link[]);
+        bookLinks.forEach(row => this._indexLink(row as Link));
+
+        this._logDatabaseTimeLog('_rebuildLinkMaps(): indexing', fromId, toId, bookLinks.length);
+      }
+    } finally {
+      this._onUpdate(suppressOnUpdate);
+      this._decrDatabaseBusyCtr();
+      this._logDatabaseTimeEnd('_rebuildLinkMaps(): indexing');
+    }
+  };
+
+  private _waitForDatabase = async () => {
+    while (this.databaseStatus.databaseLoadState.isLoading) {
+      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
+    }
+  };
+
+  private _waitForLinkTable = async () => {
+    while (this.databaseStatus.linkTableLoadState.isLoading) {
+      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
+    }
+  };
+
+  private _waitForProjectTable = async () => {
+    while (this.databaseStatus.projectTableLoadState.isLoading) {
+      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
+    }
   };
 
   /**
    * remove the indexes created for a given link
    * @param link
    */
-  _removeIndexes = (link?: Link) => {
+  private _removeIndexes = (link?: Link) => {
     if (!link || !link.id) return;
 
     link.sources.forEach((src) => {
-      const associatedLinks = this.sourcesIndex.get(src);
+      const associatedLinks = this.sourcesMap.get(src);
       if (!associatedLinks) return;
 
       const newAssociatedLinks = associatedLinks.filter((v) => v !== link.id!);
 
       if (newAssociatedLinks.length < 1) {
-        this.sourcesIndex.delete(src);
+        this.sourcesMap.delete(src);
       } else {
-        this.sourcesIndex.set(src, newAssociatedLinks);
+        this.sourcesMap.set(src, newAssociatedLinks);
       }
     });
     link.targets.forEach((tgt) => {
-      const associatedLinks = this.targetsIndex.get(tgt);
+      const associatedLinks = this.targetsMap.get(tgt);
       if (!associatedLinks) return;
 
       const newAssociatedLinks = associatedLinks.filter((v) => v !== link.id!);
 
       if (associatedLinks.length < 1) {
-        this.targetsIndex.delete(tgt);
+        this.targetsMap.delete(tgt);
       } else {
-        this.targetsIndex.set(tgt, newAssociatedLinks);
+        this.targetsMap.set(tgt, newAssociatedLinks);
       }
     });
   };
 
-  catchupNewIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
-    const indicesPromises: Promise<void>[] = [];
-    for (const link of this.links.values()) {
-      indicesPromises.push(new Promise<void>((resolve) => {
-        setTimeout(() => {
-          index.onChange(IndexedChangeType.SAVE, link, true);
-          resolve();
-        }, 3);
-      }));
+  private _logDatabaseTime = (label: string) => {
+    if (this.isLoggingTime) {
+      console.time(label);
     }
+  };
 
-    await Promise.all(indicesPromises);
-  }
+  private _logDatabaseTimeLog = (label: string, ...args: any[]) => {
+    if (this.isLoggingTime) {
+      console.timeLog(label, ...args);
+    }
+  };
+
+  private _logDatabaseTimeEnd = (label: string) => {
+    if (this.isLoggingTime) {
+      console.timeEnd(label);
+    }
+  };
+
+  /**
+   * create virtual links table with all necessary indexes
+   */
+  static createLinksTable = () => new LinksTable();
+
+  static createLinkTitle = (link: Link): string => {
+    const bcvwp = BCVWP.parseFromString(link?.targets?.[0] ?? EmptyWordId);
+    return `${bcvwp?.getBookInfo()?.ParaText ?? '???'} ${bcvwp.chapter ?? 1}:${bcvwp.verse ?? 1}`;
+  };
+
+  static createIdFromWordId = (wordId: string): string => {
+    const workWordId = `${BCVWP.sanitize(wordId)}000000000`.slice(0, 11);
+    return `${workWordId}-${uuid()}`;
+  };
+
+  /**
+   * Creates a prefixed link ID that allows for prefix-based searches.
+   * @param link Input link (required).
+   */
+  static createLinkId = (link: Link): string =>
+    LinksTable.createIdFromWordId(link?.targets?.[0] ?? EmptyWordId);
+
+  /**
+   * Creates a prefixed alignment record ID that allows for prefix-based searches.
+   * @param alignmentRecord Input Alignment record (required).
+   */
+  static createAlignmentRecordId = (alignmentRecord: AlignmentRecord): string =>
+    LinksTable.createIdFromWordId(alignmentRecord?.target?.[0] ?? EmptyWordId);
 }
+
+const LinksTableInstance = LinksTable.createLinksTable();
+
+/**
+ * Save link hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param link Link to save (optional; undefined = no save).
+ * @param saveKey Unique key to control save operation (optional; undefined = no save).
+ */
+export const useSaveLink = (link?: Link, saveKey?: string) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    saveKey?: string,
+    result?: Link | undefined;
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!projectState?.linksTable
+      || !link
+      || !saveKey
+      || status.saveKey === saveKey) {
+      return;
+    }
+    const startStatus = {
+      ...status,
+      isPending: true,
+      saveKey
+    };
+    setStatus(startStatus);
+    console.debug('useSaveLink(): startStatus', startStatus);
+    projectState?.linksTable?.save(link)
+      .then(result => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false,
+          result
+        };
+        setStatus(endStatus);
+        console.debug('useSaveLink(): endStatus', endStatus);
+      });
+  }, [link, projectState?.linksTable, saveKey, status]);
+
+  return { ...status };
+};
+
+/**
+ * Save alignment file hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param alignmentFile Alignment file to save (optional; undefined = no save).
+ * @param saveKey Unique key to control save operation (optional; undefined = no save).
+ * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
+ */
+export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = true) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    saveKey?: string
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!projectState?.linksTable
+      || !alignmentFile
+      || !saveKey
+      || status.saveKey === saveKey) {
+      return;
+    }
+    const startStatus = {
+      ...status,
+      isPending: true,
+      saveKey
+    };
+    setStatus(startStatus);
+    console.debug('useSaveAlignmentFile(): startStatus', startStatus);
+    projectState?.linksTable?.saveAlignmentFile(alignmentFile, suppressOnUpdate)
+      .then(() => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false
+        };
+        setStatus(endStatus);
+        console.debug('useSaveAlignmentFile(): endStatus', endStatus);
+      });
+  }, [alignmentFile, projectState?.linksTable, saveKey, status, suppressOnUpdate]);
+
+  return { ...status };
+};
+
+/**
+ * Save links hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param links Links to save (optional; undefined = no save).
+ * @param saveKey Unique key to control save operation (optional; undefined = no save).
+ * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
+ */
+export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpdate: boolean = true) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    saveKey?: string,
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!projectState?.linksTable
+      || !links
+      || !saveKey
+      || status.saveKey === saveKey) {
+      return;
+    }
+    const startStatus = {
+      ...status,
+      isPending: true,
+      saveKey
+    };
+    setStatus(startStatus);
+    console.debug('useSaveAllLinks(): startStatus', startStatus);
+    projectState?.linksTable?.saveAll(links, suppressOnUpdate)
+      .then(() => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false
+        };
+        setStatus(endStatus);
+        console.debug('useSaveAllLinks(): endStatus', endStatus);
+      });
+  }, [links, projectState?.linksTable, saveKey, status, suppressOnUpdate]);
+
+  return { ...status };
+};
+
+/**
+ * Links existence check hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param linkId Link id to check (optional; undefined = no check).
+ * @param existsKey Unique key to control check operation (optional; undefined = will check).
+ */
+export const useLinkExists = (linkId?: string, existsKey?: string) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    existsKey?: string;
+    result?: boolean;
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    const workExistsKey = existsKey ?? uuid();
+    if (!projectState?.linksTable
+      || !linkId
+      || status.existsKey === workExistsKey) {
+      return;
+    }
+    const endStatus = {
+      ...status,
+      isPending: false,
+      existsKey: workExistsKey,
+      result: !!projectState?.linksTable?.exists(linkId)
+    };
+    setStatus(endStatus);
+    console.debug('useLinkExists(): endStatus', endStatus);
+  }, [existsKey, linkId, projectState?.linksTable, status]);
+
+  return { ...status };
+};
+
+/**
+ * Remove all links hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param removeKey Unique key to control remove operation (optional; undefined = no remove).
+ * @param suppressOnUpdate Suppress table update notifications (optional; undefined = true).
+ */
+export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean = true) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    removeKey?: string;
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!projectState?.linksTable
+      || !removeKey
+      || status.removeKey === removeKey) {
+      return;
+    }
+    const startStatus = {
+      ...status,
+      isPending: true,
+      removeKey
+    };
+    setStatus(startStatus);
+    console.debug('useRemoveAllLinks(): startStatus', startStatus);
+    projectState?.linksTable?.removeAll(suppressOnUpdate)
+      .then(() => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false
+        };
+        setStatus(endStatus);
+        console.debug('useRemoveAllLinks(): endStatus', endStatus);
+      });
+  }, [projectState?.linksTable, removeKey, status, suppressOnUpdate]);
+
+  return { ...status };
+};
+
+/**
+ * Find links by word ID hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param side Alignment side to find (optional; undefined = no find).
+ * @param wordId Word ID to find (optional; undefined = no find).
+ * @param findKey Unique key to control find operation (optional; undefined = will find).
+ */
+export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey?: string) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    findKey?: string;
+    result?: Link[];
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    const workFindKey = findKey ?? uuid();
+    if (!projectState?.linksTable
+      || !side
+      || !wordId
+      || status.findKey === workFindKey) {
+      return;
+    }
+    const endStatus = {
+      ...status,
+      isPending: false,
+      findKey: workFindKey,
+      result: projectState?.linksTable?.findByWord(side, wordId)
+    };
+    setStatus(endStatus);
+    console.debug('useFindLinksByWord(): endStatus', endStatus);
+  }, [findKey, projectState?.linksTable, side, status, wordId]);
+
+  return { ...status };
+};
+
+/**
+ * Get all links hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param getKey Unique key to control get operation (optional; undefined = no get).
+ */
+export const useGetAllLinks = (getKey?: string) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    getKey?: string;
+    result?: Link[];
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!projectState?.linksTable
+      || !getKey
+      || status.getKey === getKey) {
+      return;
+    }
+    const endStatus = {
+      ...status,
+      isPending: false,
+      getKey,
+      result: projectState?.linksTable?.getAll()
+    };
+    setStatus(endStatus);
+    console.debug('useGetAllLinks(): endStatus', endStatus);
+  }, [getKey, projectState?.linksTable, status]);
+
+  return { ...status };
+};
+
+/**
+ * Get link by ID hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param linkId Link ID to get (optional; undefined = no get).
+ * @param getKey Unique key to control get operation (optional; undefined = will get).
+ */
+export const useGetLink = (linkId?: string, getKey?: string) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    getKey?: string;
+    result?: Link | undefined;
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    const workGetKey = getKey ?? uuid();
+    if (!projectState?.linksTable
+      || !linkId
+      || status.getKey === workGetKey) {
+      return;
+    }
+    const endStatus = {
+      ...status,
+      isPending: false,
+      getKey: workGetKey,
+      result: projectState?.linksTable?.get(linkId)
+    };
+    setStatus(endStatus);
+    console.debug('useGetLink(): endStatus', endStatus);
+  }, [getKey, linkId, projectState?.linksTable, status]);
+
+  return { ...status };
+};
+
+/**
+ * Remove link by ID hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param linkId Link ID to remove (optional; undefined = no remove).
+ * @param removeKey Unique key to control remove operation (optional; undefined = no remove).
+ * @param suppressOnUpdate Suppress table update notifications (optional; undefined = false).
+ */
+export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
+  const [status, setStatus] = useState<{
+    isPending: boolean;
+    removeKey?: string
+  }>({ isPending: false });
+  const { projectState } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!projectState?.linksTable
+      || !linkId
+      || !removeKey
+      || status.removeKey === removeKey) {
+      return;
+    }
+    const startStatus = {
+      ...status,
+      isPending: true,
+      removeKey
+    };
+    setStatus(startStatus);
+    console.debug('useRemoveLink(): startStatus', startStatus);
+    projectState?.linksTable?.remove(linkId, suppressOnUpdate)
+      .then(() => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false
+        };
+        setStatus(endStatus);
+        console.debug('useRemoveLink(): endStatus', endStatus);
+      });
+  }, [linkId, projectState?.linksTable, removeKey, status, suppressOnUpdate]);
+
+  return { ...status };
+};
+
+/**
+ * Database check/access hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param checkKey Unique key to control check operation (optional; undefined = no check).
+ */
+export const useCheckDatabase = (checkKey?: string) => {
+  const [status, setStatus] =
+    useState<{
+      result?: LinksTable,
+      status?: DatabaseStatus,
+      checkKey?: string
+    }>({
+      result: undefined,
+      status: { ..._.cloneDeep(InitialDatabaseStatus) }
+    });
+
+  useEffect(() => {
+    if (!checkKey
+      || status.checkKey === checkKey) {
+      return;
+    }
+    const databaseAccess = LinksTableInstance;
+    databaseAccess.checkAllTables()
+      .then(() => {
+        const endStatus = {
+          ...status,
+          result: databaseAccess,
+          status: { ...databaseAccess.getDatabaseStatus() },
+          checkKey
+        };
+        setStatus(endStatus);
+      });
+  }, [checkKey, status]);
+
+  return { ...status };
+};
+
+/**
+ * Database status hook.
+ *<p>
+ * @param isAsync True to fire off a timer in the background to periodically recheck and update state, as needed (optional; undefined = no async).
+ */
+export const useDatabaseStatus = (isAsync = false) => {
+  const [status, setStatus] =
+    useState<DatabaseStatus>({ ..._.cloneDeep(InitialDatabaseStatus) });
+
+  useEffect(() => {
+    const databaseAccess = LinksTableInstance;
+    const setStatusFunction = (isAsync = false): number | undefined => {
+      const endStatus = {
+        ...status,
+        ...databaseAccess.getDatabaseStatus()
+      };
+      setStatus(endStatus);
+      if (isAsync) {
+        return window.setInterval(() => setStatusFunction(false), DatbaseStatusRefreshTimeInMs);
+      }
+      return undefined;
+    };
+
+    const intervalId = setStatusFunction(isAsync);
+    if (!!intervalId) {
+      return () => window.clearInterval(intervalId);
+    }
+    return undefined;
+  }, [isAsync, status]);
+
+  return { ...status };
+};

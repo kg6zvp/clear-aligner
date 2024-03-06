@@ -1,4 +1,5 @@
-import { VirtualTableLinks } from './links/tableManager';
+import { Link } from 'structs';
+import { LinksTable } from './links/tableManager';
 import { WordsIndex } from './links/wordsIndex';
 import { UserPreferenceTable } from './preferences/tableManager';
 
@@ -15,7 +16,7 @@ export enum IndexedChangeType {
  * PouchDB "tables" (databases)
  */
 export interface ProjectState {
-  linksTable?: VirtualTableLinks;
+  linksTable?: LinksTable;
   userPreferences?: UserPreferenceTable;
   linksIndexes?: {
     sourcesIndex: WordsIndex;
@@ -23,7 +24,7 @@ export interface ProjectState {
   }
 }
 
-export type SecondaryIndex<T> = {
+export type SecondaryIndex<Link> = {
   /**
    * unique identifier
    */
@@ -34,7 +35,7 @@ export type SecondaryIndex<T> = {
    * @param payload item being removed or added
    * @param suppressLastUpdate don't update the last updated time during this indexing operation (used for bulk operations)
    */
-  onChange(type: IndexedChangeType, payload: T, suppressLastUpdate?: boolean): Promise<void>;
+  onChange(type: IndexedChangeType, payload: Link, suppressLastUpdate?: boolean): Promise<void>;
 
   isLoading(): boolean;
 }

@@ -2,7 +2,7 @@ import { AlignmentSide, CorpusContainer, Link, Word } from '../../structs';
 import { FullyResolvedLink, PivotWord, ResolvedWordEntry } from './structs';
 import { findWordByString } from '../../helpers/findWord';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { VirtualTableLinks } from '../../state/links/tableManager';
+import { LinksTable } from '../../state/links/tableManager';
 
 export const fullyResolveLink = (
   link: Link,
@@ -58,7 +58,7 @@ export const fullyResolveLink = (
  * @param pivotWord pivotWord to populate
  */
 export const getLinksForPivotWord = async (
-  linksTable: VirtualTableLinks,
+  linksTable: LinksTable,
   pivotWord: PivotWord
 ): Promise<PivotWord> => {
   pivotWord.alignmentLinks = pivotWord.instances.flatMap((instance) =>

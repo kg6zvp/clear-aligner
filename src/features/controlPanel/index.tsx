@@ -16,7 +16,7 @@ import { resetTextSegments } from 'state/alignment.slice';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { VirtualTableLinks } from '../../state/links/tableManager';
+import { LinksTable } from '../../state/links/tableManager';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
@@ -206,7 +206,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                 // grab file content
                 const file = event!.target!.files![0];
                 const content = await file.text();
-                const linksTable: VirtualTableLinks = new VirtualTableLinks();
+                const linksTable: LinksTable = new LinksTable();
 
                 const sourceContainer = props.containers.find((container) => container.id === 'source')!;
                 const targetContainer = props.containers.find((container) => container.id === 'target')!;
@@ -224,7 +224,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
                 setProjectState((ps: ProjectState) => ({
                   ...ps,
-                  linksTable,
+                  linksTable: linksTable,
                   linksIndexes
                 }));
 

@@ -6,3 +6,6 @@ npm install -g yarn
 
 # Install the node dependencies
 yarn install
+
+# Rebuild any modules that need it
+electron-rebuild

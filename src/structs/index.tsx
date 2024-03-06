@@ -150,9 +150,34 @@ export enum CorpusFileFormat {
   TSV_TARGET,
 }
 
-// An instance of alignment
-export interface Link {
+export interface BookStats {
+  bookNum: number;
+  linkCtr: number;
+}
+
+export class DatabaseRecord {
   id?: string;
+}
+
+export class Project extends DatabaseRecord {
+  constructor() {
+    super();
+    this.bookStats = [];
+  }
+
+  bookStats: BookStats[];
+}
+
+export class User extends DatabaseRecord {
+}
+
+// An instance of alignment
+export class Link extends DatabaseRecord {
+  constructor() {
+    super();
+    this.sources = [];
+    this.targets = [];
+  }
   sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
