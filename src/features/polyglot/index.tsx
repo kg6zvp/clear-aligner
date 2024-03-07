@@ -32,7 +32,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   const { preferences } = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const { result: databaseStatus } = useDatabaseStatus();
+  const { result: databaseStatus } = useDatabaseStatus(true);
 
   const corpusViewports: CorpusViewport[] | null = useMemo(
     () =>

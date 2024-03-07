@@ -16,7 +16,7 @@ import { resetTextSegments } from 'state/alignment.slice';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { useGetAllLinks, useRemoveLink, useSaveAlignmentFile, useSaveLink } from '../../state/links/tableManager';
+import { useRemoveLink, useSaveAlignmentFile, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 
@@ -44,8 +44,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     linkId?: string,
     removeKey?: string,
   }>();
-  const [tableUpdateKey, setTableUpdateKey] = useState<string>();
-  const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _initializeTargetPivotWords = usePivotWords(AlignmentSide.TARGET);
@@ -61,10 +59,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isPending: isSaveAlignmentFilePending } = useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isPending: isSaveLinkPending } = useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isPending: isRemoveLinkPending } = useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
-  const { result: allLinks } = useGetAllLinks(getAllLinksKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
   const linkHasBothSides = useMemo(
@@ -255,7 +255,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   alignmentFile: JSON.parse(content) as AlignmentFile,
                   saveKey: uuid()
                 });
-                setTableUpdateKey(uuid());
               }}
             />
             <Button

@@ -10,8 +10,8 @@ import books from '../../workbench/books';
 
 const DatabaseChunkSize = 10_000;
 const IndexChunkSize = 100;
-const DatbaseStatusRefreshTimeInMs = 500;
 const DatabaseWaitInMs = 1_000;
+const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
 const DefaultProjectName = 'default';
 const LinkTableName = 'link';
@@ -88,7 +88,7 @@ export class LinksTable extends VirtualTable<Link> {
 
       await this.checkLinkTable();
       // @ts-ignore
-      await window.databaseApi.save(LinkTableName, newLink);
+      await window.databaseApi.save(DefaultProjectName, LinkTableName, newLink);
       await this._saveDefaultProject();
 
       return newLink;
@@ -120,7 +120,7 @@ export class LinksTable extends VirtualTable<Link> {
 
       await this.checkLinkTable();
       // @ts-ignore
-      await window.databaseApi.deleteAll(LinkTableName);
+      await window.databaseApi.deleteAll(DefaultProjectName, LinkTableName);
       await this._saveDefaultProject();
 
       if (!suppressOnUpdate) {
@@ -183,8 +183,11 @@ export class LinksTable extends VirtualTable<Link> {
       busyInfo.progressMax = outputLinks.length;
       for (const chunk of _.chunk(outputLinks, DatabaseChunkSize)) {
         // @ts-ignore
-        await window.databaseApi.insert(LinkTableName, chunk);
-        chunk.forEach(outputLink => this._addLinkIndex(outputLink));
+        await window.databaseApi.insert(DefaultProjectName, LinkTableName, chunk);
+        chunk.forEach(link => {
+          this.linksMap.set(link.id ?? '', link);
+          this._addLinkIndex(link);
+        });
         busyInfo.progressCtr += chunk.length;
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -271,7 +274,7 @@ export class LinksTable extends VirtualTable<Link> {
 
       await this.checkLinkTable();
       // @ts-ignore
-      await window.databaseApi.deleteByIds(LinkTableName, oldLink.id ?? '');
+      await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
       await this._saveDefaultProject();
 
       this._onUpdate(suppressOnUpdate);
@@ -320,7 +323,7 @@ export class LinksTable extends VirtualTable<Link> {
     loadState.isLoading = true;
     try {
       // @ts-ignore
-      await window.databaseApi.createDataSource();
+      await window.databaseApi.createDataSource(DefaultProjectName);
       loadState.isLoaded = true;
 
       return true;
@@ -442,7 +445,7 @@ export class LinksTable extends VirtualTable<Link> {
       } as Project;
 
       // @ts-ignore
-      await window.databaseApi.save(ProjectTableName, defaultProject);
+      await window.databaseApi.save(DefaultProjectName, ProjectTableName, defaultProject);
       return defaultProject;
     } finally {
       this._logDatabaseTimeEnd('_saveDefaultProject()');
@@ -453,7 +456,7 @@ export class LinksTable extends VirtualTable<Link> {
     this._logDatabaseTime('_loadDefaultProject()');
     try {
       // @ts-ignore
-      const defaultProject = await window.databaseApi.findOneById(ProjectTableName, DefaultProjectName)
+      const defaultProject = await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName)
         ?? await this._saveDefaultProject();
 
       this.linksByBookMap.clear();
@@ -521,7 +524,7 @@ export class LinksTable extends VirtualTable<Link> {
         const toId = `${keyPrefix}999999999-ffffffff-ffff-ffff-ffff-ffffffffffff`;
 
         // @ts-ignore
-        const bookLinks = await window.databaseApi.findBetweenIds(LinkTableName, fromId, toId) as Link[];
+        const bookLinks = await window.databaseApi.findBetweenIds(DefaultProjectName, LinkTableName, fromId, toId) as Link[];
         bookLinks.forEach(link => {
           this.linksMap.set(link?.id ?? '', link);
           this._addLinkIndex(link as Link);
@@ -1129,7 +1132,7 @@ export const useCheckDatabase = (checkKey?: string) => {
 /**
  * Database status hook.
  */
-export const useDatabaseStatus = () => {
+export const useDatabaseStatus = (isAsync = false) => {
   const [status, setStatus] =
     useState<{
       isPending: boolean;
@@ -1137,20 +1140,32 @@ export const useDatabaseStatus = () => {
     }>({ isPending: false, result: _.cloneDeep(InitialDatabaseStatus) });
 
   useEffect(() => {
-    const nowTime = Date.now();
-    const prevStatus = status.result;
-    const currStatus = LinksTableInstance.getDatabaseStatus();
-    if (currStatus.busyInfo.isBusy
-      || !_.isEqual(prevStatus, currStatus)) {
-      const endStatus = {
-        ...status,
-        isPending: false,
-        result: currStatus
-      };
-      setStatus(endStatus);
-      databaseHookDebug('useDatabaseStatus(): endStatus', endStatus);
+    const setDatabaseStatus = (isAsync = false, inputStatus?: DatabaseStatus) => {
+      const prevStatus = inputStatus ?? status.result;
+      const currStatus = LinksTableInstance.getDatabaseStatus();
+      if (currStatus.busyInfo.isBusy
+        || !_.isEqual(prevStatus, currStatus)) {
+        const endStatus = {
+          ...status,
+          isPending: false,
+          result: currStatus
+        };
+        setStatus(endStatus);
+        databaseHookDebug('useDatabaseStatus(): endStatus', endStatus);
+      }
+
+      if (isAsync) {
+        return window.setInterval(() => setDatabaseStatus(false, currStatus), DatabaseStatusRefreshTimeInMs);
+      }
+      return undefined;
+    };
+
+    const intervalId = setDatabaseStatus(isAsync);
+    if (intervalId) {
+      return () => window.clearInterval(intervalId);
     }
-  }, [status]);
+    return undefined;
+  }, [isAsync, status]);
 
   return { ...status };
 };

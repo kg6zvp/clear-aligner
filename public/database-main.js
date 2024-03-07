@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow } = require('electron');
 const isDev = require('electron-is-dev');
+const sanitize = require('sanitize-filename');
 
 class Link {
   constructor() {
@@ -80,13 +81,19 @@ const userSchema = new EntitySchema({
 
 const DbWaitInMs = 1000;
 
+class DataSourceStatus {
+  constructor() {
+    this.dataSource = undefined;
+    this.isLoading = false;
+    this.isLoaded = false;
+  }
+}
+
 class DatabaseAccessMain {
 
   constructor() {
     this.isLoggingTime = true;
-    this.dataSource = undefined;
-    this.isDataSourceLoading = false;
-    this.isDataSourceLoaded = false;
+    this.dataSources = new Map();
   }
 
   logDatabaseTime = (label) => {
@@ -107,31 +114,34 @@ class DatabaseAccessMain {
     }
   };
 
-  waitForDataSource = async () => {
-    while (this.isDataSourceLoading) {
-      await new Promise(resolve => setTimeout(resolve, DbWaitInMs));
+  getDataSource = async (sourceName) => {
+    const sourceStatus = this.dataSources.get(sourceName) ?? new DataSourceStatus();
+    if (sourceStatus.isLoaded) {
+      return sourceStatus.dataSource;
     }
-  };
-
-  checkDataSource = async () => {
-    this.logDatabaseTime('createDataSource()');
-    if (this.isDataSourceLoading) {
-      await this.waitForDataSource();
-    }
-    if (this.isDataSourceLoaded) {
-      return;
-    }
-    this.isDataSourceLoading = true;
+    this.logDatabaseTime('getDataSource()');
     try {
+      while (sourceStatus.isLoading) {
+        await new Promise(resolve => setTimeout(resolve, DbWaitInMs));
+      }
+      if (sourceStatus.isLoaded) {
+        return sourceStatus.dataSource;
+      }
+
+      sourceStatus.isLoading = true;
+      this.dataSources.set(sourceName, sourceStatus);
+
+      const filenName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sql`;
       let databaseFile;
       if (isDev) {
-        databaseFile = `${app.getName()}.sql`;
+        databaseFile = filenName;
       } else {
         const databasePath = app.getPath('userData');
         fs.mkdirSync(databasePath, { recursive: true });
-        databaseFile = path.join(databasePath, `${app.getName()}.sql`);
+        databaseFile = path.join(databasePath, filenName);
       }
-      this.logDatabaseTimeLog('createDataSource()', databaseFile);
+
+      this.logDatabaseTimeLog('getDataSource()', sourceName, databaseFile);
       const newDataSource = new DataSource({
         type: 'better-sqlite3',
         database: databaseFile,
@@ -140,24 +150,38 @@ class DatabaseAccessMain {
       });
       await newDataSource.initialize();
 
-      this.dataSource = newDataSource;
-      this.isDataSourceLoaded = true;
+      sourceStatus.dataSource = newDataSource;
+      sourceStatus.isLoaded = true;
+
+      return sourceStatus.dataSource;
+    } catch (ex) {
+      console.error('getDataSource()', ex);
+    } finally {
+      sourceStatus.isLoading = false;
+      this.logDatabaseTimeEnd('getDataSource()');
+    }
+  };
+
+  createDataSource = async (sourceName) => {
+    this.logDatabaseTime('createDataSource()');
+    try {
+      const result = !!(await this.getDataSource(sourceName));
+      this.logDatabaseTimeLog('createDataSource()', sourceName, result);
+      return result;
     } catch (ex) {
       console.error('createDataSource()', ex);
     } finally {
-      this.isDataSourceLoading = false;
       this.logDatabaseTimeEnd('createDataSource()');
     }
   };
 
-  insert = async (table, itemOrItems) => {
+  insert = async (sourceName, table, itemOrItems) => {
     this.logDatabaseTime('insert()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      await this.dataSource.getRepository(table).insert(itemOrItems);
-      this.logDatabaseTimeLog('insert()', table, itemOrItems?.length ?? itemOrItems);
+      await (await this.getDataSource(sourceName))
+        .getRepository(table)
+        .insert(itemOrItems);
+      this.logDatabaseTimeLog('insert()', sourceName, table, itemOrItems?.length ?? itemOrItems);
     } catch (ex) {
       console.error('insert()', ex);
     } finally {
@@ -165,14 +189,13 @@ class DatabaseAccessMain {
     }
   };
 
-  deleteAll = async (table) => {
+  deleteAll = async (sourceName, table) => {
     this.logDatabaseTime('deleteAll()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      await this.dataSource.getRepository(table).clear();
-      this.logDatabaseTimeLog('deleteAll()', table);
+      await (await this.getDataSource(sourceName))
+        .getRepository(table)
+        .clear();
+      this.logDatabaseTimeLog('deleteAll()', sourceName, table);
     } catch (ex) {
       console.error('deleteAll()', ex);
     } finally {
@@ -180,14 +203,14 @@ class DatabaseAccessMain {
     }
   };
 
-  save = async (table, itemOrItems) => {
+  save = async (sourceName, table, itemOrItems) => {
     this.logDatabaseTime('save()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      const result = await this.dataSource.getRepository(table).save(itemOrItems);
-      this.logDatabaseTimeLog('save()', table, result?.length ?? result);
+      const result =
+        await (await this.getDataSource(sourceName))
+          .getRepository(table)
+          .save(itemOrItems);
+      this.logDatabaseTimeLog('save()', sourceName, table, result?.length ?? result);
       return result;
     } catch (ex) {
       console.error('save()', ex);
@@ -196,14 +219,14 @@ class DatabaseAccessMain {
     }
   };
 
-  existsById = async (table, itemId) => {
+  existsById = async (sourceName, table, itemId) => {
     this.logDatabaseTime('existsById()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      const result = await this.dataSource.getRepository(table).existsBy({ id: itemId });
-      this.logDatabaseTimeLog('existsById()', table, itemId, result);
+      const result =
+        await (await this.getDataSource(sourceName))
+          .getRepository(table)
+          .existsBy({ id: itemId });
+      this.logDatabaseTimeLog('existsById()', sourceName, table, itemId, result);
       return result;
     } catch (ex) {
       console.error('existsById()', ex);
@@ -212,14 +235,14 @@ class DatabaseAccessMain {
     }
   };
 
-  findByIds = async (table, itemIds) => {
+  findByIds = async (sourceName, table, itemIds) => {
     this.logDatabaseTime('findByIds()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      const result = await this.dataSource.getRepository(table).findBy({ id: In(itemIds) });
-      this.logDatabaseTimeLog('findByIds()', table, itemIds, result);
+      const result =
+        await (await this.getDataSource(sourceName))
+          .getRepository(table)
+          .findBy({ id: In(itemIds) });
+      this.logDatabaseTimeLog('findByIds()', sourceName, table, itemIds, result);
       return result;
     } catch (ex) {
       console.error('findByIds()', ex);
@@ -228,17 +251,16 @@ class DatabaseAccessMain {
     }
   };
 
-  getAll = async (table) => {
+  getAll = async (sourceName, table) => {
     this.logDatabaseTime('getAll()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      const result = (await this.dataSource.getRepository(table)
-        .createQueryBuilder()
-        .getMany())
-        .filter(Boolean);
-      this.logDatabaseTimeLog('getAll()', table, result.length);
+      const result =
+        (await (await this.getDataSource(sourceName))
+          .getRepository(table)
+          .createQueryBuilder()
+          .getMany())
+          .filter(Boolean);
+      this.logDatabaseTimeLog('getAll()', sourceName, table, result.length);
       return result;
     } catch (ex) {
       console.error('getAll()', ex);
@@ -247,14 +269,14 @@ class DatabaseAccessMain {
     }
   };
 
-  findOneById = async (table, itemId) => {
+  findOneById = async (sourceName, table, itemId) => {
     this.logDatabaseTime('findOneById()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      const result = await this.dataSource.getRepository(table).findOneBy({ id: itemId });
-      this.logDatabaseTimeLog('findOneById()', table, itemId, result);
+      const result =
+        await (await this.getDataSource(sourceName))
+          .getRepository(table)
+          .findOneBy({ id: itemId });
+      this.logDatabaseTimeLog('findOneById()', sourceName, table, itemId, result);
       return result;
     } catch (ex) {
       console.error('findOneById()', ex);
@@ -263,14 +285,13 @@ class DatabaseAccessMain {
     }
   };
 
-  deleteByIds = async (table, itemIdOrIds) => {
+  deleteByIds = async (sourceName, table, itemIdOrIds) => {
     this.logDatabaseTime('deleteByIds()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      await this.dataSource.getRepository(table).delete(itemIdOrIds);
-      this.logDatabaseTimeLog('deleteByIds()', table, itemIdOrIds?.length ?? itemIdOrIds);
+      await (await this.getDataSource(sourceName))
+        .getRepository(table)
+        .delete(itemIdOrIds);
+      this.logDatabaseTimeLog('deleteByIds()', sourceName, table, itemIdOrIds?.length ?? itemIdOrIds);
     } catch (ex) {
       console.error('deleteByIds()', ex);
     } finally {
@@ -278,18 +299,17 @@ class DatabaseAccessMain {
     }
   };
 
-  findBetweenIds = async (table, fromId, toId) => {
+  findBetweenIds = async (sourceName, table, fromId, toId) => {
     this.logDatabaseTime('findBetweenIds()');
     try {
-      if (!this.isDataSourceLoaded) {
-        await this.checkDataSource();
-      }
-      const result = await this.dataSource.getRepository(table)
-        .createQueryBuilder('item')
-        .where('item.id >= :fromId and item.id <= :toId',
-          { fromId, toId })
-        .getMany();
-      this.logDatabaseTimeLog('findBetweenIds()', table, fromId, toId, result?.length ?? result);
+      const result =
+        await (await this.getDataSource(sourceName))
+          .getRepository(table)
+          .createQueryBuilder('item')
+          .where('item.id >= :fromId and item.id <= :toId',
+            { fromId, toId })
+          .getMany();
+      this.logDatabaseTimeLog('findBetweenIds()', sourceName, table, fromId, toId, result?.length ?? result);
       return result;
     } catch (ex) {
       console.error('findBetweenIds()', ex);
@@ -304,9 +324,10 @@ const DatabaseAccessMainInstance = new DatabaseAccessMain();
 module.exports = {
   setUpIpcMain() {
     try {
-      ipcMain.handle(`${ChannelPrefix}:createDataSource`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.checkDataSource(...args);
-      });
+      ipcMain.handle(`${ChannelPrefix}:createDataSource`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.createDataSource(...args);
+        });
       ipcMain.handle(`${ChannelPrefix}:insert`,
         async (event, ...args) => {
           return await DatabaseAccessMainInstance.insert(...args);

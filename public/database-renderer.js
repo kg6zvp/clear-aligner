@@ -4,14 +4,14 @@ const { contextBridge, ipcRenderer } = require('electron');
 const { ChannelPrefix } = require('./database-shared.js');
 
 contextBridge.exposeInMainWorld('databaseApi', {
-  createDataSource: () => ipcRenderer.invoke(`${ChannelPrefix}:createDataSource`),
-  insert: (table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:insert`, table, itemOrItems),
-  deleteAll: (table) => ipcRenderer.invoke(`${ChannelPrefix}:deleteAll`, table),
-  save: (table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:save`, table, itemOrItems),
-  existsById: (table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:existsById`, table, itemId),
-  findByIds: (table, itemIds) => ipcRenderer.invoke(`${ChannelPrefix}:findByIds`, table, itemIds),
-  getAll: (table) => ipcRenderer.invoke(`${ChannelPrefix}:getAll`, table),
-  findOneById: (table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:findOneById`, table, itemId),
-  deleteByIds: (table, itemIdOrIds) => ipcRenderer.invoke(`${ChannelPrefix}:deleteByIds`, table, itemIdOrIds),
-  findBetweenIds: (table, fromId, toId) => ipcRenderer.invoke(`${ChannelPrefix}:findBetweenIds`, table, fromId, toId)
+  createDataSource: (database) => ipcRenderer.invoke(`${ChannelPrefix}:createDataSource`, database),
+  insert: (database, table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:insert`, database, table, itemOrItems),
+  deleteAll: (database, table) => ipcRenderer.invoke(`${ChannelPrefix}:deleteAll`, database, table),
+  save: (database, table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:save`, database, table, itemOrItems),
+  existsById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:existsById`, database, table, itemId),
+  findByIds: (database, table, itemIds) => ipcRenderer.invoke(`${ChannelPrefix}:findByIds`, database, table, itemIds),
+  getAll: (database, table) => ipcRenderer.invoke(`${ChannelPrefix}:getAll`, database, table),
+  findOneById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:findOneById`, database, table, itemId),
+  deleteByIds: (database, table, itemIdOrIds) => ipcRenderer.invoke(`${ChannelPrefix}:deleteByIds`, database, table, itemIdOrIds),
+  findBetweenIds: (database, table, fromId, toId) => ipcRenderer.invoke(`${ChannelPrefix}:findBetweenIds`, database, table, fromId, toId)
 });
