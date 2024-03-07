@@ -3,8 +3,7 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { IndexedChangeType, SecondaryIndex, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
-import { useContext, useEffect, useState } from 'react';
-import { AppContext } from '../../App';
+import { useEffect, useState } from 'react';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import books from '../../workbench/books';
 
@@ -704,12 +703,10 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
     isPending: boolean;
     result?: Link | undefined;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevSaveKey, setPrevSaveKey] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!projectState?.linksTable
-      || !link
+    if (!link
       || !saveKey
       || prevSaveKey === saveKey) {
       return;
@@ -721,7 +718,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
     setStatus(startStatus);
     setPrevSaveKey(saveKey);
     databaseHookDebug('useSaveLink(): startStatus', startStatus);
-    projectState?.linksTable?.save(link)
+    LinksTableInstance.save(link)
       .then(result => {
         const endStatus = {
           ...startStatus,
@@ -731,7 +728,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useSaveLink(): endStatus', endStatus);
       });
-  }, [prevSaveKey, link, projectState?.linksTable, saveKey, status]);
+  }, [prevSaveKey, link, saveKey, status]);
 
   return { ...status };
 };
@@ -752,12 +749,10 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevSaveKey, setPrevSaveKey] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!projectState?.linksTable
-      || !alignmentFile
+    if (!alignmentFile
       || !saveKey
       || prevSaveKey === saveKey) {
       return;
@@ -769,7 +764,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
     setStatus(startStatus);
     setPrevSaveKey(saveKey);
     databaseHookDebug('useSaveAlignmentFile(): startStatus', startStatus);
-    projectState?.linksTable?.saveAlignmentFile(alignmentFile, suppressOnUpdate)
+    LinksTableInstance.saveAlignmentFile(alignmentFile, suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -778,7 +773,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
         setStatus(endStatus);
         databaseHookDebug('useSaveAlignmentFile(): endStatus', endStatus);
       });
-  }, [prevSaveKey, alignmentFile, projectState?.linksTable, saveKey, status, suppressOnUpdate]);
+  }, [prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -799,12 +794,10 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevSaveKey, setPrevSaveKey] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!projectState?.linksTable
-      || !links
+    if (!links
       || !saveKey
       || prevSaveKey === saveKey) {
       return;
@@ -816,7 +809,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
     setStatus(startStatus);
     setPrevSaveKey(saveKey);
     databaseHookDebug('useSaveAllLinks(): startStatus', startStatus);
-    projectState?.linksTable?.saveAll(links, suppressOnUpdate)
+    LinksTableInstance.saveAll(links, suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -825,7 +818,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
         setStatus(endStatus);
         databaseHookDebug('useSaveAllLinks(): endStatus', endStatus);
       });
-  }, [prevSaveKey, links, projectState?.linksTable, saveKey, status, suppressOnUpdate]);
+  }, [prevSaveKey, links, saveKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -846,25 +839,23 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
     isPending: boolean;
     result?: boolean;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevExistsKey, setPrevExistsKey] = useState<string | undefined>();
 
   useEffect(() => {
     const workExistsKey = existsKey ?? uuid();
-    if (!projectState?.linksTable
-      || !linkId
+    if (!linkId
       || prevExistsKey === workExistsKey) {
       return;
     }
     const endStatus = {
       ...status,
       isPending: false,
-      result: !!projectState?.linksTable?.exists(linkId)
+      result: LinksTableInstance.exists(linkId)
     };
     setStatus(endStatus);
     setPrevExistsKey(existsKey);
     databaseHookDebug('useLinkExists(): endStatus', endStatus);
-  }, [prevExistsKey, existsKey, linkId, projectState?.linksTable, status]);
+  }, [prevExistsKey, existsKey, linkId, status]);
 
   return { ...status };
 };
@@ -884,12 +875,10 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevRemoveKey, setPrevRemoveKey] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!projectState?.linksTable
-      || !removeKey
+    if (!removeKey
       || prevRemoveKey === removeKey) {
       return;
     }
@@ -900,7 +889,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
     setStatus(startStatus);
     setPrevRemoveKey(removeKey);
     databaseHookDebug('useRemoveAllLinks(): startStatus', startStatus);
-    projectState?.linksTable?.removeAll(suppressOnUpdate)
+    LinksTableInstance.removeAll(suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -909,7 +898,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
         setStatus(endStatus);
         databaseHookDebug('useRemoveAllLinks(): endStatus', endStatus);
       });
-  }, [prevRemoveKey, projectState?.linksTable, removeKey, status, suppressOnUpdate]);
+  }, [prevRemoveKey, removeKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -931,13 +920,11 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
     isPending: boolean;
     result?: Link[];
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevFindKey, setPrevFindKey] = useState<string | undefined>();
 
   useEffect(() => {
     const workFindKey = findKey ?? uuid();
-    if (!projectState?.linksTable
-      || !side
+    if (!side
       || !wordId
       || prevFindKey === workFindKey) {
       return;
@@ -945,12 +932,12 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
     const endStatus = {
       ...status,
       isPending: false,
-      result: projectState?.linksTable?.findByWord(side, wordId)
+      result: LinksTableInstance.findByWord(side, wordId)
     };
     setStatus(endStatus);
     setPrevFindKey(findKey);
     databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
-  }, [prevFindKey, findKey, projectState?.linksTable, side, status, wordId]);
+  }, [prevFindKey, findKey, side, status, wordId]);
 
   return { ...status };
 };
@@ -970,24 +957,22 @@ export const useGetAllLinks = (getKey?: string) => {
     isPending: boolean;
     result?: Link[];
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevGetKey, setPrevGetKey] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!projectState?.linksTable
-      || !getKey
+    if (!getKey
       || prevGetKey === getKey) {
       return;
     }
     const endStatus = {
       ...status,
       isPending: false,
-      result: projectState?.linksTable?.getAll()
+      result: LinksTableInstance.getAll()
     };
     setStatus(endStatus);
     setPrevGetKey(getKey);
     databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
-  }, [prevGetKey, getKey, projectState?.linksTable, status]);
+  }, [prevGetKey, getKey, status]);
 
   return { ...status };
 };
@@ -1008,25 +993,23 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
     isPending: boolean;
     result?: Link | undefined;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevGetKey, setPrevGetKey] = useState<string | undefined>();
 
   useEffect(() => {
     const workGetKey = getKey ?? uuid();
-    if (!projectState?.linksTable
-      || !linkId
+    if (!linkId
       || prevGetKey === workGetKey) {
       return;
     }
     const endStatus = {
       ...status,
       isPending: false,
-      result: projectState?.linksTable?.get(linkId)
+      result: LinksTableInstance.get(linkId)
     };
     setStatus(endStatus);
     setPrevGetKey(getKey);
     databaseHookDebug('useGetLink(): endStatus', endStatus);
-  }, [prevGetKey, getKey, linkId, projectState?.linksTable, status]);
+  }, [prevGetKey, getKey, linkId, status]);
 
   return { ...status };
 };
@@ -1047,12 +1030,10 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const { projectState } = useContext(AppContext);
   const [prevRemoveKey, setPrevRemoveKey] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!projectState?.linksTable
-      || !linkId
+    if (!linkId
       || !removeKey
       || prevRemoveKey === removeKey) {
       return;
@@ -1064,7 +1045,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
     setStatus(startStatus);
     setPrevRemoveKey(removeKey);
     databaseHookDebug('useRemoveLink(): startStatus', startStatus);
-    projectState?.linksTable?.remove(linkId, suppressOnUpdate)
+    LinksTableInstance.remove(linkId, suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -1073,7 +1054,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
         setStatus(endStatus);
         databaseHookDebug('useRemoveLink(): endStatus', endStatus);
       });
-  }, [prevRemoveKey, linkId, projectState?.linksTable, removeKey, status, suppressOnUpdate]);
+  }, [prevRemoveKey, linkId, removeKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
