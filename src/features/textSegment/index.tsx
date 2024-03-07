@@ -91,7 +91,7 @@ export const TextSegment = ({
   useDebug('TextSegmentComponent');
 
   const dispatch = useAppDispatch();
-  const { projectState } = useContext(AppContext);
+  const { appState: { currentProject } } = useContext(AppContext);
 
   const mode = useAppSelector(selectAlignmentMode); // get alignment mode
 
@@ -107,7 +107,7 @@ export const TextSegment = ({
 
   const foundRelatedLinks = useMemo(
     () => {
-      const related = findRelatedAlignments(word, projectState.linksTable);
+      const related = findRelatedAlignments(word, currentProject?.linksTable);
       if (onlyLinkIds) {
         return related.filter(
           (link) => link.id && onlyLinkIds.includes(link.id)
@@ -118,8 +118,8 @@ export const TextSegment = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       word,
-      projectState.linksTable,
-      projectState.linksTable?.lastUpdate,
+      currentProject?.linksTable,
+      currentProject?.linksTable?.lastUpdate,
       onlyLinkIds,
       onlyLinkIds?.length,
     ]
@@ -149,13 +149,13 @@ export const TextSegment = ({
     () => {
       // links related to the hovered word
       if (!currentlyHovered) return [];
-      return findRelatedAlignments(currentlyHovered, projectState.linksTable);
+      return findRelatedAlignments(currentlyHovered, currentProject?.linksTable);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       currentlyHovered,
-      projectState.linksTable,
-      projectState.linksTable?.lastUpdate,
+      currentProject?.linksTable,
+      currentProject?.linksTable?.lastUpdate,
     ]
   );
 

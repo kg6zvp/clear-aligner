@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
-import { getAvailableCorporaContainers } from '../../workbench/query';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
@@ -43,24 +42,10 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
   }, [appCtx.currentReference, layoutCtx]);
 
   React.useEffect(() => {
-    const loadSourceWords = async () => {
-      const containers = await getAvailableCorporaContainers();
-      const targetCorpora = containers.find(
-        (v: CorpusContainer) => v.id === 'target'
-      );
-
-      setSelectedCorporaContainers(containers);
-      setAvailableWords(
-        targetCorpora?.corpora.flatMap(({ words }) => words) ?? []
-      );
-    };
-
-    loadSourceWords().catch(console.error);
-  }, [
-    setAvailableWords,
-    appCtx.setCurrentReference,
-    setSelectedCorporaContainers,
-  ]);
+    const targetCorpora = appCtx.appState.currentProject?.targetCorpora;
+    setSelectedCorporaContainers([targetCorpora, appCtx.appState.sourceCorpora].filter(v => v) as CorpusContainer[]);
+    setAvailableWords(targetCorpora?.corpora.flatMap(({ words }) => words) ?? []);
+  }, [appCtx.appState]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(

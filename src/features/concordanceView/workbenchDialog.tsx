@@ -4,7 +4,6 @@ import { Dialog, DialogTitle, DialogContent, Grid, IconButton, Typography } from
 import { AlignmentEditor } from '../alignmentEditor/alignmentEditor';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { Close } from '@mui/icons-material';
-import { Link } from '../../structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
 
 interface WorkbenchDialogProps {
@@ -16,14 +15,14 @@ interface WorkbenchDialogProps {
 const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({alignment, setAlignment, updateAlignments}) => {
   const appCtx = React.useContext(AppContext);
   const initialUpdateTime = React.useMemo(() => (
-    appCtx.projectState.linksTable?.lastUpdate
+    appCtx.appState.currentProject?.linksTable?.lastUpdate
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [alignment]);
 
   const handleClose = React.useCallback(() => {
-    updateAlignments(initialUpdateTime !== appCtx.projectState.linksTable?.lastUpdate);
+    updateAlignments(initialUpdateTime !== appCtx.appState.currentProject?.linksTable?.lastUpdate);
     setAlignment(null);
-  }, [initialUpdateTime, appCtx.projectState.linksTable?.lastUpdate, updateAlignments, setAlignment]);
+  }, [initialUpdateTime, appCtx.appState.currentProject?.linksTable?.lastUpdate, updateAlignments, setAlignment]);
 
   React.useEffect(() => {
     if(alignment) {

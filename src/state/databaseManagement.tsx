@@ -1,6 +1,6 @@
-import { VirtualTableLinks } from './links/tableManager';
-import { WordsIndex } from './links/wordsIndex';
 import { UserPreferenceTable } from './preferences/tableManager';
+import { Project, ProjectTable } from './projects/tableManager';
+import { CorpusContainer } from '../structs';
 
 /**
  * denotes the type of change being made to a database
@@ -14,13 +14,11 @@ export enum IndexedChangeType {
  * intended to provide a single place to keep track of
  * PouchDB "tables" (databases)
  */
-export interface ProjectState {
-  linksTable?: VirtualTableLinks;
-  userPreferences?: UserPreferenceTable;
-  linksIndexes?: {
-    sourcesIndex: WordsIndex;
-    targetsIndex: WordsIndex;
-  }
+export interface AppState {
+  projects: ProjectTable;
+  currentProject?: Project;
+  userPreferences: UserPreferenceTable;
+  sourceCorpora?: CorpusContainer;
 }
 
 export type SecondaryIndex<T> = {

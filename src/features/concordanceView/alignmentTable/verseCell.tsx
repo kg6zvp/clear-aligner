@@ -5,7 +5,7 @@ import _ from 'lodash';
 import BCVWP, { BCVWPField } from '../../bcvwp/BCVWPSupport';
 import { VerseDisplay } from '../../corpus/verseDisplay';
 import { AlignmentTableContext } from '../alignmentTable';
-import { useCorpusContainers } from '../../../hooks/useCorpusContainers';
+import { AppContext } from '../../../App';
 
 /**
  * Render cells with verse text in the appropriate font and text orientation for the verse
@@ -14,8 +14,13 @@ import { useCorpusContainers } from '../../../hooks/useCorpusContainers';
 export const VerseCell = (
   row: GridRenderCellParams<Link, any, any>
 ) => {
+  const {appState}= useContext(AppContext);
   const tableCtx = useContext(AlignmentTableContext);
-  const { sourceContainer, targetContainer } = useCorpusContainers();
+  const { sourceContainer, targetContainer } = {
+    sourceContainer: appState.sourceCorpora,
+    targetContainer: appState.currentProject?.targetCorpora
+  }
+
   const container =
     tableCtx.wordSource === AlignmentSide.SOURCE
       ? sourceContainer

@@ -9,23 +9,21 @@ import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
 import YLT from 'tsv/ylt-new.tsv';
 
 enum InitializationStates {
-  UNINITIALiZED,
+  UNINITIALIZED,
   INITIALIZING,
   INITIALIZED
 }
 
-let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
+let initializationState: InitializationStates = InitializationStates.UNINITIALIZED;
 
 const availableCorpora: CorpusContainer[] = [];
 
-const parseTsvByFileType = async (
-  tsv: RequestInfo,
+export const parseTsv = async (
+  response: string,
   refCorpus: Corpus,
   side: AlignmentSide,
   fileType: CorpusFileFormat
 ): Promise<Corpus> => {
-  const fetchedTsv = await fetch(tsv);
-  const response = await fetchedTsv.text();
   const [header, ...rows] = response.split('\n');
   const headerMap: Record<string, number> = {};
   if (!refCorpus.wordsByVerse) {
@@ -134,6 +132,18 @@ const parseTsvByFileType = async (
   };
 };
 
+
+const parseTsvByFileType = async (
+  tsv: RequestInfo,
+  refCorpus: Corpus,
+  side: AlignmentSide,
+  fileType: CorpusFileFormat
+): Promise<Corpus> => {
+  const fetchedTsv = await fetch(tsv);
+  const response = await fetchedTsv.text();
+  return await parseTsv(response, refCorpus, side, fileType);
+};
+
 const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   if (!(verse.bcvId.book && verse.bcvId.chapter && verse.bcvId.verse)) {
     return;
@@ -152,7 +162,7 @@ const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   chapterRef[verse.bcvId.verse] = verse;
 };
 
-const putVersesInCorpus = (corpus: Corpus) => {
+export const putVersesInCorpus = (corpus: Corpus) => {
   Object.values(corpus.wordsByVerse).forEach((verse) =>
     putVerseInCorpus(corpus, verse)
   );
@@ -167,7 +177,7 @@ const waitForInitialization = async () => {
 export const getAvailableCorporaContainers = async (): Promise<
   CorpusContainer[]
 > => {
-  if (initializationState === InitializationStates.UNINITIALiZED) {
+  if (initializationState === InitializationStates.UNINITIALIZED) {
     initializationState = InitializationStates.INITIALIZING;
     // Macula Hebrew OT
     let maculaHebOT: Corpus = {
@@ -268,12 +278,4 @@ export const getAvailableCorporaContainers = async (): Promise<
   }
 
   return availableCorpora;
-};
-
-export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (
-    initializationState ? availableCorpora : await getAvailableCorporaContainers()
-  ).map((corpus) => {
-    return corpus.id;
-  });
 };
