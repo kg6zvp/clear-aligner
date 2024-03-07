@@ -155,7 +155,7 @@ export class LinksTable extends VirtualTable<Link> {
       return [] as Link[];
     }
 
-    this._logDatabaseTime('saveAllLinks(): complete');
+    this._logDatabaseTime('saveAll(): complete');
     this._incrDatabaseBusyCtr();
     this.databaseStatus.busyInfo.userText = `Saving ${inputLinks.length.toLocaleString()} links...`;
     try {
@@ -163,7 +163,7 @@ export class LinksTable extends VirtualTable<Link> {
       await this.checkLinkTable();
 
       this.databaseStatus.busyInfo.userText = `Sorting ${inputLinks.length.toLocaleString()} links...`;
-      this._logDatabaseTime('saveAllLinks(): sorted');
+      this._logDatabaseTime('saveAll(): sorted');
       const outputLinks = inputLinks.map(link =>
         ({
           id: link.id ?? LinksTable.createLinkId(link),
@@ -173,9 +173,9 @@ export class LinksTable extends VirtualTable<Link> {
       outputLinks.sort((l1, l2) =>
         (l1.id ?? EmptyWordId)
           .localeCompare(l2.id ?? EmptyWordId));
-      this._logDatabaseTimeEnd('saveAllLinks(): sorted');
+      this._logDatabaseTimeEnd('saveAll(): sorted');
 
-      this._logDatabaseTime('saveAllLinks(): saved');
+      this._logDatabaseTime('saveAll(): saved');
       const busyInfo = this.databaseStatus.busyInfo;
       busyInfo.userText = `Saving ${outputLinks.length.toLocaleString()} links...`;
       busyInfo.progressCtr = 0;
@@ -195,9 +195,9 @@ export class LinksTable extends VirtualTable<Link> {
           ? `Saved ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} links)...`
           : `Saved ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} links)...`;
 
-        this._logDatabaseTimeLog('saveAllLinks(): saved', busyInfo.progressCtr, busyInfo.progressMax);
+        this._logDatabaseTimeLog('saveAll(): saved', busyInfo.progressCtr, busyInfo.progressMax);
       }
-      this._logDatabaseTimeEnd('saveAllLinks(): saved');
+      this._logDatabaseTimeEnd('saveAll(): saved');
 
       busyInfo.userText = `Saving project...`;
       await this._saveDefaultProject();
@@ -211,7 +211,7 @@ export class LinksTable extends VirtualTable<Link> {
       console.error('error saving all links', ex);
     } finally {
       this._decrDatabaseBusyCtr();
-      this._logDatabaseTimeEnd('saveAllLinks(): complete');
+      this._logDatabaseTimeEnd('saveAll(): complete');
     }
   };
 
