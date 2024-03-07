@@ -58,8 +58,17 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
   const [fileContent, setFileContent] = React.useState("");
+  const [projectUpdated, setProjectUpdated] = React.useState(false);
+
+  const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
+    if(!projectUpdated) {
+      setProjectUpdated(true);
+    }
+    setProject(p => ({...p, ...updatedProjectFields}));
+  }, [projectUpdated, setProject, setProjectUpdated]);
 
   const handleClose = React.useCallback(() => {
+    setProjectUpdated(false);
     setUploadErrors([]);
     setProject(getInitialProjectState());
     closeCallback();
@@ -72,7 +81,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
     && project.abbreviation.length
     && project.languageCode.length
     && Object.keys(TextDirection).includes(project.textDirection)
-  ), [project.abbreviation.length, project.fileName.length, project.languageCode.length, project.name.length, project.textDirection, uploadErrors.length]);
+    && projectUpdated
+  ), [project.abbreviation.length, project.fileName.length, project.languageCode.length, project.name.length, project.textDirection, uploadErrors.length, projectUpdated]);
 
   const handleSubmit = React.useCallback(async () => {
     const projectToUpdate = {
@@ -103,7 +113,15 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
 
     const updatedProject = appState.projects.save(projectToUpdate);
     if(updatedProject) {
-      setAppState(as => ({...as, currentProject: updatedProject}));
+      const corpora = (updatedProject.targetCorpora?.corpora || [])[0] as Corpus;
+      corpora.name = project.abbreviation;
+      corpora.fullName = project.name;
+      corpora.language = {
+        code: project.languageCode,
+        textDirection: project.textDirection.toLowerCase() as TextDirection
+      };
+      updatedProject.targetCorpora = CorpusContainer.fromIdAndCorpora("target", [corpora]);
+      setAppState((as: AppState) => ({...as, currentProject: updatedProject}));
     }
     handleClose();
   }, [project, fileContent, appState.projects, handleClose, dispatch, setCurrentReference, setAppState]);
@@ -150,12 +168,12 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                 <FormControl>
                   <Typography variant="subtitle2">Name</Typography>
                   <TextField size="small" sx={{mb: 2}} fullWidth type="text" value={project.name} onChange={({target: {value: name}}) =>
-                    setProject(p => ({...p, name}))} />
+                    handleUpdate({name})} />
                 </FormControl>
                 <FormControl>
                   <Typography variant="subtitle2">Abbreviation</Typography>
                   <TextField size="small" sx={{mb: 2}} fullWidth type="text" value={project.abbreviation} onChange={({target: {value: abbreviation}}) =>
-                    setProject(p => ({...p, abbreviation}))}
+                    handleUpdate({abbreviation})}
                   />
                 </FormControl>
                 <FormControl>
@@ -164,7 +182,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                     size="small"
                     fullWidth
                     disablePortal
-                    options={["", ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]}
+                    options={["", ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])].sort((a,b) => a.localeCompare(b))}
                     ListboxProps={{
                       style: {
                         maxHeight: 250
@@ -173,20 +191,16 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                     sx={{mb: 2}}
                     value={ISO6393[project.languageCode as keyof typeof ISO6393] || ""}
                     onChange={(_, language) =>
-                      setProject(p => ({
-                        ...p,
+                      handleUpdate({
                         languageCode: Object.keys(ISO6393).find(k => ISO6393[k as keyof typeof ISO6393] === language) ?? ""
-                      }))}
+                      })}
                     renderInput={(params) => <TextField {...params} />}
                   />
                 </FormControl>
                 <FormControl>
                   <Typography variant="subtitle2">Text Direction</Typography>
                   <Select size="small" sx={{mb: 2}} fullWidth type="text" value={project.textDirection} onChange={({target: {value: textDirection}}) =>
-                    setProject(p => ({
-                      ...p,
-                      textDirection: textDirection as string
-                    }))
+                    handleUpdate({textDirection: textDirection as string})
                   }>
                     {
                       Object.keys(TextDirection).map(td => (
@@ -228,7 +242,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({open, closeCallback, proje
                            }
 
                            setUploadErrors([]);
-                           setProject(p => ({...p, fileName: file.name}));
+                           handleUpdate({fileName: file.name});
                            setFileContent(content);
                          }}
                   />
