@@ -73,7 +73,7 @@ export class LinksTable extends VirtualTable<Link> {
     this._logDatabaseTime('save()');
     this._incrDatabaseBusyCtr();
     try {
-      await this.remove(link.id, true);
+      await this.remove(link.id, true, true);
 
       const newLink: Link = {
         id: link.id ?? uuid(),
