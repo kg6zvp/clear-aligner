@@ -157,7 +157,7 @@ export class LinksTable extends VirtualTable<Link> {
 
     this._logDatabaseTime('saveAllLinks(): complete');
     this._incrDatabaseBusyCtr();
-    this.databaseStatus.busyInfo.userText = `Importing ${inputLinks.length.toLocaleString()} links...`;
+    this.databaseStatus.busyInfo.userText = `Saving ${inputLinks.length.toLocaleString()} links...`;
     try {
       await this.removeAll(true, true);
       await this.checkLinkTable();
