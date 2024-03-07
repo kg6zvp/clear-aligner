@@ -131,14 +131,14 @@ class DatabaseAccessMain {
       sourceStatus.isLoading = true;
       this.dataSources.set(sourceName, sourceStatus);
 
-      const filenName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sql`;
+      const fileName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sql`;
       let databaseFile;
       if (isDev) {
-        databaseFile = filenName;
+        databaseFile = fileName;
       } else {
         const databasePath = app.getPath('userData');
         fs.mkdirSync(databasePath, { recursive: true });
-        databaseFile = path.join(databasePath, filenName);
+        databaseFile = path.join(databasePath, fileName);
       }
 
       this.logDatabaseTimeLog('getDataSource()', sourceName, databaseFile);
