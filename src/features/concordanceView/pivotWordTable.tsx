@@ -15,15 +15,12 @@ import {
   DataGridScrollbarDisplayFix,
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
-import { useAlignedWordsFromPivotWord } from './useAlignedWordsFromPivotWord';
 import { TextDirection } from '../../structs';
 
 interface PivotWordTextCellProps {
   pivotWord: PivotWord;
 }
 const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _alignedWords = useAlignedWordsFromPivotWord(pivotWord);
   return (
     <span
       key={pivotWord.normalizedText}
