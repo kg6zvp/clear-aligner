@@ -1,3 +1,7 @@
+
+# Get rid of existing modules folder & yarn.lock file
+rm -rf node_modules yarn.lock
+
 # Install the NVM defined node version
 nvm install
 
@@ -8,4 +12,4 @@ npm install -g yarn
 yarn install
 
 # Rebuild any modules that need it
-electron-rebuild
+yarn electron-rebuild
