@@ -15,13 +15,18 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     : projectState.linksIndexes?.targetsIndex, [wordSource, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
 
   const [ loading, setLoading ] = useState<boolean>(!!source?.loading);
+  const [ lastUpdate, setLastUpdate ] = useState<number>(0);
 
   // when source is changed, set the loading state to match the new source
   useInterval(() => {
     if (loading !== !!source?.isLoading()) {
       setLoading(!!source?.isLoading()); // change the status to match the source
     }
-  }, 500);
+
+    if (source?.lastUpdate && source?.lastUpdate !== lastUpdate) {
+      setLastUpdate(source.lastUpdate);
+    }
+  }, 250);
 
   // initialize indices if they don't exist or if linksTable changes
   useEffect(() => {
@@ -71,15 +76,16 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     targetContainer
   ]);
 
-  const pivotWords = useMemo<PivotWord[] | undefined>(() => {
+  const currentPivotWords = useMemo<PivotWord[] | undefined>(() => {
     if (!source || loading) {
       return undefined;
     }
-    return source.getPivotWords();
+    return [ ...source.getPivotWords() ];
   }, [
     source,
-    loading
+    loading,
+    lastUpdate
     ]);
 
-  return pivotWords;
+  return currentPivotWords;
 };
