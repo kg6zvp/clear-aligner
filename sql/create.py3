@@ -126,6 +126,7 @@ def readCorpus(metadata, tsvFile):
                 last_percentage = current_percentage
                 print(f'{metadata.get("id")}: {last_percentage}%')
             idx += 1
+    conn.commit()
 
 
 readCorpus({
