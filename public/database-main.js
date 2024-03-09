@@ -345,7 +345,6 @@ class DatabaseAccessMain {
 
   corporaGetAlignedWordsByPivotWord = async (sourceName, side, normalizedText, sort) => {
     const em = (await this.getDataSource(sourceName)).manager;
-    console.log('corporaGetAlignedWordsByPivotWord()');
     switch (side) {
       case 'sources':
         const sourceQueryTextWLang = `
@@ -364,7 +363,6 @@ class DatabaseAccessMain {
               AND l.targets_text <> ''
             GROUP BY l.targets_text
                 ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text' })};`;
-        console.log('sources', sourceQueryTextWLang);
         return await em.query(sourceQueryTextWLang);
       case 'targets':
         const targetQueryText = `
@@ -383,9 +381,19 @@ class DatabaseAccessMain {
               AND l.sources_text <> ''
             GROUP BY l.sources_text
               ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
-        console.log('targets', targetQueryText);
         return await em.query(targetQueryText);
     }
+  }
+
+  corporaGetLinkIdsByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    return (await em.query(`
+        SELECT id
+            FROM links
+            WHERE sources_text = '${sourcesText}'
+            AND targets_text = '${targetsText}'
+        ${this._buildOrderBy(sort)};`))
+      .map((link) => link.id);
   }
 
   _buildOrderBy = (sort, fieldMap) => {
@@ -454,6 +462,10 @@ module.exports = {
       ipcMain.handle(`${ChannelPrefix}:languageGetAll`,
         async (event, ...args) => {
           return await DatabaseAccessMainInstance.languageGetAll(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:corporaGetLinkIdsByAlignedWord`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.corporaGetLinkIdsByAlignedWord(...args);
         });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);

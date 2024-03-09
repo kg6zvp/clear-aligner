@@ -5,7 +5,6 @@ import { DefaultProjectName } from '../../state/links/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
 import { GridSortItem } from '@mui/x-data-grid';
 import { PivotWordFilter } from './concordanceView';
-import _ from 'lodash';
 import { useLanguages } from '../../hooks/useLanguages';
 
 export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem|null): PivotWord[] | undefined => {

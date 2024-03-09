@@ -41,10 +41,6 @@ export const ConcordanceView = () => {
   const [selectedAlignedWord, setSelectedAlignedWord] = useState(
     null as AlignedWord | null
   );
-  const [alignmentSortData, setAlignmentSortData] = useState({
-    field: 'id',
-    sort: 'desc',
-  } as GridSortItem | null);
   const [selectedAlignmentLink, setSelectedAlignmentLink] = useState(
     null as Link | null
   );
@@ -269,12 +265,9 @@ export const ConcordanceView = () => {
             }}
           >
             <AlignmentTable
-              sort={alignmentSortData}
               wordSource={wordSource}
               pivotWord={selectedPivotWord}
-              alignedWord={selectedAlignedWord}
-              alignments={[] /*TODO*/}
-              onChangeSort={setAlignmentSortData}
+              alignedWord={selectedAlignedWord ?? undefined}
               chosenAlignmentLink={selectedAlignmentLink}
               onChooseAlignmentLink={setSelectedAlignmentLink}
             />
