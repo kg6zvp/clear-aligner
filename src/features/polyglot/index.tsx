@@ -78,6 +78,13 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
           variant: 'determinate',
           value: percentProgress < 100 ? percentProgress : undefined
         };
+      } else {
+        return {
+          isBusy: true,
+          text: dbUserText ?? 'The database is busy...',
+          variant: 'indeterminate',
+          value: 0
+        };
       }
     }
     if (!corpusViewports

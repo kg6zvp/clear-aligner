@@ -13,7 +13,7 @@ const DatabaseWaitInMs = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
 export const DefaultProjectName = 'default';
-const LinkTableName = 'link';
+export const LinkTableName = 'links';
 const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 
@@ -198,6 +198,12 @@ export class LinksTable extends VirtualTable<Link> {
         this._logDatabaseTimeLog('saveAll(): saved', busyInfo.progressCtr, busyInfo.progressMax);
       }
       this._logDatabaseTimeEnd('saveAll(): saved');
+
+      busyInfo.userText = `Updating link text...`;
+      busyInfo.progressCtr = 0;
+      busyInfo.progressMax = 0;
+      // @ts-ignore
+      await window.databaseApi.updateAllLinkText(DefaultProjectName);
 
       busyInfo.userText = `Saving project...`;
       await this._saveDefaultProject();
@@ -659,8 +665,7 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   static createIdFromWordId = (wordId: string): string => {
-    const workWordId = `${BCVWP.sanitize(wordId)}000000000`.slice(0, 11);
-    return `${workWordId}-${uuid()}`;
+    return `${BCVWP.sanitize(wordId)}-${uuid()}`;
   };
 
   /**
