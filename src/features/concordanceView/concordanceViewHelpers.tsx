@@ -23,8 +23,8 @@ export const fullyResolveLink = (
             localized: {
               text: word.text.toLowerCase(),
               position: word.id,
-              languageInfo: corpus.language,
-            },
+              languageInfo: corpus.language
+            }
           };
         })
         .filter((v) => !!v)
@@ -42,13 +42,13 @@ export const fullyResolveLink = (
             localized: {
               text: word.text.toLowerCase(),
               position: word.id,
-              languageInfo: corpus.language,
-            },
+              languageInfo: corpus.language
+            }
           };
         })
         .filter((v) => !!v)
         .map((v) => v as ResolvedWordEntry)
-    ),
+    )
   };
 };
 
@@ -61,9 +61,11 @@ export const getLinksForPivotWord = async (
   linksTable: LinksTable,
   pivotWord: PivotWord
 ): Promise<PivotWord> => {
-  pivotWord.alignmentLinks = pivotWord.instances.flatMap((instance) =>
-    linksTable.findByWord(pivotWord.side, instance)
-  );
+  const results = [];
+  for (const alignmentInstance of pivotWord.instances) {
+    results.push((await linksTable.findByWord(pivotWord.side, alignmentInstance)));
+  }
+  pivotWord.alignmentLinks = results.flat();
   return pivotWord;
 };
 
@@ -80,8 +82,8 @@ export const generatePivotWordsList = async (
 
   const pivotWordPromises = container.corpora.flatMap((corpus) =>
     Array.from(corpus.wordLocation.entries()).map(async ([key, value]) => {
-      return new Promise<PivotWord>((resolve) => {
-        setTimeout(() => {
+        return new Promise<PivotWord>((resolve) => {
+          setTimeout(() => {
             resolve({
               normalizedText: key,
               side,
@@ -89,7 +91,7 @@ export const generatePivotWordsList = async (
               languageInfo: corpus.language
             } as PivotWord);
           }, 10);
-      });
+        });
       }
     )
   );

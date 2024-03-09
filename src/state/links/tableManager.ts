@@ -1,20 +1,17 @@
-import { AlignmentSide, BookStats, Link, Project } from '../../structs';
+import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
-import { IndexedChangeType, SecondaryIndex, VirtualTable } from '../databaseManagement';
+import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import books from '../../workbench/books';
 
 const DatabaseChunkSize = 10_000;
-const IndexChunkSize = 100;
 const DatabaseWaitInMs = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
 const DefaultProjectName = 'default';
 const LinkTableName = 'links';
-const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 
 export interface DatabaseLoadState {
@@ -49,19 +46,11 @@ const InitialDatabaseStatus = {
 
 export class LinksTable extends VirtualTable<Link> {
   private readonly isLoggingTime = true;
-  private readonly linksMap: Map<string, Link>;
-  private readonly sourcesMap: Map<string, string[]>;
-  private readonly targetsMap: Map<string, string[]>;
-  private readonly linksByBookMap: Map<number, number>;
   private readonly databaseStatus: DatabaseStatus;
   private databaseBusyCtr = 0;
 
   constructor() {
     super();
-    this.linksMap = new Map<string, Link>();
-    this.sourcesMap = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
-    this.targetsMap = new Map<string, string[]>(); // links a normalized BCVWP reference string to a set of link id strings
-    this.linksByBookMap = new Map<number, number>();
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   }
 
@@ -74,22 +63,15 @@ export class LinksTable extends VirtualTable<Link> {
     this._incrDatabaseBusyCtr();
     try {
       await this.remove(link.id, true, true);
-
       const newLink: Link = {
         id: link.id ?? uuid(),
         sources: link.sources.map(BCVWP.sanitize),
         targets: link.targets.map(BCVWP.sanitize)
       };
 
-      this.linksMap.set(newLink.id!, newLink);
-      this._addLinkIndex(newLink);
-      void this._updateSecondaryIndices(IndexedChangeType.SAVE, newLink);
-
-      await this.checkLinkTable();
+      await this.checkDatabase();
       // @ts-ignore
       await window.databaseApi.save(DefaultProjectName, LinkTableName, newLink);
-      await this._saveDefaultProject();
-
       return newLink;
     } catch (e) {
       return undefined;
@@ -98,9 +80,10 @@ export class LinksTable extends VirtualTable<Link> {
     }
   };
 
-  exists = (id?: string): boolean => {
-    if (!id) return false;
-    return this.linksMap.has(id);
+  exists = async (linkId?: string): Promise<boolean> => {
+    if (!linkId) return false;
+    // @ts-ignore
+    return !!(await window.databaseApi.existsById(DefaultProjectName, LinkTableName, linkId));
   };
 
   removeAll = async (suppressOnUpdate = false, isForced = false) => {
@@ -112,19 +95,9 @@ export class LinksTable extends VirtualTable<Link> {
     this._incrDatabaseBusyCtr();
     this.databaseStatus.busyInfo.userText = 'Removing old links...';
     try {
-      this.sourcesMap.clear();
-      this.targetsMap.clear();
-      this.linksMap.clear();
-      this.linksByBookMap.clear();
-
-      await this.checkLinkTable();
+      await this.checkDatabase();
       // @ts-ignore
       await window.databaseApi.deleteAll(DefaultProjectName, LinkTableName);
-      await this._saveDefaultProject();
-
-      if (!suppressOnUpdate) {
-        void this.catchUpAllIndexes();
-      }
       this._onUpdate(suppressOnUpdate);
     } catch (ex) {
       console.error('error removing all links', ex);
@@ -160,7 +133,7 @@ export class LinksTable extends VirtualTable<Link> {
     this.databaseStatus.busyInfo.userText = `Saving ${inputLinks.length.toLocaleString()} links...`;
     try {
       await this.removeAll(true, true);
-      await this.checkLinkTable();
+      await this.checkDatabase();
 
       this.databaseStatus.busyInfo.userText = `Sorting ${inputLinks.length.toLocaleString()} links...`;
       this._logDatabaseTime('saveAll(): sorted');
@@ -183,10 +156,6 @@ export class LinksTable extends VirtualTable<Link> {
       for (const chunk of _.chunk(outputLinks, DatabaseChunkSize)) {
         // @ts-ignore
         await window.databaseApi.insert(DefaultProjectName, LinkTableName, chunk);
-        chunk.forEach(link => {
-          this.linksMap.set(link.id ?? '', link);
-          this._addLinkIndex(link);
-        });
         busyInfo.progressCtr += chunk.length;
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -200,17 +169,10 @@ export class LinksTable extends VirtualTable<Link> {
       this._logDatabaseTimeEnd('saveAll(): saved');
 
       busyInfo.userText = `Updating link text...`;
-      busyInfo.progressCtr = 0;
-      busyInfo.progressMax = 0;
       // @ts-ignore
       await window.databaseApi.updateAllLinkText(DefaultProjectName);
 
       busyInfo.userText = `Saving project...`;
-      await this._saveDefaultProject();
-
-      if (!suppressOnUpdate) {
-        void this.catchUpAllIndexes();
-      }
       this._onUpdate(suppressOnUpdate);
       return outputLinks;
     } catch (ex) {
@@ -226,40 +188,34 @@ export class LinksTable extends VirtualTable<Link> {
    * @param side
    * @param wordId
    */
-  hasLinkByWord = (side: AlignmentSide, wordId: BCVWP): boolean => {
-    const refString = wordId.toReferenceString();
-    switch (side) {
-      case AlignmentSide.SOURCE:
-        return (this.sourcesMap.get(refString) ?? []).length > 0;
-      case AlignmentSide.TARGET:
-        return (this.targetsMap.get(refString) ?? []).length > 0;
-      default:
-        return false;
-    }
+  hasLinkByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<boolean> => {
+    return (await this.findLinkIdsByWord(side, wordId)).length > 0;
   };
 
-  findLinkIdsByWord = (side: AlignmentSide, wordId: BCVWP): string[] => {
-    const refString = wordId.toReferenceString();
-    switch (side) {
-      case AlignmentSide.SOURCE:
-        return this.sourcesMap.get(refString) ?? [];
-      case AlignmentSide.TARGET:
-        return this.targetsMap.get(refString) ?? [];
-      default:
-        return [];
-    }
+  findLinkIdsByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<string[]> => {
+    // @ts-ignore
+    return (((await window.databaseApi
+      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[]) ?? [])
+      .map(link => link.id)
+      .filter(Boolean);
   };
 
-  findByWord = (side: AlignmentSide, wordId: BCVWP): Link[] =>
-    this.findLinkIdsByWord(side, wordId)
-      .map(this.get)
-      .filter(v => !!v) as Link[];
+  findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
+    // @ts-ignore
+    return (((await window.databaseApi
+      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[]) ?? [])
+      .filter(Boolean);
+  };
 
-  getAll = (): Link[] => Array.from(this.linksMap.values());
+  getAll = async (): Promise<Link[]> => {
+    // @ts-ignore
+    return (await window.databaseApi.getAll(DefaultProjectName, LinkTableName) as Link[]) ?? [];
+  };
 
-  get = (id?: string): Link | undefined => {
+  get = async (id?: string): Promise<Link | undefined> => {
     if (!id) return undefined;
-    return this.linksMap.get(id);
+    // @ts-ignore
+    return (await window.databaseApi.findOneById(DefaultProjectName, LinkTableName, id) as Link | undefined);
   };
 
   remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
@@ -270,18 +226,9 @@ export class LinksTable extends VirtualTable<Link> {
     this._logDatabaseTime('remove()');
     this._incrDatabaseBusyCtr();
     try {
-      const oldLink = this.linksMap.get(id!);
-      if (!oldLink) return;
-
-      void this._updateSecondaryIndices(IndexedChangeType.REMOVE, oldLink);
-      this._removeLinkIndex(oldLink);
-      this.linksMap.delete(oldLink.id ?? '');
-
-      await this.checkLinkTable();
+      await this.checkDatabase();
       // @ts-ignore
       await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
-      await this._saveDefaultProject();
-
       this._onUpdate(suppressOnUpdate);
     } finally {
       this._decrDatabaseBusyCtr();
@@ -294,16 +241,6 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
-    const indicesPromises: Promise<void>[] = [];
-    for (const chunk of _.chunk(Array.from(this.linksMap.values()), IndexChunkSize)) {
-      indicesPromises.push(new Promise<void>(resolve =>
-        setTimeout(() => {
-          chunk.forEach(link =>
-            index.onChange(IndexedChangeType.SAVE, link, true));
-          resolve();
-        }, 3)));
-    }
-    await Promise.all(indicesPromises);
   };
 
   getDatabaseStatus = (): DatabaseStatus => ({
@@ -339,82 +276,10 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   /**
-   * Checks to see if the link table is loaded and,
-   * if not, loads it.
-   *
-   * Returns true if the link table was loaded in this step,
-   * false otherwise.
-   */
-  public checkLinkTable = async (): Promise<boolean> => {
-    if (!this._quickCheckDatabase()) {
-      await this.checkDatabase();
-    }
-    const loadState = this.databaseStatus.linkTableLoadState;
-    if (loadState.isLoading) {
-      await this._waitForLinkTable();
-    }
-    if (loadState.isLoaded) {
-      return false;
-    }
-
-    this._logDatabaseTime('checkLinkTable(): loading');
-    loadState.isLoading = true;
-    try {
-      await this.checkProjectTable();
-      await this._rebuildLinkMaps();
-
-      loadState.isLoaded = true;
-    } finally {
-      loadState.isLoading = false;
-      this._logDatabaseTimeEnd('checkLinkTable(): loading');
-    }
-
-    return true;
-  };
-
-  /**
    * Checks to see if the links DB has been created without using a promise.
    * Does not guarantee the database is not in the process of being created.
    */
   private _quickCheckDatabase = () => this.databaseStatus.databaseLoadState.isLoaded;
-
-  /**
-   * Checks to see if the project table is loaded and,
-   * if not, loads it.
-   *
-   * Returns true if the project table was loaded in this step,
-   * false otherwise.
-   */
-  public checkProjectTable = async () => {
-    if (!this._quickCheckDatabase()) {
-      await this.checkDatabase();
-    }
-    const loadState = this.databaseStatus.projectTableLoadState;
-    if (loadState.isLoading) {
-      await this._waitForProjectTable();
-    }
-    if (loadState.isLoaded) {
-      return false;
-    }
-
-    this._logDatabaseTime('checkProjectTable(): loading');
-    loadState.isLoading = true;
-    try {
-      await this._loadDefaultProject();
-      loadState.isLoaded = true;
-    } finally {
-      loadState.isLoading = false;
-      this._logDatabaseTimeEnd('checkProjectTable(): loading');
-    }
-
-    return true;
-  };
-
-  checkUserTable = async () => {
-    if (!this._quickCheckDatabase()) {
-      await this.checkDatabase();
-    }
-  };
 
   /**
    * Checks to see if the database and all tables are loaded and
@@ -426,52 +291,9 @@ export class LinksTable extends VirtualTable<Link> {
   public checkAllTables = async () => {
     this._logDatabaseTime('checkAllTables(): loading');
     try {
-      const databaseResult = await this.checkDatabase();
-      const linkTableResult = await this.checkLinkTable();
-      const projectTableResult = await this.checkProjectTable();
-      const userTableResult = await this.checkUserTable();
-      return databaseResult || linkTableResult || projectTableResult || userTableResult;
+      return await this.checkDatabase();
     } finally {
       this._logDatabaseTimeEnd('checkAllTables(): loading');
-    }
-  };
-
-  private _saveDefaultProject = async () => {
-    this._logDatabaseTime('_saveDefaultProject()');
-    try {
-      const defaultProject = {
-        id: DefaultProjectName,
-        bookStats: Array.from(this.linksByBookMap)
-          .map(([key, value]) =>
-            ({
-              bookNum: key,
-              linkCtr: value
-            } as BookStats))
-      } as Project;
-
-      // @ts-ignore
-      await window.databaseApi.save(DefaultProjectName, ProjectTableName, defaultProject);
-      return defaultProject;
-    } finally {
-      this._logDatabaseTimeEnd('_saveDefaultProject()');
-    }
-  };
-
-  private _loadDefaultProject = async () => {
-    this._logDatabaseTime('_loadDefaultProject()');
-    try {
-      // @ts-ignore
-      const defaultProject = await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName)
-        ?? await this._saveDefaultProject();
-
-      this.linksByBookMap.clear();
-      ((defaultProject.bookStats ?? []) as BookStats[])
-        .forEach(bookStats =>
-          this.linksByBookMap.set(bookStats.bookNum, bookStats.linkCtr));
-
-      return defaultProject;
-    } finally {
-      this._logDatabaseTimeEnd('_loadDefaultProject()');
     }
   };
 
@@ -497,53 +319,6 @@ export class LinksTable extends VirtualTable<Link> {
     }
   };
 
-  private _rebuildLinkMaps = async (suppressOnUpdate = false, isForced = false) => {
-    if (!isForced && this._isDatabaseBusy()) {
-      return;
-    }
-
-    this._logDatabaseTime('_rebuildLinkMaps(): indexing');
-    this._incrDatabaseBusyCtr();
-    this.databaseStatus.busyInfo.userText = 'Loading the database...';
-    try {
-      this.sourcesMap.clear();
-      this.targetsMap.clear();
-      this.linksMap.clear();
-
-      const oldLinksByBookMap = new Map<number, number>(this.linksByBookMap);
-      this.linksByBookMap.clear();
-
-      this._logDatabaseTimeLog('_rebuildLinkMaps(): indexing', oldLinksByBookMap);
-      const busyInfo = this.databaseStatus.busyInfo;
-      busyInfo.progressCtr = 0;
-      busyInfo.progressMax = oldLinksByBookMap.size;
-      for (const [bookNum, linkCtr] of oldLinksByBookMap.entries()) {
-        busyInfo.progressCtr++;
-        if (linkCtr < 1) {
-          continue;
-        }
-
-        busyInfo.userText = `Loading ${books[bookNum - 1].ParaText} (${busyInfo.progressCtr} of ${busyInfo.progressMax} books)...`;
-        const keyPrefix = `00${bookNum}`.slice(-2);
-        const fromId = `${keyPrefix}000000000-00000000-0000-0000-0000-000000000000`;
-        const toId = `${keyPrefix}999999999-ffffffff-ffff-ffff-ffff-ffffffffffff`;
-
-        // @ts-ignore
-        const bookLinks = await window.databaseApi.findBetweenIds(DefaultProjectName, LinkTableName, fromId, toId) as Link[];
-        bookLinks.forEach(link => {
-          this.linksMap.set(link?.id ?? '', link);
-          this._addLinkIndex(link as Link);
-        });
-
-        this._logDatabaseTimeLog('_rebuildLinkMaps(): indexing', fromId, toId, bookLinks.length);
-      }
-    } finally {
-      this._onUpdate(suppressOnUpdate);
-      this._decrDatabaseBusyCtr();
-      this._logDatabaseTimeEnd('_rebuildLinkMaps(): indexing');
-    }
-  };
-
   private _waitForDatabase = async () => {
     while (this.databaseStatus.databaseLoadState.isLoading) {
       await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
@@ -559,81 +334,6 @@ export class LinksTable extends VirtualTable<Link> {
   private _waitForProjectTable = async () => {
     while (this.databaseStatus.projectTableLoadState.isLoading) {
       await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
-    }
-  };
-
-  /**
-   * perform indexing on the given link
-   * @param link
-   */
-  private _addLinkIndex = (link: Link) => {
-    if (!link.id) {
-      throw new Error('Cannot index link without an id!');
-    }
-    // index sources
-    link.sources.map(BCVWP.sanitize).forEach(sourceId => {
-      const linksOnSource = this.sourcesMap.get(sourceId) ?? [];
-      if (linksOnSource.includes(link.id!)) {
-        return;
-      }
-
-      linksOnSource.push(link.id!);
-      this.sourcesMap.set(sourceId, linksOnSource);
-    });
-
-    // index targets
-    link.targets.map(BCVWP.sanitize).forEach(targetId => {
-      const linksOnTarget = this.targetsMap.get(targetId) ?? [];
-      if (linksOnTarget.includes(link.id!)) {
-        return;
-      }
-
-      linksOnTarget.push(link.id!);
-      this.targetsMap.set(targetId, linksOnTarget);
-
-      this._updateBookCtr(Number(targetId.substring(0, 2)), +1);
-    });
-  };
-
-  /**
-   * remove the indexes created for a given link
-   * @param link
-   */
-  private _removeLinkIndex = (link?: Link) => {
-    if (!link || !link.id) return;
-
-    link.sources.forEach(sourceId => {
-      const associatedLinks = this.sourcesMap.get(sourceId);
-      if (!associatedLinks) return;
-
-      const newAssociatedLinks = associatedLinks.filter(v => v !== link.id!);
-      if (newAssociatedLinks.length < 1) {
-        this.sourcesMap.delete(sourceId);
-      } else {
-        this.sourcesMap.set(sourceId, newAssociatedLinks);
-      }
-    });
-    link.targets.forEach(targetId => {
-      const associatedLinks = this.targetsMap.get(targetId);
-      if (!associatedLinks) return;
-
-      const newAssociatedLinks = associatedLinks.filter(v => v !== link.id!);
-      if (associatedLinks.length < 1) {
-        this.targetsMap.delete(targetId);
-      } else {
-        this.targetsMap.set(targetId, newAssociatedLinks);
-      }
-
-      this._updateBookCtr(Number(targetId.substring(0, 2)), -1);
-    });
-  };
-
-  private _updateBookCtr = (bookNum: number, ctrDelta: number) => {
-    const newCtr = Math.max((this.linksByBookMap.get(bookNum) ?? 0) + ctrDelta, 0);
-    if (newCtr < 1) {
-      this.linksByBookMap.delete(bookNum);
-    } else {
-      this.linksByBookMap.set(bookNum, newCtr);
     }
   };
 
@@ -852,14 +552,24 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
       || prevExistsKey === workExistsKey) {
       return;
     }
-    const endStatus = {
+
+    const startStatus = {
       ...status,
-      isPending: false,
-      result: LinksTableInstance.exists(linkId)
+      isPending: true
     };
-    setStatus(endStatus);
+    setStatus(startStatus);
     setPrevExistsKey(existsKey);
-    databaseHookDebug('useLinkExists(): endStatus', endStatus);
+    databaseHookDebug('useLinkExists(): startStatus', startStatus);
+    LinksTableInstance.exists(linkId)
+      .then((exists) => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false,
+          result: true
+        };
+        setStatus(endStatus);
+        databaseHookDebug('useLinkExists(): endStatus', endStatus);
+      });
   }, [prevExistsKey, existsKey, linkId, status]);
 
   return { ...status };
@@ -934,14 +644,23 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
       || prevFindKey === workFindKey) {
       return;
     }
-    const endStatus = {
+    const startStatus = {
       ...status,
-      isPending: false,
-      result: LinksTableInstance.findByWord(side, wordId)
+      isPending: true
     };
-    setStatus(endStatus);
+    setStatus(startStatus);
     setPrevFindKey(findKey);
-    databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+    databaseHookDebug('useFindLinksByWord(): startStatus', startStatus);
+    LinksTableInstance.findByWord(side, wordId)
+      .then((links) => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false,
+          result: links
+        };
+        setStatus(endStatus);
+        databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+      });
   }, [prevFindKey, findKey, side, status, wordId]);
 
   return { ...status };
@@ -969,14 +688,24 @@ export const useGetAllLinks = (getKey?: string) => {
       || prevGetKey === getKey) {
       return;
     }
-    const endStatus = {
+
+    const startStatus = {
       ...status,
-      isPending: false,
-      result: LinksTableInstance.getAll()
+      isPending: true
     };
-    setStatus(endStatus);
+    setStatus(startStatus);
     setPrevGetKey(getKey);
-    databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
+    databaseHookDebug('useGetAllLinks(): startStatus', startStatus);
+    LinksTableInstance.getAll()
+      .then((links) => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false,
+          result: links
+        };
+        setStatus(endStatus);
+        databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
+      });
   }, [prevGetKey, getKey, status]);
 
   return { ...status };
@@ -1006,14 +735,24 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
       || prevGetKey === workGetKey) {
       return;
     }
-    const endStatus = {
+
+    const startStatus = {
       ...status,
-      isPending: false,
-      result: LinksTableInstance.get(linkId)
+      isPending: true
     };
-    setStatus(endStatus);
+    setStatus(startStatus);
     setPrevGetKey(getKey);
-    databaseHookDebug('useGetLink(): endStatus', endStatus);
+    databaseHookDebug('useGetLink(): startStatus', startStatus);
+    LinksTableInstance.get(linkId)
+      .then((link) => {
+        const endStatus = {
+          ...startStatus,
+          isPending: false,
+          result: link
+        };
+        setStatus(endStatus);
+        databaseHookDebug('useGetLink(): endStatus', endStatus);
+      });
   }, [prevGetKey, getKey, linkId, status]);
 
   return { ...status };

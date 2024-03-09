@@ -204,7 +204,7 @@ class DatabaseAccessMain {
   }
 
 
-  getLinksToSource = (links) => {
+  createLinksToSource = (links) => {
     const result = [];
     links.forEach(link => {
       const linkId = link.id ?? '';
@@ -219,7 +219,7 @@ class DatabaseAccessMain {
     });
     return result;
   };
-  getLinksToTarget = (links) => {
+  createLinksToTarget = (links) => {
     const result = [];
     links.forEach(link => {
       const linkId = link.id ?? '';
@@ -247,9 +247,9 @@ class DatabaseAccessMain {
               id: link.id
             })));
           await dataSource.getRepository(LinksToSourceWordsName)
-            .insert(this.getLinksToSource(links));
+            .insert(this.createLinksToSource(links));
           await dataSource.getRepository(LinksToTargetWordsName)
-            .insert(this.getLinksToTarget(links));
+            .insert(this.createLinksToTarget(links));
           break;
         default:
           await dataSource.getRepository(table)
@@ -306,9 +306,9 @@ class DatabaseAccessMain {
               id: link.id
             })));
           await dataSource.getRepository(LinksToSourceWordsName)
-            .save(this.getLinksToSource(links));
+            .save(this.createLinksToSource(links));
           await dataSource.getRepository(LinksToTargetWordsName)
-            .save(this.getLinksToTarget(links));
+            .save(this.createLinksToTarget(links));
           break;
         default:
           await dataSource.getRepository(table)
@@ -340,7 +340,7 @@ class DatabaseAccessMain {
     }
   };
 
-  getLinksFromRows = (linkRows) => {
+  createLinksFromRows = (linkRows) => {
     if (!linkRows || linkRows.length === 0) {
       return [];
     }
@@ -414,44 +414,81 @@ class DatabaseAccessMain {
                                         from links__target_words t
                                         where t.link_id = '${workLinkId}';`);
     }
-    return this.getLinksFromRows(rows);
+    return this.createLinksFromRows(rows);
   };
 
   findLinksBetweenIds = async (dataSource, fromLinkId, toLinkId) => {
     if (!fromLinkId || !toLinkId) {
       return [];
     }
-    return this.getLinksFromRows((await dataSource.manager.query(`select q.link_id, q.type, q.words
-                                                                  from (select s.link_id,
-                                                                               'sources' as                                         type,
-                                                                               json_group_array(replace(s.word_id, 'sources:', '')) words
-                                                                        from links__source_words s
-                                                                        where s.link_id >= '${fromLinkId}'
-                                                                          and s.link_id <= '${toLinkId}'
-                                                                        group by s.link_id
-                                                                        union
-                                                                        select t.link_id,
-                                                                               'targets' as                                         type,
-                                                                               json_group_array(replace(t.word_id, 'targets:', '')) words
-                                                                        from links__target_words t
-                                                                        where t.link_id >= '${fromLinkId}'
-                                                                          and t.link_id <= '${toLinkId}'
-                                                                        group by t.link_id) q
-                                                                  order by q.link_id;`)));
+    return this.createLinksFromRows((await dataSource.manager.query(`select q.link_id, q.type, q.words
+                                                                     from (select s.link_id,
+                                                                                  'sources' as                                         type,
+                                                                                  json_group_array(replace(s.word_id, 'sources:', '')) words
+                                                                           from links__source_words s
+                                                                           where s.link_id >= '${fromLinkId}'
+                                                                             and s.link_id <= '${toLinkId}'
+                                                                           group by s.link_id
+                                                                           union
+                                                                           select t.link_id,
+                                                                                  'targets' as                                         type,
+                                                                                  json_group_array(replace(t.word_id, 'targets:', '')) words
+                                                                           from links__target_words t
+                                                                           where t.link_id >= '${fromLinkId}'
+                                                                             and t.link_id <= '${toLinkId}'
+                                                                           group by t.link_id) q
+                                                                     order by q.link_id;`)));
+  };
+
+  findLinksByWordId = async (sourceName, linkSide, wordId) => {
+    if (!linkSide || !wordId) {
+      return undefined;
+    }
+    this.logDatabaseTime('findLinksByWordId()');
+    try {
+      const tableName = linkSide.substring(0, 6); // e.g., "sources" to "source"
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const result = this.createLinksFromRows((await entityManager.query(`select s1.link_id,
+                                                                                 'sources' as                                          type,
+                                                                                 json_group_array(replace(s1.word_id, 'sources:', '')) words
+                                                                          from links__source_words s1
+                                                                          where s1.link_id =
+                                                                                (select q1.link_id
+                                                                                 from 'links__${tableName}_words' q1
+                                                                                 where q1.word_id = '${linkSide}:${wordId}'
+                                                                                 limit 1)
+                                                                          union
+                                                                          select t1.link_id,
+                                                                                 'targets' as                                          type,
+                                                                                 json_group_array(replace(t1.word_id, 'targets:', '')) words
+                                                                          from links__target_words t1
+                                                                          where t1.link_id =
+                                                                                (select q1.link_id
+                                                                                 from 'links__${tableName}_words' q1
+                                                                                 where q1.word_id = '${linkSide}:${wordId}'
+                                                                                 limit 1);`)));
+      this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result);
+      return result;
+    } catch (ex) {
+      console.error('findLinksByWordId()', ex);
+    } finally {
+      this.logDatabaseTimeEnd('findLinksByWordId()');
+    }
   };
 
   getAllLinks = async (dataSource) => {
-    return this.getLinksFromRows((await dataSource.manager.query(`select s.link_id,
-                                                                         'sources' as                                         type,
-                                                                         json_group_array(replace(s.word_id, 'sources:', '')) words
-                                                                  from links__source_words s
-                                                                  group by s.link_id
-                                                                  union
-                                                                  select t.link_id,
-                                                                         'targets' as                                         type,
-                                                                         json_group_array(replace(t.word_id, 'targets:', '')) words
-                                                                  from links__target_words t
-                                                                  group by t.link_id;`)));
+    return this.createLinksFromRows((await dataSource.manager.query(`
+        select s.link_id,
+               'sources' as                                         type,
+               json_group_array(replace(s.word_id, 'sources:', '')) words
+        from links__source_words s
+        group by s.link_id
+        union
+        select t.link_id,
+               'targets' as                                         type,
+               json_group_array(replace(t.word_id, 'targets:', '')) words
+        from links__target_words t
+        group by t.link_id;`)));
   };
 
   updateLinkText = async (sourceName, linkIdOrIds) => {
@@ -707,6 +744,9 @@ module.exports = {
       });
       ipcMain.handle(`${ChannelPrefix}:updateAllLinkText`, async (event, ...args) => {
         return await DatabaseAccessMainInstance.updateAllLinkText(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findLinksByWordId`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findLinksByWordId(...args);
       });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
