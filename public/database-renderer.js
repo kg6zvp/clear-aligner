@@ -13,5 +13,6 @@ contextBridge.exposeInMainWorld('databaseApi', {
   getAll: (database, table) => ipcRenderer.invoke(`${ChannelPrefix}:getAll`, database, table),
   findOneById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:findOneById`, database, table, itemId),
   deleteByIds: (database, table, itemIdOrIds) => ipcRenderer.invoke(`${ChannelPrefix}:deleteByIds`, database, table, itemIdOrIds),
-  findBetweenIds: (database, table, fromId, toId) => ipcRenderer.invoke(`${ChannelPrefix}:findBetweenIds`, database, table, fromId, toId)
+  findBetweenIds: (database, table, fromId, toId) => ipcRenderer.invoke(`${ChannelPrefix}:findBetweenIds`, database, table, fromId, toId),
+  corporaGetPivotWords: (sourceName, side, filter, sort) => ipcRenderer.invoke(`${ChannelPrefix}:corporaGetPivotWords`, sourceName, side, filter, sort),
 });

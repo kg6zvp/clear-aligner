@@ -12,7 +12,7 @@ const IndexChunkSize = 100;
 const DatabaseWaitInMs = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
-const DefaultProjectName = 'default';
+export const DefaultProjectName = 'default';
 const LinkTableName = 'link';
 const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
@@ -444,7 +444,7 @@ export class LinksTable extends VirtualTable<Link> {
       } as Project;
 
       // @ts-ignore
-      await window.databaseApi.save(DefaultProjectName, ProjectTableName, defaultProject);
+      //await window.databaseApi.save(DefaultProjectName, ProjectTableName, defaultProject);
       return defaultProject;
     } finally {
       this._logDatabaseTimeEnd('_saveDefaultProject()');
@@ -455,8 +455,7 @@ export class LinksTable extends VirtualTable<Link> {
     this._logDatabaseTime('_loadDefaultProject()');
     try {
       // @ts-ignore
-      const defaultProject = await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName)
-        ?? await this._saveDefaultProject();
+      const defaultProject = { bookStats: undefined }//await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName) ?? await this._saveDefaultProject();
 
       this.linksByBookMap.clear();
       ((defaultProject.bookStats ?? []) as BookStats[])

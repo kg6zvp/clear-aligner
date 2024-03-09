@@ -1,8 +1,7 @@
 import { AlignmentSide, CorpusContainer, Link, Word } from '../../structs';
-import { FullyResolvedLink, PivotWord, ResolvedWordEntry } from './structs';
+import { FullyResolvedLink, ResolvedWordEntry } from './structs';
 import { findWordByString } from '../../helpers/findWord';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { LinksTable } from '../../state/links/tableManager';
 
 export const fullyResolveLink = (
   link: Link,
@@ -50,75 +49,6 @@ export const fullyResolveLink = (
         .map((v) => v as ResolvedWordEntry)
     ),
   };
-};
-
-/**
- * populate alignmentLinks property of given pivotWord
- * @param linksTable datasource
- * @param pivotWord pivotWord to populate
- */
-export const getLinksForPivotWord = async (
-  linksTable: LinksTable,
-  pivotWord: PivotWord
-): Promise<PivotWord> => {
-  pivotWord.alignmentLinks = pivotWord.instances.flatMap((instance) =>
-    linksTable.findByWord(pivotWord.side, instance)
-  );
-  return pivotWord;
-};
-
-/**
- * generate map of pivotWords without links or alignedWords populated
- * @param linksTable
- * @param container
- * @param side
- */
-export const generatePivotWordsList = async (
-  container: CorpusContainer,
-  side: AlignmentSide
-): Promise<Map<string, PivotWord>> => {
-
-  const pivotWordPromises = container.corpora.flatMap((corpus) =>
-    Array.from(corpus.wordLocation.entries()).map(async ([key, value]) => {
-      return new Promise<PivotWord>((resolve) => {
-        setTimeout(() => {
-            resolve({
-              normalizedText: key,
-              side,
-              instances: Array.from(value),
-              languageInfo: corpus.language
-            } as PivotWord);
-          }, 10);
-      });
-      }
-    )
-  );
-
-  const pivotWords: PivotWord[] = [];
-
-  for (const pivotWordPromise of pivotWordPromises) {
-    const pivotWord = await pivotWordPromise;
-    pivotWords.push(pivotWord);
-  }
-
-  const pivotWordsMap = pivotWords.reduce((accumulator, currentValue) => {
-    if (
-      !accumulator.has(currentValue.normalizedText) ||
-      !accumulator.get(currentValue.normalizedText)?.alignmentLinks
-    ) {
-      // create it
-      accumulator.set(currentValue.normalizedText, currentValue);
-    } else {
-      // mutate it
-      const pivotWord = accumulator.get(currentValue.normalizedText)!;
-      currentValue.alignmentLinks?.forEach((link) =>
-        pivotWord.alignmentLinks!.push(link)
-      );
-    }
-    return accumulator;
-  }, new Map<string, PivotWord>());
-
-  return pivotWordsMap;
 };
 
 /**

@@ -5,13 +5,10 @@ import BCVWP from '../bcvwp/BCVWPSupport';
  * represents rows displayed in the pivot word table in the concordance view
  */
 export interface PivotWord {
-  instances: BCVWP[]; // instances of this pivot word appearing in the text
   normalizedText: string; // normalized text of the pivot word being representeda
   side: AlignmentSide;
-  languageInfo?: LanguageInfo;
-  alignedWords?: AlignedWord[];
-  alignmentLinks?: Link[];
-  hasAlignmentLinks?: boolean;
+  frequency: number;
+  languageInfo: LanguageInfo;
 }
 
 /**

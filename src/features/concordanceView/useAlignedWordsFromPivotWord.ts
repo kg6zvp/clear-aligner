@@ -4,7 +4,6 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import {
   fullyResolveLink,
   generateWordListFromCorpusContainerAndLink,
-  getLinksForPivotWord
 } from './concordanceViewHelpers';
 import { AppContext } from '../../App';
 import { AlignmentSide } from '../../structs';
@@ -14,20 +13,20 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
     projectState: { linksTable }
   } = useContext(AppContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
-  const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(pivotWord?.alignedWords);
+  const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(undefined);
   const setAlignedWordsRef = useRef(setAlignedWords);
 
   useEffect(() => {
     setAlignedWordsRef.current = setAlignedWords;
   }, [setAlignedWordsRef, setAlignedWords]);
 
-  useEffect(() => {
+  /*useEffect(() => {
       setAlignedWords(pivotWord?.alignedWords);
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [setAlignedWords, pivotWord, pivotWord?.alignedWords, pivotWord?.alignedWords?.length]);
+    [setAlignedWords, pivotWord, pivotWord?.alignedWords, pivotWord?.alignedWords?.length]); //*/
 
   useEffect(() => {
-    if (pivotWord?.alignedWords) {
+    /*if (pivotWord?.alignedWords) {
       setAlignedWordsRef.current(pivotWord.alignedWords);
       return;
     }
@@ -38,10 +37,6 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
           if (!sourceContainer || !targetContainer || !pivotWord || !linksTable) {
             resolve();
             return;
-          }
-
-          if (!pivotWord.alignmentLinks) {
-            await getLinksForPivotWord(linksTable, pivotWord);
           }
 
           const links = pivotWord.alignmentLinks!.map((link) => fullyResolveLink(link, sourceContainer, targetContainer));
@@ -77,7 +72,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord): AlignedWord
       });
     };
 
-    void loadAlignedWords();
+    void loadAlignedWords(); //*/
   }, [pivotWord, linksTable, sourceContainer, targetContainer, setAlignedWordsRef]);
 
   return alignedWords;

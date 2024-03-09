@@ -317,6 +317,26 @@ class DatabaseAccessMain {
       this.logDatabaseTimeEnd('findBetweenIds()');
     }
   };
+
+  corporaGetPivotWords = async (sourceName, side, filter, sort) => {
+    const dataSource = await this.getDataSource(sourceName);
+    const em = dataSource.manager;
+    return await em.query(`select
+                        normalized_text t,
+                        language_id l,
+                        count(1) c
+      from words_or_parts w
+        ${filter === 'aligned' ? `inner join links__target_words j
+                                    on w.id = j.word_id` : ''}
+      where w.side = '${side}'
+      group by t
+        ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
+  };
+
+  _buildOrderBy = (sort, fieldMap) => {
+    if (!sort || !sort.field || !sort.sort) return '';
+    return `order by ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
+  }
 }
 
 const DatabaseAccessMainInstance = new DatabaseAccessMain();
@@ -363,6 +383,10 @@ module.exports = {
       ipcMain.handle(`${ChannelPrefix}:findBetweenIds`,
         async (event, ...args) => {
           return await DatabaseAccessMainInstance.findBetweenIds(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:corporaGetPivotWords`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.corporaGetPivotWords(...args);
         });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
