@@ -319,19 +319,74 @@ class DatabaseAccessMain {
   };
 
   corporaGetPivotWords = async (sourceName, side, filter, sort) => {
-    const dataSource = await this.getDataSource(sourceName);
-    const em = dataSource.manager;
+    const em = (await this.getDataSource(sourceName)).manager;
     return await em.query(`select
                         normalized_text t,
                         language_id l,
                         count(1) c
       from words_or_parts w
-        ${filter === 'aligned' ? `inner join links__target_words j
+        ${filter === 'aligned' ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j
                                     on w.id = j.word_id` : ''}
       where w.side = '${side}'
       group by t
         ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
   };
+
+  languageFindByIds = async (sourceName, languageIds) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    return await em.query(`SELECT code, text_direction textDirection, font_family fontFamily from language WHERE code in (${languageIds.map(id => `'${id}'`).join(',')});`);
+  }
+
+
+  languageGetAll = async (sourceName) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    return await em.query(`SELECT code, text_direction textDirection, font_family fontFamily from language;`);
+  }
+
+  corporaGetAlignedWordsByPivotWord = async (sourceName, side, normalizedText, sort) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    console.log('corporaGetAlignedWordsByPivotWord()');
+    switch (side) {
+      case 'sources':
+        const sourceQueryTextWLang = `
+            SELECT sw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(1) c
+            FROM words_or_parts sw
+                     INNER JOIN links__source_words lsw
+                                ON sw.id = lsw.word_id
+                     INNER JOIN links l
+                                ON l.id = lsw.link_id
+                     INNER JOIN links__target_words ltw
+                                ON l.id = ltw.link_id
+                     INNER JOIN words_or_parts tw
+                                ON tw.id = ltw.word_id
+            WHERE sw.normalized_text = '${normalizedText}'
+              AND sw.side = 'sources'
+              AND l.targets_text <> ''
+            GROUP BY l.targets_text
+                ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text' })};`;
+        console.log('sources', sourceQueryTextWLang);
+        return await em.query(sourceQueryTextWLang);
+      case 'targets':
+        const targetQueryText = `
+            SELECT tw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(1) c
+            FROM words_or_parts tw
+                     INNER JOIN links__target_words ltw
+                                ON tw.id = ltw.word_id
+                     INNER JOIN links l
+                                ON l.id = ltw.link_id
+                     INNER JOIN links__source_words lsw
+                                ON l.id = lsw.link_id
+                     INNER JOIN words_or_parts sw
+                                ON sw.id = lsw.word_id
+            WHERE tw.normalized_text = '${normalizedText}'
+              AND tw.side = 'targets'
+              AND l.sources_text <> ''
+            GROUP BY l.sources_text
+              ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
+        console.log('targets', targetQueryText);
+        return await em.query(targetQueryText);
+    }
+  }
 
   _buildOrderBy = (sort, fieldMap) => {
     if (!sort || !sort.field || !sort.sort) return '';
@@ -387,6 +442,18 @@ module.exports = {
       ipcMain.handle(`${ChannelPrefix}:corporaGetPivotWords`,
         async (event, ...args) => {
           return await DatabaseAccessMainInstance.corporaGetPivotWords(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:languageFindByIds`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.languageFindByIds(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:corporaGetAlignedWordsByPivotWord`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.corporaGetAlignedWordsByPivotWord(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:languageGetAll`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.languageGetAll(...args);
         });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);

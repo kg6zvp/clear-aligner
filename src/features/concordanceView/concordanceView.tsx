@@ -109,12 +109,12 @@ export const ConcordanceView = () => {
       (selectedAlignedWord)
     ) {
       const alignmentLinkId = searchParams.get('alignmentLink');
-      const alignmentLink = (selectedAlignedWord
+      /*const alignmentLink = (selectedAlignedWord
       )?.alignments?.find((link) => link.id === alignmentLinkId);
 
       if (alignmentLink) {
         setSelectedAlignmentLink(alignmentLink);
-      }
+      }*/
       searchParams.delete('alignmentLink');
     }
     setSearchParams(searchParams);
@@ -237,11 +237,7 @@ export const ConcordanceView = () => {
               pivotWord={selectedPivotWord}
               chosenAlignedWord={selectedAlignedWord}
               onChooseAlignedWord={(alignedWord) =>
-                handleUpdateSelectedAlignedWord(
-                  alignedWord.alignments && alignedWord.alignments.length > 0
-                    ? alignedWord
-                    : null
-                )
+                handleUpdateSelectedAlignedWord(alignedWord)
               }
               onChangeSort={setAlignedWordSortData}
             />
@@ -277,7 +273,7 @@ export const ConcordanceView = () => {
               wordSource={wordSource}
               pivotWord={selectedPivotWord}
               alignedWord={selectedAlignedWord}
-              alignments={selectedAlignedWord?.alignments ?? []}
+              alignments={[] /*TODO*/}
               onChangeSort={setAlignmentSortData}
               chosenAlignmentLink={selectedAlignmentLink}
               onChooseAlignmentLink={setSelectedAlignmentLink}

@@ -16,7 +16,6 @@ export interface PivotWord {
  */
 export interface LocalizedWordEntry {
   text: string; // actual text of the word
-  position: string; // BCVWP string
   languageInfo?: LanguageInfo;
 }
 
@@ -26,12 +25,9 @@ export interface LocalizedWordEntry {
 export interface AlignedWord {
   id: string;
   frequency: number;
-  sourceTextId: string;
-  targetTextId: string;
-  sourceWordTexts: LocalizedWordEntry[];
-  targetWordTexts: LocalizedWordEntry[];
+  sourceWordTexts: LocalizedWordEntry;
+  targetWordTexts: LocalizedWordEntry;
   gloss?: string[] | null;
-  alignments?: Link[];
 }
 
 /**
