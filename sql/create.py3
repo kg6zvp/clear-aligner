@@ -70,9 +70,9 @@ def insertCorpus(corpus):
     conn.commit()
 
 
-def insertWordOrPart(corpus_id, word):
+def insertWordOrPart(corpus_id, language_id, word):
     cur.execute(
-        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))})')
+        f'INSERT INTO words_or_parts (id, corpus_id, side, text, after, gloss, position_book, position_chapter, position_verse, position_word, position_part, normalized_text, language_id) VALUES ({val(word.get("id"))}, {val(corpus_id)}, {val(word.get("side"))}, {val(word.get("text"))}, {val(word.get("after"))}, {val(word.get("gloss"))}, {val(word.get("position_book"))}, {val(word.get("position_chapter"))}, {val(word.get("position_verse"))}, {val(word.get("position_word"))}, {val(word.get("position_part"))}, {val(word.get("normalized_text"))}, {val(language_id)})')
 
 
 def cleanupGloss(gloss):
@@ -85,6 +85,8 @@ def cleanupGloss(gloss):
 
 def readCorpus(metadata, tsvFile):
     insertCorpus(metadata)
+    corpus_id = metadata.get('id')
+    language_id = metadata.get('language').get('code')
     total_rows = 0
     with open(tsvFile) as tsvFd:
         total_rows = len(tsvFd.readlines())
@@ -105,7 +107,7 @@ def readCorpus(metadata, tsvFile):
             after = row[idx_after]
             gloss = cleanupGloss(row[idx_gloss] or row[idx_english])
             bcvwp = parseBCVWP(row[idx_id])
-            insertWordOrPart(metadata.get('id'), {
+            insertWordOrPart(corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{id}',
                 'corpus_id': metadata.get('id'),
                 'side': metadata.get('side'),
