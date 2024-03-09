@@ -7,11 +7,30 @@ const { app, BrowserWindow } = require('electron');
 const isDev = require('electron-is-dev');
 const sanitize = require('sanitize-filename');
 
+const DbWaitInMs = 1000;
+const LinkTableName = 'links';
+const LinksToSourceWordsName = 'links__source_words';
+const LinksToTargetWordsName = 'links__target_words';
+
 class Link {
   constructor() {
     this.id = undefined;
-    this.sources = [];
-    this.targets = [];
+    this.sources_text = undefined;
+    this.targets_text = undefined;
+  }
+}
+
+class LinkToSourceWord {
+  constructor() {
+    this.link_id = undefined;
+    this.word_id = undefined;
+  }
+}
+
+class LinkToTargetWord {
+  constructor() {
+    this.link_id = undefined;
+    this.word_id = undefined;
   }
 }
 
@@ -29,57 +48,54 @@ class User {
 }
 
 const linkSchema = new EntitySchema({
-  name: 'link',
-  tableName: 'link',
-  target: Link,
-  columns: {
+  name: LinkTableName, tableName: LinkTableName, target: Link, columns: {
     id: {
-      primary: true,
-      type: 'varchar',
-      generated: false
-    },
-    sources: {
-      type: 'simple-array'
-    },
-    targets: {
-      type: 'simple-array'
+      primary: true, type: 'text', generated: false
+    }, sources_text: {
+      type: 'text'
+    }, targets_text: {
+      type: 'text'
+    }
+  }
+});
+
+const linksToSourceWordsSchema = new EntitySchema({
+  name: LinksToSourceWordsName, tableName: LinksToSourceWordsName, target: LinkToSourceWord, columns: {
+    link_id: {
+      primary: true, type: 'text', generated: false
+    }, word_id: {
+      type: 'text'
+    }
+  }
+});
+
+const linksToTargetWordsSchema = new EntitySchema({
+  name: LinksToTargetWordsName, tableName: LinksToTargetWordsName, target: LinkToTargetWord, columns: {
+    link_id: {
+      primary: true, type: 'text', generated: false
+    }, word_id: {
+      type: 'text'
     }
   }
 });
 
 const projectSchema = new EntitySchema({
-  name: 'project',
-  tableName: 'project',
-  target: Project,
-  columns: {
+  name: 'project', tableName: 'project', target: Project, columns: {
     id: {
-      primary: true,
-      type: 'varchar',
-      generated: false
-    },
-    bookStats: {
+      primary: true, type: 'text', generated: false
+    }, bookStats: {
       type: 'simple-json'
     }
   }
 });
 
 const userSchema = new EntitySchema({
-  name: 'user',
-  tableName: 'user',
-  target: User,
-  columns: {
+  name: 'user', tableName: 'user', target: User, columns: {
     id: {
-      primary: true,
-      type: 'varchar',
-      generated: false
-    },
-    bookStats: {
-      type: 'simple-json'
+      primary: true, type: 'text', generated: false
     }
   }
 });
-
-const DbWaitInMs = 1000;
 
 class DataSourceStatus {
   constructor() {
@@ -140,13 +156,15 @@ class DatabaseAccessMain {
         fs.mkdirSync(databasePath, { recursive: true });
         databaseFile = path.join(databasePath, fileName);
       }
-
+      if (!fs.existsSync(databaseFile)) {
+        fs.copyFileSync('sql/clear-aligner-template.sql', databaseFile);
+      }
       this.logDatabaseTimeLog('getDataSource()', sourceName, databaseFile);
       const newDataSource = new DataSource({
         type: 'better-sqlite3',
         database: databaseFile,
-        synchronize: true,
-        entities: [linkSchema, projectSchema, userSchema]
+        synchronize: false,
+        entities: [linkSchema, projectSchema, userSchema, linksToSourceWordsSchema, linksToTargetWordsSchema]
       });
       await newDataSource.initialize();
 
@@ -170,20 +188,78 @@ class DatabaseAccessMain {
       return result;
     } catch (ex) {
       console.error('createDataSource()', ex);
+      return false;
     } finally {
       this.logDatabaseTimeEnd('createDataSource()');
     }
   };
 
+
+  sanitizeWordId(wordId) {
+    const wordId1 = wordId.trim();
+    const wordId2 = !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
+    const wordId3 = wordId2.length < 11 ? `${wordId2}00000000000`.slice(0, 11) : wordId2;
+    return wordId3.length === 11 ? wordId3 + '1' : wordId3;
+  }
+
+
+  getLinksToSource = (links) => {
+    const result = [];
+    links.forEach(link => {
+      const linkId = link.id ?? '';
+      return (link.sources ?? [])
+        .filter(Boolean)
+        .forEach(wordId => {
+          const linkToSource = new LinkToSourceWord();
+          linkToSource.link_id = linkId;
+          linkToSource.word_id = 'sources:' + this.sanitizeWordId(wordId);
+          result.push(linkToSource);
+        });
+    });
+    return result;
+  };
+  getLinksToTarget = (links) => {
+    const result = [];
+    links.forEach(link => {
+      const linkId = link.id ?? '';
+      return (link.targets ?? [])
+        .filter(Boolean)
+        .forEach(wordId => {
+          const linkToTarget = new LinkToTargetWord();
+          linkToTarget.link_id = linkId;
+          linkToTarget.word_id = 'targets:' + this.sanitizeWordId(wordId);
+          result.push(linkToTarget);
+        });
+    });
+    return result;
+  };
+
   insert = async (sourceName, table, itemOrItems) => {
     this.logDatabaseTime('insert()');
     try {
-      await (await this.getDataSource(sourceName))
-        .getRepository(table)
-        .insert(itemOrItems);
+      const dataSource = await this.getDataSource(sourceName);
+      switch (table) {
+        case LinkTableName:
+          const links = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+          await dataSource.getRepository(LinkTableName)
+            .insert(links.map(link => ({
+              id: link.id
+            })));
+          await dataSource.getRepository(LinksToSourceWordsName)
+            .insert(this.getLinksToSource(links));
+          await dataSource.getRepository(LinksToTargetWordsName)
+            .insert(this.getLinksToTarget(links));
+          break;
+        default:
+          await dataSource.getRepository(table)
+            .insert(itemOrItems);
+          break;
+      }
       this.logDatabaseTimeLog('insert()', sourceName, table, itemOrItems?.length ?? itemOrItems);
+      return true;
     } catch (ex) {
       console.error('insert()', ex);
+      return false;
     } finally {
       this.logDatabaseTimeEnd('insert()');
     }
@@ -192,12 +268,26 @@ class DatabaseAccessMain {
   deleteAll = async (sourceName, table) => {
     this.logDatabaseTime('deleteAll()');
     try {
-      await (await this.getDataSource(sourceName))
-        .getRepository(table)
-        .clear();
+      const dataSource = await this.getDataSource(sourceName);
+      switch (table) {
+        case LinkTableName:
+          await dataSource.getRepository(LinksToSourceWordsName)
+            .clear();
+          await dataSource.getRepository(LinksToTargetWordsName)
+            .clear();
+          await dataSource.getRepository(LinkTableName)
+            .clear();
+          break;
+        default:
+          await dataSource.getRepository(table)
+            .clear();
+          break;
+      }
       this.logDatabaseTimeLog('deleteAll()', sourceName, table);
+      return true;
     } catch (ex) {
       console.error('deleteAll()', ex);
+      return false;
     } finally {
       this.logDatabaseTimeEnd('deleteAll()');
     }
@@ -206,14 +296,29 @@ class DatabaseAccessMain {
   save = async (sourceName, table, itemOrItems) => {
     this.logDatabaseTime('save()');
     try {
-      const result =
-        await (await this.getDataSource(sourceName))
-          .getRepository(table)
-          .save(itemOrItems);
-      this.logDatabaseTimeLog('save()', sourceName, table, result?.length ?? result);
-      return result;
+      const dataSource = await this.getDataSource(sourceName);
+      switch (table) {
+        case LinkTableName:
+          const links = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+          await dataSource.getRepository(LinkTableName)
+            .save(links.map(link => ({
+              id: link.id
+            })));
+          await dataSource.getRepository(LinksToSourceWordsName)
+            .save(this.getLinksToSource(links));
+          await dataSource.getRepository(LinksToTargetWordsName)
+            .save(this.getLinksToTarget(links));
+          break;
+        default:
+          await dataSource.getRepository(table)
+            .save(itemOrItems);
+          break;
+      }
+      this.logDatabaseTimeLog('save()', sourceName, table);
+      return true;
     } catch (ex) {
       console.error('save()', ex);
+      return false;
     } finally {
       this.logDatabaseTimeEnd('save()');
     }
@@ -222,10 +327,9 @@ class DatabaseAccessMain {
   existsById = async (sourceName, table, itemId) => {
     this.logDatabaseTime('existsById()');
     try {
-      const result =
-        await (await this.getDataSource(sourceName))
-          .getRepository(table)
-          .existsBy({ id: itemId });
+      const result = await (await this.getDataSource(sourceName))
+        .getRepository(table)
+        .existsBy({ id: itemId });
       this.logDatabaseTimeLog('existsById()', sourceName, table, itemId, result);
       return result;
     } catch (ex) {
@@ -235,13 +339,135 @@ class DatabaseAccessMain {
     }
   };
 
+  getLinksFromRows = (linkRows) => {
+    if (!linkRows || linkRows.length === 0) {
+      return [];
+    }
+    const results = [];
+    let currLink = {
+      id: undefined, sources: [], targets: []
+    };
+    linkRows.forEach(linkRow => {
+      if (currLink.id && currLink.id !== linkRow.link_id) {
+        results.push(currLink);
+        currLink = {
+          id: undefined, sources: [], targets: []
+        };
+      }
+      currLink.id = linkRow.link_id;
+      switch (linkRow.type) {
+        case 'sources':
+          currLink.sources = JSON.parse(linkRow.words);
+          break;
+        case 'targets':
+          currLink.targets = JSON.parse(linkRow.words);
+          break;
+      }
+    });
+    if (currLink.id) {
+      results.push(currLink);
+    }
+    return results;
+  };
+
+  findLinksById = async (dataSource, linkIdOrIds) => {
+    if (!linkIdOrIds) {
+      return [];
+    }
+    const linkIds = Array.isArray(linkIdOrIds) ? linkIdOrIds : [linkIdOrIds];
+    if (linkIds.length < 1) {
+      return [];
+    }
+    const entityManager = dataSource.manager;
+    let rows;
+    if (linkIds.length > 1) {
+      const workLinkIds = linkIds.join('\', \'');
+      rows = await entityManager.query(`select q.link_id, q.type, q.words
+                                        from (select s.link_id,
+                                                     'sources' as                                         type,
+                                                     json_group_array(replace(s.word_id, 'sources:', '')) words
+                                              from links__source_words s
+                                              where s.link_id in
+                                                    ('${workLinkIds}')
+                                              group by s.link_id
+                                              union
+                                              select t.link_id,
+                                                     'targets' as                                         type,
+                                                     json_group_array(replace(t.word_id, 'targets:', '')) words
+                                              from links__target_words t
+                                              where t.link_id in
+                                                    ('${workLinkIds}')
+                                              group by t.link_id) q
+                                        order by q.link_id;`);
+    } else {
+      const workLinkId = linkIds[0];
+      rows = await entityManager.query(`select s.link_id,
+                                               'sources' as                                         type,
+                                               json_group_array(replace(s.word_id, 'sources:', '')) words
+                                        from links__source_words s
+                                        where s.link_id = '${workLinkId}'
+                                        union
+                                        select t.link_id,
+                                               'targets' as                                         type,
+                                               json_group_array(replace(t.word_id, 'targets:', '')) words
+                                        from links__target_words t
+                                        where t.link_id = '${workLinkId}';`);
+    }
+    return this.getLinksFromRows(rows);
+  };
+
+  findLinksBetweenIds = async (dataSource, fromLinkId, toLinkId) => {
+    if (!fromLinkId || !toLinkId) {
+      return [];
+    }
+    return this.getLinksFromRows((await dataSource.manager.query(`select q.link_id, q.type, q.words
+                                                                  from (select s.link_id,
+                                                                               'sources' as                                         type,
+                                                                               json_group_array(replace(s.word_id, 'sources:', '')) words
+                                                                        from links__source_words s
+                                                                        where s.link_id >= '${fromLinkId}'
+                                                                          and s.link_id <= '${toLinkId}'
+                                                                        group by s.link_id
+                                                                        union
+                                                                        select t.link_id,
+                                                                               'targets' as                                         type,
+                                                                               json_group_array(replace(t.word_id, 'targets:', '')) words
+                                                                        from links__target_words t
+                                                                        where t.link_id >= '${fromLinkId}'
+                                                                          and t.link_id <= '${toLinkId}'
+                                                                        group by t.link_id) q
+                                                                  order by q.link_id;`)));
+  };
+
+  getAllLinks = async (dataSource) => {
+    return this.getLinksFromRows((await dataSource.manager.query(`select s.link_id,
+                                                                         'sources' as                                         type,
+                                                                         json_group_array(replace(s.word_id, 'sources:', '')) words
+                                                                  from links__source_words s
+                                                                  group by s.link_id
+                                                                  union
+                                                                  select t.link_id,
+                                                                         'targets' as                                         type,
+                                                                         json_group_array(replace(t.word_id, 'targets:', '')) words
+                                                                  from links__target_words t
+                                                                  group by t.link_id;`)));
+  };
+
   findByIds = async (sourceName, table, itemIds) => {
     this.logDatabaseTime('findByIds()');
     try {
-      const result =
-        await (await this.getDataSource(sourceName))
-          .getRepository(table)
-          .findBy({ id: In(itemIds) });
+      const dataSource = await this.getDataSource(sourceName);
+      let result;
+      switch (table) {
+        case LinkTableName:
+          result = await this.findLinksById(dataSource, itemIds);
+          break;
+        default:
+          result = await dataSource
+            .getRepository(table)
+            .findBy({ id: In(itemIds) });
+          break;
+      }
       this.logDatabaseTimeLog('findByIds()', sourceName, table, itemIds, result);
       return result;
     } catch (ex) {
@@ -254,12 +480,20 @@ class DatabaseAccessMain {
   getAll = async (sourceName, table) => {
     this.logDatabaseTime('getAll()');
     try {
-      const result =
-        (await (await this.getDataSource(sourceName))
-          .getRepository(table)
-          .createQueryBuilder()
-          .getMany())
-          .filter(Boolean);
+      const dataSource = await this.getDataSource(sourceName);
+      let result;
+      switch (table) {
+        case LinkTableName:
+          result = await this.getAllLinks(dataSource);
+          break;
+        default:
+          result = (await dataSource
+            .getRepository(table)
+            .createQueryBuilder()
+            .getMany())
+            .filter(Boolean);
+          break;
+      }
       this.logDatabaseTimeLog('getAll()', sourceName, table, result.length);
       return result;
     } catch (ex) {
@@ -272,10 +506,19 @@ class DatabaseAccessMain {
   findOneById = async (sourceName, table, itemId) => {
     this.logDatabaseTime('findOneById()');
     try {
-      const result =
-        await (await this.getDataSource(sourceName))
-          .getRepository(table)
-          .findOneBy({ id: itemId });
+      const dataSource = await this.getDataSource(sourceName);
+      let result;
+      switch (table) {
+        case LinkTableName:
+          const links = await this.findLinksById(dataSource, [itemId]);
+          result = links.length > 0 ? links[0] : [];
+          break;
+        default:
+          result = await dataSource
+            .getRepository(table)
+            .findOneBy({ id: itemId });
+          break;
+      }
       this.logDatabaseTimeLog('findOneById()', sourceName, table, itemId, result);
       return result;
     } catch (ex) {
@@ -288,12 +531,30 @@ class DatabaseAccessMain {
   deleteByIds = async (sourceName, table, itemIdOrIds) => {
     this.logDatabaseTime('deleteByIds()');
     try {
-      await (await this.getDataSource(sourceName))
-        .getRepository(table)
-        .delete(itemIdOrIds);
+      const dataSource = await this.getDataSource(sourceName);
+      switch (table) {
+        case LinkTableName:
+          await dataSource
+            .getRepository(LinkTableName)
+            .delete(itemIdOrIds);
+          await dataSource
+            .getRepository(LinksToSourceWordsName)
+            .delete(itemIdOrIds);
+          await dataSource
+            .getRepository(LinksToTargetWordsName)
+            .delete(itemIdOrIds);
+          break;
+        default:
+          await dataSource
+            .getRepository(table)
+            .delete(itemIdOrIds);
+          break;
+      }
       this.logDatabaseTimeLog('deleteByIds()', sourceName, table, itemIdOrIds?.length ?? itemIdOrIds);
+      return true;
     } catch (ex) {
       console.error('deleteByIds()', ex);
+      return false;
     } finally {
       this.logDatabaseTimeEnd('deleteByIds()');
     }
@@ -302,13 +563,20 @@ class DatabaseAccessMain {
   findBetweenIds = async (sourceName, table, fromId, toId) => {
     this.logDatabaseTime('findBetweenIds()');
     try {
-      const result =
-        await (await this.getDataSource(sourceName))
-          .getRepository(table)
-          .createQueryBuilder('item')
-          .where('item.id >= :fromId and item.id <= :toId',
-            { fromId, toId })
-          .getMany();
+      const dataSource = await this.getDataSource(sourceName);
+      let result = [];
+      switch (table) {
+        case LinkTableName:
+          result = await this.findLinksBetweenIds(dataSource, fromId, toId);
+          break;
+        default:
+          result = await dataSource
+            .getRepository(table)
+            .createQueryBuilder('item')
+            .where('item.id >= :fromId and item.id <= :toId', { fromId, toId })
+            .getMany();
+          break;
+      }
       this.logDatabaseTimeLog('findBetweenIds()', sourceName, table, fromId, toId, result?.length ?? result);
       return result;
     } catch (ex) {
@@ -324,46 +592,36 @@ const DatabaseAccessMainInstance = new DatabaseAccessMain();
 module.exports = {
   setUpIpcMain() {
     try {
-      ipcMain.handle(`${ChannelPrefix}:createDataSource`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.createDataSource(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:insert`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.insert(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:deleteAll`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.deleteAll(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:save`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.save(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:existsById`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.existsById(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:findByIds`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.findByIds(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:getAll`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.getAll(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:findOneById`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.findOneById(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:deleteByIds`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.deleteByIds(...args);
-        });
-      ipcMain.handle(`${ChannelPrefix}:findBetweenIds`,
-        async (event, ...args) => {
-          return await DatabaseAccessMainInstance.findBetweenIds(...args);
-        });
+      ipcMain.handle(`${ChannelPrefix}:createDataSource`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.createDataSource(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:insert`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.insert(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:deleteAll`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.deleteAll(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:save`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.save(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:existsById`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.existsById(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findByIds`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findByIds(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:getAll`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.getAll(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findOneById`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findOneById(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:deleteByIds`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.deleteByIds(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findBetweenIds(...args);
+      });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
     }

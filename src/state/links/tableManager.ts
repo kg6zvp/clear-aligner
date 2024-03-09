@@ -13,7 +13,7 @@ const DatabaseWaitInMs = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
 const DefaultProjectName = 'default';
-const LinkTableName = 'link';
+const LinkTableName = 'links';
 const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 
@@ -660,8 +660,7 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   static createIdFromWordId = (wordId: string): string => {
-    const workWordId = `${BCVWP.sanitize(wordId)}000000000`.slice(0, 11);
-    return `${workWordId}-${uuid()}`;
+    return `${BCVWP.sanitize(wordId)}-${uuid()}`;
   };
 
   /**

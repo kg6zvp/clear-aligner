@@ -1,4 +1,4 @@
-PRAGMA foreign_keys=OFF;
+PRAGMA foreign_keys= OFF;
 BEGIN TRANSACTION;
 CREATE TABLE language
 (
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "corpora"
         constraint id
             primary key,
     side        TEXT not null,
-    name   TEXT not null,
+    name        TEXT not null,
     full_name   TEXT not null,
     language_id TEXT
         constraint language_fk
@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS "corpora"
 );
 CREATE TABLE links
 (
-    id TEXT not null
+    id           TEXT not null
         constraint links_pk
-            primary key,
+            primary key on conflict ignore,
     sources_text TEXT,
     targets_text TEXT
 );
@@ -50,25 +50,17 @@ CREATE TABLE IF NOT EXISTS "words_or_parts"
 );
 CREATE TABLE IF NOT EXISTS "links__target_words"
 (
-    link_id TEXT not null
-        constraint links__words_links_id_fk
-            references links,
-    word_id TEXT not null
-        constraint links__words_words_or_parts_id_fk
-            references words_or_parts,
+    link_id TEXT not null,
+    word_id TEXT not null,
     constraint links__words_pk
-        primary key (link_id, word_id)
+        primary key (link_id, word_id) on conflict ignore
 );
 CREATE TABLE IF NOT EXISTS "links__source_words"
 (
-    link_id TEXT not null
-        constraint links__source_words_links_id_fk
-            references links,
-    word_id TEXT not null
-        constraint links__source_words_words_or_parts_id_fk
-            references words_or_parts,
+    link_id TEXT not null,
+    word_id TEXT not null,
     constraint links__source_words_pk
-        primary key (link_id, word_id)
+        primary key (link_id, word_id) on conflict ignore
 );
 CREATE INDEX idx__word_or_part__position_book
     on words_or_parts (position_book);

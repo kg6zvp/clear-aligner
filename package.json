@@ -119,7 +119,13 @@
     "directories": {
       "buildResources": "build/",
       "app": "."
-    }
+    },
+    "extraFiles": [
+      {
+        "from": "sql",
+        "to": "sql"
+      }
+    ]
   },
   "babel": {
     "sourceType": "unambiguous",
