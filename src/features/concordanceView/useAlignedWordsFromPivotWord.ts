@@ -22,6 +22,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
   useEffect(() => {
     if (!pivotWord || !languages) return;
     const load = async () => {
+      console.time(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
       const alignedWords = (await db.corporaGetAlignedWordsByPivotWord(DefaultProjectName, pivotWord.side, pivotWord.normalizedText, sort))
                                             .map((aw): AlignedWord => {
                                               return {
@@ -37,6 +38,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
                                                 frequency: aw.c
                                               }
                                             });
+      console.timeEnd(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
       setAlignedWords(alignedWords);
     };
 
