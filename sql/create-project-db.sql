@@ -76,6 +76,7 @@ CREATE INDEX idx__word_or_part__position_word
 CREATE INDEX idx__word_or_part__position_part
     on words_or_parts (position_part);
 
+
 CREATE INDEX idx__word_or_part__text
     on words_or_parts (corpus_id, text);
 CREATE INDEX links_sources_text_index
