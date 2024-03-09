@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS "words_or_parts"
     corpus_id          TEXT    not null
         constraint corpus_fk
             references corpora,
+    language_id        TEXT    not null
+        constraint word__language_fk
+            references "language",
     side               TEXT    not null,
     text               TEXT    not null,
     after              TEXT,
