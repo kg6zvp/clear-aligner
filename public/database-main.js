@@ -382,37 +382,34 @@ class DatabaseAccessMain {
     const entityManager = dataSource.manager;
     let rows;
     if (linkIds.length > 1) {
-      const workLinkIds = linkIds.join('\', \'');
       rows = await entityManager.query(`select q.link_id, q.type, q.words
                                         from (select s.link_id,
                                                      'sources' as                                         type,
                                                      json_group_array(replace(s.word_id, 'sources:', '')) words
                                               from links__source_words s
-                                              where s.link_id in
-                                                    ('${workLinkIds}')
+                                              where s.link_id in (?)
                                               group by s.link_id
                                               union
                                               select t.link_id,
                                                      'targets' as                                         type,
                                                      json_group_array(replace(t.word_id, 'targets:', '')) words
                                               from links__target_words t
-                                              where t.link_id in
-                                                    ('${workLinkIds}')
+                                              where t.link_id in (?)
                                               group by t.link_id) q
-                                        order by q.link_id;`);
+                                        order by q.link_id;`, [linkIds]);
     } else {
       const workLinkId = linkIds[0];
       rows = await entityManager.query(`select s.link_id,
                                                'sources' as                                         type,
                                                json_group_array(replace(s.word_id, 'sources:', '')) words
                                         from links__source_words s
-                                        where s.link_id = '${workLinkId}'
+                                        where s.link_id = ?
                                         union
                                         select t.link_id,
                                                'targets' as                                         type,
                                                json_group_array(replace(t.word_id, 'targets:', '')) words
                                         from links__target_words t
-                                        where t.link_id = '${workLinkId}';`);
+                                        where t.link_id = ?;`, [workLinkId, workLinkId]);
     }
     return this.createLinksFromRows(rows);
   };
@@ -426,18 +423,19 @@ class DatabaseAccessMain {
                                                                                   'sources' as                                         type,
                                                                                   json_group_array(replace(s.word_id, 'sources:', '')) words
                                                                            from links__source_words s
-                                                                           where s.link_id >= '${fromLinkId}'
-                                                                             and s.link_id <= '${toLinkId}'
+                                                                           where s.link_id >= ?
+                                                                             and s.link_id <= ?
                                                                            group by s.link_id
                                                                            union
                                                                            select t.link_id,
                                                                                   'targets' as                                         type,
                                                                                   json_group_array(replace(t.word_id, 'targets:', '')) words
                                                                            from links__target_words t
-                                                                           where t.link_id >= '${fromLinkId}'
-                                                                             and t.link_id <= '${toLinkId}'
+                                                                           where t.link_id >= ?
+                                                                             and t.link_id <= ?
                                                                            group by t.link_id) q
-                                                                     order by q.link_id;`)));
+                                                                     order by q.link_id;`,
+      [fromLinkId, toLinkId, fromLinkId, toLinkId])));
   };
 
   findLinksByWordId = async (sourceName, linkSide, wordId) => {
@@ -447,6 +445,7 @@ class DatabaseAccessMain {
     this.logDatabaseTime('findLinksByWordId()');
     try {
       const tableName = linkSide.substring(0, 6); // e.g., "sources" to "source"
+      const queryWordId = `${linkSide}:${wordId}`;
       const entityManager = (await this.getDataSource(sourceName)).manager;
       const result = this.createLinksFromRows((await entityManager.query(`select s1.link_id,
                                                                                  'sources' as                                          type,
@@ -455,7 +454,7 @@ class DatabaseAccessMain {
                                                                           where s1.link_id =
                                                                                 (select q1.link_id
                                                                                  from 'links__${tableName}_words' q1
-                                                                                 where q1.word_id = '${linkSide}:${wordId}'
+                                                                                 where q1.word_id = ?
                                                                                  limit 1)
                                                                           union
                                                                           select t1.link_id,
@@ -465,8 +464,9 @@ class DatabaseAccessMain {
                                                                           where t1.link_id =
                                                                                 (select q1.link_id
                                                                                  from 'links__${tableName}_words' q1
-                                                                                 where q1.word_id = '${linkSide}:${wordId}'
-                                                                                 limit 1);`)));
+                                                                                 where q1.word_id = ?
+                                                                                 limit 1);`,
+        [queryWordId, queryWordId])));
       this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result);
       return result;
     } catch (ex) {
@@ -502,30 +502,28 @@ class DatabaseAccessMain {
     this.logDatabaseTime('updateLinkText()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      for (const linkId of linkIds) {
-        await entityManager.query(`update links
-                                   set sources_text = coalesce((select group_concat(words, ' ')
-                                                                from (select group_concat(w.normalized_text, '') words
-                                                                      from links l
-                                                                               join links__source_words j on l.id = j.link_id
-                                                                               join words_or_parts w on w.id = j.word_id
-                                                                      where l.id = links.id
-                                                                        and l.id = '${linkId}'
-                                                                        and w.normalized_text is not null
-                                                                      group by w.position_word
-                                                                      order by w.id)), '');`);
-        await entityManager.query(`update links
-                                   set targets_text = coalesce((select group_concat(words, ' ')
-                                                                from (select group_concat(w.normalized_text, '') words
-                                                                      from links l
-                                                                               join links__target_words j on l.id = j.link_id
-                                                                               join words_or_parts w on w.id = j.word_id
-                                                                      where l.id = links.id
-                                                                        and l.id = '${linkId}'
-                                                                        and w.normalized_text is not null
-                                                                      group by w.position_word
-                                                                      order by w.id)), '');`);
-      }
+      await entityManager.query(`update links
+                                 set sources_text = coalesce((select group_concat(words, ' ')
+                                                              from (select group_concat(w.normalized_text, '') words
+                                                                    from links l
+                                                                             join links__source_words j on l.id = j.link_id
+                                                                             join words_or_parts w on w.id = j.word_id
+                                                                    where l.id = links.id
+                                                                      and l.id in (?)
+                                                                      and w.normalized_text is not null
+                                                                    group by w.position_word
+                                                                    order by w.id)), '');`, [linkIds]);
+      await entityManager.query(`update links
+                                 set targets_text = coalesce((select group_concat(words, ' ')
+                                                              from (select group_concat(w.normalized_text, '') words
+                                                                    from links l
+                                                                             join links__target_words j on l.id = j.link_id
+                                                                             join words_or_parts w on w.id = j.word_id
+                                                                    where l.id = links.id
+                                                                      and l.id in (?)
+                                                                      and w.normalized_text is not null
+                                                                    group by w.position_word
+                                                                    order by w.id)), '');`, [linkIds]);
       this.logDatabaseTimeLog('updateLinkText()', sourceName, linkIdOrIds);
       return true;
     } catch (ex) {
