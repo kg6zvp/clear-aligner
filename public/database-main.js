@@ -164,6 +164,7 @@ class DatabaseAccessMain {
         type: 'better-sqlite3',
         database: databaseFile,
         synchronize: false,
+        enableWAL: true,
         entities: [linkSchema, projectSchema, userSchema, linksToSourceWordsSchema, linksToTargetWordsSchema]
       });
       await newDataSource.initialize();
@@ -453,6 +454,85 @@ class DatabaseAccessMain {
                                                                   group by t.link_id;`)));
   };
 
+  updateLinkText = async (sourceName, linkIdOrIds) => {
+    if (!linkIdOrIds) {
+      return [];
+    }
+    const linkIds = Array.isArray(linkIdOrIds) ? linkIdOrIds : [linkIdOrIds];
+    if (linkIds.length < 1) {
+      return [];
+    }
+    this.logDatabaseTime('updateLinkText()');
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      for (const linkId of linkIds) {
+        await entityManager.query(`update links
+                                   set sources_text = coalesce((select group_concat(words, ' ')
+                                                                from (select group_concat(w.normalized_text, '') words
+                                                                      from links l
+                                                                               join links__source_words j on l.id = j.link_id
+                                                                               join words_or_parts w on w.id = j.word_id
+                                                                      where l.id = links.id
+                                                                        and l.id = '${linkId}'
+                                                                        and w.normalized_text is not null
+                                                                      group by w.position_word
+                                                                      order by w.id)), '');`);
+        await entityManager.query(`update links
+                                   set targets_text = coalesce((select group_concat(words, ' ')
+                                                                from (select group_concat(w.normalized_text, '') words
+                                                                      from links l
+                                                                               join links__target_words j on l.id = j.link_id
+                                                                               join words_or_parts w on w.id = j.word_id
+                                                                      where l.id = links.id
+                                                                        and l.id = '${linkId}'
+                                                                        and w.normalized_text is not null
+                                                                      group by w.position_word
+                                                                      order by w.id)), '');`);
+      }
+      this.logDatabaseTimeLog('updateLinkText()', sourceName, linkIdOrIds);
+      return true;
+    } catch (ex) {
+      console.error('updateLinkText()', ex);
+      return false;
+    } finally {
+      this.logDatabaseTimeEnd('updateLinkText()');
+    }
+  };
+
+  updateAllLinkText = async (sourceName) => {
+    this.logDatabaseTime('updateAllLinkText()');
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      await entityManager.query(`update links
+                                 set sources_text = coalesce((select group_concat(words, ' ')
+                                                              from (select group_concat(w.normalized_text, '') words
+                                                                    from links l
+                                                                             join links__source_words j on l.id = j.link_id
+                                                                             join words_or_parts w on w.id = j.word_id
+                                                                    where l.id = links.id
+                                                                      and w.normalized_text is not null
+                                                                    group by w.position_word
+                                                                    order by w.id)), '');`);
+      await entityManager.query(`update links
+                                 set targets_text = coalesce((select group_concat(words, ' ')
+                                                              from (select group_concat(w.normalized_text, '') words
+                                                                    from links l
+                                                                             join links__target_words j on l.id = j.link_id
+                                                                             join words_or_parts w on w.id = j.word_id
+                                                                    where l.id = links.id
+                                                                      and w.normalized_text is not null
+                                                                    group by w.position_word
+                                                                    order by w.id)), '');`);
+      this.logDatabaseTimeLog('updateAllLinkText()', sourceName);
+      return true;
+    } catch (ex) {
+      console.error('updateAllLinkText()', ex);
+      return false;
+    } finally {
+      this.logDatabaseTimeEnd('updateAllLinkText()');
+    }
+  };
+
   findByIds = async (sourceName, table, itemIds) => {
     this.logDatabaseTime('findByIds()');
     try {
@@ -621,6 +701,12 @@ module.exports = {
       });
       ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => {
         return await DatabaseAccessMainInstance.findBetweenIds(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:updateLinkText`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.updateLinkText(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:updateAllLinkText`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.updateAllLinkText(...args);
       });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);

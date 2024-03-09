@@ -199,6 +199,12 @@ export class LinksTable extends VirtualTable<Link> {
       }
       this._logDatabaseTimeEnd('saveAll(): saved');
 
+      busyInfo.userText = `Updating link text...`;
+      busyInfo.progressCtr = 0;
+      busyInfo.progressMax = 0;
+      // @ts-ignore
+      await window.databaseApi.updateAllLinkText(DefaultProjectName);
+
       busyInfo.userText = `Saving project...`;
       await this._saveDefaultProject();
 
