@@ -234,6 +234,9 @@ export class LinksTable extends VirtualTable<Link> {
       const result = await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
       this._onUpdate(suppressOnUpdate);
       return result;
+    } catch (ex) {
+      console.error('error removing link', ex);
+      return false;
     } finally {
       this._decrDatabaseBusyCtr();
       this._logDatabaseTimeEnd('remove()');
@@ -273,6 +276,9 @@ export class LinksTable extends VirtualTable<Link> {
       loadState.isLoaded = true;
 
       return true;
+    } catch (ex) {
+      console.error('error checking database', ex);
+      return false;
     } finally {
       loadState.isLoading = false;
       this._logDatabaseTimeEnd('checkDatabase(): loading');
@@ -551,10 +557,10 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
     prevExistsKey.current = existsKey;
     databaseHookDebug('useLinkExists(): status', status);
     LinksTableInstance.exists(linkId)
-      .then(exists => {
+      .then(result => {
         const endStatus = {
           ...status,
-          result: true
+          result
         };
         setStatus(endStatus);
         databaseHookDebug('useLinkExists(): endStatus', endStatus);
@@ -635,10 +641,10 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByWord(): status', status);
     LinksTableInstance.findByWord(side, wordId)
-      .then(links => {
+      .then(result => {
         const endStatus = {
           ...status,
-          result: links
+          result
         };
         setStatus(endStatus);
         databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
@@ -672,10 +678,10 @@ export const useGetAllLinks = (getKey?: string) => {
     prevGetKey.current = getKey;
     databaseHookDebug('useGetAllLinks(): status', status);
     LinksTableInstance.getAll()
-      .then(links => {
+      .then(result => {
         const endStatus = {
           ...status,
-          result: links
+          result
         };
         setStatus(endStatus);
         databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
@@ -711,10 +717,10 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
     prevGetKey.current = getKey;
     databaseHookDebug('useGetLink(): status', status);
     LinksTableInstance.get(linkId)
-      .then(link => {
+      .then(result => {
         const endStatus = {
           ...status,
-          result: link
+          result
         };
         setStatus(endStatus);
         databaseHookDebug('useGetLink(): endStatus', endStatus);
