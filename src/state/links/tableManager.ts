@@ -13,8 +13,9 @@ const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
-const DefaultProjectName = 'default';
-const LinkTableName = 'links';
+export const DefaultProjectName = 'default';
+export const LinkTableName = 'links';
+const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 10;
 

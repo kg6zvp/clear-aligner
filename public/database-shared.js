@@ -1,3 +1,5 @@
+const ChannelPrefix = 'clear-aligner'
+
 module.exports = {
-  ChannelPrefix: 'clear-aligner'
+  ChannelPrefix
 };

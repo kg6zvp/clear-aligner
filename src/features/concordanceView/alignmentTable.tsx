@@ -2,7 +2,7 @@ import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
 import { IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
@@ -10,6 +10,7 @@ import { AlignedWord, PivotWord } from './structs';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
+import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -89,12 +90,9 @@ const columns: GridColDef[] = [
 ];
 
 export interface AlignmentTableProps {
-  sort: GridSortItem | null;
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
-  alignedWord?: AlignedWord | null;
-  alignments: Link[];
-  onChangeSort: (sortData: GridSortItem | null) => void;
+  alignedWord?: AlignedWord;
   chosenAlignmentLink: Link | null;
   onChooseAlignmentLink: (alignmentLink: Link) => void;
 }
@@ -102,28 +100,29 @@ export interface AlignmentTableProps {
 /**
  * The AlignmentTable displays a list of alignment Links and allows the user to navigate to that alignment link in the
  * alignment editor
- * @param sort current sort model for Material UI DataGrid
  * @param wordSource current word source
  * @param pivotWord the pivot word that's currently selected, corresponds to the alignment rows being displayed and the
  * currently selected aligned word
  * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
- * @param alignments alignment links to be displayed in the table
- * @param onChangeSort callback for when the user changes the sort model
  * @param chosenAlignmentLink currently selected alignment link
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
  */
 export const AlignmentTable = ({
-  sort,
   wordSource,
   pivotWord,
   alignedWord,
-  alignments,
-  onChangeSort,
   chosenAlignmentLink,
   onChooseAlignmentLink,
 }: AlignmentTableProps) => {
+  const [ sort, onChangeSort ] = useState<GridSortItem|null>({
+    field: 'id',
+    sort: 'desc',
+  } as GridSortItem);
+
+  const alignments = useLinksFromAlignedWord(alignedWord, sort);
+
   const initialPage = useMemo(() => {
-    if (chosenAlignmentLink) {
+    if (chosenAlignmentLink && alignments) {
       return (
         alignments.findIndex(
           (link) => link.id === chosenAlignmentLink.id
@@ -157,11 +156,11 @@ export const AlignmentTable = ({
             ...DataGridResizeAnimationFixes,
           }}
           rowSelection={true}
-          rowCount={alignments.length}
+          rowCount={alignments?.length ?? 0}
           rowSelectionModel={
             chosenAlignmentLink?.id ? [chosenAlignmentLink.id] : undefined
           }
-          rows={alignments}
+          rows={alignments ?? []}
           columns={columns}
           getRowId={(row) => row.id}
           getRowHeight={(_) => 'auto'}
