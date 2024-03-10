@@ -214,9 +214,8 @@ export class LinksTable extends VirtualTable<Link> {
     const cacheKey = [side, referenceString].join('|');
     return this.linksByWordIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
-      return ((await window.databaseApi
-        .findLinksByWordId(DefaultProjectName, side, referenceString)) as Link[] ?? [])
-        .filter(Boolean);
+      return window.databaseApi
+        .findLinksByWordId(DefaultProjectName, side, referenceString);
     });
   };
 
@@ -224,9 +223,8 @@ export class LinksTable extends VirtualTable<Link> {
     const cacheKey = [side, bookNum, chapterNum, verseNum].join('|');
     return this.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
-      return ((await window.databaseApi
-        .findLinksByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum)) as Link[] ?? [])
-        .filter(Boolean);
+      return window.databaseApi
+        .findLinksByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum);
     });
   };
 
