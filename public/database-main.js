@@ -513,11 +513,12 @@ class DatabaseAccessMain {
                                                                           from words_or_parts w
                                                                                    inner join 'links__${firstTableName}_words' t1 on w.id = t1.word_id
                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
-                                                                          where w.position_book = ?
+                                                                          where w.side = ?
+                                                                            and w.position_book = ?
                                                                             and w.position_chapter = ?
                                                                             and w.position_verse = ?
                                                                           group by t1.link_id
-                                                                          order by t1.link_id;`, [bookNum, chapterNum, verseNum])));
+                                                                          order by t1.link_id;`, [linkSide, bookNum, chapterNum, verseNum])));
       this.logDatabaseTimeLog('findLinksByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result);
       return result;
     } catch (ex) {
