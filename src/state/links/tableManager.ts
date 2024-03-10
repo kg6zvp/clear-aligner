@@ -450,7 +450,7 @@ export class LinksTable extends VirtualTable<Link> {
       } as Project;
 
       // @ts-ignore
-      //await window.databaseApi.save(DefaultProjectName, ProjectTableName, defaultProject);
+      await window.databaseApi.save(DefaultProjectName, ProjectTableName, defaultProject);
       return defaultProject;
     } finally {
       this._logDatabaseTimeEnd('_saveDefaultProject()');
@@ -461,7 +461,7 @@ export class LinksTable extends VirtualTable<Link> {
     this._logDatabaseTime('_loadDefaultProject()');
     try {
       // @ts-ignore
-      const defaultProject = { bookStats: undefined }//await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName) ?? await this._saveDefaultProject();
+      const defaultProject = await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName) ?? await this._saveDefaultProject();
 
       this.linksByBookMap.clear();
       ((defaultProject.bookStats ?? []) as BookStats[])
