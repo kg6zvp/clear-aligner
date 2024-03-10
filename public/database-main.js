@@ -164,6 +164,7 @@ class DatabaseAccessMain {
         type: 'better-sqlite3',
         database: databaseFile,
         synchronize: false,
+        statementCacheSize: 1000,
         prepareDatabase: (db) => {
           db.pragma('journal_mode = WAL');
           db.pragma('synchronous = normal');
