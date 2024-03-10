@@ -41,8 +41,9 @@ const determineCorpusView = async (
       continue;
     }
     const alignmentSide =
-      (viewCorpora.id === 'source'
-        ? 'sources' : 'targets') as AlignmentSide;
+      viewCorpora.id === 'target'
+        ? AlignmentSide.TARGET
+        : AlignmentSide.SOURCE;
     console.log(alignmentSide, verse);
     const links = await linksTable.findByBCV(
       alignmentSide,
