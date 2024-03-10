@@ -108,7 +108,7 @@ class DataSourceStatus {
 class DatabaseAccessMain {
 
   constructor() {
-    this.isLoggingTime = false;
+    this.isLoggingTime = true;
     this.dataSources = new Map();
   }
 
@@ -477,7 +477,7 @@ class DatabaseAccessMain {
                                                                           from 'links__${firstTableName}_words' t1
                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
                                                                           where t1.word_id = ?;`, [queryWordId])));
-      this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result);
+      this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result?.length ?? 0);
       return result;
     } catch (ex) {
       console.error('findLinksByWordId()', ex);
@@ -519,7 +519,7 @@ class DatabaseAccessMain {
                                                                             and w.position_verse = ?
                                                                           group by t1.link_id
                                                                           order by t1.link_id;`, [linkSide, bookNum, chapterNum, verseNum])));
-      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result);
+      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result?.length ?? result);
       return result;
     } catch (ex) {
       console.error('findLinksByBCV()', ex);

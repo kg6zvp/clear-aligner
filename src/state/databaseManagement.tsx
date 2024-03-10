@@ -87,14 +87,14 @@ export abstract class VirtualTable<T> {
    * internal function to be called when performing a mutating operation
    * @param suppressOnUpdate
    */
-  protected _onUpdate = (suppressOnUpdate = false) => {
+  protected _onUpdate = async (suppressOnUpdate = false) => {
     if (!suppressOnUpdate) {
       this.lastUpdate = Date.now();
     }
-    this._onUpdateImpl(suppressOnUpdate);
+    await this._onUpdateImpl(suppressOnUpdate);
   };
 
-  protected _onUpdateImpl = (suppressOnUpdate = false) => {
+  protected _onUpdateImpl = async (suppressOnUpdate = false) => {
   };
 
   _updateSecondaryIndices = async (type: IndexedChangeType, payload: T): Promise<void> => {

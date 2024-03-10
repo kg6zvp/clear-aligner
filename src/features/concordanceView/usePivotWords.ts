@@ -14,8 +14,8 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
   const source = useMemo(() => wordSource === AlignmentSide.SOURCE ? projectState.linksIndexes?.sourcesIndex
     : projectState.linksIndexes?.targetsIndex, [wordSource, projectState.linksIndexes?.sourcesIndex, projectState.linksIndexes?.targetsIndex]);
 
-  const [ loading, setLoading ] = useState<boolean>(!!source?.loading);
-  const [ lastUpdate, setLastUpdate ] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(!!source?.loading);
+  const [lastUpdate, setLastUpdate] = useState<number>(0);
 
   // when source is changed, set the loading state to match the new source
   useInterval(() => {
@@ -65,8 +65,8 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     secondaryIndices.sourcesIndex.indexingTasks.enqueue(secondaryIndices.sourcesIndex.initialize);
     secondaryIndices.targetsIndex.indexingTasks.enqueue(secondaryIndices.targetsIndex.initialize);
     if (projectState.linksTable) {
-      secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex))
-      secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex))
+      secondaryIndices.sourcesIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.sourcesIndex));
+      secondaryIndices.targetsIndex.indexingTasks.enqueue(async () => await projectState.linksTable!.registerSecondaryIndex(secondaryIndices.targetsIndex));
     }
   }, [
     projectState.linksTable,
@@ -80,12 +80,11 @@ export const usePivotWords = (wordSource: AlignmentSide): PivotWord[] | undefine
     if (!source || loading) {
       return undefined;
     }
-    return [ ...source.getPivotWords() ];
+    return [...source.getPivotWords()];
   }, [
     source,
-    loading,
-    lastUpdate
-    ]);
+    loading
+  ]);
 
   return currentPivotWords;
 };

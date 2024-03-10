@@ -5,9 +5,12 @@ import uuid from 'uuid-random';
 import _ from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
+import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 
 const DatabaseChunkSize = 10_000;
 const DatabaseWaitInMs = 1_000;
+const DatabaseCacheTTLMs = 600_000;
+const DatabaseCacheMaxSize = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
 const DefaultProjectName = 'default';
@@ -48,10 +51,14 @@ export class LinksTable extends VirtualTable<Link> {
   private readonly isLoggingTime = true;
   private readonly databaseStatus: DatabaseStatus;
   private databaseBusyCtr = 0;
+  private linksByWordIdCache: MemoryCache;
+  private linksByBCVCache: MemoryCache;
 
   constructor() {
     super();
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
+    this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
+    this.linksByWordIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
   }
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
@@ -75,7 +82,7 @@ export class LinksTable extends VirtualTable<Link> {
     } catch (e) {
       return false;
     } finally {
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -97,7 +104,7 @@ export class LinksTable extends VirtualTable<Link> {
       await this.checkDatabase();
       // @ts-ignore
       const result = await window.databaseApi.deleteAll(DefaultProjectName, LinkTableName);
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
       console.error('error removing all links', ex);
@@ -175,7 +182,7 @@ export class LinksTable extends VirtualTable<Link> {
       await window.databaseApi.updateAllLinkText(DefaultProjectName);
 
       busyInfo.userText = `Saving project...`;
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
       return true;
     } catch (ex) {
       console.error('error saving all links', ex);
@@ -192,29 +199,34 @@ export class LinksTable extends VirtualTable<Link> {
    * @param wordId
    */
   hasLinkByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<boolean> => {
-    return (await this.findLinkIdsByWord(side, wordId)).length > 0;
+    return (await this.findLinkIdsByWordId(side, wordId)).length > 0;
   };
 
-  findLinkIdsByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<string[]> => {
-    // @ts-ignore
-    return ((await window.databaseApi
-      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[] ?? [])
+  findLinkIdsByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<string[]> => {
+    return (await this.findByWordId(side, wordId))
       .map(link => link.id)
-      .filter(Boolean);
+      .filter(Boolean) as string[];
   };
 
   findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
-    // @ts-ignore
-    return ((await window.databaseApi
-      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[] ?? [])
-      .filter(Boolean);
+    const referenceString = wordId.toReferenceString();
+    const cacheKey = [side, referenceString].join('|');
+    return this.linksByWordIdCache.wrap(cacheKey, async () => {
+      // @ts-ignore
+      return ((await window.databaseApi
+        .findLinksByWordId(DefaultProjectName, side, referenceString)) as Link[] ?? [])
+        .filter(Boolean);
+    });
   };
 
   findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    // @ts-ignore
-    return ((await window.databaseApi
-      .findLinksByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum)) as Link[] ?? [])
-      .filter(Boolean);
+    const cacheKey = [side, bookNum, chapterNum, verseNum].join('|');
+    return this.linksByBCVCache.wrap(cacheKey, async () => {
+      // @ts-ignore
+      return ((await window.databaseApi
+        .findLinksByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum)) as Link[] ?? [])
+        .filter(Boolean);
+    });
   };
 
   getAll = async (): Promise<Link[]> => {
@@ -239,7 +251,7 @@ export class LinksTable extends VirtualTable<Link> {
       await this.checkDatabase();
       // @ts-ignore
       const result = await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
       console.error('error removing link', ex);
@@ -250,8 +262,10 @@ export class LinksTable extends VirtualTable<Link> {
     }
   };
 
-  protected override _onUpdateImpl = (suppressOnUpdate?: boolean) => {
+  protected override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
+    await this.linksByWordIdCache.reset();
+    await this.linksByBCVCache.reset();
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
