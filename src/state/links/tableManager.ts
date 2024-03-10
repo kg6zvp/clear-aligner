@@ -231,15 +231,7 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   preloadByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
-    const minVerse = Math.max(verseNum - PreloadVerseRange, 1);
-    const maxVerse = verseNum + PreloadVerseRange;
-    const verseNumbers: number[] = _.range(minVerse, maxVerse)
-      .filter(verseCtr => !skipVerseNum || verseCtr != verseNum);
-    verseNumbers.sort((v1, v2) => {
-      return Math.abs(verseNum - v1) -
-        Math.abs(verseNum - v2);
-    });
-    for (const verseCtr of verseNumbers) {
+    for (const verseCtr of this._createVersePreloadRange(verseNum, skipVerseNum)) {
       void this.findByBCV(side, bookNum, chapterNum, verseCtr);
     }
   };
@@ -342,6 +334,18 @@ export class LinksTable extends VirtualTable<Link> {
       this._logDatabaseTimeEnd('checkAllTables(): loading');
     }
   };
+
+  _createVersePreloadRange(verseNum: number, skipVerseNum: boolean) {
+    const minVerse = Math.max(verseNum - PreloadVerseRange, 1);
+    const maxVerse = verseNum + PreloadVerseRange;
+    const verseNumbers: number[] = _.range(minVerse, maxVerse)
+      .filter(verseCtr => !skipVerseNum || verseCtr != verseNum);
+    verseNumbers.sort((v1, v2) => {
+      return Math.abs(verseNum - v1) -
+        Math.abs(verseNum - v2);
+    });
+    return verseNumbers;
+  }
 
   private _isDatabaseBusy = () => this.databaseBusyCtr > 0;
 
