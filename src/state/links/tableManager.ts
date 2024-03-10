@@ -663,7 +663,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
  * @param wordId Word ID to find (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, findKey?: string) => {
+export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoPreload = false, findKey?: string) => {
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -685,9 +685,15 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, findK
           result
         };
         setStatus(endStatus);
+        if (!isNoPreload
+          && wordId.book
+          && wordId.chapter
+          && wordId.verse) {
+          LinksTableInstance.preloadByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
+        }
         databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
       });
-  }, [prevFindKey, findKey, side, status, wordId]);
+  }, [isNoPreload, prevFindKey, findKey, side, status, wordId]);
 
   return { ...status };
 };
@@ -706,7 +712,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, findK
  * @param verseNum Verse number  (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, findKey?: string) => {
+export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -730,9 +736,12 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
           result
         };
         setStatus(endStatus);
+        if (!isNoPreload) {
+          LinksTableInstance.preloadByBCV(side, bookNum, chapterNum, verseNum, true);
+        }
         databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
       });
-  }, [prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
+  }, [isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
 
   return { ...status };
 };

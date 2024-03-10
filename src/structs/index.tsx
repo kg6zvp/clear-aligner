@@ -41,7 +41,6 @@ export interface Verse {
   sourceVerse?: string;
   citation: string; // ${chapter}:${verse}
   words: Word[];
-  links?: Map<string, Link>;
 }
 
 export enum TextDirection {

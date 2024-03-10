@@ -2,7 +2,7 @@ import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useRe
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import { AlignmentSide, CorpusContainer, Link, Verse } from 'structs';
+import { CorpusContainer, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { VerseDisplay } from './verseDisplay';
 import {
@@ -33,48 +33,6 @@ const determineCorpusView = async (
   const corpus = bcvId ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString()) : undefined;
   if (!corpus) {
     return <></>;
-  }
-  for (const verse of verses) {
-    if (!verse.bcvId.book
-      || !verse.bcvId.chapter
-      || !verse.bcvId.verse) {
-      continue;
-    }
-    const alignmentSide =
-      viewCorpora.id === 'target'
-        ? AlignmentSide.TARGET
-        : AlignmentSide.SOURCE;
-    const links = await linksTable.findByBCV(
-      alignmentSide,
-      verse.bcvId.book!,
-      verse.bcvId.chapter!,
-      verse.bcvId.verse!);
-    const result = new Map<string, Link>();
-    links
-      .filter(Boolean)
-      .forEach(link =>
-        ((alignmentSide === 'sources'
-          ? link.sources
-          : link.targets) ?? [])
-          .forEach(wordId => result.set(wordId, link)));
-    verse.links = result;
-  }
-  for (const verse of verses) {
-    if (!verse.bcvId.book
-      || !verse.bcvId.chapter
-      || !verse.bcvId.verse) {
-      continue;
-    }
-    const alignmentSide =
-      viewCorpora.id === 'target'
-        ? AlignmentSide.TARGET
-        : AlignmentSide.SOURCE;
-    window.setTimeout(() =>
-      linksTable.preloadByBCV(alignmentSide,
-        verse.bcvId.book!,
-        verse.bcvId.chapter!,
-        verse.bcvId.verse!,
-        true), 0);
   }
   return verses.map((verse) => {
     const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
