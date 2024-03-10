@@ -821,15 +821,20 @@ class DatabaseAccessMain {
     }
   }
 
-  corporaGetLinkIdsByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
+  corporaGetLinksByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
     const em = (await this.getDataSource(sourceName)).manager;
-    return (await em.query(`
+    const linkIds = (await em.query(`
         SELECT id
             FROM links
             WHERE sources_text = '${sourcesText}'
             AND targets_text = '${targetsText}'
         ${this._buildOrderBy(sort)};`))
       .map((link) => link.id);
+    const links = [];
+    for (const linkId of linkIds) {
+      links.push( ...(await this.findByIds(sourceName, 'links', linkId)) );
+    }
+    return links;
   }
 
   _buildOrderBy = (sort, fieldMap) => {
@@ -859,9 +864,9 @@ module.exports = {
         async (event, ...args) => {
           return await DatabaseAccessMainInstance.languageGetAll(...args);
         });
-      ipcMain.handle(`${ChannelPrefix}:corporaGetLinkIdsByAlignedWord`,
+      ipcMain.handle(`${ChannelPrefix}:corporaGetLinksByAlignedWord`,
         async (event, ...args) => {
-          return await DatabaseAccessMainInstance.corporaGetLinkIdsByAlignedWord(...args);
+          return await DatabaseAccessMainInstance.corporaGetLinksByAlignedWord(...args);
         });
       ipcMain.handle(`${ChannelPrefix}:createDataSource`, async (event, ...args) => {
         return await DatabaseAccessMainInstance.createDataSource(...args);
