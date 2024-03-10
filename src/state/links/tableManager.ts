@@ -339,7 +339,7 @@ export class LinksTable extends VirtualTable<Link> {
     const minVerse = Math.max(verseNum - PreloadVerseRange, 1);
     const maxVerse = verseNum + PreloadVerseRange;
     const verseNumbers: number[] = _.range(minVerse, maxVerse)
-      .filter(verseCtr => !skipVerseNum || verseCtr != verseNum);
+      .filter(verseCtr => !skipVerseNum || verseCtr !== verseNum);
     verseNumbers.sort((v1, v2) => {
       return Math.abs(verseNum - v1) -
         Math.abs(verseNum - v2);
