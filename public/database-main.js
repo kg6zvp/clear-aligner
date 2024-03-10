@@ -108,7 +108,7 @@ class DataSourceStatus {
 class DatabaseAccessMain {
 
   constructor() {
-    this.isLoggingTime = true;
+    this.isLoggingTime = false;
     this.dataSources = new Map();
   }
 
