@@ -46,13 +46,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }>();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _initializeTargetPivotWords = usePivotWords(AlignmentSide.TARGET);
+  usePivotWords(AlignmentSide.TARGET);
   const { projectState, setProjectState, preferences, setPreferences } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [formats, setFormats] = useState([] as string[]);
 
   const inProgressLink = useAppSelector(
@@ -60,14 +58,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isSaveAlignmentFilePending } = useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isSaveLinkPending } = useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isRemoveLinkPending } = useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isGetAllLinksPending, result: allLinks } = useGetAllLinks(getAllLinksKey);
+  useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
+  const { result: allLinks } = useGetAllLinks(getAllLinksKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
   const linkHasBothSides = useMemo(

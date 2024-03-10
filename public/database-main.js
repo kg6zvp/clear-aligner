@@ -356,13 +356,20 @@ class DatabaseAccessMain {
         };
       }
       currLink.id = linkRow.link_id;
-      switch (linkRow.type) {
-        case 'sources':
-          currLink.sources = JSON.parse(linkRow.words);
-          break;
-        case 'targets':
-          currLink.targets = JSON.parse(linkRow.words);
-          break;
+      // normal find* methods
+      if (linkRow.type) {
+        switch (linkRow.type) {
+          case 'sources':
+            currLink.sources = JSON.parse(linkRow.words);
+            break;
+          case 'targets':
+            currLink.targets = JSON.parse(linkRow.words);
+            break;
+        }
+        // findLinksByWordId()
+      } else {
+        currLink.sources = JSON.parse(linkRow.sources);
+        currLink.targets = JSON.parse(linkRow.targets);
       }
     });
     if (currLink.id) {
@@ -444,29 +451,29 @@ class DatabaseAccessMain {
     }
     this.logDatabaseTime('findLinksByWordId()');
     try {
-      const tableName = linkSide.substring(0, 6); // e.g., "sources" to "source"
+      let firstTableName;
+      let secondTableName;
+      switch (linkSide) {
+        case 'sources':
+          firstTableName = 'source';
+          secondTableName = 'target';
+          break;
+        case 'targets':
+          firstTableName = 'target';
+          secondTableName = 'source';
+          break;
+        default:
+          return [];
+      }
       const queryWordId = `${linkSide}:${wordId}`;
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const result = this.createLinksFromRows((await entityManager.query(`select s1.link_id,
-                                                                                 'sources' as                                          type,
-                                                                                 json_group_array(replace(s1.word_id, 'sources:', '')) words
-                                                                          from links__source_words s1
-                                                                          where s1.link_id =
-                                                                                (select q1.link_id
-                                                                                 from 'links__${tableName}_words' q1
-                                                                                 where q1.word_id = ?
-                                                                                 limit 1)
-                                                                          union
-                                                                          select t1.link_id,
-                                                                                 'targets' as                                          type,
-                                                                                 json_group_array(replace(t1.word_id, 'targets:', '')) words
-                                                                          from links__target_words t1
-                                                                          where t1.link_id =
-                                                                                (select q1.link_id
-                                                                                 from 'links__${tableName}_words' q1
-                                                                                 where q1.word_id = ?
-                                                                                 limit 1);`,
-        [queryWordId, queryWordId])));
+      const result = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
+                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
+                                                                                 json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                          from 'links__${firstTableName}_words' t1
+                                                                                   left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
+                                                                          where t1.word_id = ?;`,
+        [queryWordId])));
       this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result);
       return result;
     } catch (ex) {

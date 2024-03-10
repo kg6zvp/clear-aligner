@@ -100,13 +100,9 @@ export const TextSegment = ({
     (state) => state.textSegmentHover.hovered
   );
   const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    isPending: isWordLinksPending,
     result: wordLinks
   } = useFindLinksByWord(word.side, BCVWP.parseFromString(word.id), word.id);
   const {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    isPending: isWordHoveredLinksPending,
     result: hoveredLinks
   } = useFindLinksByWord(
     currentlyHovered?.side,

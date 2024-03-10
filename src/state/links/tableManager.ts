@@ -3,7 +3,7 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 
 const DatabaseChunkSize = 10_000;
@@ -54,9 +54,9 @@ export class LinksTable extends VirtualTable<Link> {
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   }
 
-  save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<Link | undefined> => {
+  save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
     if (!isForced && this._isDatabaseBusy()) {
-      return;
+      return false;
     }
 
     this._logDatabaseTime('save()');
@@ -71,10 +71,9 @@ export class LinksTable extends VirtualTable<Link> {
 
       await this.checkDatabase();
       // @ts-ignore
-      await window.databaseApi.save(DefaultProjectName, LinkTableName, newLink);
-      return newLink;
+      return await window.databaseApi.save(DefaultProjectName, LinkTableName, newLink);
     } catch (e) {
-      return undefined;
+      return false;
     } finally {
       this._onUpdate(suppressOnUpdate);
     }
@@ -88,7 +87,7 @@ export class LinksTable extends VirtualTable<Link> {
 
   removeAll = async (suppressOnUpdate = false, isForced = false) => {
     if (!isForced && this._isDatabaseBusy()) {
-      return;
+      return false;
     }
 
     this._logDatabaseTime('removeAll()');
@@ -97,10 +96,12 @@ export class LinksTable extends VirtualTable<Link> {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      await window.databaseApi.deleteAll(DefaultProjectName, LinkTableName);
+      const result = await window.databaseApi.deleteAll(DefaultProjectName, LinkTableName);
       this._onUpdate(suppressOnUpdate);
+      return result;
     } catch (ex) {
       console.error('error removing all links', ex);
+      return false;
     } finally {
       this._decrDatabaseBusyCtr();
       this._logDatabaseTimeEnd('removeAll()');
@@ -125,8 +126,9 @@ export class LinksTable extends VirtualTable<Link> {
     // reentry is possible because everything is
     // done in chunks with promises
     if (!isForced && this._isDatabaseBusy()) {
-      return [] as Link[];
+      return false;
     }
+
 
     this._logDatabaseTime('saveAll(): complete');
     this._incrDatabaseBusyCtr();
@@ -174,9 +176,10 @@ export class LinksTable extends VirtualTable<Link> {
 
       busyInfo.userText = `Saving project...`;
       this._onUpdate(suppressOnUpdate);
-      return outputLinks;
+      return true;
     } catch (ex) {
       console.error('error saving all links', ex);
+      return false;
     } finally {
       this._decrDatabaseBusyCtr();
       this._logDatabaseTimeEnd('saveAll(): complete');
@@ -194,28 +197,28 @@ export class LinksTable extends VirtualTable<Link> {
 
   findLinkIdsByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<string[]> => {
     // @ts-ignore
-    return (((await window.databaseApi
-      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[]) ?? [])
+    return ((await window.databaseApi
+      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[] ?? [])
       .map(link => link.id)
       .filter(Boolean);
   };
 
   findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
     // @ts-ignore
-    return (((await window.databaseApi
-      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[]) ?? [])
+    return ((await window.databaseApi
+      .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[] ?? [])
       .filter(Boolean);
   };
 
   getAll = async (): Promise<Link[]> => {
     // @ts-ignore
-    return (await window.databaseApi.getAll(DefaultProjectName, LinkTableName) as Link[]) ?? [];
+    return await window.databaseApi.getAll(DefaultProjectName, LinkTableName) as Link[] ?? [];
   };
 
   get = async (id?: string): Promise<Link | undefined> => {
     if (!id) return undefined;
     // @ts-ignore
-    return (await window.databaseApi.findOneById(DefaultProjectName, LinkTableName, id) as Link | undefined);
+    return await window.databaseApi.findOneById(DefaultProjectName, LinkTableName, id) as Link | undefined;
   };
 
   remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
@@ -228,8 +231,9 @@ export class LinksTable extends VirtualTable<Link> {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
+      const result = await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
       this._onUpdate(suppressOnUpdate);
+      return result;
     } finally {
       this._decrDatabaseBusyCtr();
       this._logDatabaseTimeEnd('remove()');
@@ -405,29 +409,22 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  */
 export const useSaveLink = (link?: Link, saveKey?: string) => {
   const [status, setStatus] = useState<{
-    isPending: boolean;
-    result?: Link | undefined;
-  }>({ isPending: false });
-  const [prevSaveKey, setPrevSaveKey] = useState<string | undefined>();
+    result?: boolean | undefined;
+  }>({});
+  const prevSaveKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!link
       || !saveKey
-      || prevSaveKey === saveKey) {
+      || prevSaveKey.current === saveKey) {
       return;
     }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevSaveKey(saveKey);
-    databaseHookDebug('useSaveLink(): startStatus', startStatus);
+    prevSaveKey.current = saveKey;
+    databaseHookDebug('useSaveLink(): status', status);
     LinksTableInstance.save(link)
       .then(result => {
         const endStatus = {
-          ...startStatus,
-          isPending: false,
+          ...status,
           result
         };
         setStatus(endStatus);
@@ -454,12 +451,12 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const [prevSaveKey, setPrevSaveKey] = useState<string | undefined>();
+  const prevSaveKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!alignmentFile
       || !saveKey
-      || prevSaveKey === saveKey) {
+      || prevSaveKey.current === saveKey) {
       return;
     }
     const startStatus = {
@@ -467,7 +464,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
       isPending: true
     };
     setStatus(startStatus);
-    setPrevSaveKey(saveKey);
+    prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveAlignmentFile(): startStatus', startStatus);
     LinksTableInstance.saveAlignmentFile(alignmentFile, suppressOnUpdate)
       .then(() => {
@@ -499,12 +496,12 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const [prevSaveKey, setPrevSaveKey] = useState<string | undefined>();
+  const prevSaveKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!links
       || !saveKey
-      || prevSaveKey === saveKey) {
+      || prevSaveKey.current === saveKey) {
       return;
     }
     const startStatus = {
@@ -512,7 +509,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
       isPending: true
     };
     setStatus(startStatus);
-    setPrevSaveKey(saveKey);
+    prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveAllLinks(): startStatus', startStatus);
     LinksTableInstance.saveAll(links, suppressOnUpdate)
       .then(() => {
@@ -541,30 +538,22 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
  */
 export const useLinkExists = (linkId?: string, existsKey?: string) => {
   const [status, setStatus] = useState<{
-    isPending: boolean;
     result?: boolean;
-  }>({ isPending: false });
-  const [prevExistsKey, setPrevExistsKey] = useState<string | undefined>();
+  }>({});
+  const prevExistsKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workExistsKey = existsKey ?? uuid();
     if (!linkId
-      || prevExistsKey === workExistsKey) {
+      || prevExistsKey.current === workExistsKey) {
       return;
     }
-
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevExistsKey(existsKey);
-    databaseHookDebug('useLinkExists(): startStatus', startStatus);
+    prevExistsKey.current = existsKey;
+    databaseHookDebug('useLinkExists(): status', status);
     LinksTableInstance.exists(linkId)
-      .then((exists) => {
+      .then(exists => {
         const endStatus = {
-          ...startStatus,
-          isPending: false,
+          ...status,
           result: true
         };
         setStatus(endStatus);
@@ -590,11 +579,11 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
-  const [prevRemoveKey, setPrevRemoveKey] = useState<string | undefined>();
+  const prevRemoveKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!removeKey
-      || prevRemoveKey === removeKey) {
+      || prevRemoveKey.current === removeKey) {
       return;
     }
     const startStatus = {
@@ -602,7 +591,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
       isPending: true
     };
     setStatus(startStatus);
-    setPrevRemoveKey(removeKey);
+    prevRemoveKey.current = removeKey;
     databaseHookDebug('useRemoveAllLinks(): startStatus', startStatus);
     LinksTableInstance.removeAll(suppressOnUpdate)
       .then(() => {
@@ -632,30 +621,23 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
  */
 export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey?: string) => {
   const [status, setStatus] = useState<{
-    isPending: boolean;
     result?: Link[];
-  }>({ isPending: false });
-  const [prevFindKey, setPrevFindKey] = useState<string | undefined>();
+  }>({});
+  const prevFindKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workFindKey = findKey ?? uuid();
     if (!side
       || !wordId
-      || prevFindKey === workFindKey) {
+      || prevFindKey.current === workFindKey) {
       return;
     }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevFindKey(findKey);
-    databaseHookDebug('useFindLinksByWord(): startStatus', startStatus);
+    prevFindKey.current = findKey;
+    databaseHookDebug('useFindLinksByWord(): status', status);
     LinksTableInstance.findByWord(side, wordId)
-      .then((links) => {
+      .then(links => {
         const endStatus = {
-          ...startStatus,
-          isPending: false,
+          ...status,
           result: links
         };
         setStatus(endStatus);
@@ -678,29 +660,21 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
  */
 export const useGetAllLinks = (getKey?: string) => {
   const [status, setStatus] = useState<{
-    isPending: boolean;
     result?: Link[];
-  }>({ isPending: false });
-  const [prevGetKey, setPrevGetKey] = useState<string | undefined>();
+  }>({});
+  const prevGetKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!getKey
-      || prevGetKey === getKey) {
+      || prevGetKey.current === getKey) {
       return;
     }
-
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevGetKey(getKey);
-    databaseHookDebug('useGetAllLinks(): startStatus', startStatus);
+    prevGetKey.current = getKey;
+    databaseHookDebug('useGetAllLinks(): status', status);
     LinksTableInstance.getAll()
-      .then((links) => {
+      .then(links => {
         const endStatus = {
-          ...startStatus,
-          isPending: false,
+          ...status,
           result: links
         };
         setStatus(endStatus);
@@ -724,30 +698,22 @@ export const useGetAllLinks = (getKey?: string) => {
  */
 export const useGetLink = (linkId?: string, getKey?: string) => {
   const [status, setStatus] = useState<{
-    isPending: boolean;
     result?: Link | undefined;
-  }>({ isPending: false });
-  const [prevGetKey, setPrevGetKey] = useState<string | undefined>();
+  }>({});
+  const prevGetKey = useRef<string | undefined>();
 
   useEffect(() => {
     const workGetKey = getKey ?? uuid();
     if (!linkId
-      || prevGetKey === workGetKey) {
+      || prevGetKey.current === workGetKey) {
       return;
     }
-
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevGetKey(getKey);
-    databaseHookDebug('useGetLink(): startStatus', startStatus);
+    prevGetKey.current = getKey;
+    databaseHookDebug('useGetLink(): status', status);
     LinksTableInstance.get(linkId)
-      .then((link) => {
+      .then(link => {
         const endStatus = {
-          ...startStatus,
-          isPending: false,
+          ...status,
           result: link
         };
         setStatus(endStatus);
@@ -772,28 +738,23 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
  */
 export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
   const [status, setStatus] = useState<{
-    isPending: boolean;
-  }>({ isPending: false });
-  const [prevRemoveKey, setPrevRemoveKey] = useState<string | undefined>();
+    result?: boolean;
+  }>({});
+  const prevRemoveKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!linkId
       || !removeKey
-      || prevRemoveKey === removeKey) {
+      || prevRemoveKey.current === removeKey) {
       return;
     }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevRemoveKey(removeKey);
-    databaseHookDebug('useRemoveLink(): startStatus', startStatus);
+    prevRemoveKey.current = removeKey;
+    databaseHookDebug('useRemoveLink(): status', status);
     LinksTableInstance.remove(linkId, suppressOnUpdate)
-      .then(() => {
+      .then(result => {
         const endStatus = {
-          ...startStatus,
-          isPending: false
+          ...status,
+          result
         };
         setStatus(endStatus);
         databaseHookDebug('useRemoveLink(): endStatus', endStatus);
@@ -816,34 +777,25 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
 export const useCheckDatabase = (checkKey?: string) => {
   const [status, setStatus] =
     useState<{
-      isPending: boolean;
       result?: LinksTable,
       status: DatabaseStatus
     }>({
-      isPending: false,
       status: { ..._.cloneDeep(InitialDatabaseStatus) }
     });
-  const [prevCheckKey, setPrevCheckKey] = useState<string | undefined>();
+  const prevCheckKey = useRef<string | undefined>();
 
   useEffect(() => {
     if (!checkKey
-      || prevCheckKey === checkKey) {
+      || prevCheckKey.current === checkKey) {
       return;
     }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    setPrevCheckKey(checkKey);
-    databaseHookDebug('useCheckDatabase(): startStatus', startStatus);
-
+    prevCheckKey.current = checkKey;
+    databaseHookDebug('useCheckDatabase(): status', status);
     const databaseAccess = LinksTableInstance;
     databaseAccess.checkAllTables()
       .then(() => {
         const endStatus = {
-          ...startStatus,
-          isPending: false,
+          ...status,
           result: databaseAccess,
           status: databaseAccess.getDatabaseStatus()
         };
@@ -857,14 +809,20 @@ export const useCheckDatabase = (checkKey?: string) => {
 /**
  * Database status hook.
  */
-export const useDatabaseStatus = (isAsync = false) => {
+export const useDatabaseStatus = (isAsync = false, checkKey?: string) => {
   const [status, setStatus] =
     useState<{
-      isPending: boolean;
       result: DatabaseStatus
-    }>({ isPending: false, result: _.cloneDeep(InitialDatabaseStatus) });
+    }>({ result: _.cloneDeep(InitialDatabaseStatus) });
+  const prevCheckKey = useRef<string | undefined>();
 
   useEffect(() => {
+    if (!checkKey
+      || prevCheckKey.current === checkKey) {
+      return;
+    }
+    prevCheckKey.current = checkKey;
+    databaseHookDebug('useDatabaseStatus(): status', status);
     const setDatabaseStatus = (isAsync = false, inputStatus?: DatabaseStatus) => {
       const prevStatus = inputStatus ?? status.result;
       const currStatus = LinksTableInstance.getDatabaseStatus();
@@ -872,7 +830,6 @@ export const useDatabaseStatus = (isAsync = false) => {
         || !_.isEqual(prevStatus, currStatus)) {
         const endStatus = {
           ...status,
-          isPending: false,
           result: currStatus
         };
         setStatus(endStatus);
@@ -890,7 +847,7 @@ export const useDatabaseStatus = (isAsync = false) => {
       return () => window.clearInterval(intervalId);
     }
     return undefined;
-  }, [isAsync, status]);
+  }, [prevCheckKey, isAsync, status]);
 
   return { ...status };
 };
