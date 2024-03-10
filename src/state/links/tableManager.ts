@@ -12,8 +12,8 @@ const IndexChunkSize = 100;
 const DatabaseWaitInMs = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 const EmptyWordId = '00000000000';
-const DefaultProjectName = 'default';
-const LinkTableName = 'links';
+export const DefaultProjectName = 'default';
+export const LinkTableName = 'links';
 const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 
@@ -461,8 +461,7 @@ export class LinksTable extends VirtualTable<Link> {
     this._logDatabaseTime('_loadDefaultProject()');
     try {
       // @ts-ignore
-      const defaultProject = await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName)
-        ?? await this._saveDefaultProject();
+      const defaultProject = await window.databaseApi.findOneById(DefaultProjectName, ProjectTableName, DefaultProjectName) ?? await this._saveDefaultProject();
 
       this.linksByBookMap.clear();
       ((defaultProject.bookStats ?? []) as BookStats[])
