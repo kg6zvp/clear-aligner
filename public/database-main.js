@@ -167,7 +167,7 @@ class DatabaseAccessMain {
         prepareDatabase: (db) => {
           db.pragma('journal_mode = WAL');
           db.pragma('synchronous = normal');
-          db.pragma('cache_size = -8000');
+          db.pragma('cache_size = -8000000');
         },
         entities: [linkSchema, projectSchema, userSchema, linksToSourceWordsSchema, linksToTargetWordsSchema]
       });
