@@ -586,6 +586,34 @@ class DatabaseAccessMain {
     }
   };
 
+  findWordsByRange = async (sourceName, linkSide, corpusId, wordLimit, wordSkip) => {
+    if (!linkSide || !wordLimit) {
+      return [];
+    }
+    this.logDatabaseTime('findWordsByRange()');
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const result = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
+                                                        w.corpus_id                       as corpusId,
+                                                        w.side                            as side,
+                                                        w.text                            as text,
+                                                        w.after                           as after,
+                                                        w.position_part                   as position
+                                                 from words_or_parts w
+                                                 where w.side = ?
+                                                   and w.corpus_id = ?
+                                                 order by w.id
+                                                 limit ? offset ?;`, [linkSide, corpusId, wordLimit, wordSkip]));
+      this.logDatabaseTimeLog('findWordsByRange()', sourceName, linkSide, corpusId, wordLimit, wordSkip, result?.length ?? result);
+      return result;
+    } catch (ex) {
+      console.error('findWordsByRange()', ex);
+      return [];
+    } finally {
+      this.logDatabaseTimeEnd('findWordsByRange()');
+    }
+  };
+
   getAllLinks = async (dataSource) => {
     return this.createLinksFromRows((await dataSource.manager.query(`
         select s.link_id,
@@ -861,6 +889,9 @@ module.exports = {
       });
       ipcMain.handle(`${ChannelPrefix}:findWordsByBCV`, async (event, ...args) => {
         return await DatabaseAccessMainInstance.findWordsByBCV(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findWordsByRange`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findWordsByRange(...args);
       });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);

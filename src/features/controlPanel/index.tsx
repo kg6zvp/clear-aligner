@@ -186,6 +186,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         ? ControlPanelFormat.VERTICAL
         : ControlPanelFormat.HORIZONTAL
     });
+
     if (updatedUserPreference) {
       setPreferences(p => ({
         ...p,
