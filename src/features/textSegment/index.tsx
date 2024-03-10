@@ -4,7 +4,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { AlignmentSide, LanguageInfo, Word } from 'structs';
+import { AlignmentSide, LanguageInfo, Link, Word } from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -12,7 +12,6 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { useDatabaseStatus, useFindLinksByWord } from '../../state/links/tableManager';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -20,6 +19,7 @@ export interface TextSegmentProps extends LimitedToLinks {
   languageInfo?: LanguageInfo;
   showAfter?: boolean;
   alignment?: 'flex-end' | 'flex-start' | 'center';
+  links?: Map<string, Link>;
 }
 
 const computeVariant = (
@@ -85,6 +85,7 @@ export const TextSegment = ({
                               languageInfo,
                               onlyLinkIds,
                               alignment,
+                              links,
                               showAfter = false
                             }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
@@ -96,22 +97,25 @@ export const TextSegment = ({
       state.textSegmentHover.hovered?.side === word.side &&
       state.textSegmentHover.hovered?.id === word.id
   );
-  const { result: databaseStatus } = useDatabaseStatus();
   const currentlyHovered = useAppSelector(
     (state) => state.textSegmentHover.hovered
   );
-  const {
-    result: wordLinks
-  } = useFindLinksByWord(
-    word.side,
-    BCVWP.parseFromString(word.id),
-    String(databaseStatus?.lastUpdateTime ?? 0));
-  const {
-    result: hoveredLinks
-  } = useFindLinksByWord(
-    currentlyHovered?.side,
-    (currentlyHovered?.id ? BCVWP.parseFromString(currentlyHovered?.id) : undefined),
-    String(databaseStatus?.lastUpdateTime ?? 0));
+  const wordLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !word?.id) {
+      return [];
+    }
+    const result = links.get(BCVWP.sanitize(word.id));
+    return result ? [result] : [];
+  }, [links, word?.id]);
+  const hoveredLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !currentlyHovered?.id) {
+      return [];
+    }
+    const result = links.get(BCVWP.sanitize(currentlyHovered?.id));
+    return result ? [result] : [];
+  }, [links, currentlyHovered?.id]);
 
   const isMemberOfMultipleAlignments = useMemo(
     () => (wordLinks ?? []).length > 1,

@@ -203,10 +203,17 @@ export class LinksTable extends VirtualTable<Link> {
       .filter(Boolean);
   };
 
-  findByWord = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
+  findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
     // @ts-ignore
     return ((await window.databaseApi
       .findLinksByWordId(DefaultProjectName, side, wordId.toReferenceString())) as Link[] ?? [])
+      .filter(Boolean);
+  };
+
+  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
+    // @ts-ignore
+    return ((await window.databaseApi
+      .findLinksByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum)) as Link[] ?? [])
       .filter(Boolean);
   };
 
@@ -625,7 +632,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
  * @param wordId Word ID to find (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey?: string) => {
+export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, findKey?: string) => {
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -640,7 +647,7 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByWord(): status', status);
-    LinksTableInstance.findByWord(side, wordId)
+    LinksTableInstance.findByWordId(side, wordId)
       .then(result => {
         const endStatus = {
           ...status,
@@ -650,6 +657,51 @@ export const useFindLinksByWord = (side?: AlignmentSide, wordId?: BCVWP, findKey
         databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
       });
   }, [prevFindKey, findKey, side, status, wordId]);
+
+  return { ...status };
+};
+
+/**
+ * Find links by word ID hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param side Alignment side to find (optional; undefined = no find).
+ * @param bookNum Book number (optional; undefined = no find).
+ * @param chapterNum Chapter number (optional; undefined = no find).
+ * @param verseNum Verse number  (optional; undefined = no find).
+ * @param findKey Unique key to control find operation (optional; undefined = will find).
+ */
+export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, findKey?: string) => {
+  const [status, setStatus] = useState<{
+    result?: Link[];
+  }>({});
+  const prevFindKey = useRef<string | undefined>();
+
+  useEffect(() => {
+    const workFindKey = findKey ?? uuid();
+    if (!side
+      || !bookNum
+      || !chapterNum
+      || !verseNum
+      || prevFindKey.current === workFindKey) {
+      return;
+    }
+    prevFindKey.current = findKey;
+    databaseHookDebug('useFindLinksByWord(): status', status);
+    LinksTableInstance.findByBCV(side, bookNum, chapterNum, verseNum)
+      .then(result => {
+        const endStatus = {
+          ...status,
+          result
+        };
+        setStatus(endStatus);
+        databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+      });
+  }, [prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
 
   return { ...status };
 };
@@ -823,11 +875,12 @@ export const useDatabaseStatus = (isAsync = false, checkKey?: string) => {
   const prevCheckKey = useRef<string | undefined>();
 
   useEffect(() => {
+    const workCheckKey = checkKey ?? uuid();
     if (!checkKey
-      || prevCheckKey.current === checkKey) {
+      || prevCheckKey.current === workCheckKey) {
       return;
     }
-    prevCheckKey.current = checkKey;
+    prevCheckKey.current = workCheckKey;
     databaseHookDebug('useDatabaseStatus(): status', status);
     const setDatabaseStatus = (isAsync = false, inputStatus?: DatabaseStatus) => {
       const prevStatus = inputStatus ?? status.result;
@@ -853,7 +906,7 @@ export const useDatabaseStatus = (isAsync = false, checkKey?: string) => {
       return () => window.clearInterval(intervalId);
     }
     return undefined;
-  }, [prevCheckKey, isAsync, status]);
+  }, [prevCheckKey, checkKey, isAsync, status]);
 
   return { ...status };
 };

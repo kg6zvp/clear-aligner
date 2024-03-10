@@ -63,7 +63,7 @@ export const getLinksForPivotWord = async (
 ): Promise<PivotWord> => {
   const results = [];
   for (const alignmentInstance of pivotWord.instances) {
-    results.push((await linksTable.findByWord(pivotWord.side, alignmentInstance)));
+    results.push((await linksTable.findByWordId(pivotWord.side, alignmentInstance)));
   }
   pivotWord.alignmentLinks = results.flat();
   return pivotWord;

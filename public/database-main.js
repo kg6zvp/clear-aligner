@@ -371,7 +371,7 @@ class DatabaseAccessMain {
             currLink.targets = JSON.parse(linkRow.words);
             break;
         }
-        // findLinksByWordId()
+        // findLinksByWordId,findLinksByBCV
       } else {
         currLink.sources = JSON.parse(linkRow.sources);
         currLink.targets = JSON.parse(linkRow.targets);
@@ -446,8 +446,7 @@ class DatabaseAccessMain {
                                                                            where t.link_id >= ?
                                                                              and t.link_id <= ?
                                                                            group by t.link_id) q
-                                                                     order by q.link_id;`,
-      [fromLinkId, toLinkId, fromLinkId, toLinkId])));
+                                                                     order by q.link_id;`, [fromLinkId, toLinkId, fromLinkId, toLinkId])));
   };
 
   findLinksByWordId = async (sourceName, linkSide, wordId) => {
@@ -473,18 +472,59 @@ class DatabaseAccessMain {
       const queryWordId = `${linkSide}:${wordId}`;
       const entityManager = (await this.getDataSource(sourceName)).manager;
       const result = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
-                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as                    '${firstTableName}s',
+                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
                                                                           from 'links__${firstTableName}_words' t1
                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
-                                                                          where t1.word_id = ?;`,
-        [queryWordId])));
+                                                                          where t1.word_id = ?;`, [queryWordId])));
       this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result);
       return result;
     } catch (ex) {
       console.error('findLinksByWordId()', ex);
     } finally {
       this.logDatabaseTimeEnd('findLinksByWordId()');
+    }
+  };
+
+  findLinksByBCV = async (sourceName, linkSide, bookNum, chapterNum, verseNum) => {
+    if (!linkSide || !bookNum || !chapterNum || !verseNum) {
+      return [];
+    }
+    this.logDatabaseTime('findLinksByBCV()');
+    try {
+      let firstTableName;
+      let secondTableName;
+      switch (linkSide) {
+        case 'sources':
+          firstTableName = 'source';
+          secondTableName = 'target';
+          break;
+        case 'targets':
+          firstTableName = 'target';
+          secondTableName = 'source';
+          break;
+        default:
+          return [];
+      }
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const result = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
+                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
+                                                                                 json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                          from words_or_parts w
+                                                                                   inner join 'links__${firstTableName}_words' t1 on w.id = t1.word_id
+                                                                                   left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
+                                                                          where w.position_book = ?
+                                                                            and w.position_chapter = ?
+                                                                            and w.position_verse = ?
+                                                                          group by t1.link_id
+                                                                          order by t1.link_id;`, [bookNum, chapterNum, verseNum])));
+      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result);
+      return result;
+    } catch (ex) {
+      console.error('findLinksByBCV()', ex);
+      return [];
+    } finally {
+      this.logDatabaseTimeEnd('findLinksByBCV()');
     }
   };
 
@@ -757,6 +797,9 @@ module.exports = {
       });
       ipcMain.handle(`${ChannelPrefix}:findLinksByWordId`, async (event, ...args) => {
         return await DatabaseAccessMainInstance.findLinksByWordId(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findLinksByBCV`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findLinksByBCV(...args);
       });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
