@@ -164,7 +164,11 @@ class DatabaseAccessMain {
         type: 'better-sqlite3',
         database: databaseFile,
         synchronize: false,
-        enableWAL: true,
+        prepareDatabase: (db) => {
+          db.pragma('journal_mode = WAL');
+          db.pragma('synchronous = normal');
+          db.pragma('cache_size = -8000');
+        },
         entities: [linkSchema, projectSchema, userSchema, linksToSourceWordsSchema, linksToTargetWordsSchema]
       });
       await newDataSource.initialize();
@@ -468,7 +472,7 @@ class DatabaseAccessMain {
       const queryWordId = `${linkSide}:${wordId}`;
       const entityManager = (await this.getDataSource(sourceName)).manager;
       const result = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
-                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
+                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as                    '${firstTableName}s',
                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
                                                                           from 'links__${firstTableName}_words' t1
                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
