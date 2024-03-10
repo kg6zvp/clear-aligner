@@ -709,7 +709,7 @@ class DatabaseAccessMain {
             WHERE sw.normalized_text = '${normalizedText}'
               AND sw.side = 'sources'
               AND l.targets_text <> ''
-            GROUP BY l.targets_text
+            GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text' })};`;
         return await em.query(sourceQueryTextWLang);
       case 'targets':
@@ -727,7 +727,7 @@ class DatabaseAccessMain {
             WHERE tw.normalized_text = '${normalizedText}'
               AND tw.side = 'targets'
               AND l.sources_text <> ''
-            GROUP BY l.sources_text
+            GROUP BY l.sources_text, l.targets_text
               ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
         return await em.query(targetQueryText);
     }
