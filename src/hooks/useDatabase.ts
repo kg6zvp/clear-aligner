@@ -33,7 +33,7 @@ export const useDatabase = (): DatabaseApi => {
       corporaGetAlignedWordsByPivotWord: dbDelegate.corporaGetAlignedWordsByPivotWord,
       corporaGetLinksByAlignedWord: async (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null): Promise<Link[]> => {
         const linkIds = await dbDelegate.corporaGetLinkIdsByAlignedWord(sourceName, sourcesText, targetsText, sort);
-        return await Promise.all(linkIds.map(linksTable?.get)); // TODO: FIX THIS
+        return await dbDelegate.findByIds(sourceName, 'links', linkIds);
       },
       findByIds: dbDelegate.findByIds,
       languageGetAll: dbDelegate.languageGetAll,
