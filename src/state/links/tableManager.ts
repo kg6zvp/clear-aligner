@@ -16,6 +16,7 @@ const EmptyWordId = '00000000000';
 const DefaultProjectName = 'default';
 const LinkTableName = 'links';
 const LogDatabaseHooks = true;
+const PreloadVerseRange = 10;
 
 export interface DatabaseLoadState {
   isLoaded: boolean,
@@ -227,6 +228,20 @@ export class LinksTable extends VirtualTable<Link> {
         .findLinksByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum)) as Link[] ?? [])
         .filter(Boolean);
     });
+  };
+
+  preloadByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
+    const minVerse = Math.max(verseNum - PreloadVerseRange, 1);
+    const maxVerse = verseNum + PreloadVerseRange;
+    const verseNumbers: number[] = _.range(minVerse, maxVerse)
+      .filter(verseCtr => !skipVerseNum || verseCtr != verseNum);
+    verseNumbers.sort((v1, v2) => {
+      return Math.abs(verseNum - v1) -
+        Math.abs(verseNum - v2);
+    });
+    for (const verseCtr of verseNumbers) {
+      void this.findByBCV(side, bookNum, chapterNum, verseCtr);
+    }
   };
 
   getAll = async (): Promise<Link[]> => {

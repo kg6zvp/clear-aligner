@@ -52,13 +52,29 @@ const determineCorpusView = async (
     const result = new Map<string, Link>();
     links
       .filter(Boolean)
-      .forEach(link => {
+      .forEach(link =>
         ((alignmentSide === 'sources'
           ? link.sources
           : link.targets) ?? [])
-          .forEach(wordId => result.set(wordId, link));
-      });
+          .forEach(wordId => result.set(wordId, link)));
     verse.links = result;
+  }
+  for (const verse of verses) {
+    if (!verse.bcvId.book
+      || !verse.bcvId.chapter
+      || !verse.bcvId.verse) {
+      continue;
+    }
+    const alignmentSide =
+      viewCorpora.id === 'target'
+        ? AlignmentSide.TARGET
+        : AlignmentSide.SOURCE;
+    window.setTimeout(() =>
+      linksTable.preloadByBCV(alignmentSide,
+        verse.bcvId.book!,
+        verse.bcvId.chapter!,
+        verse.bcvId.verse!,
+        true), 0);
   }
   return verses.map((verse) => {
     const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
@@ -154,9 +170,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     [viewCorpora.corpora]
   );
 
-  useEffect(() => {
-    setVisibleVerses(initialVerses);
-  }, [initialVerses]);
+  useEffect(() => setVisibleVerses(initialVerses), [initialVerses]);
 
   const addBcvId = useCallback(() => {
     const firstExistingRef = visibleVerses?.at(0)?.bcvId ?? computedPosition;
@@ -201,7 +215,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     setVisibleVerses(updatedVerses);
   }, [visibleVerses, viewCorpora, computedPosition]);
 
-  const removeBcvId = useCallback(() => {
+  const removeBcvId = useCallback(() =>
     setVisibleVerses((verses) => {
       if (verses.length < 1 || !computedPosition) {
         return verses;
@@ -218,8 +232,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
           ? verses.length
           : -1
       );
-    });
-  }, [computedPosition]);
+    }), [computedPosition]);
 
   const corpusActionEnableState = useMemo(() => {
     const firstBcvId = viewCorpora.verseByReferenceString(
@@ -250,9 +263,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       viewCorpora,
       visibleVerses,
       computedPosition)
-      .then(verseElement => {
-        setVerseElement(verseElement);
-      });
+      .then(verseElement => setVerseElement(verseElement));
   }, [appCtx?.projectState?.linksTable, computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
 
   if (!viewCorpora) {
@@ -340,8 +351,8 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
                                                      add,
                                                      remove,
                                                      disabled
-                                                   }) => {
-  return (
+                                                   }) =>
+  (
     <Grid container>
       <Tooltip title="Show the next verses">
         <span>
@@ -359,6 +370,5 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
       </Tooltip>
     </Grid>
   );
-};
 
 export default CorpusComponent;
