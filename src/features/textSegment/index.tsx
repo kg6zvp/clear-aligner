@@ -12,7 +12,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { useFindLinksByWord } from '../../state/links/tableManager';
+import { useDatabaseStatus, useFindLinksByWord } from '../../state/links/tableManager';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -96,18 +96,22 @@ export const TextSegment = ({
       state.textSegmentHover.hovered?.side === word.side &&
       state.textSegmentHover.hovered?.id === word.id
   );
+  const { result: databaseStatus } = useDatabaseStatus();
   const currentlyHovered = useAppSelector(
     (state) => state.textSegmentHover.hovered
   );
   const {
     result: wordLinks
-  } = useFindLinksByWord(word.side, BCVWP.parseFromString(word.id), word.id);
+  } = useFindLinksByWord(
+    word.side,
+    BCVWP.parseFromString(word.id),
+    String(databaseStatus?.lastUpdateTime ?? 0));
   const {
     result: hoveredLinks
   } = useFindLinksByWord(
     currentlyHovered?.side,
     (currentlyHovered?.id ? BCVWP.parseFromString(currentlyHovered?.id) : undefined),
-    currentlyHovered?.id);
+    String(databaseStatus?.lastUpdateTime ?? 0));
 
   const isMemberOfMultipleAlignments = useMemo(
     () => (wordLinks ?? []).length > 1,
