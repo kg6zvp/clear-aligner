@@ -1,4 +1,4 @@
-import { AlignmentSide, Link } from '../../structs';
+import { AlignmentSide, Link, Word } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
@@ -54,12 +54,14 @@ export class LinksTable extends VirtualTable<Link> {
   private databaseBusyCtr = 0;
   private linksByWordIdCache: MemoryCache;
   private linksByBCVCache: MemoryCache;
+  private wordsByBCVCache: MemoryCache;
 
   constructor() {
     super();
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
-    this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
     this.linksByWordIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
+    this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
+    this.wordsByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
   }
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
@@ -219,7 +221,7 @@ export class LinksTable extends VirtualTable<Link> {
     });
   };
 
-  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
+  findLinksByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
     const cacheKey = [side, bookNum, chapterNum, verseNum].join('|');
     return this.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
@@ -228,9 +230,24 @@ export class LinksTable extends VirtualTable<Link> {
     });
   };
 
-  preloadByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
+  findWordsByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Word[]> => {
+    const cacheKey = [side, bookNum, chapterNum, verseNum].join('|');
+    return this.wordsByBCVCache.wrap(cacheKey, async () => {
+      // @ts-ignore
+      return window.databaseApi
+        .findWordsByBCV(DefaultProjectName, side, bookNum, chapterNum, verseNum);
+    });
+  };
+
+  preloadLinksByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
     for (const verseCtr of this._createVersePreloadRange(verseNum, skipVerseNum)) {
-      void this.findByBCV(side, bookNum, chapterNum, verseCtr);
+      void this.findLinksByBCV(side, bookNum, chapterNum, verseCtr);
+    }
+  };
+
+  preloadWordsByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
+    for (const verseCtr of this._createVersePreloadRange(verseNum, skipVerseNum)) {
+      void this.findWordsByBCV(side, bookNum, chapterNum, verseCtr);
     }
   };
 
@@ -271,6 +288,7 @@ export class LinksTable extends VirtualTable<Link> {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
     await this.linksByWordIdCache.reset();
     await this.linksByBCVCache.reset();
+    // await this.wordsByBCVCache.reset(); - no need
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
@@ -677,7 +695,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
       return;
     }
     prevFindKey.current = findKey;
-    databaseHookDebug('useFindLinksByWord(): status', status);
+    databaseHookDebug('useFindLinksByWordId(): status', status);
     LinksTableInstance.findByWordId(side, wordId)
       .then(result => {
         const endStatus = {
@@ -689,9 +707,9 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
           && wordId.book
           && wordId.chapter
           && wordId.verse) {
-          LinksTableInstance.preloadByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
+          LinksTableInstance.preloadLinksByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
         }
-        databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+        databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
       });
   }, [isNoPreload, prevFindKey, findKey, side, status, wordId]);
 
@@ -728,8 +746,8 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
       return;
     }
     prevFindKey.current = findKey;
-    databaseHookDebug('useFindLinksByWord(): status', status);
-    LinksTableInstance.findByBCV(side, bookNum, chapterNum, verseNum)
+    databaseHookDebug('useFindLinksByBCV(): status', status);
+    LinksTableInstance.findLinksByBCV(side, bookNum, chapterNum, verseNum)
       .then(result => {
         const endStatus = {
           ...status,
@@ -737,9 +755,57 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
         };
         setStatus(endStatus);
         if (!isNoPreload) {
-          LinksTableInstance.preloadByBCV(side, bookNum, chapterNum, verseNum, true);
+          LinksTableInstance.preloadLinksByBCV(side, bookNum, chapterNum, verseNum, true);
         }
-        databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+        databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
+      });
+  }, [isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
+
+  return { ...status };
+};
+
+/**
+ * Find words by word ID hook.
+ *<p>
+ * Key parameters are used to control operations that may be destructive or time-consuming
+ * on re-render. A constant value will ensure an operation only happens once, and a UUID
+ * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
+ * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ *<p>
+ * @param side Alignment side to find (optional; undefined = no find).
+ * @param bookNum Book number (optional; undefined = no find).
+ * @param chapterNum Chapter number (optional; undefined = no find).
+ * @param verseNum Verse number  (optional; undefined = no find).
+ * @param findKey Unique key to control find operation (optional; undefined = will find).
+ */
+export const useFindWordsByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
+  const [status, setStatus] = useState<{
+    result?: Word[];
+  }>({});
+  const prevFindKey = useRef<string | undefined>();
+
+  useEffect(() => {
+    const workFindKey = findKey ?? uuid();
+    if (!side
+      || !bookNum
+      || !chapterNum
+      || !verseNum
+      || prevFindKey.current === workFindKey) {
+      return;
+    }
+    prevFindKey.current = findKey;
+    databaseHookDebug('useFindWordsByBCV(): status', status);
+    LinksTableInstance.findWordsByBCV(side, bookNum, chapterNum, verseNum)
+      .then(result => {
+        const endStatus = {
+          ...status,
+          result
+        };
+        setStatus(endStatus);
+        if (!isNoPreload) {
+          LinksTableInstance.preloadWordsByBCV(side, bookNum, chapterNum, verseNum, true);
+        }
+        databaseHookDebug('useFindWordsByBCV(): endStatus', endStatus);
       });
   }, [isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
 

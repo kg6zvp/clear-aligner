@@ -47,6 +47,17 @@ class User {
   }
 }
 
+class WordsOrParts {
+  constructor() {
+    this.id = undefined;
+    this.corpusId = undefined;
+    this.side = undefined;
+    this.text = undefined;
+    this.after = undefined;
+    this.position = undefined;
+  }
+}
+
 const linkSchema = new EntitySchema({
   name: LinkTableName, tableName: LinkTableName, target: Link, columns: {
     id: {
@@ -93,6 +104,24 @@ const userSchema = new EntitySchema({
   name: 'user', tableName: 'user', target: User, columns: {
     id: {
       primary: true, type: 'text', generated: false
+    }
+  }
+});
+
+const wordsOrPartsSchema = new EntitySchema({
+  name: 'user', tableName: 'user', target: User, columns: {
+    id: {
+      primary: true, type: 'text', generated: false
+    }, corpusId: {
+      type: 'text'
+    }, side: {
+      type: 'text'
+    }, text: {
+      type: 'text'
+    }, after: {
+      type: 'text'
+    }, position: {
+      type: 'integer'
     }
   }
 });
@@ -170,7 +199,7 @@ class DatabaseAccessMain {
           db.pragma('synchronous = normal');
           db.pragma('cache_size = -8000000');
         },
-        entities: [linkSchema, projectSchema, userSchema, linksToSourceWordsSchema, linksToTargetWordsSchema]
+        entities: [linkSchema, projectSchema, userSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema]
       });
       await newDataSource.initialize();
 
@@ -529,6 +558,34 @@ class DatabaseAccessMain {
     }
   };
 
+  findWordsByBCV = async (sourceName, linkSide, bookNum, chapterNum, verseNum) => {
+    if (!linkSide || !bookNum || !chapterNum || !verseNum) {
+      return [];
+    }
+    this.logDatabaseTime('findWordsByBCV()');
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const result = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
+                                                        w.corpus_id                       as corpusId,
+                                                        w.side                            as side,
+                                                        w.text                            as text,
+                                                        w.after                           as after,
+                                                        w.position_part                   as position
+                                                 from words_or_parts w
+                                                 where w.side = ?
+                                                   and w.position_book = ?
+                                                   and w.position_chapter = ?
+                                                   and w.position_verse = ?;`, [linkSide, bookNum, chapterNum, verseNum]));
+      this.logDatabaseTimeLog('findWordsByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result?.length ?? result);
+      return result;
+    } catch (ex) {
+      console.error('findWordsByBCV()', ex);
+      return [];
+    } finally {
+      this.logDatabaseTimeEnd('findWordsByBCV()');
+    }
+  };
+
   getAllLinks = async (dataSource) => {
     return this.createLinksFromRows((await dataSource.manager.query(`
         select s.link_id,
@@ -801,6 +858,9 @@ module.exports = {
       });
       ipcMain.handle(`${ChannelPrefix}:findLinksByBCV`, async (event, ...args) => {
         return await DatabaseAccessMainInstance.findLinksByBCV(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findWordsByBCV`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findWordsByBCV(...args);
       });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
