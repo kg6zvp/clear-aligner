@@ -8,7 +8,7 @@ if [[ "$*" == *'-h'* || "$*" == *'--help'* ]]; then
   echo "Usage: ${0} [-h|--help] [--no-remove]"
   exit 0
 elif [[ -f "${theDbFile}" && "$*" == *'--no-remove'* ]]; then
-  echo "Template database already exists: '${theDbPath}' (not deleting)."
+  echo "Template database already exists: '${theDbPath}' (not recreating)."
   exit 0
 fi
 
