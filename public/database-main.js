@@ -625,15 +625,18 @@ class DatabaseAccessMain {
                                                          c.full_name      as fullName,
                                                          c.side           as side,
                                                          l.code           as code,
-                                                         l.text_direction as textDirection
+                                                         l.text_direction as textDirection,
+                                                         l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
       this.logDatabaseTimeLog('getAllCorpora()', results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({
-          id: result.id, name: result.name, fullName: result.fullName, side: result.side, langauge: {
-            code: result.code, textDirection: result.textDirection
+          id: result.id, name: result.name, fullName: result.fullName, side: result.side, language: {
+            code: result.code,
+            textDirection: result.textDirection,
+            fontFamily: result.fontFamily
           }
         }));
     } catch (ex) {
