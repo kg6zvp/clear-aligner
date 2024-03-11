@@ -60,14 +60,14 @@ export const VerseDisplay = ({
       return;
     }
     const result = new Map<string, Link>();
-    (allLinks ?? [onlyLink])
+    (allLinks ?? [onlyLink as Link])
       .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
       .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
         ? link!.sources
         : link!.targets) ?? [])
         .forEach(wordId => result.set(wordId, link!)));
     return result;
-  }, [allLinks, onlyLink, onlyLinkIds, alignmentSide]);
+  }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Card,
@@ -20,20 +20,29 @@ import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
-import { DatabaseBusyInfo, useDatabaseStatus } from '../../state/links/tableManager';
+import { useDatabaseStatus } from '../../state/links/tableManager';
+import uuid from 'uuid-random';
 
 interface PolyglotProps {
   containers: CorpusContainer[];
   position: BCVWP | null;
 }
 
+const DatabaseStatusRefreshTimeInMs = 500;
+
 export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
   useDebug('PolyglotComponent');
   const { preferences } = React.useContext(AppContext);
   const containerViewportRefs = useRef<HTMLDivElement[]>([]);
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const { result: databaseStatus } = useDatabaseStatus(true);
-
+  const [databaseCheckKey, setDatabaseCheckKey] = useState<string>();
+  const { result: databaseStatus } = useDatabaseStatus(databaseCheckKey);
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setDatabaseCheckKey(uuid());
+    }, DatabaseStatusRefreshTimeInMs);
+    return () => window.clearInterval(intervalId);
+  }, []);
   const corpusViewports: CorpusViewport[] | null = useMemo(
     () =>
       containers?.map(
@@ -43,47 +52,31 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       ) ?? null,
     [containers]
   );
-  const {
-    isBusy: dbIsBusy,
-    userText: dbUserText,
-    progressCtr: dbProgressCtr,
-    progressMax: dbProgressMax
-  } = useMemo<DatabaseBusyInfo>(() => {
-    const busyInfo = databaseStatus?.busyInfo;
-    if (!busyInfo) {
-      return {
-        isBusy: false,
-        userText: undefined,
-        progressCtr: 0,
-        progressMax: 0
-      };
-    }
-    return { ...busyInfo };
-  }, [databaseStatus?.busyInfo]);
   const spinnerParams = useMemo<{
     isBusy?: boolean,
     text?: string,
     variant?: 'determinate' | 'indeterminate',
     value?: number
   }>(() => {
-    if (dbIsBusy) {
-      const progressCtr = dbProgressCtr ?? 0;
-      const progressMax = dbProgressMax ?? 0;
+    const busyInfo = databaseStatus?.busyInfo;
+    if (busyInfo?.isBusy) {
+      const progressCtr = busyInfo?.progressCtr ?? 0;
+      const progressMax = busyInfo?.progressMax ?? 0;
       if (progressMax > 0
         && progressMax >= progressCtr) {
         const percentProgress = Math.round((progressCtr / progressMax) * 100.0);
         return {
           isBusy: true,
-          text: dbUserText ?? 'The database is busy...',
+          text: busyInfo?.userText ?? 'The database is busy...',
           variant: 'determinate',
           value: percentProgress < 100 ? percentProgress : undefined
         };
       } else {
         return {
           isBusy: true,
-          text: dbUserText ?? 'The database is busy...',
+          text: busyInfo?.userText ?? 'The database is busy...',
           variant: 'indeterminate',
-          value: 0
+          value: undefined
         };
       }
     }
@@ -102,7 +95,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       variant: 'indeterminate',
       value: undefined
     };
-  }, [corpusViewports, dbIsBusy, dbProgressCtr, dbProgressMax, dbUserText]);
+  }, [corpusViewports, databaseStatus?.busyInfo]);
 
   const controlPanelFormat = useMemo(() => (
     preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined

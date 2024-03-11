@@ -11,7 +11,6 @@ const DatabaseChunkSize = 10_000;
 const DatabaseWaitInMs = 1_000;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
-const DatabaseStatusRefreshTimeInMs = 500;
 export const EmptyWordId = '00000000000';
 export const DefaultProjectName = 'default';
 export const LinkTableName = 'links';
@@ -21,9 +20,6 @@ const PreloadVerseRange = 3;
 export interface DatabaseLoadState {
   isLoaded: boolean,
   isLoading: boolean
-}
-
-export interface TableLoadState extends DatabaseLoadState {
 }
 
 export interface DatabaseBusyInfo {
@@ -36,16 +32,12 @@ export interface DatabaseBusyInfo {
 export interface DatabaseStatus {
   busyInfo: DatabaseBusyInfo,
   databaseLoadState: DatabaseLoadState,
-  projectTableLoadState: TableLoadState,
-  linkTableLoadState: TableLoadState,
   lastUpdateTime?: number,
 }
 
 const InitialDatabaseStatus = {
   busyInfo: { isBusy: false, progressCtr: 0, progressMax: 0 },
-  databaseLoadState: { isLoaded: false, isLoading: false },
-  projectTableLoadState: { isLoaded: false, isLoading: false },
-  linkTableLoadState: { isLoaded: false, isLoading: false }
+  databaseLoadState: { isLoaded: false, isLoading: false }
 } as DatabaseStatus;
 
 export class LinksTable extends VirtualTable<Link> {
@@ -70,7 +62,6 @@ export class LinksTable extends VirtualTable<Link> {
     }
 
     this._logDatabaseTime('save()');
-    this._incrDatabaseBusyCtr();
     try {
       await this.remove(link.id, true, true);
       const newLink: Link = {
@@ -256,7 +247,6 @@ export class LinksTable extends VirtualTable<Link> {
     }
 
     this._logDatabaseTime('remove()');
-    this._incrDatabaseBusyCtr();
     try {
       await this.checkDatabase();
       // @ts-ignore
@@ -267,7 +257,6 @@ export class LinksTable extends VirtualTable<Link> {
       console.error('error removing link', ex);
       return false;
     } finally {
-      this._decrDatabaseBusyCtr();
       this._logDatabaseTimeEnd('remove()');
     }
   };
@@ -375,18 +364,6 @@ export class LinksTable extends VirtualTable<Link> {
 
   private _waitForDatabase = async () => {
     while (this.databaseStatus.databaseLoadState.isLoading) {
-      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
-    }
-  };
-
-  private _waitForLinkTable = async () => {
-    while (this.databaseStatus.linkTableLoadState.isLoading) {
-      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
-    }
-  };
-
-  private _waitForProjectTable = async () => {
-    while (this.databaseStatus.projectTableLoadState.isLoading) {
       await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
     }
   };
@@ -913,7 +890,7 @@ export const useCheckDatabase = (checkKey?: string) => {
 /**
  * Database status hook.
  */
-export const useDatabaseStatus = (isAsync = false, checkKey?: string) => {
+export const useDatabaseStatus = (checkKey?: string) => {
   const [status, setStatus] =
     useState<{
       result: DatabaseStatus
@@ -927,32 +904,18 @@ export const useDatabaseStatus = (isAsync = false, checkKey?: string) => {
       return;
     }
     prevCheckKey.current = workCheckKey;
-    databaseHookDebug('useDatabaseStatus(): status', status);
-    const setDatabaseStatus = (isAsync = false, inputStatus?: DatabaseStatus) => {
-      const prevStatus = inputStatus ?? status.result;
-      const currStatus = LinksTableInstance.getDatabaseStatus();
-      if (currStatus.busyInfo.isBusy
-        || !_.isEqual(prevStatus, currStatus)) {
-        const endStatus = {
-          ...status,
-          result: currStatus
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useDatabaseStatus(): endStatus', endStatus);
-      }
-
-      if (isAsync) {
-        return window.setInterval(() => setDatabaseStatus(false, currStatus), DatabaseStatusRefreshTimeInMs);
-      }
-      return undefined;
-    };
-
-    const intervalId = setDatabaseStatus(isAsync);
-    if (intervalId) {
-      return () => window.clearInterval(intervalId);
+    const prevStatus = status.result;
+    const currStatus = LinksTableInstance.getDatabaseStatus();
+    if (currStatus.busyInfo.isBusy
+      || !_.isEqual(prevStatus, currStatus)) {
+      const endStatus = {
+        ...status,
+        result: currStatus
+      };
+      setStatus(endStatus);
+      databaseHookDebug('useDatabaseStatus(): endStatus', endStatus);
     }
-    return undefined;
-  }, [prevCheckKey, checkKey, isAsync, status]);
+  }, [prevCheckKey, checkKey, status]);
 
   return { ...status };
 };
