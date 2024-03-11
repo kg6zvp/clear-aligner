@@ -1,6 +1,5 @@
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { PivotWord } from '../../features/concordanceView/structs';
-import { generatePivotWordsList } from '../../features/concordanceView/concordanceViewHelpers';
 import { findWordByString } from '../../helpers/findWord';
 import { IndexedChangeType, SecondaryIndex } from '../databaseManagement';
 import _ from 'lodash';
@@ -41,7 +40,7 @@ export class WordsIndex implements SecondaryIndex<Link> {
   };
 
   initialize = async (): Promise<void> => {
-    this.pivotWords = await generatePivotWordsList(this.container, this.side);
+    //this.pivotWords = await generatePivotWordsList(this.container, this.side);
   };
 
   waitForTasksToFinish = async (): Promise<void> => {
@@ -81,14 +80,14 @@ export class WordsIndex implements SecondaryIndex<Link> {
     for (const normalizedText of pivotWordNormalizedTexts) {
       const pivotWord = this.pivotWords.get(normalizedText);
       if (!pivotWord) break;
-      if (!pivotWord.alignmentLinks) {
+      /*if (!pivotWord.alignmentLinks) {
         pivotWord.alignmentLinks = [];
       }
       pivotWord.alignmentLinks.push(payload);
       if (pivotWord.alignedWords) {
         delete pivotWord.alignedWords;
       }
-      pivotWord.hasAlignmentLinks = (pivotWord.alignmentLinks.length > 0);
+      pivotWord.hasAlignmentLinks = (pivotWord.alignmentLinks.length > 0); //*/
     }
   };
 
@@ -99,7 +98,7 @@ export class WordsIndex implements SecondaryIndex<Link> {
     for (const normalizedText of pivotWordNormalizedTexts) {
       const pivotWord = this.pivotWords.get(normalizedText);
       if (!pivotWord) break;
-      if (pivotWord.alignmentLinks) {
+      /*if (pivotWord.alignmentLinks) {
         // remove the link from the list
         _.remove(pivotWord.alignmentLinks, (link) => link.id === payload.id);
         pivotWord.hasAlignmentLinks = (pivotWord.alignmentLinks.length > 0);
@@ -111,7 +110,7 @@ export class WordsIndex implements SecondaryIndex<Link> {
           alignedWord.frequency = alignedWord.alignments.length;
           return (alignedWord.alignments.length < 1); // remove alignedWord if it has no links
         });
-      }
+      } //*/
     }
     this.linkIdsToPivotWordNormalizedTexts.delete(payload.id);
   };

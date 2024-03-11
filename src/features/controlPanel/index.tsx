@@ -21,7 +21,6 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 
 import { WordsIndex } from '../../state/links/wordsIndex';
-import { usePivotWords } from '../concordanceView/usePivotWords';
 import uuid from 'uuid-random';
 
 interface ControlPanelProps {
@@ -46,7 +45,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }>();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
 
-  usePivotWords(AlignmentSide.TARGET);
   const { projectState, setProjectState, preferences, setPreferences } = useContext(AppContext);
 
   // File input reference to support file loading via a button click

@@ -2,7 +2,7 @@ import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { useDatabaseStatus, useFindLinksByBCV } from '../../state/links/tableManager';
+import { useDatabaseStatus, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -42,27 +42,32 @@ export const VerseDisplay = ({
       ? AlignmentSide.SOURCE
       : AlignmentSide.TARGET, [corpus?.id]);
   const { result: databaseStatus } = useDatabaseStatus();
-  const { result: links } = useFindLinksByBCV(
-    alignmentSide,
+  const { result: onlyLink } = useGetLink(
+    (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
+    String(databaseStatus.lastUpdateTime ?? 0)
+  );
+  const { result: allLinks } = useFindLinksByBCV(
+    (onlyLinkIds?.length ?? 0) < 1 ? alignmentSide : undefined,
     verse.bcvId.book,
     verse.bcvId.chapter,
     verse.bcvId.verse,
-    false,
+    readonly,
     String(databaseStatus.lastUpdateTime ?? 0)
   );
   const linkMap = useMemo(() => {
-    if (!links
-      || links.length < 0) {
+    if ((!allLinks || allLinks.length < 1)
+      && !onlyLink) {
       return;
     }
     const result = new Map<string, Link>();
-    (links ?? [])
+    (allLinks ?? [onlyLink])
+      .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
       .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
-        ? link.sources
-        : link.targets) ?? [])
-        .forEach(wordId => result.set(wordId, link)));
+        ? link!.sources
+        : link!.targets) ?? [])
+        .forEach(wordId => result.set(wordId, link!)));
     return result;
-  }, [links, alignmentSide]);
+  }, [allLinks, onlyLink, onlyLinkIds, alignmentSide]);
 
   return (
     <>

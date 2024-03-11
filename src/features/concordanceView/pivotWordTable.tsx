@@ -38,11 +38,11 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
 
 const columns: GridColDef[] = [
   {
-    field: 'instances.length',
+    field: 'frequency',
     headerName: 'Frequency',
     flex: 1,
     valueGetter: (row: GridValueGetterParams<PivotWord>) =>
-      row.row.instances.length,
+      row.row.frequency,
   },
   {
     field: 'normalizedText',
@@ -141,9 +141,7 @@ export const PivotWordTable = ({
             onChooseWord(clickEvent.row);
           }
         }}
-        isRowSelectable={({
-          row: { hasAlignmentLinks },
-        }: GridRowParams<PivotWord>) => !!hasAlignmentLinks}
+        isRowSelectable={(_: GridRowParams<PivotWord>) => true}
       />
     </TableContainer>
   );

@@ -870,6 +870,94 @@ class DatabaseAccessMain {
       this.logDatabaseTimeEnd('findBetweenIds()');
     }
   };
+
+  corporaGetPivotWords = async (sourceName, side, filter, sort) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    return await em.query(`select
+                        normalized_text t,
+                        language_id l,
+                        count(1) c
+      from words_or_parts w
+        ${filter === 'aligned' ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j
+                                    on w.id = j.word_id` : ''}
+      where w.side = '${side}'
+      group by t
+        ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
+  };
+
+  languageFindByIds = async (sourceName, languageIds) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    return await em.query(`SELECT code, text_direction textDirection, font_family fontFamily from language WHERE code in (${languageIds.map(id => `'${id}'`).join(',')});`);
+  }
+
+
+  languageGetAll = async (sourceName) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    return await em.query(`SELECT code, text_direction textDirection, font_family fontFamily from language;`);
+  }
+
+  corporaGetAlignedWordsByPivotWord = async (sourceName, side, normalizedText, sort) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    switch (side) {
+      case 'sources':
+        const sourceQueryTextWLang = `
+            SELECT sw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(1) c
+            FROM words_or_parts sw
+                     INNER JOIN links__source_words lsw
+                                ON sw.id = lsw.word_id
+                     INNER JOIN links l
+                                ON l.id = lsw.link_id
+                     INNER JOIN links__target_words ltw
+                                ON l.id = ltw.link_id
+                     INNER JOIN words_or_parts tw
+                                ON tw.id = ltw.word_id
+            WHERE sw.normalized_text = '${normalizedText}'
+              AND sw.side = 'sources'
+              AND l.targets_text <> ''
+            GROUP BY l.targets_text
+                ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text' })};`;
+        return await em.query(sourceQueryTextWLang);
+      case 'targets':
+        const targetQueryText = `
+            SELECT tw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(1) c
+            FROM words_or_parts tw
+                     INNER JOIN links__target_words ltw
+                                ON tw.id = ltw.word_id
+                     INNER JOIN links l
+                                ON l.id = ltw.link_id
+                     INNER JOIN links__source_words lsw
+                                ON l.id = lsw.link_id
+                     INNER JOIN words_or_parts sw
+                                ON sw.id = lsw.word_id
+            WHERE tw.normalized_text = '${normalizedText}'
+              AND tw.side = 'targets'
+              AND l.sources_text <> ''
+            GROUP BY l.sources_text
+              ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
+        return await em.query(targetQueryText);
+    }
+  }
+
+  corporaGetLinksByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
+    const em = (await this.getDataSource(sourceName)).manager;
+    const linkIds = (await em.query(`
+        SELECT id
+            FROM links
+            WHERE sources_text = '${sourcesText}'
+            AND targets_text = '${targetsText}'
+        ${this._buildOrderBy(sort)};`))
+      .map((link) => link.id);
+    const links = [];
+    for (const linkId of linkIds) {
+      links.push( ...(await this.findByIds(sourceName, 'links', linkId)) );
+    }
+    return links;
+  }
+
+  _buildOrderBy = (sort, fieldMap) => {
+    if (!sort || !sort.field || !sort.sort) return '';
+    return `order by ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
+  }
 }
 
 const DatabaseAccessMainInstance = new DatabaseAccessMain();
@@ -894,6 +982,68 @@ module.exports = {
       ipcMain.handle(`${ChannelPrefix}:findWordsByBCV`, async (event, ...args) => await DatabaseAccessMainInstance.findWordsByBCV(...args));
       ipcMain.handle(`${ChannelPrefix}:getAllWordsByCorpus`, async (event, ...args) => await DatabaseAccessMainInstance.getAllWordsByCorpus(...args));
       ipcMain.handle(`${ChannelPrefix}:getAllCorpora`, async (event, ...args) => await DatabaseAccessMainInstance.getAllCorpora(...args));
+      ipcMain.handle(`${ChannelPrefix}:corporaGetPivotWords`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.corporaGetPivotWords(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:languageFindByIds`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.languageFindByIds(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:corporaGetAlignedWordsByPivotWord`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.corporaGetAlignedWordsByPivotWord(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:languageGetAll`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.languageGetAll(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:corporaGetLinksByAlignedWord`,
+        async (event, ...args) => {
+          return await DatabaseAccessMainInstance.corporaGetLinksByAlignedWord(...args);
+        });
+      ipcMain.handle(`${ChannelPrefix}:createDataSource`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.createDataSource(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:insert`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.insert(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:deleteAll`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.deleteAll(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:save`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.save(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:existsById`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.existsById(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findByIds`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findByIds(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:getAll`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.getAll(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findOneById`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findOneById(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:deleteByIds`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.deleteByIds(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findBetweenIds(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:updateLinkText`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.updateLinkText(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:updateAllLinkText`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.updateAllLinkText(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findLinksByWordId`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findLinksByWordId(...args);
+      });
+      ipcMain.handle(`${ChannelPrefix}:findLinksByBCV`, async (event, ...args) => {
+        return await DatabaseAccessMainInstance.findLinksByBCV(...args);
+      });
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
     }

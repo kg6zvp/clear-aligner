@@ -15,8 +15,12 @@ const DatabaseStatusRefreshTimeInMs = 500;
 export const EmptyWordId = '00000000000';
 export const DefaultProjectName = 'default';
 const LinkTableName = 'links';
+const EmptyWordId = '00000000000';
+export const DefaultProjectName = 'default';
+export const LinkTableName = 'links';
+const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
-const PreloadVerseRange = 10;
+const PreloadVerseRange = 3;
 
 export interface DatabaseLoadState {
   isLoaded: boolean,
