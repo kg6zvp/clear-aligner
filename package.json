@@ -127,7 +127,8 @@
         "from": "sql",
         "to": "sql",
         "filter": [
-          "!sql/projects/**"
+          "!sql/projects/**",
+          "!**/.gitignore"
         ]
       }
     ]
