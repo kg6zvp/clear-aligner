@@ -28,7 +28,7 @@ The component currently supports react v18.x.
     - build for Windows: `yarn build:win`
     - build for Mac: `yarn build:mac`
 - Run electron in dev mode: `yarn dev-electron`
-    - Note: `yarn start` _will not work_, due to the use of platform-specific
+    - **Note:** `yarn start` _will not work_, due to the use of platform-specific
       libraries (sqlite3) and main/renderer process IPC.
 
 ### Install electron build dependencies on Ubuntu 22.04
