@@ -29,7 +29,7 @@ The component currently supports react v18.x.
     - build for Mac: `yarn build:mac`
 - Run electron in dev mode: `yarn dev-electron`
     - Note: `yarn start` _will not work_, due to the use of platform-specific
-      libraries (sqlite3) and the use of main/renderer process IPC.
+      libraries (sqlite3) and main/renderer process IPC.
 
 ## Rebuilding the template database
 
