@@ -5,9 +5,9 @@ import { useEffect, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
 import { DefaultProjectName } from '../../state/links/tableManager';
 
-export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem|null): Link[] | undefined => {
+export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
   const db = useDatabase();
-  const [ links, setLinks ] = useState<Link[]|undefined>(undefined);
+  const [links, setLinks] = useState<Link[] | undefined>(undefined);
 
   useEffect(() => {
     if (!alignedWord) return;
@@ -19,10 +19,10 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
       } finally {
         console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${alignedWord.id}')`);
       }
-    }
+    };
 
     void load();
-  }, [alignedWord, sort, setLinks]);
+  }, [db, alignedWord, sort, setLinks]);
 
   return links;
-}
+};

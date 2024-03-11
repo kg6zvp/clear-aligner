@@ -1,15 +1,11 @@
 import { AlignedWord, PivotWord } from './structs';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { AppContext } from '../../App';
+import { useEffect, useRef, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
 import { DefaultProjectName } from '../../state/links/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useLanguages } from '../../hooks/useLanguages';
 
-export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridSortItem|null): AlignedWord[] | undefined => {
-  const {
-    projectState: { linksTable }
-  } = useContext(AppContext);
+export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridSortItem | null): AlignedWord[] | undefined => {
   const languages = useLanguages();
   const db = useDatabase();
   const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(undefined);
@@ -24,26 +20,26 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
     const load = async () => {
       console.time(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
       const alignedWords = (await db.corporaGetAlignedWordsByPivotWord(DefaultProjectName, pivotWord.side, pivotWord.normalizedText, sort))
-                                            .map((aw): AlignedWord => {
-                                              return {
-                                                id: `${aw.t}:${aw.st}-${aw.tt}`,
-                                                sourceWordTexts: {
-                                                  languageInfo: languages.get(aw.sl),
-                                                  text: aw.st
-                                                },
-                                                targetWordTexts: {
-                                                  languageInfo: languages.get(aw.tl),
-                                                  text: aw.tt
-                                                },
-                                                frequency: aw.c
-                                              }
-                                            });
+        .map((aw): AlignedWord => {
+          return {
+            id: `${aw.t}:${aw.st}-${aw.tt}`,
+            sourceWordTexts: {
+              languageInfo: languages.get(aw.sl),
+              text: aw.st
+            },
+            targetWordTexts: {
+              languageInfo: languages.get(aw.tl),
+              text: aw.tt
+            },
+            frequency: aw.c
+          };
+        });
       console.timeEnd(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
       setAlignedWords(alignedWords);
     };
 
     void load();
-  }, [setAlignedWords, pivotWord, languages]);
+  }, [db, sort, setAlignedWords, pivotWord, languages]);
 
   return alignedWords;
 };

@@ -63,6 +63,7 @@ export interface Corpus {
   name: string;
   fullName: string;
   language: LanguageInfo;
+  side: AlignmentSide,
   words: Word[];
   wordsByVerse: Record<string, Verse>;
   wordLocation: Map<string, Set<BCVWP>>;

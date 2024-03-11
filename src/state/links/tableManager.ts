@@ -12,10 +12,9 @@ const DatabaseWaitInMs = 1_000;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
-const EmptyWordId = '00000000000';
+export const EmptyWordId = '00000000000';
 export const DefaultProjectName = 'default';
 export const LinkTableName = 'links';
-const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
 
@@ -55,12 +54,14 @@ export class LinksTable extends VirtualTable<Link> {
   private databaseBusyCtr = 0;
   private linksByWordIdCache: MemoryCache;
   private linksByBCVCache: MemoryCache;
+  private linksByLinkIdCache: MemoryCache;
 
   constructor() {
     super();
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
-    this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
     this.linksByWordIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
+    this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
+    this.linksByLinkIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
   }
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
@@ -242,8 +243,11 @@ export class LinksTable extends VirtualTable<Link> {
 
   get = async (id?: string): Promise<Link | undefined> => {
     if (!id) return undefined;
-    // @ts-ignore
-    return await window.databaseApi.findOneById(DefaultProjectName, LinkTableName, id) as Link | undefined;
+    return this.linksByLinkIdCache.wrap(id, async () => {
+      // @ts-ignore
+      return window.databaseApi
+        .findOneById(DefaultProjectName, LinkTableName, id);
+    });
   };
 
   remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
@@ -272,6 +276,7 @@ export class LinksTable extends VirtualTable<Link> {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
     await this.linksByWordIdCache.reset();
     await this.linksByBCVCache.reset();
+    await this.linksByLinkIdCache.reset();
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
@@ -678,7 +683,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
       return;
     }
     prevFindKey.current = findKey;
-    databaseHookDebug('useFindLinksByWord(): status', status);
+    databaseHookDebug('useFindLinksByWordId(): status', status);
     LinksTableInstance.findByWordId(side, wordId)
       .then(result => {
         const endStatus = {
@@ -692,7 +697,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
           && wordId.verse) {
           LinksTableInstance.preloadByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
         }
-        databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+        databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
       });
   }, [isNoPreload, prevFindKey, findKey, side, status, wordId]);
 
@@ -729,7 +734,7 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
       return;
     }
     prevFindKey.current = findKey;
-    databaseHookDebug('useFindLinksByWord(): status', status);
+    databaseHookDebug('useFindLinksByBCV(): status', status);
     LinksTableInstance.findByBCV(side, bookNum, chapterNum, verseNum)
       .then(result => {
         const endStatus = {
@@ -740,7 +745,7 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
         if (!isNoPreload) {
           LinksTableInstance.preloadByBCV(side, bookNum, chapterNum, verseNum, true);
         }
-        databaseHookDebug('useFindLinksByWord(): endStatus', endStatus);
+        databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
       });
   }, [isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
 
