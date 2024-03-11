@@ -7,13 +7,17 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { PivotWordFilter } from './concordanceView';
 import { useLanguages } from '../../hooks/useLanguages';
 
-export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null): PivotWord[] | undefined => {
+export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null): {
+  refetch: CallableFunction;
+  pivotWords: PivotWord[] | undefined;
+} => {
+  const [initializeIndices, setInitializeIndices] = useState(false);
   const databaseApi = useDatabase();
   const languages = useLanguages();
   const [pivotWords, setPivotWords] = useState<PivotWord[] | undefined>(undefined);
 
   useEffect(() => {
-    if (!languages) return;
+    if (!languages && !initializeIndices) return;
     const load = async () => {
       console.time(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
       const pivotWordList = (await databaseApi.corporaGetPivotWords(DefaultProjectName, side, filter, sort));
@@ -24,12 +28,14 @@ export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort
           side,
           normalizedText: t,
           frequency: c,
-          languageInfo: languages.get(l)!
+          languageInfo: languages?.get?.(l)!
         })));
     };
-
+    setInitializeIndices(false);
     void load();
-  }, [side, filter, sort, setPivotWords, databaseApi, languages]);
+  }, [side, filter, sort, setPivotWords, databaseApi, languages, initializeIndices]);
 
-  return pivotWords;
+  return { pivotWords, refetch: () => {
+      setInitializeIndices(true)
+    }};
 };

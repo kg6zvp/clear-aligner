@@ -11,11 +11,14 @@ import { LayoutContext } from '../../AppLayout';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { useAppDispatch } from '../../app';
 
 export type PivotWordFilter = 'aligned' | 'all';
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
+  const dispatch = useAppDispatch();
 
   /**
    * pivot words
@@ -26,7 +29,7 @@ export const ConcordanceView = () => {
     field: 'frequency',
     sort: 'desc'
   } as GridSortItem | null);
-  const pivotWords = usePivotWords(wordSource, wordFilter, pivotWordSortData);
+  const {pivotWords, refetch} = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);
@@ -255,6 +258,15 @@ export const ConcordanceView = () => {
               alignedWord={selectedAlignedWord ?? undefined}
               chosenAlignmentLink={selectedAlignmentLink}
               onChooseAlignmentLink={setSelectedAlignmentLink}
+              updateAlignments={(resetState: boolean) => {
+                dispatch(resetTextSegments());
+                if(resetState) {
+                  setSelectedAlignedWord(null);
+                  setSelectedAlignmentLink(null);
+                  setSelectedPivotWord(undefined);
+                  refetch();
+                }
+              }}
             />
           </Paper>
         </Box>
