@@ -117,7 +117,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           if (!container) return <div key={index} />;
 
           const selectedPartsForText = selectedWords[textId];
-          const sortedSelectedPartsForText = selectedPartsForText.sort(
+          const sortedSelectedPartsForText = selectedPartsForText.filter(p => p).sort(
             (a: Word, b: Word) => {
               if (a.position === b.position) {
                 return a.id > b.id ? 1 : -1;

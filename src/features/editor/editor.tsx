@@ -19,11 +19,12 @@ interface EditorProps {
 
 const Editor = (props: EditorProps): ReactElement => {
   useDebug('Editor');
+
   return (
     <Container maxWidth={false}>
-      <Polyglot containers={props.containers} position={props.position} />
-      <ControlPanel containers={props.containers} position={props.position} />
-      <ContextPanel containers={props.containers} />
+            <Polyglot containers={props.containers} position={props.position} />
+            <ControlPanel containers={props.containers} position={props.position} />
+            <ContextPanel containers={props.containers} />
     </Container>
   );
 };

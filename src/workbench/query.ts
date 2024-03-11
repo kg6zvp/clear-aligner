@@ -13,6 +13,7 @@ let initializationState: InitializationStates = InitializationStates.UNINITIALiZ
 
 const availableCorpora: CorpusContainer[] = [];
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const parseTsvByFileType = async (
   tsv: RequestInfo,
   refCorpus: Corpus,

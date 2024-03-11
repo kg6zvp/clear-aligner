@@ -3,14 +3,14 @@ import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem
 import { IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import { createContext, useContext, useMemo, useState } from 'react';
-import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
+import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
-import { createSearchParams, useNavigate } from 'react-router-dom';
 import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
+import WorkbenchDialog from './workbenchDialog';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -27,67 +27,26 @@ export const RefCell = (
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
   return (
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
-  );}
+  );
+}
 
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this Link entry
+ * @param onClick Callback on button click
  */
-export const LinkCell = (
-  row: GridRenderCellParams<Link, any, any>
-) => {
-  const navigate = useNavigate();
+export const LinkCell = ({row, onClick}: {
+  row: GridRenderCellParams<Link, any, any>,
+  onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
+}) => {
   const tableCtx = useContext(AlignmentTableContext);
-  const refString = findFirstRefFromLink(row.row, AlignmentSide.TARGET);
   return (
-    <IconButton
-      onClick={() =>
-        navigate({
-          pathname: '/',
-          search: createSearchParams({
-            ref: refString ? BCVWP.truncateTo(refString, BCVWPField.Verse ) : '',
-            pivotWord: tableCtx?.pivotWord?.normalizedText || '',
-            alignedWord: tableCtx?.alignedWord?.id || '',
-            alignmentLink: row.row.id ?? '',
-          }).toString(),
-        })
-      }
-    >
+    <IconButton onClick={() => onClick(tableCtx, row.row)}>
       <Launch />
     </IconButton>
   );
 };
 
-const columns: GridColDef[] = [
-  {
-    field: 'state',
-    headerName: 'State',
-  },
-  {
-    field: 'sources',
-    headerName: 'Ref',
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-      <RefCell {...row} />
-    ),
-  },
-  {
-    field: 'verse',
-    headerName: 'Verse Text',
-    flex: 1,
-    sortable: false,
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-      <VerseCell {...row} />
-    ),
-  },
-  {
-    field: 'id',
-    headerName: 'Link',
-    sortable: false,
-    renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-      <LinkCell {...row} />
-    ),
-  },
-];
 
 export interface AlignmentTableProps {
   wordSource: AlignmentSide;
@@ -95,6 +54,7 @@ export interface AlignmentTableProps {
   alignedWord?: AlignedWord;
   chosenAlignmentLink: Link | null;
   onChooseAlignmentLink: (alignmentLink: Link) => void;
+  updateAlignments: (resetState: boolean) => void;
 }
 
 /**
@@ -113,7 +73,9 @@ export const AlignmentTable = ({
   alignedWord,
   chosenAlignmentLink,
   onChooseAlignmentLink,
+  updateAlignments
 }: AlignmentTableProps) => {
+  const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [ sort, onChangeSort ] = useState<GridSortItem|null>({
     field: 'id',
     sort: 'desc',
@@ -131,6 +93,39 @@ export const AlignmentTable = ({
     }
     return 0;
   }, [chosenAlignmentLink, alignments]);
+
+  const columns: GridColDef[] = [
+    {
+      field: 'state',
+      headerName: 'State',
+    },
+    {
+      field: 'sources',
+      headerName: 'Ref',
+      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+        <RefCell {...row} />
+      ),
+    },
+    {
+      field: 'verse',
+      headerName: 'Verse Text',
+      flex: 1,
+      sortable: false,
+      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+        <VerseCell {...row} />
+      ),
+    },
+    {
+      field: 'id',
+      headerName: 'Link',
+      sortable: false,
+      renderCell: (row: GridRenderCellParams<Link, any, any>) => (
+        <LinkCell row={row} onClick={() => {
+          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ""))
+        }} />
+      ),
+    },
+  ];
 
   return (
     <AlignmentTableContext.Provider
@@ -184,6 +179,11 @@ export const AlignmentTable = ({
           }}
         />
       </TableContainer>
+      <WorkbenchDialog
+        alignment={selectedAligment}
+        setAlignment={setSelectedAlignment}
+        updateAlignments={updateAlignments}
+      />
     </AlignmentTableContext.Provider>
   );
 };
