@@ -38,7 +38,7 @@ installation.
 
 The template database file is created automatically when executing `yarn dev-electron`
 or any of the `yarn build*` commands, including the platform builds. These build steps
-will _only_ create the template database file if it's missing. This may be manually
+will _only_ create the template database file when it's missing. This may be manually
 recreated at any time by executing the following shell script:
 
 ```
