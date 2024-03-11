@@ -24,19 +24,19 @@ export const ConcordanceView = () => {
   const [wordFilter, setWordFilter] = useState('all' as PivotWordFilter);
   const [pivotWordSortData, setPivotWordSortData] = useState({
     field: 'frequency',
-    sort: 'desc',
+    sort: 'desc'
   } as GridSortItem | null);
   const pivotWords = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loading = useMemo(() => !!pivotWords, [ pivotWords, pivotWords?.length ]);
+  const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);
 
   const [selectedPivotWord, setSelectedPivotWord] = useState<
     PivotWord | undefined
   >();
   const [alignedWordSortData, setAlignedWordSortData] = useState({
     field: 'frequency',
-    sort: 'desc',
+    sort: 'desc'
   } as GridSortItem | null);
   const [selectedAlignedWord, setSelectedAlignedWord] = useState(
     null as AlignedWord | null
@@ -91,26 +91,11 @@ export const ConcordanceView = () => {
       }
       searchParams.delete('pivotWord');
     } else if (searchParams.has('alignedWord') && (selectedPivotWord)) {
-      const alignedWordId = searchParams.get('alignedWord')!;
-      /*const alignedWord = (selectedPivotWord)!.alignedWords?.find(
-        (alignedWord) => alignedWord.id === alignedWordId
-      );
-
-      if (alignedWord) {
-        setSelectedAlignedWord(alignedWord);
-      }//*/
       searchParams.delete('alignedWord');
     } else if (
       searchParams.has('alignmentLink') &&
       (selectedAlignedWord)
     ) {
-      const alignmentLinkId = searchParams.get('alignmentLink');
-      /*const alignmentLink = (selectedAlignedWord
-      )?.alignments?.find((link) => link.id === alignmentLinkId);
-
-      if (alignmentLink) {
-        setSelectedAlignmentLink(alignmentLink);
-      }*/
       searchParams.delete('alignmentLink');
     }
     setSearchParams(searchParams);
@@ -123,7 +108,7 @@ export const ConcordanceView = () => {
     setSelectedAlignedWord,
     selectedAlignedWord,
     setSelectedAlignmentLink,
-    selectedAlignmentLink,
+    selectedAlignmentLink
   ]);
 
   return (
@@ -134,7 +119,7 @@ export const ConcordanceView = () => {
           display: 'flex',
           gridGap: '.5em',
           gridTemplateColumns: 'repeat(18, 1fr)',
-          width: '100vw !important',
+          width: '100vw !important'
         }}
       >
         {/**
@@ -150,7 +135,7 @@ export const ConcordanceView = () => {
             width: '100%',
             gap: '1em',
             marginLeft: '2em',
-            marginTop: '1em',
+            marginTop: '1em'
           }}
         >
           <SingleSelectButtonGroup
@@ -158,12 +143,12 @@ export const ConcordanceView = () => {
             items={[
               {
                 value: 'sources',
-                label: 'Source',
+                label: 'Source'
               },
               {
                 value: 'targets',
-                label: 'Target',
-              },
+                label: 'Target'
+              }
             ]}
             onSelect={(value) => setWordSource(value as AlignmentSide)}
           />
@@ -172,12 +157,12 @@ export const ConcordanceView = () => {
             items={[
               {
                 value: 'aligned',
-                label: 'Aligned',
+                label: 'Aligned'
               },
               {
                 value: 'all',
-                label: 'All',
-              },
+                label: 'All'
+              }
             ]}
             onSelect={(value) => setWordFilter(value as PivotWordFilter)}
           />
@@ -187,8 +172,8 @@ export const ConcordanceView = () => {
               width: '100%',
               height: 'calc(100vh - 64px - 10.5em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
-                width: 0,
-              },
+                width: 0
+              }
             }}
           >
             <PivotWordTable
@@ -215,7 +200,7 @@ export const ConcordanceView = () => {
             width: '100%',
             gap: '1em',
             marginLeft: '2em',
-            marginTop: '1em',
+            marginTop: '1em'
           }}
         >
           <Paper
@@ -224,8 +209,8 @@ export const ConcordanceView = () => {
               width: '100%',
               height: 'calc(100vh - 64px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
-                width: 0,
-              },
+                width: 0
+              }
             }}
           >
             <AlignedWordTable
@@ -251,7 +236,7 @@ export const ConcordanceView = () => {
             width: '100%',
             gap: '1em',
             margin: '2em',
-            marginTop: '1em',
+            marginTop: '1em'
           }}
         >
           <Paper
@@ -260,8 +245,8 @@ export const ConcordanceView = () => {
               width: '100%',
               height: 'calc(100vh - 64px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
-                width: 0,
-              },
+                width: 0
+              }
             }}
           >
             <AlignmentTable

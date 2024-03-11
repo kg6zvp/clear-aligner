@@ -14,11 +14,7 @@ const DatabaseCacheMaxSize = 1_000;
 const DatabaseStatusRefreshTimeInMs = 500;
 export const EmptyWordId = '00000000000';
 export const DefaultProjectName = 'default';
-const LinkTableName = 'links';
-const EmptyWordId = '00000000000';
-export const DefaultProjectName = 'default';
 export const LinkTableName = 'links';
-const ProjectTableName = 'project';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
 
@@ -58,12 +54,14 @@ export class LinksTable extends VirtualTable<Link> {
   private databaseBusyCtr = 0;
   private linksByWordIdCache: MemoryCache;
   private linksByBCVCache: MemoryCache;
+  private linksByLinkIdCache: MemoryCache;
 
   constructor() {
     super();
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
     this.linksByWordIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
     this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
+    this.linksByLinkIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
   }
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
@@ -245,8 +243,11 @@ export class LinksTable extends VirtualTable<Link> {
 
   get = async (id?: string): Promise<Link | undefined> => {
     if (!id) return undefined;
-    // @ts-ignore
-    return await window.databaseApi.findOneById(DefaultProjectName, LinkTableName, id) as Link | undefined;
+    return this.linksByLinkIdCache.wrap(id, async () => {
+      // @ts-ignore
+      return window.databaseApi
+        .findOneById(DefaultProjectName, LinkTableName, id);
+    });
   };
 
   remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
@@ -275,7 +276,7 @@ export class LinksTable extends VirtualTable<Link> {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
     await this.linksByWordIdCache.reset();
     await this.linksByBCVCache.reset();
-    // await this.wordsByBCVCache.reset(); - no need
+    await this.linksByLinkIdCache.reset();
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {

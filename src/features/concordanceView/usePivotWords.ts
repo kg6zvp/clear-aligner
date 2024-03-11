@@ -1,5 +1,5 @@
 import { PivotWord } from './structs';
-import { AlignmentSide, LanguageInfo } from '../../structs';
+import { AlignmentSide } from '../../structs';
 import { useEffect, useState } from 'react';
 import { DefaultProjectName } from '../../state/links/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -7,10 +7,10 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { PivotWordFilter } from './concordanceView';
 import { useLanguages } from '../../hooks/useLanguages';
 
-export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem|null): PivotWord[] | undefined => {
+export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null): PivotWord[] | undefined => {
   const databaseApi = useDatabase();
   const languages = useLanguages();
-  const [ pivotWords, setPivotWords ] = useState<PivotWord[]|undefined>(undefined);
+  const [pivotWords, setPivotWords] = useState<PivotWord[] | undefined>(undefined);
 
   useEffect(() => {
     if (!languages) return;
@@ -26,7 +26,7 @@ export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort
           frequency: c,
           languageInfo: languages.get(l)!
         })));
-    }
+    };
 
     void load();
   }, [side, filter, sort, setPivotWords, databaseApi, languages]);

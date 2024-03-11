@@ -147,11 +147,10 @@ const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   chapterRef[verse.bcvId.verse] = verse;
 };
 
-const putVersesInCorpus = (corpus: Corpus) => {
+const putVersesInCorpus = (corpus: Corpus) =>
   Object.values(corpus.wordsByVerse).forEach((verse) =>
     putVerseInCorpus(corpus, verse)
   );
-};
 
 const waitForInitialization = async () => {
   while (initializationState !== InitializationStates.INITIALIZED) {
@@ -208,20 +207,21 @@ export const getAvailableCorporaContainers = async (): Promise<
     initializationState = InitializationStates.INITIALIZING;
 
     // @ts-ignore
-    const inputCorpora = (((await window.databaseApi.getAllCorpora(DefaultProjectName)) as Corpus[]) ?? []);
-    const outputCorpora: Corpus[] = [];
-    for (const inputCorpus of inputCorpora) {
-      const outputCorpus = (await getCorpusFromDatabase({
-        ...inputCorpus,
-        words: [],
-        wordsByVerse: {},
-        wordLocation: new Map<string, Set<BCVWP>>(),
-        books: {},
-        hasGloss: true
-      } as Corpus));
-      putVersesInCorpus(outputCorpus);
-      outputCorpora.push(outputCorpus);
-    }
+    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(DefaultProjectName)) as Corpus[]) ?? []);
+    const corpusPromises: Promise<Corpus>[] = inputCorpora
+      .map(inputCorpus =>
+        getCorpusFromDatabase({
+          ...inputCorpus,
+          words: [],
+          wordsByVerse: {},
+          wordLocation: new Map<string, Set<BCVWP>>(),
+          books: {},
+          hasGloss: true
+        }));
+    const outputCorpora: Corpus[] =
+      (await Promise.all(corpusPromises));
+    outputCorpora.forEach(
+      outputCorpus => putVersesInCorpus(outputCorpus));
 
     const sourceContainer = CorpusContainer.fromIdAndCorpora('source',
       outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
@@ -238,10 +238,7 @@ export const getAvailableCorporaContainers = async (): Promise<
   return availableCorpora;
 };
 
-export const getAvailableCorporaIds = async (): Promise<string[]> => {
-  return (
+export const getAvailableCorporaIds = async (): Promise<string[]> =>
+  (
     initializationState ? availableCorpora : await getAvailableCorporaContainers()
-  ).map((corpus) => {
-    return corpus.id;
-  });
-};
+  ).map((corpus) => corpus.id);
