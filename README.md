@@ -63,7 +63,7 @@ sql/create-template-db.sh
 ```
 
 This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
-The SQL commands used by this script to create this database may be found in:
+The SQL commands used by this script to create the database may be found in:
 
 ```
 sql/create-template-db.sql
