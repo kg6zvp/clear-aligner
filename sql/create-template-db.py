@@ -8,12 +8,12 @@ prefixed_bcvwp = re.compile('^[onON]\d')
 gloss_needing_cleanup = re.compile('^(.+\..+)+$')
 
 # read schema script
-schemaFd = open('create-project-db.sql', 'r')
+schemaFd = open('create-template-db.sql', 'r')
 sqlScript = schemaFd.read()
 schemaFd.close()
 
 # create db connection
-conn = sqlite3.connect('project.db')
+conn = sqlite3.connect('clear-aligner-template.sqlite')
 cur = conn.cursor()
 
 # execute schema script
@@ -22,14 +22,10 @@ for command in sqlScript.split(';'):
 
 
 def sanitizeBCVWP(bcv_id):
-    trimmed = bcv_id.strip()
-    if prefixed_bcvwp.match(trimmed):
-        trimmed = trimmed[1:]
-    if len(trimmed) < 11:
-        raise RuntimeError('invalid bcv_id: ' + bcv_id)
-    elif len(trimmed) == 11:
-        trimmed += '1'
-    return trimmed
+    result = bcv_id.strip()
+    if prefixed_bcvwp.match(result):
+        result = result[1:]
+    return result
 
 
 def parseBCVWP(bcv_id):

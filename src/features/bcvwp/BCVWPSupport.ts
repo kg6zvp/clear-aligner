@@ -120,9 +120,8 @@ export default class BCVWP {
 
   static sanitize(wordId: string): string {
     const wordId1 = wordId.trim();
-    const wordId2 = !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
-    const wordId3 = wordId2.length < 11 ? `${wordId2}00000000000`.slice(0, 11) : wordId2;
-    return wordId3.length === 11 ? wordId3 + '1' : wordId3;
+    return !!wordId1.match(/^[onON]\d/)
+      ? wordId1.substring(1) : wordId1;
   }
 
   static truncateTo(reference: string, field: BCVWPField): string {

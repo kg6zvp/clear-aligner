@@ -178,7 +178,7 @@ class DatabaseAccessMain {
       sourceStatus.isLoading = true;
       this.dataSources.set(sourceName, sourceStatus);
 
-      const fileName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sql`;
+      const fileName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sqlite`;
       let databaseFile;
       if (isDev) {
         databaseFile = fileName;
@@ -188,7 +188,7 @@ class DatabaseAccessMain {
         databaseFile = path.join(databasePath, fileName);
       }
       if (!fs.existsSync(databaseFile)) {
-        fs.copyFileSync('sql/clear-aligner-template.sql', databaseFile);
+        fs.copyFileSync('sql/clear-aligner-template.sqlite', databaseFile);
       }
       this.logDatabaseTimeLog('getDataSource()', sourceName, databaseFile);
       const newDataSource = new DataSource({
@@ -234,9 +234,8 @@ class DatabaseAccessMain {
 
   sanitizeWordId(wordId) {
     const wordId1 = wordId.trim();
-    const wordId2 = !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
-    const wordId3 = wordId2.length < 11 ? `${wordId2}00000000000`.slice(0, 11) : wordId2;
-    return wordId3.length === 11 ? wordId3 + '1' : wordId3;
+    return !!wordId1.match(/^[onON]\d/)
+      ? wordId1.substring(1) : wordId1;
   }
 
 
