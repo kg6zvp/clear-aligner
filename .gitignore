@@ -31,7 +31,7 @@ yarn-error.log*
 .idea
 
 /storybook-static
-./*.sqlite
-**/*.sqlite-shm
-**/*.sqlite-wam
-**/*.sqlite-journal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wam
+*.sqlite-journal
