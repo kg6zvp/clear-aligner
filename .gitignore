@@ -11,7 +11,8 @@
 # production
 /build
 
-# We use yarn, prevent the npm package lock file
+# Prevent the npm package lock files
+yarn.lock
 package-lock.json
 
 # misc
