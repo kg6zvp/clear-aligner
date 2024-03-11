@@ -53,6 +53,8 @@ This database may be manually recreated at any time by executing the following s
 sql/create-template-db.sh
 ```
 
+This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
+
 ### install electron build dependencies on Ubuntu 22.04
 
 ```bash
