@@ -83,7 +83,6 @@ export const TextSegment = ({
                               readonly,
                               word,
                               languageInfo,
-                              onlyLinkIds,
                               alignment,
                               links,
                               showAfter = false
@@ -106,9 +105,8 @@ export const TextSegment = ({
       return [];
     }
     const result = links.get(BCVWP.sanitize(word.id));
-    return (result ? [result] : [])
-      .filter((link) => onlyLinkIds ? onlyLinkIds.includes(link.id!) : true);
-  }, [links, word?.id, onlyLinkIds]);
+    return (result ? [result] : []);
+  }, [links, word?.id]);
   const hoveredLinks = useMemo<Link[]>(() => {
     if (!links
       || !currentlyHovered?.id) {

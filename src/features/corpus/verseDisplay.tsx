@@ -47,7 +47,7 @@ export const VerseDisplay = ({
     verse.bcvId.book,
     verse.bcvId.chapter,
     verse.bcvId.verse,
-    false,
+    !!onlyLinkIds || readonly,
     String(databaseStatus.lastUpdateTime ?? 0)
   );
   const linkMap = useMemo(() => {
@@ -57,6 +57,7 @@ export const VerseDisplay = ({
     }
     const result = new Map<string, Link>();
     (links ?? [])
+      .filter(link => onlyLinkIds?.includes(link.id!) ?? true)
       .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
         ? link.sources
         : link.targets) ?? [])
