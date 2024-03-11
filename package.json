@@ -127,7 +127,7 @@
         "from": "sql",
         "to": "sql",
         "filter": [
-          "!projects/**"
+          "!sql/projects/**"
         ]
       }
     ]
