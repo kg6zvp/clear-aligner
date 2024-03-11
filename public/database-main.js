@@ -696,7 +696,7 @@ class DatabaseAccessMain {
     switch (side) {
       case 'sources':
         const sourceQueryTextWLang = `
-            SELECT sw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(1) c
+            SELECT sw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(DISTINCT l.id) c
             FROM words_or_parts sw
                      INNER JOIN links__source_words lsw
                                 ON sw.id = lsw.word_id
@@ -714,7 +714,7 @@ class DatabaseAccessMain {
         return await em.query(sourceQueryTextWLang);
       case 'targets':
         const targetQueryText = `
-            SELECT tw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(1) c
+            SELECT tw.normalized_text t, sw.language_id sl, l.sources_text st, tw.language_id tl, l.targets_text tt, count(DISTINCT l.id) c
             FROM words_or_parts tw
                      INNER JOIN links__target_words ltw
                                 ON tw.id = ltw.word_id
