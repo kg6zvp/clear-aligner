@@ -28,8 +28,8 @@ The component currently supports react v18.x.
     - build for Windows: `yarn build:win`
     - build for Mac: `yarn build:mac`
 - Run electron in dev mode: `yarn dev-electron`
-    - Note: `yarn start` _will not work_, due to the presence of platform-specific libraries and the use of
-      main/renderer process IPC.
+    - Note: `yarn start` _will not work_, due to the presence of platform-specific
+      libraries and the use of main/renderer process IPC.
 
 ## Rebuilding the template database
 
@@ -40,15 +40,15 @@ installation.
 
 The template database file is created automatically when executing `yarn dev-electron`
 or any of the `yarn build*` commands, including the platform builds. These build steps
-will _only_ create the template database file when it's missing. This database may be manually recreated at any time by
-executing the following shell script:
+will _only_ create the template database file when it's missing. This database may be
+manually recreated at any time by executing the following shell script:
 
 ```
 sql/create-template-db.sh
 ```
 
-This script requires Python3 installed and the corpora TSV files to be in `src/tsv`. The SQL commands used by this
-script to create this database may be found in:
+This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
+The SQL commands used by this script to create this database may be found in:
 
 ```
 sql/create-template-db.sql
