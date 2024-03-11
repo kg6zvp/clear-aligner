@@ -33,8 +33,8 @@ The component currently supports react v18.x.
 
 The template database file is the basis of all project databases and included
 with the platform builds. The file is stored in `sql/clear-aligner-template.sqlite`
-in the project directory during development and the application user data directory
-after installation.
+in the project directory during development and the application footprint after
+installation.
 
 The template database file is created automatically when executing `yarn dev-electron`
 or any of the `yarn build*` commands, including the platform builds. These build steps
