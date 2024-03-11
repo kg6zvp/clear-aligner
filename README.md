@@ -31,6 +31,21 @@ The component currently supports react v18.x.
     - Note: `yarn start` _will not work_, due to the use of platform-specific
       libraries (sqlite3) and main/renderer process IPC.
 
+### Install electron build dependencies on Ubuntu 22.04
+
+```bash
+sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
+                       libnotify-dev libasound2-dev libcap-dev \
+                       libcups2-dev libxtst-dev \
+                       libxss1 libnss3-dev gcc-multilib g++-multilib curl \
+                       gperf bison python3-dbusmock openjdk-8-jre \
+		               libfuse2 sqlite3 python3
+```
+
+### Run Electron AppImage on Ubuntu 20.04+ - requires fuse
+
+- requires `libfuse2` package
+
 ## Rebuilding the template database
 
 The template database file is the basis of all project databases and included
@@ -53,21 +68,6 @@ The SQL commands used by this script to create this database may be found in:
 ```
 sql/create-template-db.sql
 ```
-
-### install electron build dependencies on Ubuntu 22.04
-
-```bash
-sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
-                       libnotify-dev libasound2-dev libcap-dev \
-                       libcups2-dev libxtst-dev \
-                       libxss1 libnss3-dev gcc-multilib g++-multilib curl \
-                       gperf bison python3-dbusmock openjdk-8-jre \
-		               libfuse2 sqlite3 python3
-```
-
-### Run Electron AppImage on Ubuntu 20.04+ - requires fuse
-
-- requires `libfuse2` package
 
 ## Basic Usage
 
