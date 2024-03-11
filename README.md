@@ -28,6 +28,8 @@ The component currently supports react v18.x.
     - build for Windows: `yarn build:win`
     - build for Mac: `yarn build:mac`
 - Run electron in dev mode: `yarn dev-electron`
+    - Note: `yarn start` _will not work_, due to the presence of platform-specific libraries and the use of
+      main/renderer process IPC.
 
 ## Rebuilding the template database
 
