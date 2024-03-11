@@ -12,8 +12,13 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
   useEffect(() => {
     if (!alignedWord) return;
     const load = async () => {
-      const links = await db.corporaGetLinksByAlignedWord(DefaultProjectName, alignedWord.sourceWordTexts.text, alignedWord.targetWordTexts.text, sort);
-      setLinks(links);
+      console.time(`useLinksFromAlignedWord(alignedWord: '${alignedWord.id}')`);
+      try {
+        const links = await db.corporaGetLinksByAlignedWord(DefaultProjectName, alignedWord.sourceWordTexts.text, alignedWord.targetWordTexts.text, sort);
+        setLinks(links);
+      } finally {
+        console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${alignedWord.id}')`);
+      }
     }
 
     void load();

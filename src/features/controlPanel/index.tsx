@@ -16,7 +16,7 @@ import { resetTextSegments } from 'state/alignment.slice';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { useRemoveLink, useSaveAlignmentFile, useSaveLink } from '../../state/links/tableManager';
+import { useGetAllLinks, useRemoveLink, useSaveAlignmentFile, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
 
@@ -43,12 +43,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     linkId?: string,
     removeKey?: string,
   }>();
+  const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
 
   const { projectState, setProjectState, preferences, setPreferences } = useContext(AppContext);
 
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [formats, setFormats] = useState([] as string[]);
 
   const inProgressLink = useAppSelector(
@@ -56,12 +56,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isSaveAlignmentFilePending } = useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isSaveLinkPending } = useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isPending: isRemoveLinkPending } = useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
+  useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
+  const { result: allLinks } = useGetAllLinks(getAllLinksKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
   const linkHasBothSides = useMemo(
@@ -111,6 +109,73 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectState?.linksTable, projectState?.linksIndexes]);
+  useEffect(() => {
+    if (!allLinks || allLinks.length < 1) {
+      return;
+    }
+    // create starting instance
+    const alignmentExport: AlignmentFile = {
+      type: 'translation',
+      meta: {
+        creator: 'ClearAligner'
+      },
+      records: []
+    };
+
+    allLinks.map(
+      (link) =>
+        ({
+          id: link.id,
+          source: link.sources,
+          target: link.targets
+        } as AlignmentRecord)
+    )
+      .forEach((record) => alignmentExport.records.push(record));
+
+    // Create alignment file content
+    const fileContent = JSON.stringify(
+      alignmentExport,
+      undefined,
+      2
+    );
+
+    // Create a Blob from the data
+    const blob = new Blob([fileContent], {
+      type: 'application/json'
+    });
+
+    // Create a URL for the Blob
+    const url = URL.createObjectURL(blob);
+
+    // Create a link element
+    const link = document.createElement('a');
+    const currentDate = new Date();
+
+    // Set the download attribute and file name
+    link.download = `alignment_data_${currentDate.getFullYear()}-${String(
+      currentDate.getMonth() + 1
+    ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
+      2,
+      '0'
+    )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
+      currentDate.getMinutes()
+    ).padStart(2, '0')}.json`;
+
+    // Set the href attribute to the generated URL
+    link.href = url;
+
+    // Append the link to the document
+    document.body.appendChild(link);
+
+    // Trigger a click event on the link
+    link.click();
+
+    // Remove the link from the document
+    document.body.removeChild(link);
+
+    // Revoke the URL to free up resources
+    URL.revokeObjectURL(url);
+  }, [allLinks]);
 
   const saveControlPanelFormat = useCallback(() => {
     const updatedUserPreference = projectState.userPreferences?.save({
@@ -273,74 +338,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               disabled={props.containers.length === 0}
               variant="contained"
               onClick={() => {
-                // create starting instance
-                const alignmentExport: AlignmentFile = {
-                  type: 'translation',
-                  meta: {
-                    creator: 'ClearAligner'
-                  },
-                  records: []
-                };
-
-                if (!projectState.linksTable) {
-                  return;
-                }
-
-                projectState.linksTable
-                  .getAll()
-                  .map(
-                    (link) =>
-                      ({
-                        id: link.id,
-                        source: link.sources,
-                        target: link.targets
-                      } as AlignmentRecord)
-                  )
-                  .forEach((record) => alignmentExport.records.push(record));
-
-                // Create alignment file content
-                const fileContent = JSON.stringify(
-                  alignmentExport,
-                  undefined,
-                  2
-                );
-
-                // Create a Blob from the data
-                const blob = new Blob([fileContent], {
-                  type: 'application/json'
-                });
-
-                // Create a URL for the Blob
-                const url = URL.createObjectURL(blob);
-
-                // Create a link element
-                const link = document.createElement('a');
-                const currentDate = new Date();
-
-                // Set the download attribute and file name
-                link.download = `alignment_data_${currentDate.getFullYear()}-${String(
-                  currentDate.getMonth() + 1
-                ).padStart(2, '0')}-${String(currentDate.getDate()).padStart(
-                  2,
-                  '0'
-                )}T${String(currentDate.getHours()).padStart(2, '0')}_${String(
-                  currentDate.getMinutes()
-                ).padStart(2, '0')}.json`;
-
-                // Set the href attribute to the generated URL
-                link.href = url;
-
-                // Append the link to the document
-                document.body.appendChild(link);
-
-                // Trigger a click event on the link
-                link.click();
-
-                // Remove the link from the document
-                document.body.removeChild(link);
-
-                // Revoke the URL to free up resources
-                URL.revokeObjectURL(url);
+                setGetAllLinksKey(uuid());
               }}
             >
               <FileDownload />

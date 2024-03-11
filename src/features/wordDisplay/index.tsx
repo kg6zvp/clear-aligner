@@ -1,4 +1,4 @@
-import { Corpus, Word } from '../../structs';
+import { Corpus, Link, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -14,6 +14,7 @@ export interface WordDisplayProps extends LimitedToLinks {
   parts?: Word[];
   corpus?: Corpus;
   allowGloss?: boolean;
+  links?: Map<string, Link>;
 }
 
 /**
@@ -30,6 +31,7 @@ export const WordDisplay = ({
                               onlyLinkIds,
                               parts,
                               corpus,
+                              links,
                               allowGloss = false
                             }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = corpus ?? { languageInfo: null, hasGloss: false };
@@ -70,6 +72,7 @@ export const WordDisplay = ({
                     readonly={readonly}
                     onlyLinkIds={onlyLinkIds}
                     word={part}
+                    links={links}
                     languageInfo={languageInfo}
                   />
                   {!suppressAfter && (

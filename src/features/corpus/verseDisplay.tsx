@@ -1,7 +1,8 @@
-import { Corpus, Verse, Word } from '../../structs';
+import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
+import { useDatabaseStatus, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -26,16 +27,47 @@ export interface VerseDisplayProps extends LimitedToLinks {
  * @constructor
  */
 export const VerseDisplay = ({
-  readonly,
-  corpus,
-  verse,
-  onlyLinkIds,
-  allowGloss = false
-}: VerseDisplayProps) => {
+                               readonly,
+                               corpus,
+                               verse,
+                               onlyLinkIds,
+                               allowGloss = false
+                             }: VerseDisplayProps) => {
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
+  const alignmentSide = useMemo(() =>
+    corpus?.id === 'source'
+      ? AlignmentSide.SOURCE
+      : AlignmentSide.TARGET, [corpus?.id]);
+  const { result: databaseStatus } = useDatabaseStatus();
+  const { result: onlyLink } = useGetLink(
+    (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
+    String(databaseStatus.lastUpdateTime ?? 0)
+  );
+  const { result: allLinks } = useFindLinksByBCV(
+    (onlyLinkIds?.length ?? 0) < 1 ? alignmentSide : undefined,
+    verse.bcvId.book,
+    verse.bcvId.chapter,
+    verse.bcvId.verse,
+    readonly,
+    String(databaseStatus.lastUpdateTime ?? 0)
+  );
+  const linkMap = useMemo(() => {
+    if ((!allLinks || allLinks.length < 1)
+      && !onlyLink) {
+      return;
+    }
+    const result = new Map<string, Link>();
+    (allLinks ?? [onlyLink])
+      .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
+      .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
+        ? link!.sources
+        : link!.targets) ?? [])
+        .forEach(wordId => result.set(wordId, link!)));
+    return result;
+  }, [allLinks, onlyLink, onlyLinkIds, alignmentSide]);
 
   return (
     <>
@@ -43,6 +75,7 @@ export const VerseDisplay = ({
         (token: Word[], index): ReactElement => (
           <WordDisplay
             key={`${index}/${token.at(0)?.id}`}
+            links={linkMap}
             readonly={readonly}
             onlyLinkIds={onlyLinkIds}
             corpus={corpus}

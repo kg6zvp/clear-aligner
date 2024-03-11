@@ -1,8 +1,7 @@
 import { AlignmentSide, LanguageInfo, Link } from '../structs';
 import { PivotWordFilter } from '../features/concordanceView/concordanceView';
 import { GridSortItem } from '@mui/x-data-grid';
-import { useContext, useMemo } from 'react';
-import { AppContext } from '../App';
+import { useMemo } from 'react';
 
 export interface DatabaseApi {
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
@@ -20,24 +19,13 @@ export interface DatabaseApi {
   }[]>;
   corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
+  findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (sourceName: string, languageIds: string[]) => Promise<LanguageInfo[]>;
 }
 
 export const useDatabase = (): DatabaseApi => {
-  const { projectState: { linksTable } } = useContext(AppContext);
   // @ts-ignore
   const dbDelegate = useMemo(() => window.databaseApi, []);
-  const db: DatabaseApi = useMemo(() => ({
-      corporaGetPivotWords: dbDelegate.corporaGetPivotWords,
-      corporaGetAlignedWordsByPivotWord: dbDelegate.corporaGetAlignedWordsByPivotWord,
-      corporaGetLinksByAlignedWord: async (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null): Promise<Link[]> => {
-        const linkIds = await dbDelegate.corporaGetLinkIdsByAlignedWord(sourceName, sourcesText, targetsText, sort);
-        return await dbDelegate.findByIds(sourceName, 'links', linkIds);
-      },
-      findByIds: dbDelegate.findByIds,
-      languageGetAll: dbDelegate.languageGetAll,
-      languageFindByIds: dbDelegate.languageFindByIds
-    }), [linksTable]);
-  return db;
+  return dbDelegate as DatabaseApi;
 }

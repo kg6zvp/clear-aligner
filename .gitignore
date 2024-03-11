@@ -31,4 +31,6 @@ yarn-error.log*
 .idea
 
 /storybook-static
-/*.sql
+*.sql
+*.sql-shm
+*.sql-wam

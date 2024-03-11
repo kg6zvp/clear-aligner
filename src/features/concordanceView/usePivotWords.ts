@@ -31,6 +31,5 @@ export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort
     void load();
   }, [side, filter, sort, setPivotWords, databaseApi, languages]);
 
-
   return pivotWords;
 };

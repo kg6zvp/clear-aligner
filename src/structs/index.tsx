@@ -103,7 +103,7 @@ export class CorpusContainer {
   }
 
   corpusAtReferenceString(refString: string): Corpus | undefined {
-    const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse)
+    const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse);
     return this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
   }
 
@@ -124,7 +124,7 @@ export class CorpusContainer {
     const corpus = this.corpusAtReferenceString(reference.toReferenceString());
     return corpus?.books[reference.book!]?.[reference.chapter!]?.[
       reference.verse!
-    ];
+      ];
   }
 
   verseByReferenceString(refString: string): Verse | undefined {
@@ -178,6 +178,7 @@ export class Link extends DatabaseRecord {
     this.sources = [];
     this.targets = [];
   }
+
   sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
