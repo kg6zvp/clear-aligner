@@ -216,7 +216,7 @@ export const getAvailableCorporaContainers = async (): Promise<
           wordsByVerse: {},
           wordLocation: new Map<string, Set<BCVWP>>(),
           books: {},
-          hasGloss: true
+          hasGloss: inputCorpus.side === AlignmentSide.SOURCE
         }));
     const outputCorpora: Corpus[] =
       (await Promise.all(corpusPromises));

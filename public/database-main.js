@@ -118,6 +118,8 @@ const wordsOrPartsSchema = new EntitySchema({
       type: 'text'
     }, text: {
       type: 'text'
+    }, gloss: {
+      type: 'text'
     }, after: {
       type: 'text'
     }, position: {
@@ -597,6 +599,7 @@ class DatabaseAccessMain {
                                                          w.corpus_id                       as corpusId,
                                                          w.side                            as side,
                                                          w.text                            as text,
+                                                         w.gloss                           as gloss,
                                                          w.after                           as after,
                                                          w.position_part                   as position
                                                   from words_or_parts w
