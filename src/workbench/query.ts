@@ -190,7 +190,7 @@ export const getCorpusFromDatabase = async (
         ...verse,
         sourceVerse: verseId,
         bcvId: verseBCV,
-        citation: verse.citation ?? `${verseBCV.book}:${verseBCV.verse}`,
+        citation: verse.citation ?? `${verseBCV.chapter}:${verseBCV.verse}`,
         words: (verse.words || []).concat([word])
       };
       inputCorpus.words.push(word);
