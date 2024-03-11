@@ -500,14 +500,14 @@ class DatabaseAccessMain {
       }
       const queryWordId = `${linkSide}:${wordId}`;
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const result = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
-                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
-                                                                                 json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
-                                                                          from 'links__${firstTableName}_words' t1
-                                                                                   left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
-                                                                          where t1.word_id = ?;`, [queryWordId])));
-      this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, result?.length ?? 0);
-      return result;
+      const results = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
+                                                                                  json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
+                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                           from 'links__${firstTableName}_words' t1
+                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
+                                                                           where t1.word_id = ?;`, [queryWordId])));
+      this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, results?.length ?? 0);
+      return results;
     } catch (ex) {
       console.error('findLinksByWordId()', ex);
     } finally {
@@ -536,20 +536,20 @@ class DatabaseAccessMain {
           return [];
       }
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const result = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
-                                                                                 json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
-                                                                                 json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
-                                                                          from words_or_parts w
-                                                                                   inner join 'links__${firstTableName}_words' t1 on w.id = t1.word_id
-                                                                                   left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
-                                                                          where w.side = ?
-                                                                            and w.position_book = ?
-                                                                            and w.position_chapter = ?
-                                                                            and w.position_verse = ?
-                                                                          group by t1.link_id
-                                                                          order by t1.link_id;`, [linkSide, bookNum, chapterNum, verseNum])));
-      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result?.length ?? result);
-      return result;
+      const results = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
+                                                                                  json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
+                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                           from words_or_parts w
+                                                                                    inner join 'links__${firstTableName}_words' t1 on w.id = t1.word_id
+                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
+                                                                           where w.side = ?
+                                                                             and w.position_book = ?
+                                                                             and w.position_chapter = ?
+                                                                             and w.position_verse = ?
+                                                                           group by t1.link_id
+                                                                           order by t1.link_id;`, [linkSide, bookNum, chapterNum, verseNum])));
+      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, results?.length ?? results);
+      return results;
     } catch (ex) {
       console.error('findLinksByBCV()', ex);
       return [];
@@ -565,19 +565,19 @@ class DatabaseAccessMain {
     this.logDatabaseTime('findWordsByBCV()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const result = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
-                                                        w.corpus_id                       as corpusId,
-                                                        w.side                            as side,
-                                                        w.text                            as text,
-                                                        w.after                           as after,
-                                                        w.position_part                   as position
-                                                 from words_or_parts w
-                                                 where w.side = ?
-                                                   and w.position_book = ?
-                                                   and w.position_chapter = ?
-                                                   and w.position_verse = ?;`, [linkSide, bookNum, chapterNum, verseNum]));
-      this.logDatabaseTimeLog('findWordsByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, result?.length ?? result);
-      return result;
+      const results = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
+                                                         w.corpus_id                       as corpusId,
+                                                         w.side                            as side,
+                                                         w.text                            as text,
+                                                         w.after                           as after,
+                                                         w.position_part                   as position
+                                                  from words_or_parts w
+                                                  where w.side = ?
+                                                    and w.position_book = ?
+                                                    and w.position_chapter = ?
+                                                    and w.position_verse = ?;`, [linkSide, bookNum, chapterNum, verseNum]));
+      this.logDatabaseTimeLog('findWordsByBCV()', sourceName, linkSide, bookNum, chapterNum, verseNum, results?.length ?? results);
+      return results;
     } catch (ex) {
       console.error('findWordsByBCV()', ex);
       return [];
@@ -586,36 +586,69 @@ class DatabaseAccessMain {
     }
   };
 
-  findWordsByRange = async (sourceName, linkSide, corpusId, wordLimit, wordSkip) => {
+  getAllWordsByCorpus = async (sourceName, linkSide, corpusId, wordLimit, wordSkip) => {
     if (!linkSide || !wordLimit) {
       return [];
     }
-    this.logDatabaseTime('findWordsByRange()');
+    this.logDatabaseTime('getAllWordsByCorpus()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const result = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
-                                                        w.corpus_id                       as corpusId,
-                                                        w.side                            as side,
-                                                        w.text                            as text,
-                                                        w.after                           as after,
-                                                        w.position_part                   as position
-                                                 from words_or_parts w
-                                                 where w.side = ?
-                                                   and w.corpus_id = ?
-                                                 order by w.id
-                                                 limit ? offset ?;`, [linkSide, corpusId, wordLimit, wordSkip]));
-      this.logDatabaseTimeLog('findWordsByRange()', sourceName, linkSide, corpusId, wordLimit, wordSkip, result?.length ?? result);
-      return result;
+      const results = (await entityManager.query(`select replace(w.id, '${linkSide}:', '') as id,
+                                                         w.corpus_id                       as corpusId,
+                                                         w.side                            as side,
+                                                         w.text                            as text,
+                                                         w.after                           as after,
+                                                         w.position_part                   as position
+                                                  from words_or_parts w
+                                                  where w.side = ?
+                                                    and w.corpus_id = ?
+                                                  order by w.id
+                                                  limit ? offset ?;`, [linkSide, corpusId, wordLimit, wordSkip]));
+      this.logDatabaseTimeLog('getAllWordsByCorpus()', sourceName, linkSide, corpusId, wordLimit, wordSkip, results?.length ?? results);
+      return results;
     } catch (ex) {
-      console.error('findWordsByRange()', ex);
+      console.error('getAllWordsByCorpus()', ex);
       return [];
     } finally {
-      this.logDatabaseTimeEnd('findWordsByRange()');
+      this.logDatabaseTimeEnd('getAllWordsByCorpus()');
     }
   };
 
-  getAllLinks = async (dataSource) => {
-    return this.createLinksFromRows((await dataSource.manager.query(`
+  getAllCorpora = async (sourceName) => {
+    this.logDatabaseTime('getAllCorpora()');
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const results = (await entityManager.query(`select c.id             as id,
+                                                         c.name           as name,
+                                                         c.full_name      as fullName,
+                                                         c.side           as side,
+                                                         l.code           as code,
+                                                         l.text_direction as textDirection
+                                                  from corpora c
+                                                           inner join language l on c.language_id = l.code;`));
+      this.logDatabaseTimeLog('getAllCorpora()', results?.length ?? results);
+      return (results ?? [])
+        .filter(Boolean)
+        .map(result => ({
+          id: result.id,
+          name: result.name,
+          fullName: result.fullName,
+          side: result.side,
+          langauge: {
+            code: result.code,
+            textDirection: result.textDirection
+          }
+        }));
+    } catch (ex) {
+      console.error('getAllCorpora()', ex);
+      return [];
+    } finally {
+      this.logDatabaseTimeEnd('getAllCorpora()');
+    }
+  };
+
+  getAllLinks = async (dataSource) =>
+    this.createLinksFromRows((await dataSource.manager.query(`
         select s.link_id,
                'sources' as                                         type,
                json_group_array(replace(s.word_id, 'sources:', '')) words
@@ -627,7 +660,6 @@ class DatabaseAccessMain {
                json_group_array(replace(t.word_id, 'targets:', '')) words
         from links__target_words t
         group by t.link_id;`)));
-  };
 
   updateLinkText = async (sourceName, linkIdOrIds) => {
     if (!linkIdOrIds) {
@@ -845,54 +877,23 @@ const DatabaseAccessMainInstance = new DatabaseAccessMain();
 module.exports = {
   setUpIpcMain() {
     try {
-      ipcMain.handle(`${ChannelPrefix}:createDataSource`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.createDataSource(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:insert`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.insert(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:deleteAll`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.deleteAll(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:save`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.save(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:existsById`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.existsById(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findByIds`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findByIds(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:getAll`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.getAll(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findOneById`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findOneById(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:deleteByIds`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.deleteByIds(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findBetweenIds(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:updateLinkText`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.updateLinkText(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:updateAllLinkText`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.updateAllLinkText(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findLinksByWordId`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findLinksByWordId(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findLinksByBCV`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findLinksByBCV(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findWordsByBCV`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findWordsByBCV(...args);
-      });
-      ipcMain.handle(`${ChannelPrefix}:findWordsByRange`, async (event, ...args) => {
-        return await DatabaseAccessMainInstance.findWordsByRange(...args);
-      });
+      ipcMain.handle(`${ChannelPrefix}:createDataSource`, async (event, ...args) => await DatabaseAccessMainInstance.createDataSource(...args));
+      ipcMain.handle(`${ChannelPrefix}:insert`, async (event, ...args) => await DatabaseAccessMainInstance.insert(...args));
+      ipcMain.handle(`${ChannelPrefix}:deleteAll`, async (event, ...args) => await DatabaseAccessMainInstance.deleteAll(...args));
+      ipcMain.handle(`${ChannelPrefix}:save`, async (event, ...args) => await DatabaseAccessMainInstance.save(...args));
+      ipcMain.handle(`${ChannelPrefix}:existsById`, async (event, ...args) => await DatabaseAccessMainInstance.existsById(...args));
+      ipcMain.handle(`${ChannelPrefix}:findByIds`, async (event, ...args) => await DatabaseAccessMainInstance.findByIds(...args));
+      ipcMain.handle(`${ChannelPrefix}:getAll`, async (event, ...args) => await DatabaseAccessMainInstance.getAll(...args));
+      ipcMain.handle(`${ChannelPrefix}:findOneById`, async (event, ...args) => await DatabaseAccessMainInstance.findOneById(...args));
+      ipcMain.handle(`${ChannelPrefix}:deleteByIds`, async (event, ...args) => await DatabaseAccessMainInstance.deleteByIds(...args));
+      ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => await DatabaseAccessMainInstance.findBetweenIds(...args));
+      ipcMain.handle(`${ChannelPrefix}:updateLinkText`, async (event, ...args) => await DatabaseAccessMainInstance.updateLinkText(...args));
+      ipcMain.handle(`${ChannelPrefix}:updateAllLinkText`, async (event, ...args) => await DatabaseAccessMainInstance.updateAllLinkText(...args));
+      ipcMain.handle(`${ChannelPrefix}:findLinksByWordId`, async (event, ...args) => await DatabaseAccessMainInstance.findLinksByWordId(...args));
+      ipcMain.handle(`${ChannelPrefix}:findLinksByBCV`, async (event, ...args) => await DatabaseAccessMainInstance.findLinksByBCV(...args));
+      ipcMain.handle(`${ChannelPrefix}:findWordsByBCV`, async (event, ...args) => await DatabaseAccessMainInstance.findWordsByBCV(...args));
+      ipcMain.handle(`${ChannelPrefix}:getAllWordsByCorpus`, async (event, ...args) => await DatabaseAccessMainInstance.getAllWordsByCorpus(...args));
+      ipcMain.handle(`${ChannelPrefix}:getAllCorpora`, async (event, ...args) => await DatabaseAccessMainInstance.getAllCorpora(...args));
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
     }
