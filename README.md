@@ -46,7 +46,7 @@ sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
 
 - requires `libfuse2` package
 
-## Rebuilding the template database
+## The Template Database
 
 The template database file is the basis of all project databases and included
 with the platform builds. The file is stored in `sql/clear-aligner-template.sqlite`
