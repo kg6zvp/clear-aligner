@@ -25,7 +25,6 @@ export interface CorpusProps {
 }
 
 const determineCorpusView = async (
-  linksTable: LinksTable,
   viewCorpora: CorpusContainer,
   verses: Verse[],
   bcvId: BCVWP | null
@@ -217,7 +216,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
       return;
     }
     determineCorpusView(
-      linksTable,
       viewCorpora,
       visibleVerses,
       computedPosition)

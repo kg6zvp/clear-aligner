@@ -600,7 +600,8 @@ class DatabaseAccessMain {
                                                          w.text                            as text,
                                                          w.gloss                           as gloss,
                                                          w.after                           as after,
-                                                         w.position_part                   as position
+                                                         w.position_part                   as position,
+                                                         w.source_verse_bcvid              as sourceVerse
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?
