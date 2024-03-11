@@ -1,12 +1,6 @@
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
-// @ts-ignore
-import MACULA_SBLGNT from 'tsv/source_macula_greek_SBLGNT.tsv';
-// @ts-ignore
-import MACULA_HEBOT_TSV from 'tsv/source_macula_hebrew.tsv';
-// @ts-ignore
-import YLT from 'tsv/ylt-new.tsv';
 import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
 
 enum InitializationStates {
