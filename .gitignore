@@ -32,6 +32,6 @@ yarn-error.log*
 
 /storybook-static
 *.sqlite
-*.sqlite-shm
-*.sqlite-wam
-*.sqlite-journal
+**/*.sqlite-shm
+**/*.sqlite-wal
+**/*.sqlite-journal

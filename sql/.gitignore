@@ -1,5 +1,5 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 ./clear-aligner-template.sqlite
-*.sqlite-shm
-*.sqlite-wam
-*.sqlite-journal
+**/*.sqlite-shm
+**/*.sqlite-wal
+**/*.sqlite-journal
