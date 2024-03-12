@@ -6,6 +6,7 @@ const fs = require('fs');
 const { app, BrowserWindow } = require('electron');
 const isDev = require('electron-is-dev');
 const sanitize = require('sanitize-filename');
+const _ = require('lodash');
 
 const DbWaitInMs = 1000;
 const LinkTableName = 'links';
@@ -395,16 +396,16 @@ class DatabaseAccessMain {
       if (linkRow.type) {
         switch (linkRow.type) {
           case 'sources':
-            currLink.sources = JSON.parse(linkRow.words);
+            currLink.sources = _.uniqWith(JSON.parse(linkRow.words), _.isEqual);
             break;
           case 'targets':
-            currLink.targets = JSON.parse(linkRow.words);
+            currLink.targets = _.uniqWith(JSON.parse(linkRow.words), _.isEqual);
             break;
         }
         // findLinksByWordId,findLinksByBCV
       } else {
-        currLink.sources = JSON.parse(linkRow.sources);
-        currLink.targets = JSON.parse(linkRow.targets);
+        currLink.sources = _.uniqWith(JSON.parse(linkRow.sources), _.isEqual);
+        currLink.targets = _.uniqWith(JSON.parse(linkRow.targets), _.isEqual);
       }
     });
     if (currLink.id) {
