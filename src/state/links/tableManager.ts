@@ -250,7 +250,7 @@ export class LinksTable extends VirtualTable<Link> {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      const result = await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, oldLink.id ?? '');
+      const result = await window.databaseApi.deleteByIds(DefaultProjectName, LinkTableName, id ?? '');
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
