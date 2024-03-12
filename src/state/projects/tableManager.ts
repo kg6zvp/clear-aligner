@@ -99,6 +99,9 @@ export class ProjectTable extends VirtualTable<Project> {
     const corpora = dataSource?.corpora || [];
     const sourceCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.SOURCE);
     const targetCorpus = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET)[0];
+
+    console.log("corpora: ", corpora)
+
     return {
       id: dataSource.id,
       name: targetCorpus?.fullName,
@@ -123,7 +126,7 @@ export class ProjectTable extends VirtualTable<Project> {
     position_word: +BCVWP.truncateTo(word.id, BCVWPField.Word),
     position_part: +BCVWP.truncateTo(word.id, BCVWPField.Part),
     normalized_text: (word.text || "").toLowerCase(),
-    source_verse_bcvid: word.side === AlignmentSide.TARGET ? "" : "",
+    source_verse_bcvid: word.sourceVerse ?? "",
     language_id: corpus.language.code,
     side: word.side
   })

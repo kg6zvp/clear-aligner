@@ -7,6 +7,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
+import { useInterval } from 'usehooks-ts';
 
 const DatabaseChunkSize = 10_000;
 const DatabaseWaitInMs = 1_000;
@@ -183,12 +184,12 @@ export class LinksTable extends VirtualTable<Link> {
       await window.databaseApi.updateAllLinkText(this.sourceName);
 
       busyInfo.userText = `Saving project...`;
-      await this._onUpdate(suppressOnUpdate);
       return true;
     } catch (ex) {
       console.error('error saving all links', ex);
       return false;
     } finally {
+      await this._onUpdate(suppressOnUpdate);
       this._decrDatabaseBusyCtr();
       this._logDatabaseTimeEnd('saveAll(): complete');
     }
@@ -480,7 +481,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
-export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = true) => {
+export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
   const {preferences} = useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
@@ -938,3 +939,18 @@ export const useDatabaseStatus = (checkKey?: string) => {
 
   return { ...status };
 };
+
+export const useDataLastUpdated = () => {
+  const {preferences} = useContext(AppContext);
+  const [ lastUpdate, setLastUpdate ] = useState(0);
+
+  useInterval(() => {
+    const linksTableInstance = LinksTable.createLinksTable(preferences?.currentProject ?? DefaultProjectName)
+    if (linksTableInstance.lastUpdate && linksTableInstance.lastUpdate !== lastUpdate) {
+      setLastUpdate(linksTableInstance.lastUpdate);
+    }
+  }, 200);
+
+  return lastUpdate;
+};
+

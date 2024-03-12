@@ -759,7 +759,8 @@ class ProjectRepository extends BaseRepository {
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({
-          id: result.id, name: result.name, fullName: result.fullName, side: result.side, language: {
+          id: result.id, name: result.name, fileName: result.fileName,
+          fullName: result.fullName, side: result.side, language: {
             code: result.code,
             textDirection: result.textDirection,
             fontFamily: result.fontFamily
