@@ -1,5 +1,4 @@
 import { AlignmentSide, LanguageInfo, Link, Word } from '../../structs';
-import BCVWP from '../bcvwp/BCVWPSupport';
 
 /**
  * represents rows displayed in the pivot word table in the concordance view

@@ -70,7 +70,7 @@ export const ConcordanceView = () => {
   useEffect(() => {
     if (!loading) {
       layoutCtx.setMenuBarDelegate(
-        <Typography sx={{ textAlign: 'center', translate: '-20px' }}>
+        <Typography sx={{ textAlign: 'center' }}>
           Alignments :: Batch-review Mode
         </Typography>
       );

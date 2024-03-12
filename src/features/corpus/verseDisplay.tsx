@@ -24,6 +24,8 @@ export interface VerseDisplayProps extends LimitedToLinks {
  * @param readonly optional property to specify if the verse should be displayed in read-only mode
  * @param corpus Corpus containing language information to determine how the verse should be displayed
  * @param verse verse to be displayed
+ * @param onlyLinkIds
+ * @param allowGloss
  * @constructor
  */
 export const VerseDisplay = ({
@@ -37,7 +39,7 @@ export const VerseDisplay = ({
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
-  const alignmentSide = useMemo(() => corpus?.side, [corpus?.side]);
+  const alignmentSide = useMemo(() => corpus?.side as AlignmentSide, [corpus?.side]);
   const { result: databaseStatus } = useDatabaseStatus();
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,

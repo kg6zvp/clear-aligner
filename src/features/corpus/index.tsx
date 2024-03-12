@@ -2,7 +2,7 @@ import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useRe
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, Verse } from 'structs';
+import { AlignmentSide, CorpusContainer, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { VerseDisplay } from './verseDisplay';
 import {
@@ -12,15 +12,13 @@ import {
   getReferenceListFromWords
 } from '../bcvNavigation/structs';
 import { AppContext } from '../../App';
-import { LinksTable } from '../../state/links/tableManager';
-
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
   viewportIndex: number;
   position: BCVWP | null;
   containers: {
-    source?: CorpusContainer,
-    target?: CorpusContainer
+    sources?: CorpusContainer,
+    targets?: CorpusContainer
   };
 }
 
@@ -93,15 +91,15 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   useDebug('TextComponent');
 
   const computedPosition = useMemo(() => {
-    if (viewCorpora.id === 'target') {
+    if (viewCorpora.id === AlignmentSide.TARGET) {
       return props.position ?? null;
     }
     // displaying source
-    if (!props.position || !containers.target) return null;
-    const verseString = containers.target.verseByReference(props.position)?.sourceVerse;
+    if (!props.position || !containers.targets) return null;
+    const verseString = containers.targets.verseByReference(props.position)?.sourceVerse;
     if (verseString) return BCVWP.parseFromString(verseString);
     return props.position;
-  }, [viewCorpora.id, props.position, containers.target]);
+  }, [viewCorpora.id, props.position, containers.targets]);
 
   const verseAtPosition: Verse | undefined = useMemo(
     () =>

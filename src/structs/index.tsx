@@ -64,7 +64,7 @@ export interface Corpus {
   name: string;
   fullName: string;
   language: LanguageInfo;
-  side: AlignmentSide,
+  side: string;
   words: Word[];
   wordsByVerse: Record<string, Verse>;
   wordLocation: Map<string, Set<BCVWP>>;
@@ -77,6 +77,7 @@ export interface Corpus {
       };
     };
   };
+  fileName?: string;
   fullText?: string;
   viewType?: CorpusViewType;
   syntax?: SyntaxRoot;
@@ -185,17 +186,10 @@ export class Link extends DatabaseRecord {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
-// Extension of Link, use in tracking
-// state of 'inProgress' links.
-export interface InProgressLink extends Link {
-  source: string;
-  target: string;
-}
-
 export enum AlignmentSide {
   SOURCE = 'sources',
   TARGET = 'targets'
-};
+}
 
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';

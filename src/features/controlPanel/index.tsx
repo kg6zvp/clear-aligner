@@ -12,16 +12,17 @@ import {
 } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { resetTextSegments } from 'state/alignment.slice';
+import UploadAlignmentGroup from './uploadAlignmentGroup'
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
 import { useGetAllLinks, useRemoveLink, useSaveAlignmentFile, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
+import { ControlPanelFormat, UserPreference } from '../../state/preferences/tableManager';
 
 import { WordsIndex } from '../../state/links/wordsIndex';
 import uuid from 'uuid-random';
+import { resetTextSegments } from '../../state/alignment.slice';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -47,8 +48,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
   const { projectState, setProjectState, preferences, setPreferences } = useContext(AppContext);
 
-  // File input reference to support file loading via a button click
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formats, setFormats] = useState([] as string[]);
 
   const inProgressLink = useAppSelector(
@@ -84,9 +83,9 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     }
 
     const nextSourcesIndex = currSourcesIndex
-      ?? new WordsIndex(props.containers.find((container) => container.id === 'source')!, AlignmentSide.SOURCE);
+      ?? new WordsIndex(props.containers.find((container) => container.id === AlignmentSide.SOURCE)!, AlignmentSide.SOURCE);
     const nextTargetsIndex = currTargetsIndex
-      ?? new WordsIndex(props.containers.find((container) => container.id === 'target')!, AlignmentSide.TARGET);
+      ?? new WordsIndex(props.containers.find((container) => container.id === AlignmentSide.TARGET)!, AlignmentSide.TARGET);
 
     setProjectState({
       ...projectState,
@@ -126,8 +125,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       (link) =>
         ({
           id: link.id,
-          source: link.sources,
-          target: link.targets
+          sources: link.sources,
+          targets: link.targets
         } as AlignmentRecord)
     )
       .forEach((record) => alignmentExport.records.push(record));
@@ -177,29 +176,21 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     URL.revokeObjectURL(url);
   }, [allLinks]);
 
-  const saveControlPanelFormat = useCallback(() => {
-    const updatedUserPreference = projectState.userPreferences?.save({
-      name: PreferenceKey.CONTROL_PANEL_FORMAT,
-      value: (preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined)?.value === ControlPanelFormat.HORIZONTAL
-        ? ControlPanelFormat.VERTICAL
-        : ControlPanelFormat.HORIZONTAL
-    });
-
-    if (updatedUserPreference) {
-      setPreferences(p => ({
-        ...p,
-        [updatedUserPreference.name]: updatedUserPreference
-      }));
-    }
-  }, [preferences, projectState.userPreferences, setPreferences]);
+  const saveControlPanelFormat = useCallback(async () => {
+    const alignmentDirection = preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
+      ? ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
+      : ControlPanelFormat[ControlPanelFormat.VERTICAL];
+    const updatedPreferences = {
+      ...preferences,
+      alignmentDirection
+    } as UserPreference;
+    projectState.userPreferenceTable?.saveOrUpdate(updatedPreferences);
+    setPreferences(updatedPreferences);
+  }, [preferences, projectState.userPreferenceTable, setPreferences]);
 
   if (scrollLock && !formats.includes('scroll-lock')) {
     setFormats(formats.concat(['scroll-lock']));
   }
-
-  const controlPanelFormat = useMemo(() => (
-    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
-  )?.value, [preferences]);
 
   return (
     <Stack
@@ -213,29 +204,30 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         <Tooltip title="Toggle Glosses" arrow describeChild>
           <span>
             <Button
-              variant={preferences.showGloss ? 'contained' : 'outlined'}
+              variant={preferences?.showGloss ? 'contained' : 'outlined'}
               disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? '')?.hasGloss)}
-              onClick={() => setPreferences(p => ({
-                ...p,
-                showGloss: !p.showGloss
-              }))}
+              onClick={() => {
+                const updatedPreferences = {...((preferences ?? {}) as UserPreference), showGloss: !preferences?.showGloss};
+                setPreferences(updatedPreferences);
+                projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
+              }}
             >
               <Translate />
             </Button>
           </span>
         </Tooltip>
         <Tooltip
-          title={`Swap to ${controlPanelFormat === ControlPanelFormat.VERTICAL ? 'horizontal' : 'vertical'} view mode`}
+          title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
           arrow describeChild>
           <span>
             <Button
               variant="contained"
-              onClick={saveControlPanelFormat}
+              onClick={() => void saveControlPanelFormat()}
             >
               {
-                controlPanelFormat === ControlPanelFormat.HORIZONTAL
-                  ? <SwapVert />
-                  : <SwapHoriz />
+                preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
+                ? <SwapHoriz />
+                : <SwapVert />
               }
             </Button>
           </span>
@@ -294,59 +286,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         </Tooltip>
       </ButtonGroup>
 
-      <ButtonGroup>
-        <Tooltip title="Load Alignment Data" arrow describeChild>
-          <span>
-            <input
-              type="file"
-              hidden
-              ref={fileInputRef}
-              multiple={false}
-              onClick={(event) => {
-                // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
-                // event isn't thrown.
-
-                // @ts-ignore
-                event.currentTarget.value = null;
-              }}
-              onChange={async (event) => {
-                // grab file content
-                const file = event!.target!.files![0];
-                const content = await file.text();
-
-                setAlignmentFileSaveState({
-                  alignmentFile: JSON.parse(content) as AlignmentFile,
-                  saveKey: uuid()
-                });
-              }}
-            />
-            <Button
-              disabled={props.containers.length === 0}
-              variant="contained"
-              onClick={() => {
-                // delegate file loading to regular file input
-                fileInputRef?.current?.click();
-              }}
-            >
-              <FileUpload />
-            </Button>
-          </span>
-        </Tooltip>
-
-        <Tooltip title="Save Alignment Data" arrow describeChild>
-          <span>
-            <Button
-              disabled={props.containers.length === 0}
-              variant="contained"
-              onClick={() => {
-                setGetAllLinksKey(uuid());
-              }}
-            >
-              <FileDownload />
-            </Button>
-          </span>
-        </Tooltip>
-      </ButtonGroup>
+      <UploadAlignmentGroup
+        containers={props.containers}
+        setGetAllLinksKey={() => {
+          setGetAllLinksKey(uuid());
+        }}
+      />
     </Stack>
   );
 };

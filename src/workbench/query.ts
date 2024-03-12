@@ -4,25 +4,15 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
 
 enum InitializationStates {
-  UNINITIALiZED,
+  UNINITIALIZED,
   INITIALIZING,
   INITIALIZED
 }
 
-let initializationState: InitializationStates = InitializationStates.UNINITIALiZED;
+let initializationState: InitializationStates = InitializationStates.UNINITIALIZED;
 
-const availableCorpora: CorpusContainer[] = [];
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const parseTsvByFileType = async (
-  tsv: RequestInfo,
-  refCorpus: Corpus,
-  side: AlignmentSide,
-  fileType: CorpusFileFormat
-): Promise<Corpus> => {
-  const fetchedTsv = await fetch(tsv);
-  const response = await fetchedTsv.text();
-  const [header, ...rows] = response.split('\n');
+export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
+  const [header, ...rows] = fileContent.split('\n');
   const headerMap: Record<string, number> = {};
   if (!refCorpus.wordsByVerse) {
     refCorpus.wordsByVerse = {} as Record<string, Verse>;
@@ -130,6 +120,18 @@ const parseTsvByFileType = async (
   };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const parseTsvByFileType = async (
+  tsv: RequestInfo,
+  refCorpus: Corpus,
+  side: AlignmentSide,
+  fileType: CorpusFileFormat
+): Promise<Corpus> => {
+  const fetchedTsv = await fetch(tsv);
+  const response = await fetchedTsv.text();
+  return parseTsv(response, refCorpus, side, fileType);
+};
+
 const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   if (!(verse.bcvId.book && verse.bcvId.chapter && verse.bcvId.verse)) {
     return;
@@ -148,7 +150,7 @@ const putVerseInCorpus = (corpus: Corpus, verse: Verse) => {
   chapterRef[verse.bcvId.verse] = verse;
 };
 
-const putVersesInCorpus = (corpus: Corpus) =>
+export const putVersesInCorpus = (corpus: Corpus) =>
   Object.values(corpus.wordsByVerse).forEach((verse) =>
     putVerseInCorpus(corpus, verse)
   );
@@ -162,7 +164,8 @@ const waitForInitialization = async () => {
 const WordQueryBatchSize = 100_000;
 
 export const getCorpusFromDatabase = async (
-  inputCorpus: Corpus
+  inputCorpus: Corpus,
+  sourceName?: string
 ): Promise<Corpus> => {
   inputCorpus.wordsByVerse = {} as Record<string, Verse>;
   inputCorpus.words = [];
@@ -170,10 +173,11 @@ export const getCorpusFromDatabase = async (
   while (true) {
     // @ts-ignore
     const words = ((await window.databaseApi.getAllWordsByCorpus(
-      DefaultProjectName,
+      sourceName ?? DefaultProjectName,
       inputCorpus.side,
       inputCorpus.id,
       WordQueryBatchSize, offset)) as Word[]);
+    // no batch returned
     if (!words
       || words.length < 1) {
       break;
@@ -196,19 +200,24 @@ export const getCorpusFromDatabase = async (
       };
       inputCorpus.words.push(word);
     }
+    // this was the last batch
+    if (words.length < WordQueryBatchSize) {
+      break;
+    }
     offset += WordQueryBatchSize;
   }
   return inputCorpus;
 };
 
-export const getAvailableCorporaContainers = async (): Promise<
+export const getAvailableCorporaContainers = async (sourceName?: string, refetch = false): Promise<
   CorpusContainer[]
 > => {
-  if (initializationState === InitializationStates.UNINITIALiZED) {
+  const corpora: CorpusContainer[] = [];
+  if (initializationState === InitializationStates.UNINITIALIZED || refetch) {
     initializationState = InitializationStates.INITIALIZING;
 
     // @ts-ignore
-    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(DefaultProjectName)) as Corpus[]) ?? []);
+    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(sourceName ?? DefaultProjectName)) as Corpus[]) ?? []);
     const corpusPromises: Promise<Corpus>[] = inputCorpora
       .map(inputCorpus =>
         getCorpusFromDatabase({
@@ -218,28 +227,23 @@ export const getAvailableCorporaContainers = async (): Promise<
           wordLocation: new Map<string, Set<BCVWP>>(),
           books: {},
           hasGloss: inputCorpus.side === AlignmentSide.SOURCE
-        }));
+        }, sourceName));
     const outputCorpora: Corpus[] =
       (await Promise.all(corpusPromises));
     outputCorpora.forEach(
       outputCorpus => putVersesInCorpus(outputCorpus));
 
-    const sourceContainer = CorpusContainer.fromIdAndCorpora('source',
+    const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
       outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
-    const targetContainer = CorpusContainer.fromIdAndCorpora('target',
+    const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
       outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
 
-    availableCorpora.push(sourceContainer);
-    availableCorpora.push(targetContainer);
+    corpora.push(sourceContainer);
+    corpora.push(targetContainer);
     initializationState = InitializationStates.INITIALIZED;
   } else if (initializationState === InitializationStates.INITIALIZING) {
     await waitForInitialization();
   }
 
-  return availableCorpora;
+  return corpora;
 };
-
-export const getAvailableCorporaIds = async (): Promise<string[]> =>
-  (
-    initializationState ? availableCorpora : await getAvailableCorporaContainers()
-  ).map((corpus) => corpus.id);
