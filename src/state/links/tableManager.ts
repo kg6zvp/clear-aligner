@@ -925,7 +925,6 @@ export const useDataLastUpdated = () => {
   const [ lastUpdate, setLastUpdate ] = useState(0);
 
   useInterval(() => {
-    console.log('useDataLastUpdated', LinksTableInstance.lastUpdate !== lastUpdate, lastUpdate, LinksTableInstance.lastUpdate);
     if (LinksTableInstance.lastUpdate && LinksTableInstance.lastUpdate !== lastUpdate) {
       setLastUpdate(LinksTableInstance.lastUpdate);
     }

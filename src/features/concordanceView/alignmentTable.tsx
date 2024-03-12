@@ -106,7 +106,7 @@ export const AlignmentTable = ({
       headerName: 'State',
     },
     {
-      field: 'sources',
+      field: 'ref',
       headerName: 'Ref',
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <RefCell {...row} />

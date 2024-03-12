@@ -955,11 +955,14 @@ class DatabaseAccessMain {
   corporaGetLinksByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
     const em = (await this.getDataSource(sourceName)).manager;
     const linkIds = (await em.query(`
-        SELECT id
-        FROM links
-        WHERE sources_text = '${sourcesText}'
-          AND targets_text = '${targetsText}'
-            ${this._buildOrderBy(sort)};`))
+        SELECT l.id id,
+               ltw.word_id word_id
+        FROM links l
+            INNER JOIN links__target_words ltw
+                        ON ltw.link_id = l.id
+        WHERE l.sources_text = '${sourcesText}'
+          AND l.targets_text = '${targetsText}'
+            ${this._buildOrderBy(sort, { ref: 'word_id' })};`))
       .map((link) => link.id);
     const links = [];
     for (const linkId of linkIds) {
