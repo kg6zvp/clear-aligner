@@ -2,7 +2,7 @@ import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { useDatabaseStatus, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
+import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -38,10 +38,10 @@ export const VerseDisplay = ({
     [verse?.words]
   );
   const alignmentSide = useMemo(() => corpus?.side, [corpus?.side]);
-  const { result: databaseStatus } = useDatabaseStatus();
+  const lastUpdated = useDataLastUpdated();
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
-    String(databaseStatus.lastUpdateTime ?? 0)
+    String(lastUpdated)
   );
   const { result: allLinks } = useFindLinksByBCV(
     (onlyLinkIds?.length ?? 0) < 1 ? alignmentSide : undefined,
@@ -49,7 +49,7 @@ export const VerseDisplay = ({
     verse.bcvId.chapter,
     verse.bcvId.verse,
     readonly,
-    String(databaseStatus.lastUpdateTime ?? 0)
+    String(lastUpdated)
   );
   const linkMap = useMemo(() => {
     if ((!allLinks || allLinks.length < 1)
