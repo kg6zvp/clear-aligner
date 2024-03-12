@@ -53,7 +53,8 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           side,
           corpusId: refCorpus.id,
           text: values[headerMap['text']] || values[headerMap['lemma']] || '',
-          position: pos
+          position: pos,
+          sourceVerse: values[headerMap['source_verse']] || ""
         };
 
         wordKey = word.text.toLowerCase();
