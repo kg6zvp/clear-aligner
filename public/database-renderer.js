@@ -4,6 +4,17 @@ const { contextBridge, ipcRenderer } = require('electron');
 const { ChannelPrefix } = require('./database-shared.js');
 
 contextBridge.exposeInMainWorld('databaseApi', {
+  // User
+  getPreferences: () => ipcRenderer.invoke(`${ChannelPrefix}:getPreferences`),
+  createOrUpdatePreferences: (preferences) => ipcRenderer.invoke(`${ChannelPrefix}:createOrUpdatePreferences`, preferences),
+  // Projects
+  getDataSources: () => ipcRenderer.invoke(`${ChannelPrefix}:getDataSources`),
+  getDataSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:getDataSource`, sourceName),
+  createSourceFromProject: (project) => ipcRenderer.invoke(`${ChannelPrefix}:createSourceFromProject`, project),
+  updateSourceFromProject: (project) => ipcRenderer.invoke(`${ChannelPrefix}:updateSourceFromProject`, project),
+  removeSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:removeSource`, sourceName),
+  removeTargetWordsOrParts: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:removeTargetWordsOrParts`, sourceName),
+
   createDataSource: (database) => ipcRenderer.invoke(`${ChannelPrefix}:createDataSource`, database),
   insert: (database, table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:insert`, database, table, itemOrItems),
   deleteAll: (database, table) => ipcRenderer.invoke(`${ChannelPrefix}:deleteAll`, database, table),

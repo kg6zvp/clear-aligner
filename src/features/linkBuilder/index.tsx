@@ -3,7 +3,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { CorpusContainer, Word } from 'structs';
+import { AlignmentSide, CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
@@ -20,13 +20,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
   useDebug('LinkBuilderComponent');
 
   const sourceContainer = useMemo(
-    () => containers.find(({ id }) => id === 'source')!,
+    () => containers.find(({ id }) => id === AlignmentSide.SOURCE)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
   );
   const targetContainer = useMemo(
-    () => containers.find(({ id }) => id === 'target')!,
+    () => containers.find(({ id }) => id === AlignmentSide.TARGET)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
@@ -61,8 +61,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
         .filter((x): x is Word => !!x);
 
       return {
-        source: sourceWords ?? [],
-        target: targetWords ?? [],
+        sources: sourceWords ?? [],
+        targets: targetWords ?? [],
       } as Record<string, Word[]>;
     }
     return {};

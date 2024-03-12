@@ -55,11 +55,10 @@ export const WordDisplay = ({
         }}
       >
         {
-          (hasGloss && preferences.showGloss && allowGloss) ? (
+          (hasGloss && preferences?.showGloss && allowGloss) ? (
             <GlossSegment
               readonly={readonly}
               suppressAfter={suppressAfter}
-              links={links}
               parts={parts}
               corpus={corpus}
               allowGloss={allowGloss}

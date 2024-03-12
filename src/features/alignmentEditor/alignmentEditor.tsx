@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
-import { CorpusContainer, Word } from '../../structs';
+import { AlignmentSide, CorpusContainer, Word } from '../../structs';
 import { getAvailableCorporaContainers } from '../../workbench/query';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
+import { UserPreference } from 'state/preferences/tableManager';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -23,30 +24,46 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
 
   const appCtx = useContext(AppContext);
 
+  const updatePreferences = React.useCallback((pref: Partial<UserPreference>) => {
+    appCtx.setPreferences((p: UserPreference | undefined) => {
+      const updatedPreferences = {...((p ?? {}) as UserPreference), ...pref};
+      appCtx.projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
+      return updatedPreferences;
+    });
+  }, [appCtx])
+
   // set current reference to default if none set
   useEffect(() => {
-    if (!appCtx.currentReference) {
-      appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
+    if (!appCtx.preferences?.bcv) {
+      appCtx.setPreferences((p: UserPreference | undefined) => ({...(p ?? {}) as UserPreference, bcv: new BCVWP(45, 5, 3)})); // set current reference to default
     }
-  }, [appCtx, appCtx.currentReference, appCtx.setCurrentReference]);
+  }, [appCtx, appCtx.preferences, appCtx.setPreferences, updatePreferences]);
 
   React.useEffect(() => {
-    if (appCtx.currentReference) {
+    if (appCtx.preferences?.bcv) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          appCtx.currentReference?.getBookInfo()?.EnglishBookName
-        } ${appCtx.currentReference?.chapter}:${appCtx.currentReference?.verse}`
+          appCtx.preferences?.bcv?.getBookInfo()?.EnglishBookName
+        } ${appCtx.preferences?.bcv?.chapter}:${appCtx.preferences?.bcv?.verse}`
       );
     } else {
       layoutCtx.setWindowTitle(defaultDocumentTitle);
     }
-  }, [appCtx.currentReference, layoutCtx]);
+  }, [appCtx.preferences?.bcv, layoutCtx]);
+
+  const [sourceName, setSourceName] = React.useState(appCtx.preferences?.currentProject);
+
+  React.useEffect(() => {
+    if(sourceName !== appCtx.preferences?.currentProject) {
+      setSourceName(appCtx.preferences?.currentProject);
+    }
+  }, [appCtx.preferences?.currentProject]);
 
   React.useEffect(() => {
     const loadSourceWords = async () => {
-      const containers = await getAvailableCorporaContainers();
+      const containers = await getAvailableCorporaContainers(sourceName, true);
       const targetCorpora = containers.find(
-        (v: CorpusContainer) => v.id === 'target'
+        (v: CorpusContainer) => v.id === AlignmentSide.TARGET
       );
 
       setSelectedCorporaContainers(containers);
@@ -58,15 +75,16 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
     loadSourceWords().catch(console.error);
   }, [
     setAvailableWords,
-    appCtx.setCurrentReference,
+    appCtx.setPreferences,
+    sourceName,
     setSelectedCorporaContainers,
   ]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={appCtx.currentReference} />
+      <BCVDisplay currentPosition={appCtx.preferences?.bcv} />
     );
-  }, [layoutCtx, appCtx.currentReference]);
+  }, [layoutCtx, appCtx.preferences?.bcv]);
 
   return (
     <>
@@ -78,15 +96,15 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
               horizontal
               disabled={!availableWords || availableWords.length < 1}
               words={availableWords}
-              currentPosition={appCtx.currentReference ?? undefined}
-              onNavigate={appCtx.setCurrentReference}
+              currentPosition={appCtx.preferences?.bcv ?? undefined}
+              onNavigate={bcv => appCtx.setPreferences((p: UserPreference | undefined) => ({...(p ?? {}) as UserPreference, bcv}))}
             />
           </div>
         )
       }
       <Workbench
         corpora={selectedCorporaContainers}
-        currentPosition={appCtx.currentReference}
+        currentPosition={appCtx.preferences?.bcv}
       />
     </>
   );

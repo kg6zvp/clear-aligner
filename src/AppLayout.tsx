@@ -13,9 +13,11 @@ import {
   Select,
   Toolbar,
   useMediaQuery,
+  Typography,
+  Grid
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import React, { createContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import Themed from './features/themed';
 import {
   createSearchParams,
@@ -23,7 +25,9 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-import { AddLink, ManageSearch } from '@mui/icons-material';
+import { AddLink, ManageSearch, LibraryBooks } from '@mui/icons-material';
+import useTrackLocation from './utils/useTrackLocation';
+import { AppContext } from './App';
 
 type THEME = 'night' | 'day';
 type THEME_PREFERENCE = THEME | 'auto';
@@ -39,6 +43,7 @@ export interface LayoutContextProps {
 export const LayoutContext = createContext({} as LayoutContextProps);
 
 export const AppLayout = () => {
+  useTrackLocation();
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const themeDefault: THEME = useMemo(
     () => (prefersDarkMode ? 'night' : 'day'),
@@ -75,10 +80,16 @@ export const AppLayout = () => {
 
   const navigate = useNavigate();
 
+  const {preferences, projects} = useContext(AppContext);
+  const projectName = useMemo(() => (
+    (projects || []).find(p => p.id === preferences?.currentProject)?.name ?? projects?.[0]?.name ?? ""
+  ), [projects, preferences]);
+
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
         <AppBar position={'fixed'} enableColorOnDark={theme !== 'night'}>
+          <Grid container justifyContent="space-between" alignItems="center" sx={{position: 'relative'}}>
           <Toolbar aria-label={'Menu'} onClick={() => setShowMenu(!showMenu)}>
             <IconButton>
               <MenuIcon {...(theme !== 'night' && { htmlColor: 'white' })} />
@@ -87,6 +98,10 @@ export const AppLayout = () => {
               {menuBarDelegate ?? <></>}
             </div>
           </Toolbar>
+            <Typography variant="h6" sx={{fontWeight: 'bold', position: 'absolute', top: "50%", left: '50%', transform: 'translate(-50%, -50%)'}}>
+              {projectName}
+            </Typography>
+          </Grid>
           <Drawer
             anchor={'left'}
             open={showMenu}
@@ -124,6 +139,21 @@ export const AppLayout = () => {
                       <ManageSearch />
                     </ListItemIcon>
                     <ListItemText primary={'Concordance View'} />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                  <ListItemButton
+                    onClick={() => {
+                      setShowMenu(false);
+                      navigate({
+                        pathname: '/projects',
+                      });
+                    }}
+                  >
+                    <ListItemIcon>
+                      <LibraryBooks />
+                    </ListItemIcon>
+                    <ListItemText primary='Projects' />
                   </ListItemButton>
                 </ListItem>
               </List>

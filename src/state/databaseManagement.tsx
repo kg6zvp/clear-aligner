@@ -1,6 +1,7 @@
 import { LinksTable } from './links/tableManager';
 import { WordsIndex } from './links/wordsIndex';
 import { UserPreferenceTable } from './preferences/tableManager';
+import { ProjectTable } from './projects/tableManager';
 
 /**
  * denotes the type of change being made to a database
@@ -16,7 +17,8 @@ export enum IndexedChangeType {
  */
 export interface ProjectState {
   linksTable?: LinksTable;
-  userPreferences?: UserPreferenceTable;
+  projectTable: ProjectTable;
+  userPreferenceTable: UserPreferenceTable;
   linksIndexes?: {
     sourcesIndex: WordsIndex;
     targetsIndex: WordsIndex;

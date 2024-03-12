@@ -14,12 +14,12 @@ import {
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import { CorpusContainer, CorpusViewport } from 'structs';
+import { AlignmentSide, CorpusContainer, CorpusViewport } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
-import { ControlPanelFormat, PreferenceKey, UserPreference } from '../../state/preferences/tableManager';
+import { ControlPanelFormat } from '../../state/preferences/tableManager';
 import { useDatabaseStatus } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 
@@ -97,15 +97,11 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     };
   }, [corpusViewports, databaseStatus?.busyInfo]);
 
-  const controlPanelFormat = useMemo(() => (
-    preferences[PreferenceKey.CONTROL_PANEL_FORMAT] as UserPreference | undefined
-  )?.value, [preferences]);
-
   return (
     <Stack
-      direction={controlPanelFormat === ControlPanelFormat.HORIZONTAL ? 'row' : 'column'}
+      direction={preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'column' : 'row'}
       spacing={2}
-      style={{ height: controlPanelFormat === ControlPanelFormat.HORIZONTAL ? '17rem' : '30rem' }}
+      style={{ height: preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? '30rem' : '17rem' }}
       justifyContent="stretch"
       alignItems="stretch"
     >
@@ -137,7 +133,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
       </Dialog>
 
       {corpusViewports &&
-        corpusViewports.sort(c => c.containerId === "source" ? -1 : 1).map((corpusViewport: CorpusViewport, index: number) => {
+        corpusViewports.sort(c => c.containerId === AlignmentSide.SOURCE ? -1 : 1).map((corpusViewport: CorpusViewport, index: number) => {
           const corpusId = corpusViewport.containerId;
           const key = `text_${index}`;
           const container = containers.find(
@@ -174,8 +170,8 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 viewCorpora={container}
                 viewportIndex={index}
                 containers={{
-                  source: containers?.find(c => c.id === 'source'),
-                  target: containers?.find(c => c.id === 'target')
+                  sources: containers?.find(c => c.id === AlignmentSide.SOURCE),
+                  targets: containers?.find(c => c.id === AlignmentSide.TARGET)
                 }}
                 position={position}
               />

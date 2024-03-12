@@ -1,8 +1,8 @@
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, TableContainer } from '@mui/material';
+import { IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
@@ -11,7 +11,6 @@ import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../..
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
-import { Box } from '@mui/system';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -76,18 +75,13 @@ export const AlignmentTable = ({
   onChooseAlignmentLink,
   updateAlignments
 }: AlignmentTableProps) => {
-  const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(null);
+  const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [ sort, onChangeSort ] = useState<GridSortItem|null>({
     field: 'id',
     sort: 'desc',
   } as GridSortItem);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
-
-  const loading: boolean = useMemo(
-    () => !!alignedWord &&  !alignments,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ alignedWord, alignments, alignments?.length ]);
 
   const initialPage = useMemo(() => {
     if (chosenAlignmentLink && alignments) {
@@ -133,19 +127,6 @@ export const AlignmentTable = ({
     },
   ];
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', margin: 'auto' }}>
-        <CircularProgress sx={{
-          display: 'flex',
-          '.MuiLinearProgress-bar': {
-            transition: 'none'
-          },
-        }} />
-      </Box>
-    );
-  }
-
   return (
     <AlignmentTableContext.Provider
       value={{
@@ -163,11 +144,6 @@ export const AlignmentTable = ({
           },
         }}
       >
-        {loading ? (
-          <Box sx={{ display: 'flex', margin: 'auto' }}>
-            <CircularProgress sx={{ margin: 'auto' }} />
-          </Box>
-        ) : (
         <DataGrid
           sx={{
             width: '100%',
@@ -202,10 +178,9 @@ export const AlignmentTable = ({
             }
           }}
         />
-      )}
       </TableContainer>
       <WorkbenchDialog
-        alignment={selectedAlignment}
+        alignment={selectedAligment}
         setAlignment={setSelectedAlignment}
         updateAlignments={updateAlignments}
       />

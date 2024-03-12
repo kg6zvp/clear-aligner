@@ -1,7 +1,7 @@
 import React from 'react';
 import { ThemeMode } from '../themed';
 import { Box, Divider, Grid, Paper } from '@mui/material';
-import { Corpus, LanguageInfo, Link, Word } from '../../structs';
+import { Corpus, LanguageInfo, Word } from '../../structs';
 import TextSegment from './index';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
@@ -10,7 +10,6 @@ interface GlossSegmentProps extends LimitedToLinks {
   readonly?: boolean;
   suppressAfter?: boolean;
   parts?: Word[];
-  links?: Map<string, Link>;
   corpus?: Corpus;
   allowGloss?: boolean;
   languageInfo?: LanguageInfo;
@@ -29,7 +28,6 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                         readonly,
                         suppressAfter,
                         onlyLinkIds,
-                        links,
                         parts,
                         languageInfo
                       }: GlossSegmentProps) => {
@@ -54,7 +52,6 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                     readonly={readonly}
                     onlyLinkIds={onlyLinkIds}
                     word={wordPart}
-                    links={links}
                     languageInfo={languageInfo}
                     showAfter={!suppressAfter}
                     alignment={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'}
