@@ -275,9 +275,9 @@ export class LinksTable extends VirtualTable<Link> {
 
   protected override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
-    // await this.linksByWordIdCache.reset();
-    // await this.linksByBCVCache.reset();
-    // await this.linksByLinkIdCache.reset();
+    await this.linksByWordIdCache.reset();
+    await this.linksByBCVCache.reset();
+    await this.linksByLinkIdCache.reset();
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
