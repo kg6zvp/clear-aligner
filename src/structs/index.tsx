@@ -30,6 +30,7 @@ export interface Word {
   after?: string;
   position: number;
   gloss?: string;
+  sourceVerse?: string;
 }
 
 export interface CorpusViewport {

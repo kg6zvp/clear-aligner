@@ -3,10 +3,11 @@ import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import GlossSegment from '../textSegment/glossSegment';
+import uuid from 'uuid-random';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
@@ -34,7 +35,7 @@ export const WordDisplay = ({
                               links,
                               allowGloss = false
                             }: WordDisplayProps) => {
-  const { language: languageInfo, hasGloss } = corpus ?? { languageInfo: null, hasGloss: false };
+  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
 
@@ -47,7 +48,7 @@ export const WordDisplay = ({
             ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
               BCVWPField.Word
             )
-            : ''
+            : uuid()
         }-${languageInfo?.code}`}
         style={{
           padding: '1px'

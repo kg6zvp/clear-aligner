@@ -2,7 +2,7 @@ import { CorpusContainer } from '../structs';
 import { getAvailableCorporaContainers } from '../workbench/query';
 import { useEffect, useState } from 'react';
 
-interface Containers {
+export interface Containers {
   sourceContainer?: CorpusContainer;
   targetContainer?: CorpusContainer;
 }

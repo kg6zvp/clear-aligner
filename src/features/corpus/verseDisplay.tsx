@@ -37,10 +37,7 @@ export const VerseDisplay = ({
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
-  const alignmentSide = useMemo(() =>
-    corpus?.id === 'source'
-      ? AlignmentSide.SOURCE
-      : AlignmentSide.TARGET, [corpus?.id]);
+  const alignmentSide = useMemo(() => corpus?.side, [corpus?.side]);
   const { result: databaseStatus } = useDatabaseStatus();
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
@@ -74,7 +71,7 @@ export const VerseDisplay = ({
       {(verseTokens || []).map(
         (token: Word[], index): ReactElement => (
           <WordDisplay
-            key={`${index}/${token.at(0)?.id}`}
+            key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
             links={linkMap}
             readonly={readonly}
             onlyLinkIds={onlyLinkIds}

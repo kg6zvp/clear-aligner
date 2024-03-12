@@ -91,12 +91,13 @@ export const TextSegment = ({
 
   const dispatch = useAppDispatch();
   const mode = useAppSelector(selectAlignmentMode); // get alignment mode
-  const isHovered = useAppSelector(
+
+  const isHoveredWord = useAppSelector(
     (state) =>
       state.textSegmentHover.hovered?.side === word.side &&
       state.textSegmentHover.hovered?.id === word.id
   );
-  const currentlyHovered = useAppSelector(
+  const currentlyHoveredWord = useAppSelector(
     (state) => state.textSegmentHover.hovered
   );
   const wordLinks = useMemo<Link[]>(() => {
@@ -109,12 +110,13 @@ export const TextSegment = ({
   }, [links, word?.id]);
   const hoveredLinks = useMemo<Link[]>(() => {
     if (!links
-      || !currentlyHovered?.id) {
+      || !currentlyHoveredWord?.id) {
       return [];
     }
-    const result = links.get(BCVWP.sanitize(currentlyHovered?.id));
+    const sanitized = BCVWP.sanitize(currentlyHoveredWord.id);
+    const result = [ ...links.values() ].find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
     return result ? [result] : [];
-  }, [links, currentlyHovered?.id]);
+  }, [links, currentlyHoveredWord?.id, currentlyHoveredWord?.side]);
 
   const isMemberOfMultipleAlignments = useMemo(
     () => (wordLinks ?? []).length > 1,
@@ -165,7 +167,7 @@ export const TextSegment = ({
           readonly ? '.readonly' : ''
         } ${computeDecoration(
           !!readonly,
-          isHovered,
+          isHoveredWord,
           isRelatedToCurrentlyHovered,
           mode,
           isLinked,

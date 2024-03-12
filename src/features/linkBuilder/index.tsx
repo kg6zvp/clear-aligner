@@ -46,7 +46,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(sourceId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       const targetWords: Word[] = inProgressLink.targets
         .map((targetId) => {
@@ -58,7 +58,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(targetId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       return {
         source: sourceWords ?? [],

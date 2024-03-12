@@ -6,6 +6,7 @@ const fs = require('fs');
 const { app, BrowserWindow } = require('electron');
 const isDev = require('electron-is-dev');
 const sanitize = require('sanitize-filename');
+const _ = require('lodash');
 
 const DbWaitInMs = 1000;
 const LinkTableName = 'links';
@@ -395,16 +396,16 @@ class DatabaseAccessMain {
       if (linkRow.type) {
         switch (linkRow.type) {
           case 'sources':
-            currLink.sources = JSON.parse(linkRow.words);
+            currLink.sources = _.uniqWith(JSON.parse(linkRow.words), _.isEqual);
             break;
           case 'targets':
-            currLink.targets = JSON.parse(linkRow.words);
+            currLink.targets = _.uniqWith(JSON.parse(linkRow.words), _.isEqual);
             break;
         }
         // findLinksByWordId,findLinksByBCV
       } else {
-        currLink.sources = JSON.parse(linkRow.sources);
-        currLink.targets = JSON.parse(linkRow.targets);
+        currLink.sources = _.uniqWith(JSON.parse(linkRow.sources), _.isEqual);
+        currLink.targets = _.uniqWith(JSON.parse(linkRow.targets), _.isEqual);
       }
     });
     if (currLink.id) {
@@ -600,7 +601,8 @@ class DatabaseAccessMain {
                                                          w.text                            as text,
                                                          w.gloss                           as gloss,
                                                          w.after                           as after,
-                                                         w.position_part                   as position
+                                                         w.position_part                   as position,
+                                                         w.source_verse_bcvid              as sourceVerse
                                                   from words_or_parts w
                                                   where w.side = ?
                                                     and w.corpus_id = ?
@@ -625,15 +627,18 @@ class DatabaseAccessMain {
                                                          c.full_name      as fullName,
                                                          c.side           as side,
                                                          l.code           as code,
-                                                         l.text_direction as textDirection
+                                                         l.text_direction as textDirection,
+                                                         l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
       this.logDatabaseTimeLog('getAllCorpora()', results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({
-          id: result.id, name: result.name, fullName: result.fullName, side: result.side, langauge: {
-            code: result.code, textDirection: result.textDirection
+          id: result.id, name: result.name, fullName: result.fullName, side: result.side, language: {
+            code: result.code,
+            textDirection: result.textDirection,
+            fontFamily: result.fontFamily
           }
         }));
     } catch (ex) {
