@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import GlossSegment from '../textSegment/glossSegment';
+import uuid from 'uuid-random';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
@@ -47,7 +48,7 @@ export const WordDisplay = ({
             ? BCVWP.parseFromString(ref).toTruncatedReferenceString(
               BCVWPField.Word
             )
-            : ''
+            : uuid()
         }-${languageInfo?.code}`}
         style={{
           padding: '1px'
