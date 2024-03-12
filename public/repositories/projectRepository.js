@@ -7,11 +7,11 @@ const { app } = require('electron');
 const uuid = require('uuid-random');
 const LinkTableName = 'links';
 const CorporaTableName = 'corpora';
-const LanguageTableName = 'language'
+const LanguageTableName = 'language';
 const LinksToSourceWordsName = 'links__source_words';
 const LinksToTargetWordsName = 'links__target_words';
-const PrimaryProjectDatabaseId = "default";
-const ProjectDatabaseDirectory = "projects";
+const PrimaryProjectDatabaseId = 'default';
+const ProjectDatabaseDirectory = 'projects';
 
 class Link {
   constructor() {
@@ -39,16 +39,16 @@ class WordsOrParts {
   constructor() {
     this.id = undefined;
     this.corpus_id = undefined;
-    this.text = "";
-    this.after = "";
-    this.gloss = "";
-    this.side = "";
+    this.text = '';
+    this.after = '';
+    this.gloss = '';
+    this.side = '';
     this.position_book = undefined;
     this.position_chapter = undefined;
     this.position_verse = undefined;
     this.position_part = undefined;
     this.position_word = undefined;
-    this.normalized_text = "";
+    this.normalized_text = '';
     this.source_verse_bcvid = undefined;
     this.language_id = undefined;
   }
@@ -69,8 +69,8 @@ class CorporaEntity {
 class LanguageEntity {
   constructor() {
     this.code = undefined;
-    this.text_direction = "";
-    this.font_family = "";
+    this.text_direction = '';
+    this.font_family = '';
   }
 }
 
@@ -198,7 +198,7 @@ const languageSchema = new EntitySchema({
     },
     text_direction: {
       type: 'text'
-    },
+    }
   }
 });
 
@@ -246,7 +246,7 @@ class ProjectRepository extends BaseRepository {
         }
 
         for (const file of files) {
-          if(!file.endsWith('.sqlite')) continue;
+          if (!file.endsWith('.sqlite')) continue;
           const sourceName = file.slice(app.getName().length + 1, -7);
           const corpora = await this.getAllCorpora(sourceName);
           sources.push({ id: sourceName, corpora: corpora });
@@ -264,9 +264,9 @@ class ProjectRepository extends BaseRepository {
       .createQueryBuilder()
       .delete()
       .from(WordsOrParts)
-      .where("words_or_parts.side = :side", {side: "targets"})
+      .where('words_or_parts.side = :side', { side: 'targets' })
       .execute();
-  }
+  };
 
   createSourceFromProject = async (project) => {
     try {
@@ -281,9 +281,9 @@ class ProjectRepository extends BaseRepository {
       return {
         id: project.id,
         sources
-      }
-    } catch(ex) {
-      console.error("createSourceFromProject()", ex);
+      };
+    } catch (ex) {
+      console.error('createSourceFromProject()', ex);
     }
   };
 
@@ -304,22 +304,22 @@ class ProjectRepository extends BaseRepository {
       return {
         id: project.id,
         sources
-      }
-    } catch(err) {
-      console.error("updateSourceFromProject()", err);
+      };
+    } catch (err) {
+      console.error('updateSourceFromProject()', err);
     }
   };
 
   removeSource = async (projectId) => {
     fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
-      if(err) {
+      if (err) {
         console.error('There was an error removing the data source: ', err);
       }
-      let sourceFile = "";
+      let sourceFile = '';
       for (let file of files) {
-        if(!file.endsWith('.sqlite')) continue;
+        if (!file.endsWith('.sqlite')) continue;
         const sourceName = file.slice(app.getName().length + 1, -7);
-        if(sourceName === projectId) {
+        if (sourceName === projectId) {
           sourceFile = sourceName;
           break;
         }
@@ -328,7 +328,7 @@ class ProjectRepository extends BaseRepository {
         fs.unlink(path.join(this.getDataDirectory(), ProjectDatabaseDirectory, sourceFile), () => null);
       }
     });
-  }
+  };
 
   createDataSource = async (sourceName) => {
     this.logDatabaseTime('createDataSource()');
@@ -406,10 +406,10 @@ class ProjectRepository extends BaseRepository {
               code: c.language.code,
               text_direction: c.language.textDirection,
               font_family: c.language.fontFamily
-            })), ["code"]);
+            })), ['code']);
           await dataSource.getRepository(CorporaTableName)
             .insert(corpora.map(this.convertCorpusToDataSource));
-            break;
+          break;
         default:
           await dataSource.getRepository(table)
             .insert(itemOrItems);
@@ -627,9 +627,9 @@ class ProjectRepository extends BaseRepository {
       const entityManager = (await this.getDataSource(sourceName)).manager;
       const results = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
                                                                                   json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
-                                                                                   json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
                                                                            from 'links__${firstTableName}_words' t1
-                                                                               left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
+                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
                                                                            where t1.word_id = ?;`, [queryWordId])));
       this.logDatabaseTimeLog('findLinksByWordId()', sourceName, linkSide, wordId, results?.length ?? 0);
       return results;
@@ -663,10 +663,10 @@ class ProjectRepository extends BaseRepository {
       const entityManager = (await this.getDataSource(sourceName)).manager;
       const results = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
                                                                                   json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
-                                                                                   json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
                                                                            from words_or_parts w
                                                                                     inner join 'links__${firstTableName}_words' t1 on w.id = t1.word_id
-                                                                               left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
+                                                                                    left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
                                                                            where w.side = ?
                                                                              and w.position_book = ?
                                                                              and w.position_chapter = ?
@@ -945,15 +945,16 @@ class ProjectRepository extends BaseRepository {
       const dataSource = await this.getDataSource(sourceName);
       switch (table) {
         case LinkTableName:
-          await dataSource
-            .getRepository(LinkTableName)
-            .delete(itemIdOrIds);
+          const linkIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
           await dataSource
             .getRepository(LinksToSourceWordsName)
-            .delete(itemIdOrIds);
+            .delete(linkIds);
           await dataSource
             .getRepository(LinksToTargetWordsName)
-            .delete(itemIdOrIds);
+            .delete(linkIds);
+          await dataSource
+            .getRepository(LinkTableName)
+            .delete(linkIds);
           break;
         default:
           await dataSource
@@ -1048,8 +1049,8 @@ class ProjectRepository extends BaseRepository {
               AND l.targets_text <> ''
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, {
-          frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
-        })};`;
+                    frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
+                })};`;
         return await em.query(sourceQueryTextWLang);
       case 'targets':
         const targetQueryText = `
@@ -1080,11 +1081,11 @@ class ProjectRepository extends BaseRepository {
   corporaGetLinksByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
     const em = (await this.getDataSource(sourceName)).manager;
     const linkIds = (await em.query(`
-        SELECT l.id id,
+        SELECT l.id        id,
                ltw.word_id word_id
         FROM links l
-            INNER JOIN links__target_words ltw
-                        ON ltw.link_id = l.id
+                 INNER JOIN links__target_words ltw
+                            ON ltw.link_id = l.id
         WHERE l.sources_text = '${sourcesText}'
           AND l.targets_text = '${targetsText}'
             ${this._buildOrderBy(sort, { ref: 'word_id' })};`))
@@ -1104,4 +1105,4 @@ class ProjectRepository extends BaseRepository {
 
 module.exports = {
   ProjectRepository
-}
+};

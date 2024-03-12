@@ -61,8 +61,8 @@ export class LinksTable extends VirtualTable<Link> {
   }
 
   setSourceName = (sourceName?: string) => {
-    this.sourceName = sourceName ?? this.sourceName
-  }
+    this.sourceName = sourceName ?? this.sourceName;
+  };
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
     if (!isForced && this._isDatabaseBusy()) {
@@ -80,7 +80,10 @@ export class LinksTable extends VirtualTable<Link> {
 
       await this.checkDatabase();
       // @ts-ignore
-      return await window.databaseApi.save(this.sourceName, LinkTableName, newLink);
+      const result = await window.databaseApi.save(this.sourceName, LinkTableName, newLink);
+      // @ts-ignore
+      await window.databaseApi.updateLinkText(this.sourceName, newLink.id);
+      return result;
     } catch (e) {
       return false;
     } finally {
@@ -141,7 +144,7 @@ export class LinksTable extends VirtualTable<Link> {
 
     this._logDatabaseTime('saveAll(): complete');
     this._incrDatabaseBusyCtr();
-    this.databaseStatus.busyInfo.userText = `Saving ${inputLinks.length.toLocaleString()} links...`;
+    this.databaseStatus.busyInfo.userText = `Loading ${inputLinks.length.toLocaleString()} links...`;
     try {
       await this.removeAll(true, true);
       await this.checkDatabase();
@@ -172,18 +175,19 @@ export class LinksTable extends VirtualTable<Link> {
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
         const toLinkTitle = LinksTable.createLinkTitle(chunk[chunk.length - 1]);
         busyInfo.userText = chunk.length === busyInfo.progressMax
-          ? `Saved ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} links)...`
-          : `Saved ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} links)...`;
+          ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} links)...`
+          : `Loading ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} links)...`;
 
         this._logDatabaseTimeLog('saveAll(): saved', busyInfo.progressCtr, busyInfo.progressMax);
       }
       this._logDatabaseTimeEnd('saveAll(): saved');
 
-      busyInfo.userText = `Updating link text...`;
+      this._logDatabaseTime('saveAll(): text');
+      busyInfo.userText = 'Updating link text...';
       // @ts-ignore
       await window.databaseApi.updateAllLinkText(this.sourceName);
+      this._logDatabaseTimeEnd('saveAll(): text');
 
-      busyInfo.userText = `Saving project...`;
       return true;
     } catch (ex) {
       console.error('error saving all links', ex);
@@ -271,9 +275,9 @@ export class LinksTable extends VirtualTable<Link> {
 
   protected override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
-    await this.linksByWordIdCache.reset();
-    await this.linksByBCVCache.reset();
-    await this.linksByLinkIdCache.reset();
+    // await this.linksByWordIdCache.reset();
+    // await this.linksByBCVCache.reset();
+    // await this.linksByLinkIdCache.reset();
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
@@ -441,7 +445,7 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
 export const useSaveLink = (link?: Link, saveKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
   }>({});
@@ -482,7 +486,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
 export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -528,7 +532,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
 export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpdate: boolean = true) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -573,7 +577,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
  * @param existsKey Unique key to control check operation (optional; undefined = will check).
  */
 export const useLinkExists = (linkId?: string, existsKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
   }>({});
@@ -613,7 +617,7 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = true).
  */
 export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean = true) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -658,7 +662,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
 export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoPreload = false, findKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -709,7 +713,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
 export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -755,7 +759,7 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
  * @param getKey Unique key to control get operation (optional; undefined = no get).
  */
 export const useGetAllLinks = (getKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -794,7 +798,7 @@ export const useGetAllLinks = (getKey?: string) => {
  * @param getKey Unique key to control get operation (optional; undefined = will get).
  */
 export const useGetLink = (linkId?: string, getKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link | undefined;
   }>({});
@@ -835,7 +839,7 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = false).
  */
 export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
   }>({});
@@ -874,7 +878,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
  * @param checkKey Unique key to control check operation (optional; undefined = no check).
  */
 export const useCheckDatabase = (checkKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] =
     useState<{
       result?: LinksTable,
@@ -910,7 +914,7 @@ export const useCheckDatabase = (checkKey?: string) => {
  * Database status hook.
  */
 export const useDatabaseStatus = (checkKey?: string) => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const [status, setStatus] =
     useState<{
       result: DatabaseStatus
@@ -941,11 +945,11 @@ export const useDatabaseStatus = (checkKey?: string) => {
 };
 
 export const useDataLastUpdated = () => {
-  const {preferences} = useContext(AppContext);
-  const [ lastUpdate, setLastUpdate ] = useState(0);
+  const { preferences } = useContext(AppContext);
+  const [lastUpdate, setLastUpdate] = useState(0);
 
   useInterval(() => {
-    const linksTableInstance = LinksTable.createLinksTable(preferences?.currentProject ?? DefaultProjectName)
+    const linksTableInstance = LinksTable.createLinksTable(preferences?.currentProject ?? DefaultProjectName);
     if (linksTableInstance.lastUpdate && linksTableInstance.lastUpdate !== lastUpdate) {
       setLastUpdate(linksTableInstance.lastUpdate);
     }

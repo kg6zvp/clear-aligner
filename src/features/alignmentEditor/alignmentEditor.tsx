@@ -15,7 +15,7 @@ interface AlignmentEditorProps {
   showNavigation?: boolean;
 }
 
-export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation = true}) => {
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true }) => {
   const layoutCtx = useContext(LayoutContext);
   const [availableWords, setAvailableWords] = useState([] as Word[]);
   const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
@@ -26,16 +26,19 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
 
   const updatePreferences = React.useCallback((pref: Partial<UserPreference>) => {
     appCtx.setPreferences((p: UserPreference | undefined) => {
-      const updatedPreferences = {...((p ?? {}) as UserPreference), ...pref};
+      const updatedPreferences = { ...((p ?? {}) as UserPreference), ...pref };
       appCtx.projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
       return updatedPreferences;
     });
-  }, [appCtx])
+  }, [appCtx]);
 
   // set current reference to default if none set
   useEffect(() => {
     if (!appCtx.preferences?.bcv) {
-      appCtx.setPreferences((p: UserPreference | undefined) => ({...(p ?? {}) as UserPreference, bcv: new BCVWP(45, 5, 3)})); // set current reference to default
+      appCtx.setPreferences((p: UserPreference | undefined) => ({
+        ...(p ?? {}) as UserPreference,
+        bcv: new BCVWP(45, 5, 3)
+      })); // set current reference to default
     }
   }, [appCtx, appCtx.preferences, appCtx.setPreferences, updatePreferences]);
 
@@ -54,10 +57,10 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
   const [sourceName, setSourceName] = React.useState(appCtx.preferences?.currentProject);
 
   React.useEffect(() => {
-    if(sourceName !== appCtx.preferences?.currentProject) {
+    if (sourceName !== appCtx.preferences?.currentProject) {
       setSourceName(appCtx.preferences?.currentProject);
     }
-  }, [appCtx.preferences?.currentProject]);
+  }, [sourceName, appCtx.preferences?.currentProject]);
 
   React.useEffect(() => {
     const loadSourceWords = async () => {
@@ -77,7 +80,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
     setAvailableWords,
     appCtx.setPreferences,
     sourceName,
-    setSelectedCorporaContainers,
+    setSelectedCorporaContainers
   ]);
 
   useEffect(() => {
@@ -97,7 +100,10 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
               disabled={!availableWords || availableWords.length < 1}
               words={availableWords}
               currentPosition={appCtx.preferences?.bcv ?? undefined}
-              onNavigate={bcv => appCtx.setPreferences((p: UserPreference | undefined) => ({...(p ?? {}) as UserPreference, bcv}))}
+              onNavigate={bcv => appCtx.setPreferences((p: UserPreference | undefined) => ({
+                ...(p ?? {}) as UserPreference,
+                bcv
+              }))}
             />
           </div>
         )
