@@ -66,6 +66,8 @@ export class LinksTable extends VirtualTable<Link> {
     this.sourceName = sourceName ?? this.sourceName;
   };
 
+  getSourceName = () => this.sourceName;
+
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
     if (!isForced && this._isDatabaseBusy()) {
       return false;
@@ -304,11 +306,21 @@ export class LinksTable extends VirtualTable<Link> {
     }
   };
 
-  protected override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
+  reset = async () => {
+    try {
+      await this.linksByWordIdCache.reset();
+      await this.linksByBCVCache.reset();
+      await this.linksByLinkIdCache.reset();
+      return true;
+    } catch (e) {
+      console.error("Error clearing links table cache: ", e);
+      return false;
+    }
+  }
+
+  override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
-    await this.linksByWordIdCache.reset();
-    await this.linksByBCVCache.reset();
-    await this.linksByLinkIdCache.reset();
+    await this.reset();
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
@@ -902,7 +914,7 @@ export const useDatabaseStatus = (checkKey?: string) => {
     }
     prevCheckKey.current = workCheckKey;
     const prevStatus = status.result;
-    const currStatus = linksTable.getDatabaseStatus();
+    const currStatus = linksTable?.getDatabaseStatus?.();
     if (currStatus.busyInfo.isBusy
       || !_.isEqual(prevStatus, currStatus)) {
       const endStatus = {

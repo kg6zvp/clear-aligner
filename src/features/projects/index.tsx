@@ -75,6 +75,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [currentProject, project]);
 
   const updateCurrentProject = React.useCallback(() => {
+    projectState.linksTable.reset().catch(console.error);
+    projectState.linksTable.setSourceName(project.id);
     setPreferences(() => {
       const updatedPreference = { ...(preferences ?? {}), currentProject: project.id, initialized: false } as UserPreference;
       projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreference);
