@@ -10,7 +10,7 @@ const CorporaTableName = 'corpora';
 const LanguageTableName = 'language';
 const LinksToSourceWordsName = 'links__source_words';
 const LinksToTargetWordsName = 'links__target_words';
-const PrimaryProjectDatabaseId = 'default';
+const DefaultProjectName = 'default';
 const ProjectDatabaseDirectory = 'projects';
 
 class Link {
@@ -181,7 +181,9 @@ class ProjectRepository extends BaseRepository {
     this.getDataSource = async (sourceName) =>
       await this.getDataSourceWithEntities(sourceName,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
-        'sql/clear-aligner-template.sqlite',
+        DefaultProjectName === sourceName
+          ? 'sql/projects/clear-aligner-default.sqlite'
+          : 'sql/clear-aligner-template.sqlite',
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
 
@@ -1059,7 +1061,7 @@ class ProjectRepository extends BaseRepository {
         WHERE l.sources_text = ?
           AND l.targets_text = ?
         GROUP BY id
-            ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [ sourcesText , targetsText ]))
+            ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [sourcesText, targetsText]))
       .map((link) => link.id);
     const links = [];
     for (const linkId of linkIds) {
