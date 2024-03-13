@@ -23,10 +23,6 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
-  const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
-    alignmentFile?: AlignmentFile,
-    saveKey?: string
-  }>();
   const [linkSaveState, setLinkSaveState] = useState<{
     link?: Link,
     saveKey?: string,
@@ -46,7 +42,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
   useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
   const { result: allLinks } = useGetAllLinks(getAllLinksKey);
@@ -116,8 +111,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       (link) =>
         ({
           id: link.id,
-          sources: link.sources,
-          targets: link.targets
+          source: link.sources,
+          target: link.targets
         } as AlignmentRecord)
     )
       .forEach((record) => alignmentExport.records.push(record));
@@ -281,6 +276,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       </ButtonGroup>
 
       <UploadAlignmentGroup
+        allowImport
         containers={props.containers}
         setGetAllLinksKey={() => {
           setGetAllLinksKey(uuid());

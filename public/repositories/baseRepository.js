@@ -53,7 +53,7 @@ class BaseRepository {
     if (sourceStatus.isLoaded) {
       return sourceStatus.dataSource;
     }
-    this.logDatabaseTime('getDataSource()');
+    this.logDatabaseTime('getDataSourceWithEntities()');
     try {
       while (sourceStatus.isLoading) {
         await new Promise(resolve => setTimeout(resolve, BaseRepository.DB_WAIT_IN_MS));
@@ -74,7 +74,7 @@ class BaseRepository {
         fs.copyFileSync(generationFile, databaseFile);
       }
 
-      this.logDatabaseTimeLog('getDataSource()', sourceName, databaseFile);
+      this.logDatabaseTimeLog('getDataSourceWithEntities()', sourceName, databaseFile);
       const newDataSource = new DataSource({
         type: 'better-sqlite3',
         database: databaseFile,
@@ -94,10 +94,10 @@ class BaseRepository {
 
       return sourceStatus.dataSource;
     } catch (ex) {
-      console.error('getDataSource()', ex);
+      console.error('getDataSourceWithEntities()', ex);
     } finally {
       sourceStatus.isLoading = false;
-      this.logDatabaseTimeEnd('getDataSource()');
+      this.logDatabaseTimeEnd('getDataSourceWithEntities()');
     }
   };
 }

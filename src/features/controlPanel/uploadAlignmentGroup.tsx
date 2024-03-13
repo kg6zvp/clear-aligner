@@ -10,12 +10,11 @@ import uuid from 'uuid-random';
 const UploadAlignmentGroup = ({containers, size, allowImport, setGetAllLinksKey}: {containers: CorpusContainer[], size?: string, allowImport?: boolean; setGetAllLinksKey: CallableFunction}) => {
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
     alignmentFile?: AlignmentFile,
     saveKey?: string
   }>();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { isPending: isSaveAlignmentFilePending } = useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
 
   return (

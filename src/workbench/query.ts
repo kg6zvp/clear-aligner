@@ -56,7 +56,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
           corpusId: refCorpus.id,
           text: values[headerMap['text']] || values[headerMap['lemma']] || '',
           position: pos,
-          sourceVerse: values[headerMap['source_verse']] || ""
+          sourceVerse: values[headerMap['source_verse']] || ''
         };
 
         wordKey = word.text.toLowerCase();
@@ -180,7 +180,6 @@ export const getCorpusFromDatabase = async (
       inputCorpus.side,
       inputCorpus.id,
       WordQueryBatchSize, offset)) as Word[]);
-    // no batch returned
     if (!words
       || words.length < 1) {
       break;
@@ -203,11 +202,10 @@ export const getCorpusFromDatabase = async (
       };
       inputCorpus.words.push(word);
     }
-    // this was the last batch
+    offset += words.length;
     if (words.length < WordQueryBatchSize) {
       break;
     }
-    offset += WordQueryBatchSize;
   }
   return inputCorpus;
 };

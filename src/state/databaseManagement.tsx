@@ -16,7 +16,7 @@ export enum IndexedChangeType {
  * PouchDB "tables" (databases)
  */
 export interface ProjectState {
-  linksTable?: LinksTable;
+  linksTable: LinksTable;
   projectTable: ProjectTable;
   userPreferenceTable: UserPreferenceTable;
   linksIndexes?: {

@@ -730,7 +730,7 @@ class ProjectRepository extends BaseRepository {
                                                   where w.side = ?
                                                     and w.corpus_id = ?
                                                   order by w.id
-                                                  limit ? offset ?;`, [linkSide, corpusId, wordLimit, wordSkip]));
+                                                  limit ? offset ?;`, [linkSide, corpusId, wordLimit, wordSkip ?? 0]));
       this.logDatabaseTimeLog('getAllWordsByCorpus()', sourceName, linkSide, corpusId, wordLimit, wordSkip, results?.length ?? results);
       return results;
     } catch (ex) {
@@ -774,18 +774,19 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAllLinks = async (dataSource) => this.createLinksFromRows((await dataSource.manager.query(`
-      select s.link_id,
-             'sources' as                                         type,
-             json_group_array(replace(s.word_id, 'sources:', '')) words
-      from links__source_words s
-      group by s.link_id
-      union
-      select t.link_id,
-             'targets' as                                         type,
-             json_group_array(replace(t.word_id, 'targets:', '')) words
-      from links__target_words t
-      group by t.link_id;`)));
+  getAllLinks = async (dataSource, itemLimit, itemSkip) => this.createLinksFromRows((await dataSource.manager.query(`select q.link_id, q.type, q.words
+                                                                                                                     from (select s.link_id,
+                                                                                                                                  'sources' as                                         type,
+                                                                                                                                  json_group_array(replace(s.word_id, 'sources:', '')) words
+                                                                                                                           from links__source_words s
+                                                                                                                           group by s.link_id
+                                                                                                                           union
+                                                                                                                           select t.link_id,
+                                                                                                                                  'targets' as                                         type,
+                                                                                                                                  json_group_array(replace(t.word_id, 'targets:', '')) words
+                                                                                                                           from links__target_words t
+                                                                                                                           group by t.link_id) q
+                                                                                                                     limit ? offset ?`, [itemLimit, itemSkip])));
 
   updateLinkText = async (sourceName, linkIdOrIds) => {
     if (!linkIdOrIds) {
@@ -888,24 +889,29 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAll = async (sourceName, table) => {
+  getAll = async (sourceName, table, itemLimit, itemSkip) => {
+    if (!itemLimit) {
+      return [];
+    }
     this.logDatabaseTime('getAll()');
     try {
       const dataSource = await this.getDataSource(sourceName);
       let result;
       switch (table) {
         case LinkTableName:
-          result = await this.getAllLinks(dataSource);
+          result = await this.getAllLinks(dataSource, itemLimit, itemSkip);
           break;
         default:
           result = (await dataSource
             .getRepository(table)
             .createQueryBuilder()
+            .take(itemLimit)
+            .skip(itemSkip ?? 0)
             .getMany())
             .filter(Boolean);
           break;
       }
-      this.logDatabaseTimeLog('getAll()', sourceName, table, result.length);
+      this.logDatabaseTimeLog('getAll()', sourceName, table, itemLimit, itemSkip, result.length);
       return result;
     } catch (ex) {
       console.error('getAll()', ex);

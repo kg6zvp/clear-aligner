@@ -11,6 +11,6 @@ export interface AlignmentFile {
 
 export interface AlignmentRecord {
   id: string;
-  sources: string[];
-  targets: string[];
+  source: string[];
+  target: string[];
 }

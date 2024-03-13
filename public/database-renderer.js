@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   save: (database, table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:save`, database, table, itemOrItems),
   existsById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:existsById`, database, table, itemId),
   findByIds: (database, table, itemIds) => ipcRenderer.invoke(`${ChannelPrefix}:findByIds`, database, table, itemIds),
-  getAll: (database, table) => ipcRenderer.invoke(`${ChannelPrefix}:getAll`, database, table),
+  getAll: (database, table, linkLimit, linkSkip) => ipcRenderer.invoke(`${ChannelPrefix}:getAll`, database, table, linkLimit, linkSkip),
   findOneById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:findOneById`, database, table, itemId),
   deleteByIds: (database, table, itemIdOrIds) => ipcRenderer.invoke(`${ChannelPrefix}:deleteByIds`, database, table, itemIdOrIds),
   findBetweenIds: (database, table, fromId, toId) => ipcRenderer.invoke(`${ChannelPrefix}:findBetweenIds`, database, table, fromId, toId),
