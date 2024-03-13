@@ -2,7 +2,6 @@ const path = require('path');
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const isDev = require('electron-is-dev');
 const { setUpIpcMain } = require(path.join(__dirname, '/database-main.js'));
-const { default: installExtension, REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } = require('electron-devtools-installer');
 
 function createWindow() {
   // Create the browser window.
@@ -45,12 +44,6 @@ function createWindow() {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
-  installExtension(REACT_DEVELOPER_TOOLS)
-    .then((name) => console.log(`Initialized extension ${name}`))
-    .catch((err) => console.error(`Error`, err));
-  installExtension(REDUX_DEVTOOLS)
-    .then((name) => console.log(`Initialized extension ${name}`))
-    .catch((err) => console.error(`Error`, err));
   setUpIpcMain();
   createWindow();
 });

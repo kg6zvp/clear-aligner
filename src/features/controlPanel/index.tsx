@@ -7,7 +7,7 @@ import UploadAlignmentGroup from './uploadAlignmentGroup';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
-import { useGetAllLinks, useRemoveLink, useSaveAlignmentFile, useSaveLink } from '../../state/links/tableManager';
+import { useGetAllLinks, useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, UserPreference } from '../../state/preferences/tableManager';
 

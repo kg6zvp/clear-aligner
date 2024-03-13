@@ -46,8 +46,7 @@ export const VerseDisplay = ({
     String(lastUpdated)
   );
   const { result: allLinks } = useFindLinksByBCV(
-    (onlyLinkIds?.length ?? 0) < 1 ? alignmentSide : undefined,
-    verse.bcvId.book,
+    (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.book : undefined,
     verse.bcvId.chapter,
     verse.bcvId.verse,
     readonly,
@@ -66,7 +65,7 @@ export const VerseDisplay = ({
         : link!.targets) ?? [])
         .forEach(wordId => result.set(wordId, link!)));
     return result;
-  }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
+  }, [allLinks, onlyLink, alignmentSide]);
 
   return (
     <>

@@ -69,6 +69,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
 
     loadSourceWords().catch(console.error);
   }, [
+    appCtx,
     setAvailableWords,
     setSelectedCorporaContainers,
     appCtx.preferences?.initialized

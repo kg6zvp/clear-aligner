@@ -1,12 +1,12 @@
 #!/bin/bash -e
 pushd "$(dirname "$0")" || exit
 
-templateDbPath="../clear-aligner-template.sqlite"
-
 if [[ "$*" == *'-h'* || "$*" == *'--help'* ]]; then
   echo "Usage: ${0} [-h|--help] [--no-remove]"
   exit 0
 fi
+
+templateDbPath="../clear-aligner-template.sqlite"
 
 if [[ -f "${templateDbPath}" && "$*" == *'--no-remove'* ]]; then
   echo "Template database already exists: '${templateDbPath}' (not recreating)."
@@ -45,8 +45,7 @@ else
   echo "...Template database created: '${templateDbPath}'."
 fi
 
-defaultDbFile="../projects/clear-aligner-default.sqlite"
-defaultDbPath=$(realpath "${defaultDbFile}")
+defaultDbPath="../projects/clear-aligner-default.sqlite"
 
 if [[ -f "${defaultDbPath}" && "$*" == *'--no-remove'* ]]; then
   echo "Default database already exists: '${defaultDbPath}' (not recreating)."
@@ -75,8 +74,7 @@ else
   echo "...Default database created: '${defaultDbPath}'."
 fi
 
-userDbFile="../clear-aligner-user.sqlite"
-userDbPath=$(realpath "${userDbFile}")
+userDbPath="../clear-aligner-user.sqlite"
 
 if [[ -f "${userDbPath}" && "$*" == *'--no-remove'* ]]; then
   echo "User database already exists: '${userDbPath}' (not recreating)."

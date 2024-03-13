@@ -7,7 +7,12 @@ import { FileDownload, FileUpload } from '@mui/icons-material';
 import uuid from 'uuid-random';
 
 
-const UploadAlignmentGroup = ({containers, size, allowImport, setGetAllLinksKey}: {containers: CorpusContainer[], size?: string, allowImport?: boolean; setGetAllLinksKey: CallableFunction}) => {
+const UploadAlignmentGroup = ({ containers, size, allowImport, setGetAllLinksKey }: {
+  containers: CorpusContainer[],
+  size?: string,
+  allowImport?: boolean;
+  setGetAllLinksKey: CallableFunction
+}) => {
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -15,7 +20,7 @@ const UploadAlignmentGroup = ({containers, size, allowImport, setGetAllLinksKey}
     alignmentFile?: AlignmentFile,
     saveKey?: string
   }>();
-  const { isPending: isSaveAlignmentFilePending } = useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
 
   return (
     <ButtonGroup>
@@ -45,7 +50,7 @@ const UploadAlignmentGroup = ({containers, size, allowImport, setGetAllLinksKey}
               }}
             />
             <Button
-              size={size as "medium" | "small" | undefined}
+              size={size as 'medium' | 'small' | undefined}
               disabled={containers.length === 0 || !allowImport}
               variant="contained"
               onClick={() => {
@@ -61,7 +66,7 @@ const UploadAlignmentGroup = ({containers, size, allowImport, setGetAllLinksKey}
       <Tooltip title="Save Alignment Data" arrow describeChild>
           <span>
             <Button
-              size={size as "medium" | "small" | undefined}
+              size={size as 'medium' | 'small' | undefined}
               disabled={containers.length === 0}
               variant="contained"
               onClick={() => setGetAllLinksKey()}
@@ -71,7 +76,7 @@ const UploadAlignmentGroup = ({containers, size, allowImport, setGetAllLinksKey}
           </span>
       </Tooltip>
     </ButtonGroup>
-  )
-}
+  );
+};
 
 export default UploadAlignmentGroup;
