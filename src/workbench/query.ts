@@ -189,9 +189,7 @@ export const getCorpusFromDatabase = async (
       break;
     }
     for (const word of words) {
-      if (!word.text
-        || (word.text ?? '')
-          .match(/^\p{P}$/gu)) {
+      if (!word.text) {
         continue;
       }
       const verseId = (word.id ?? EmptyWordId).substring(0, 8);
