@@ -315,16 +315,17 @@ class ProjectRepository extends BaseRepository {
       if (err) {
         console.error('There was an error removing the data source: ', err);
       }
-      let sourceFile = '';
+      const sourceFiles = [];
       for (let file of files) {
-        if (!file.endsWith('.sqlite')) continue;
-        const sourceName = file.slice(app.getName().length + 1, -7);
-        if (sourceName === projectId) {
-          sourceFile = sourceName;
-          break;
+        if (!(file.endsWith('.sqlite') || file.endsWith('.sqlite-shm') || file.endsWith('.sqlite-wal'))) {
+          continue;
+        }
+        const sourceName = file.slice(app.getName().length + 1);
+        if (sourceName.startsWith(projectId)) {
+          sourceFiles.push(file);
         }
       }
-      if (sourceFile) {
+      for (const sourceFile of sourceFiles) {
         fs.unlink(path.join(this.getDataDirectory(), ProjectDatabaseDirectory, sourceFile), () => null);
       }
     });
