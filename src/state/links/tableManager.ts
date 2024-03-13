@@ -222,18 +222,18 @@ export class LinksTable extends VirtualTable<Link> {
     });
   };
 
-  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    const cacheKey = [side, bookNum, chapterNum, verseNum].join('|');
+  findByBCV = async (bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
+    const cacheKey = [bookNum, chapterNum, verseNum].join('|');
     return this.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
-        .findLinksByBCV(this.sourceName, side, bookNum, chapterNum, verseNum);
+        .findLinksByBCV(this.sourceName, bookNum, chapterNum, verseNum);
     });
   };
 
-  preloadByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
+  preloadByBCV = (bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
     for (const verseCtr of this._createVersePreloadRange(verseNum, skipVerseNum)) {
-      void this.findByBCV(side, bookNum, chapterNum, verseCtr);
+      void this.findByBCV(bookNum, chapterNum, verseCtr);
     }
   };
 
@@ -707,7 +707,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
           && wordId.book
           && wordId.chapter
           && wordId.verse) {
-          linksTable.preloadByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
+          linksTable.preloadByBCV(wordId.book, wordId.chapter, wordId.verse, true);
         }
         databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
       });
@@ -730,7 +730,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
  * @param verseNum Verse number  (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
+export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
   const { projectState: { linksTable } } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
@@ -739,8 +739,7 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
 
   useEffect(() => {
     const workFindKey = findKey ?? uuid();
-    if (!side
-      || !bookNum
+    if (!bookNum
       || !chapterNum
       || !verseNum
       || prevFindKey.current === workFindKey) {
@@ -748,7 +747,7 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByBCV(): status', status);
-    linksTable.findByBCV(side, bookNum, chapterNum, verseNum)
+    linksTable.findByBCV(bookNum, chapterNum, verseNum)
       .then(result => {
         const endStatus = {
           ...status,
@@ -756,11 +755,11 @@ export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapte
         };
         setStatus(endStatus);
         if (!isNoPreload) {
-          linksTable.preloadByBCV(side, bookNum, chapterNum, verseNum, true);
+          linksTable.preloadByBCV(bookNum, chapterNum, verseNum, true);
         }
         databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
       });
-  }, [linksTable, isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
+  }, [linksTable, isNoPreload, prevFindKey, findKey, bookNum, chapterNum, verseNum, status]);
 
   return { ...status };
 };
