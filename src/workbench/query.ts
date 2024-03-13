@@ -2,6 +2,8 @@ import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word }
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 
 import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
+import { AppContextProps } from '../App';
+import { UserPreference } from '../state/preferences/tableManager';
 
 enum InitializationStates {
   UNINITIALIZED,
@@ -210,15 +212,18 @@ export const getCorpusFromDatabase = async (
   return inputCorpus;
 };
 
-export const getAvailableCorporaContainers = async (sourceName?: string, refetch = false): Promise<
+let corpora: CorpusContainer[] = [];
+
+export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Promise<
   CorpusContainer[]
 > => {
-  const corpora: CorpusContainer[] = [];
-  if (initializationState === InitializationStates.UNINITIALIZED || refetch) {
+  if (initializationState !== InitializationStates.INITIALIZING && !appCtx.preferences?.initialized) {
+    corpora = [];
+    appCtx.setPreferences(p => ({...(p ?? {}) as UserPreference, initialized: true}));
     initializationState = InitializationStates.INITIALIZING;
 
     // @ts-ignore
-    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(sourceName ?? DefaultProjectName)) as Corpus[]) ?? []);
+    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject ?? DefaultProjectName)) as Corpus[]) ?? []);
     const corpusPromises: Promise<Corpus>[] = inputCorpora
       .map(inputCorpus =>
         getCorpusFromDatabase({
@@ -228,7 +233,7 @@ export const getAvailableCorporaContainers = async (sourceName?: string, refetch
           wordLocation: new Map<string, Set<BCVWP>>(),
           books: {},
           hasGloss: inputCorpus.side === AlignmentSide.SOURCE
-        }, sourceName));
+        }, appCtx.preferences?.currentProject));
     const outputCorpora: Corpus[] =
       (await Promise.all(corpusPromises));
     outputCorpora.forEach(

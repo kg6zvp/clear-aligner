@@ -54,17 +54,9 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     }
   }, [appCtx.preferences?.bcv, layoutCtx]);
 
-  const [sourceName, setSourceName] = React.useState(appCtx.preferences?.currentProject);
-
-  React.useEffect(() => {
-    if (sourceName !== appCtx.preferences?.currentProject) {
-      setSourceName(appCtx.preferences?.currentProject);
-    }
-  }, [sourceName, appCtx.preferences?.currentProject]);
-
   React.useEffect(() => {
     const loadSourceWords = async () => {
-      const containers = await getAvailableCorporaContainers(sourceName, true);
+      const containers = await getAvailableCorporaContainers(appCtx);
       const targetCorpora = containers.find(
         (v: CorpusContainer) => v.id === AlignmentSide.TARGET
       );
@@ -78,9 +70,8 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     loadSourceWords().catch(console.error);
   }, [
     setAvailableWords,
-    appCtx.setPreferences,
-    sourceName,
-    setSelectedCorporaContainers
+    setSelectedCorporaContainers,
+    appCtx.preferences?.initialized
   ]);
 
   useEffect(() => {

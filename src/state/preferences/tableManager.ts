@@ -13,6 +13,7 @@ export interface UserPreference {
   page: string;
   showGloss: boolean;
   currentProject: string;
+  initialized?: boolean;
 }
 
 interface UserPreferenceDto {

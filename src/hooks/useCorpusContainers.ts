@@ -9,7 +9,7 @@ export interface Containers {
 }
 
 export const useCorpusContainers = (): Containers => {
-  const {preferences} = useContext(AppContext);
+  const appContextProps = useContext(AppContext);
   const [sourceContainer, setSourceContainer] = useState(
     undefined as CorpusContainer | undefined
   );
@@ -20,7 +20,7 @@ export const useCorpusContainers = (): Containers => {
   useEffect(() => {
     const loadCorpora = async () => {
       const containers: CorpusContainer[] =
-        await getAvailableCorporaContainers(preferences?.currentProject);
+        await getAvailableCorporaContainers(appContextProps);
 
       containers.forEach((container) => {
         if (container.id === AlignmentSide.SOURCE) {
@@ -35,7 +35,7 @@ export const useCorpusContainers = (): Containers => {
       return;
     }
     void loadCorpora();
-  }, [ sourceContainer, setSourceContainer, targetContainer, setTargetContainer, preferences?.currentProject]);
+  }, [sourceContainer, setSourceContainer, targetContainer, setTargetContainer, appContextProps.preferences?.initialized]);
 
   return {
     sourceContainer,

@@ -141,7 +141,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       await projectState.projectTable?.remove?.(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
-        setPreferences((p: UserPreference | undefined) => ({ ...(p ?? {}) as UserPreference, currentProject: '' }));
+        setPreferences((p: UserPreference | undefined) => ({ ...(p ?? {}) as UserPreference, currentProject: '', initialized: false }));
       }
       setOpenConfirmDelete(false);
       handleClose();
