@@ -44,15 +44,14 @@ class BaseRepository {
   };
 
   getDataDirectory = () => {
-    return isDev ? 'sql' : path.join(app.getPath('userData'), sanitize(app.getName()).slice(0, 40));
+    return isDev ? 'sql' : app.getPath('userData');
   };
 
   getSqlDirectory = () => {
     if (isDev) {
       return 'sql';
     }
-    return path.join((isMac ? path.join(app.getAppPath(), 'Contents') : app.getAppPath()),
-      'sql', sanitize(app.getName()).slice(0, 40));
+    return path.join((isMac ? path.join(app.getAppPath(), 'Contents') : app.getAppPath()), 'sql');
   };
 
 
