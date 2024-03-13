@@ -111,22 +111,25 @@ export class ProjectTable extends VirtualTable<Project> {
     } as Project;
   };
 
-  static convertWordToDto = (word: Word, corpus: Corpus) => ({
-    id: `${word.side}:${BCVWP.sanitize(word.id)}`,
-    corpus_id: corpus.id,
-    text: word.text,
-    after: word.after,
-    gloss: word.gloss,
-    position_book: +BCVWP.truncateTo(word.id, BCVWPField.Book),
-    position_chapter: +BCVWP.truncateTo(word.id, BCVWPField.Chapter),
-    position_verse: +BCVWP.truncateTo(word.id, BCVWPField.Verse),
-    position_word: +BCVWP.truncateTo(word.id, BCVWPField.Word),
-    position_part: +BCVWP.truncateTo(word.id, BCVWPField.Part),
-    normalized_text: (word.text || '').toLowerCase(),
-    source_verse_bcvid: word.sourceVerse ?? '',
-    language_id: corpus.language.code,
-    side: word.side
-  });
+  static convertWordToDto = (word: Word, corpus: Corpus) => {
+    const bcv = BCVWP.parseFromString(word.id);
+    return ({
+      id: `${word.side}:${BCVWP.sanitize(word.id)}`,
+      corpus_id: corpus.id,
+      text: word.text,
+      after: word.after,
+      gloss: word.gloss,
+      position_book: bcv.book,
+      position_chapter: bcv.chapter,
+      position_verse: bcv.verse,
+      position_word: bcv.word,
+      position_part: bcv.part,
+      normalized_text: (word.text || '').toLowerCase(),
+      source_verse_bcvid: word.sourceVerse ?? '',
+      language_id: corpus.language.code,
+      side: word.side
+    });
+  };
 
   static convertToDto = (project: Project) => ({
     id: project.id,
