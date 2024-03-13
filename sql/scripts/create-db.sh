@@ -1,12 +1,12 @@
 #!/bin/bash -e
 pushd "$(dirname "$0")" || exit
 
-templateDbPath="../clear-aligner-template.sqlite"
-
 if [[ "$*" == *'-h'* || "$*" == *'--help'* ]]; then
   echo "Usage: ${0} [-h|--help] [--no-remove]"
   exit 0
 fi
+
+templateDbPath="../clear-aligner-template.sqlite"
 
 if [[ -f "${templateDbPath}" && "$*" == *'--no-remove'* ]]; then
   echo "Template database already exists: '${templateDbPath}' (not recreating)."
