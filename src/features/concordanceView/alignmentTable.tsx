@@ -84,6 +84,12 @@ export const AlignmentTable = ({
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
+  const chosenLink: Link|undefined = useMemo(() => {
+    if (!chosenAlignmentLink) return undefined;
+    if (!alignments?.includes(chosenAlignmentLink)) return undefined;
+    return chosenAlignmentLink;
+  }, [alignments, chosenAlignmentLink]);
+
   const loading: boolean = useMemo(
     () => !!alignedWord &&  !alignments,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -177,7 +183,7 @@ export const AlignmentTable = ({
           rowSelection={true}
           rowCount={alignments?.length ?? 0}
           rowSelectionModel={
-            chosenAlignmentLink?.id ? [chosenAlignmentLink.id] : undefined
+            chosenLink?.id ? [chosenLink.id] : undefined
           }
           rows={alignments ?? []}
           columns={columns}

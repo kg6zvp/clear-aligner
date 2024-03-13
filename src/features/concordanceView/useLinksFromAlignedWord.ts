@@ -3,12 +3,13 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { Link } from '../../structs';
 import { useContext, useEffect, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
-import { DefaultProjectName } from '../../state/links/tableManager';
+import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 
 export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
   const {preferences} = useContext(AppContext);
   const db = useDatabase();
+  const lastUpdate = useDataLastUpdated();
   const [links, setLinks] = useState<Link[] | undefined>(undefined);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
     };
 
     void load();
-  }, [db, alignedWord, sort, setLinks, preferences?.currentProject]);
+  }, [db, alignedWord, sort, setLinks, preferences?.currentProject, lastUpdate]);
 
   return links;
 };
