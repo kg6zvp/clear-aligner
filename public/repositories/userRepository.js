@@ -39,7 +39,7 @@ const preferenceEntity = new EntitySchema({
       nullable: true
     },
     show_gloss: {
-      type: 'boolean'
+      type: 'integer'
     }
   },
 });
@@ -61,7 +61,7 @@ class UserRepository extends BaseRepository {
         .getRepository('preference')
         .createQueryBuilder('preference')
         .getMany();
-    return (preferences || []).flatMap(v => v)[0]
+    return (preferences || [])[0]
   };
 
   createOrUpdatePreferences = async (preferenceData) => {

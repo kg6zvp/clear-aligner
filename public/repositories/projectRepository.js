@@ -804,7 +804,7 @@ class ProjectRepository extends BaseRepository {
                                                                       and l.id in (?)
                                                                       and w.normalized_text is not null
                                                                     group by w.position_word
-                                                                    order by w.id)), '');`, [linkIds]);
+                                                                    order by w.id)), '') WHERE links.id in (?);`, [linkIds, linkIds]);
       await entityManager.query(`update links
                                  set targets_text = coalesce((select group_concat(words, ' ')
                                                               from (select group_concat(w.normalized_text, '') words
@@ -815,7 +815,7 @@ class ProjectRepository extends BaseRepository {
                                                                       and l.id in (?)
                                                                       and w.normalized_text is not null
                                                                     group by w.position_word
-                                                                    order by w.id)), '');`, [linkIds]);
+                                                                    order by w.id)), '') WHERE links.id in (?);`, [linkIds, linkIds]);
       this.logDatabaseTimeLog('updateLinkText()', sourceName, linkIdOrIds);
       return true;
     } catch (ex) {
@@ -1045,14 +1045,14 @@ class ProjectRepository extends BaseRepository {
                                 ON l.id = ltw.link_id
                      INNER JOIN words_or_parts tw
                                 ON tw.id = ltw.word_id
-            WHERE sw.normalized_text = '${normalizedText}'
+            WHERE sw.normalized_text = ?
               AND sw.side = 'sources'
               AND l.targets_text <> ''
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, {
                     frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
                 })};`;
-        return await em.query(sourceQueryTextWLang);
+        return await em.query(sourceQueryTextWLang, [normalizedText]);
       case 'targets':
         const targetQueryText = `
             SELECT tw.normalized_text   t,
@@ -1070,12 +1070,12 @@ class ProjectRepository extends BaseRepository {
                                 ON l.id = lsw.link_id
                      INNER JOIN words_or_parts sw
                                 ON sw.id = lsw.word_id
-            WHERE tw.normalized_text = '${normalizedText}'
+            WHERE tw.normalized_text = ?
               AND tw.side = 'targets'
               AND l.sources_text <> ''
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
-        return await em.query(targetQueryText);
+        return await em.query(targetQueryText, [normalizedText]);
     }
   };
 
