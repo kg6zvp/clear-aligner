@@ -29,6 +29,7 @@ import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import _ from 'lodash';
+import useDatabaseStatusMessage from '../../utils/useDatabaseStatusMessage';
 
 
 enum TextDirection {
@@ -53,6 +54,7 @@ const getInitialProjectState = (): Project => ({
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
+  const databaseStatusDialog = useDatabaseStatusMessage()
   const dispatch = useAppDispatch();
   const [loading, setLoading] = React.useState(false);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
@@ -164,6 +166,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
 
   return (
     <>
+      {databaseStatusDialog}
       <Dialog
         open={open}
         onClose={handleClose}
