@@ -8,6 +8,6 @@ CREATE TABLE IF NOT EXISTS "preference"
     alignment_view  TEXT not null,
     page            TEXT not null,
     current_project TEXT not null,
-    show_gloss      TEXT not null
+    show_gloss      integer not null
 );
 COMMIT;
