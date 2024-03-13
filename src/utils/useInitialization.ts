@@ -44,7 +44,6 @@ const useInitialization = () => {
         });
       }).then(() => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
-          console.log("preferences: ", res)
           setPreferences({
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject ?? projects?.[0]?.id ?? ""
