@@ -720,7 +720,7 @@ class ProjectRepository extends BaseRepository {
                                                          l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
-      this.logDatabaseTimeLog('getAllCorpora()', results?.length ?? results);
+      this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({
