@@ -59,6 +59,7 @@ export const WordDisplay = ({
             <GlossSegment
               readonly={readonly}
               suppressAfter={suppressAfter}
+              links={links}
               parts={parts}
               corpus={corpus}
               allowGloss={allowGloss}
