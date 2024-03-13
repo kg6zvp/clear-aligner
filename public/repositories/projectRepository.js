@@ -1097,6 +1097,7 @@ class ProjectRepository extends BaseRepository {
                             ON ltw.link_id = l.id
         WHERE l.sources_text = '${sourcesText}'
           AND l.targets_text = '${targetsText}'
+            GROUP BY id
             ${this._buildOrderBy(sort, { ref: 'word_id' })};`))
       .map((link) => link.id);
     const links = [];
@@ -1108,7 +1109,7 @@ class ProjectRepository extends BaseRepository {
 
   _buildOrderBy = (sort, fieldMap) => {
     if (!sort || !sort.field || !sort.sort) return '';
-    return `order by ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
+    return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
 }
 

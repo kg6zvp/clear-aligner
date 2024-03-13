@@ -29,7 +29,7 @@ export const ConcordanceView = () => {
     field: 'frequency',
     sort: 'desc'
   } as GridSortItem | null);
-  const {pivotWords, refetch} = usePivotWords(wordSource, wordFilter, pivotWordSortData);
+  const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);
@@ -264,7 +264,6 @@ export const ConcordanceView = () => {
                   setSelectedAlignedWord(null);
                   setSelectedAlignmentLink(null);
                   setSelectedPivotWord(undefined);
-                  refetch();
                 }
               }}
             />
