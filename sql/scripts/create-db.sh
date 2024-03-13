@@ -17,6 +17,7 @@ else
   rm -fv "${templateDbPath}"
   rm -fv "${templateDbPath}-shm"
   rm -fv "${templateDbPath}-wal"
+  rm -fv "${templateDbPath}-journal"
   python3 ./create-db.py \
     -of "${templateDbPath}" \
     -sf "create-template-db.sql"
@@ -58,6 +59,7 @@ else
   rm -fv "${defaultDbPath}"
   rm -fv "${defaultDbPath}-shm"
   rm -fv "${defaultDbPath}-wal"
+  rm -fv "${defaultDbPath}-journal"
   cp -fv "${templateDbPath}" \
     "${defaultDbPath}"
   python3 ./create-db.py \
@@ -89,6 +91,7 @@ else
   rm -fv "${userDbPath}"
   rm -fv "${userDbPath}-shm"
   rm -fv "${userDbPath}-wal"
+  rm -fv "${userDbPath}-journal"
   python3 ./create-db.py \
     -of "${userDbPath}" \
     -sf "create-user-db.sql"
