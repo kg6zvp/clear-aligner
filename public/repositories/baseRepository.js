@@ -51,7 +51,7 @@ class BaseRepository {
     if (isDev) {
       return 'sql';
     }
-    return path.join((isMac ? path.join(app.getPath('exe'), '/../') : app.getPath('exe')), 'sql');
+    return path.join((isMac ? path.join(app.getPath('exe'), '..') : app.getPath('exe')), 'sql');
   };
 
 
