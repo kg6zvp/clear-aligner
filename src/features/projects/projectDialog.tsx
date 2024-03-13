@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import {
   Autocomplete,
   Box,
@@ -61,6 +61,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
   const [fileContent, setFileContent] = React.useState('');
   const [projectUpdated, setProjectUpdated] = React.useState(false);
+
+  const languageOptions = useMemo(() => ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])].sort((a, b) => a.localeCompare(b)), [ISO6393]);
 
   const allowDelete = React.useMemo(() => projectId !== DefaultProjectName, [projectId]);
 
@@ -199,7 +201,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                   size="small"
                   fullWidth
                   disablePortal
-                  options={['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])].sort((a, b) => a.localeCompare(b))}
+                  options={languageOptions}
                   ListboxProps={{
                     style: {
                       maxHeight: 250
