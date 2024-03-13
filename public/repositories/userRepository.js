@@ -42,7 +42,7 @@ class UserRepository extends BaseRepository {
       await this.getDataSourceWithEntities(
         UserRepository.USER_DB_NAME,
         [preferenceEntity],
-        path.join(this.getSqlDirectory(), 'clear-aligner-user.sqlite'),
+        path.join(this.getTemplatesDirectory(), 'clear-aligner-user.sqlite'),
         this.getDataDirectory());
   }
 

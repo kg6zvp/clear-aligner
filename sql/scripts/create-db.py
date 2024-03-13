@@ -5,9 +5,11 @@ import math
 import os
 import re
 import sqlite3
+import string
 
 prefixed_bcvwp = re.compile("^[onON]\d")
 gloss_needing_cleanup = re.compile('^(.+\..+)+$')
+punctuation = re.compile(f'[{string.punctuation}]', re.U)
 
 
 def sanitize_bcvwp(bcv_id):
@@ -71,6 +73,7 @@ def cleanup_gloss(gloss):
 def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
     insert_corpus(project_conn, project_cursor, metadata)
     corpus_id = metadata.get('id')
+    corpus_side = metadata.get('side')
     language_id = metadata.get('language').get('code')
     total_rows = 0
     with open(tsv_file) as tsvFd:
@@ -90,14 +93,16 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
         for row in corpus:
             row_id = sanitize_bcvwp(row[idx_id])
             text = row[idx_text] or row[idx_lemma]
+            if corpus_side == 'targets' and (text is None or punctuation.match(text)):
+                continue
             after = row[idx_after] if idx_after >= 0 else ""
             gloss = cleanup_gloss(row[idx_gloss] or row[idx_english]) if idx_gloss >= 0 or idx_english >= 0 else ""
             bcvwp = parse_bcvwp(row[idx_id])
             source_verse = sanitize_bcvwp(row[idx_source_verse]) if idx_source_verse >= 0 else ""
             insert_word_or_part(project_conn, project_cursor, corpus_id, language_id, {
                 'id': f'{metadata.get("side")}:{row_id}',
-                'corpus_id': metadata.get('id'),
-                'side': metadata.get('side'),
+                'corpus_id': corpus_id,
+                'side': corpus_side,
                 'text': text,
                 'after': after,
                 'gloss': gloss,

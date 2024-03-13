@@ -183,7 +183,7 @@ class ProjectRepository extends BaseRepository {
         sourceName,
         [corporaSchema, linkSchema, wordsOrPartsSchema,
           linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
-        path.join(this.getSqlDirectory(),
+        path.join(this.getTemplatesDirectory(),
           DefaultProjectName === sourceName
             ? 'projects/clear-aligner-default.sqlite'
             : 'clear-aligner-template.sqlite'),
