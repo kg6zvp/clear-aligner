@@ -89,17 +89,16 @@ export const AppLayout = () => {
 
   const navigate = useNavigate();
 
-  const {preferences, projects} = useContext(AppContext);
+  const {preferences, projects, projectState} = useContext(AppContext);
   const projectName = useMemo(() => (
     (projects || []).find(p => p.id === preferences?.currentProject)?.name ?? projects?.[0]?.name ?? ""
   ), [projects, preferences]);
 
   // code needed for the Dialog/BusyBox to work properly down below
-  const appContext: AppContextProps = useInitialization();
   const [initializationState, setInitializationState] = useState<InitializationStates>();
   const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus>();
   useInterval(() => {
-    const newDatabaseStatus = appContext.projectState?.linksTable.getDatabaseStatus();
+    const newDatabaseStatus = projectState?.linksTable.getDatabaseStatus();
     if (!_.isEqual(newDatabaseStatus, databaseStatus)) {
       setDatabaseStatus(newDatabaseStatus);
     }
