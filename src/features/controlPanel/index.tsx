@@ -212,6 +212,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       </ButtonGroup>
 
       <UploadAlignmentGroup
+        projectId={preferences?.id ?? ''}
         allowImport
         containers={props.containers}
         setGetAllLinksKey={() => {
