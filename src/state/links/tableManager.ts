@@ -3,7 +3,7 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
@@ -516,12 +516,13 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
-export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
-  const { projectState } = React.useContext(AppContext);
+export const useSaveAlignmentFile = (projectId: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
+  //const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
   const prevSaveKey = useRef<string | undefined>();
+  const linksTable = useMemo(() => new LinksTable(projectId), [projectId]);
 
   useEffect(() => {
     if (!alignmentFile
@@ -536,7 +537,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveAlignmentFile(): startStatus', startStatus);
-    projectState?.linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
+    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -545,7 +546,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
         setStatus(endStatus);
         databaseHookDebug('useSaveAlignmentFile(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
+  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
