@@ -261,7 +261,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                          if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
                            errorMessages.push('TSV must include \'text\' and \'id\' headers.');
                          }
-                         if (contentLines.some(Boolean)) {
+                         if (!contentLines.some(Boolean)) {
                            errorMessages.push('TSV must include at least one row of data.');
                          }
                          if (errorMessages.length) {
