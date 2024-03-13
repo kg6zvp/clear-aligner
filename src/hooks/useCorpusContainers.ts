@@ -35,7 +35,7 @@ export const useCorpusContainers = (): Containers => {
       return;
     }
     void loadCorpora();
-  }, [sourceContainer, setSourceContainer, targetContainer, setTargetContainer, appContextProps.preferences?.initialized]);
+  }, [appContextProps, sourceContainer, setSourceContainer, targetContainer, setTargetContainer]);
 
   return {
     sourceContainer,

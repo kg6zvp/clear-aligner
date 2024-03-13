@@ -113,9 +113,9 @@ export const TextSegment = ({
       return [];
     }
     const sanitized = BCVWP.sanitize(currentlyHoveredWord.id);
-    const result = [ ...links.values() ].find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
+    const result = [...links.values()].find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
     return result ? [result] : [];
-  }, [links, currentlyHoveredWord?.id]);
+  }, [links, currentlyHoveredWord?.id, currentlyHoveredWord?.side]);
 
   const isMemberOfMultipleAlignments = useMemo(
     () => (wordLinks ?? []).length > 1,

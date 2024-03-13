@@ -2,7 +2,8 @@ import React, { useContext, useMemo } from 'react';
 import {
   Autocomplete,
   Box,
-  Button, CircularProgress,
+  Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -71,7 +72,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setProjectUpdated(true);
     }
     setProject((p: Project) => ({ ...p, ...updatedProjectFields }));
-  }, [projectUpdated, setProject, setProjectUpdated]);
+  }, [projectUpdated, setProject]);
 
   const handleClose = React.useCallback(() => {
     setProjectUpdated(false);
@@ -79,7 +80,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     setUploadErrors([]);
     setProject(getInitialProjectState());
     closeCallback();
-  }, [closeCallback, setProject]);
+  }, [closeCallback, setProject, setLoading, setUploadErrors]);
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
@@ -89,7 +90,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     && (project.languageCode || '').length
     && Object.keys(TextDirection).includes((project.textDirection || '').toUpperCase())
     && projectUpdated
-  ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
+  ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated, (project.fileName || '').length, (project.name || '').length, (project.abbreviation || '').length, (project.languageCode || '').length]);
 
   const handleSubmit = React.useCallback(async (e: any) => {
     e.preventDefault();
@@ -136,19 +137,23 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     }
     setLoading(false);
     handleClose();
-  }, [project, fileContent, projectId, projectState.projectTable, projectState.userPreferenceTable, handleClose, dispatch, preferences, setProjects]);
+  }, [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
       await projectState.projectTable?.remove?.(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
-        setPreferences((p: UserPreference | undefined) => ({ ...(p ?? {}) as UserPreference, currentProject: '', initialized: false }));
+        setPreferences((p: UserPreference | undefined) => ({
+          ...(p ?? {}) as UserPreference,
+          currentProject: '',
+          initialized: false
+        }));
       }
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences]);
+  }, [projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
 
   const setInitialProjectState = React.useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);

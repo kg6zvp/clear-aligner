@@ -179,11 +179,14 @@ class ProjectRepository extends BaseRepository {
     this.isLoggingTime = true;
     this.dataSources = new Map();
     this.getDataSource = async (sourceName) =>
-      await this.getDataSourceWithEntities(sourceName,
-        [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
-        DefaultProjectName === sourceName
-          ? 'sql/projects/clear-aligner-default.sqlite'
-          : 'sql/clear-aligner-template.sqlite',
+      await this.getDataSourceWithEntities(
+        sourceName,
+        [corporaSchema, linkSchema, wordsOrPartsSchema,
+          linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
+        path.join(this.getSqlDirectory(),
+          DefaultProjectName === sourceName
+            ? 'projects/clear-aligner-default.sqlite'
+            : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
 

@@ -4,6 +4,8 @@ const path = require('path');
 const { app } = require('electron');
 const sanitize = require('sanitize-filename');
 const fs = require('fs');
+const { platform } = require('os');
+const isMac = platform() === 'darwin';
 
 
 class DataSourceStatus {
@@ -42,7 +44,15 @@ class BaseRepository {
   };
 
   getDataDirectory = () => {
-    return isDev ? 'sql' : path.join(app.getPath('appData'), sanitize(app.getName()).slice(0, 40));
+    return isDev ? 'sql' : path.join(app.getPath('userData'), sanitize(app.getName()).slice(0, 40));
+  };
+
+  getSqlDirectory = () => {
+    if (isDev) {
+      return 'sql';
+    }
+    return path.join(isMac ? path.join(app.getAppPath(), 'Contents') : app.getAppPath(),
+      sanitize(app.getName()).slice(0, 40));
   };
 
 

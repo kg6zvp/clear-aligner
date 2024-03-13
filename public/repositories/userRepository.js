@@ -1,5 +1,6 @@
 const { BaseRepository } = require('./baseRepository');
 const { EntitySchema } = require('typeorm');
+const path = require('path');
 
 
 class Preference {
@@ -38,9 +39,10 @@ class UserRepository extends BaseRepository {
   constructor() {
     super();
     this.getDataSource = async () =>
-      await this.getDataSourceWithEntities(UserRepository.USER_DB_NAME,
+      await this.getDataSourceWithEntities(
+        UserRepository.USER_DB_NAME,
         [preferenceEntity],
-        'sql/clear-aligner-user.sqlite',
+        path.join(this.getSqlDirectory(), 'clear-aligner-user.sqlite'),
         this.getDataDirectory());
   }
 

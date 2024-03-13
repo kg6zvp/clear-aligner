@@ -3,7 +3,6 @@ import { WordsIndex } from '../links/wordsIndex';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { LinksTable } from '../links/tableManager';
 import BCVWP, { BCVWPField } from '../../features/bcvwp/BCVWPSupport';
-import uuid from 'uuid-random';
 
 export interface Project {
   id: string;
@@ -50,7 +49,7 @@ export class ProjectTable extends VirtualTable<Project> {
       await window.databaseApi.removeSource(projectId);
       this.projects.delete(projectId);
     } catch (e) {
-      console.error("Error deleting project: ", e)
+      console.error('Error deleting project: ', e);
     } finally {
       this._onUpdate(suppressOnUpdate);
     }
@@ -95,7 +94,7 @@ export class ProjectTable extends VirtualTable<Project> {
     return this.projects;
   };
 
-  static convertDataSourceToProject = (dataSource: {id: string, corpora: Corpus[]}) => {
+  static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {
     const corpora = dataSource?.corpora || [];
     const sourceCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.SOURCE);
     const targetCorpus = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET)[0];
@@ -106,11 +105,11 @@ export class ProjectTable extends VirtualTable<Project> {
       abbreviation: targetCorpus?.name,
       languageCode: targetCorpus?.language.code,
       textDirection: targetCorpus?.language.textDirection,
-      fileName: targetCorpus?.fileName ?? "",
+      fileName: targetCorpus?.fileName ?? '',
       sourceCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE, sourceCorpora),
       targetCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [targetCorpus])
     } as Project;
-  }
+  };
 
   static convertWordToDto = (word: Word, corpus: Corpus) => ({
     id: `${word.side}:${BCVWP.sanitize(word.id)}`,
@@ -123,17 +122,17 @@ export class ProjectTable extends VirtualTable<Project> {
     position_verse: +BCVWP.truncateTo(word.id, BCVWPField.Verse),
     position_word: +BCVWP.truncateTo(word.id, BCVWPField.Word),
     position_part: +BCVWP.truncateTo(word.id, BCVWPField.Part),
-    normalized_text: (word.text || "").toLowerCase(),
-    source_verse_bcvid: word.sourceVerse ?? "",
+    normalized_text: (word.text || '').toLowerCase(),
+    source_verse_bcvid: word.sourceVerse ?? '',
     language_id: corpus.language.code,
     side: word.side
-  })
+  });
 
   static convertToDto = (project: Project) => ({
     id: project.id,
     name: project.name,
     corpora: [...(project.sourceCorpora?.corpora || []), ...(project.targetCorpora?.corpora || [])]
-  })
+  });
 
   catchUpIndex = async (_index: SecondaryIndex<Project>) => {
   };

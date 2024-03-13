@@ -11,11 +11,11 @@ const useTrackLocation = () => {
 
 
   React.useEffect(() => {
-    if(preferences?.id && preferences?.page && !redirected) {
+    if (preferences?.id && preferences?.page && !redirected) {
       setRedirected(true);
       navigate(preferences.page);
     }
-  }, [preferences?.page, redirected]);
+  }, [navigate, preferences?.page, preferences?.id, redirected]);
 
   React.useEffect(() => {
     setPreferences((p: UserPreference | undefined) => {
