@@ -221,7 +221,6 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
 > => {
   if (initializationState !== InitializationStates.INITIALIZING && !appCtx.preferences?.initialized) {
     corpora = [];
-    appCtx.setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: true }));
     initializationState = InitializationStates.INITIALIZING;
 
     // @ts-ignore
@@ -249,6 +248,7 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
     corpora.push(sourceContainer);
     corpora.push(targetContainer);
     initializationState = InitializationStates.INITIALIZED;
+    appCtx.setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: true }));
   } else if (initializationState === InitializationStates.INITIALIZING) {
     await waitForInitialization();
   }

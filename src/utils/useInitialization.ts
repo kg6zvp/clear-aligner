@@ -48,7 +48,7 @@ const useInitialization = () => {
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject ?? projects?.[0]?.id ?? ""
           });
-          currLinksTable.setSourceName(res?.currentProject ?? projects?.[0]?.id ?? "default");
+          currLinksTable.setSourceName(res?.currentProject ?? projects?.[0]?.id);
         });
       });
       initializeProject().catch(console.error);
