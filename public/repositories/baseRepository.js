@@ -47,11 +47,11 @@ class BaseRepository {
     return isDev ? 'sql' : app.getPath('userData');
   };
 
-  getSqlDirectory = () => {
+  getTemplatesDirectory = () => {
     if (isDev) {
       return 'sql';
     }
-    return path.join((isMac ? path.join(app.getAppPath(), 'Contents') : app.getAppPath()), 'sql');
+    return path.join((isMac ? path.join(app.getPath('exe'), '/../') : app.getPath('exe')), 'sql');
   };
 
 

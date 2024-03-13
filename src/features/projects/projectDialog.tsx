@@ -55,7 +55,7 @@ const getInitialProjectState = (): Project => ({
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
-  const databaseStatusDialog = useDatabaseStatusMessage()
+  const databaseStatusDialog = useDatabaseStatusMessage();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = React.useState(false);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
@@ -255,13 +255,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                          const file = event!.target!.files![0];
                          const content = await file.text();
                          const errorMessages: string[] = [];
-                         if (file.type !== 'text/tab-separated-values') {
-                           errorMessages.push('Invalid file type supplied.');
-                         }
-                         if (!['text', 'id'].every(header => content.split('\n')[0].includes(header))) {
+                         const contentLines = content.split('\n');
+                         if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
                            errorMessages.push('TSV must include \'text\' and \'id\' headers.');
                          }
-                         if (content.split('\n').filter(v => v).length < 2) {
+                         if (contentLines.some(Boolean)) {
                            errorMessages.push('TSV must include at least one row of data.');
                          }
                          if (errorMessages.length) {
