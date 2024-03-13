@@ -15,6 +15,8 @@ else
   echo "Creating template database: '${templateDbPath}'..."
 
   rm -fv "${templateDbPath}"
+  rm -fv "${templateDbPath}-shm"
+  rm -fv "${templateDbPath}-wal"
   python3 ./create-db.py \
     -of "${templateDbPath}" \
     -sf "create-template-db.sql"
@@ -54,6 +56,8 @@ else
   echo "Creating default database: '${defaultDbPath}'..."
 
   rm -fv "${defaultDbPath}"
+  rm -fv "${defaultDbPath}-shm"
+  rm -fv "${defaultDbPath}-wal"
   cp -fv "${templateDbPath}" \
     "${defaultDbPath}"
   python3 ./create-db.py \
@@ -83,6 +87,8 @@ else
   echo "Creating user database: '${userDbPath}'..."
 
   rm -fv "${userDbPath}"
+  rm -fv "${userDbPath}-shm"
+  rm -fv "${userDbPath}-wal"
   python3 ./create-db.py \
     -of "${userDbPath}" \
     -sf "create-user-db.sql"

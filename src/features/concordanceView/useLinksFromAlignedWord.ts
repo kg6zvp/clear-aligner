@@ -7,18 +7,18 @@ import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableM
 import { AppContext } from '../../App';
 
 export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const db = useDatabase();
   const lastUpdate = useDataLastUpdated();
   const [links, setLinks] = useState<Link[] | undefined>(undefined);
-  const [ currentAlignedWord, setCurrentAlignedWord ] = useState<AlignedWord|undefined>();
+  const [currentAlignedWord, setCurrentAlignedWord] = useState<AlignedWord | undefined>();
 
   useEffect(() => {
     if (currentAlignedWord !== alignedWord) {
       setCurrentAlignedWord(alignedWord);
       setLinks(undefined);
     }
-  }, [alignedWord]);
+  }, [currentAlignedWord, alignedWord]);
 
   useEffect(() => {
     if (!currentAlignedWord) return;

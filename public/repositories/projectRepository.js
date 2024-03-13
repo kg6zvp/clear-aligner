@@ -76,28 +76,18 @@ class LanguageEntity {
 
 
 const corporaSchema = new EntitySchema({
-  name: 'corpora',
-  tableName: 'corpora',
-  target: CorporaEntity,
-  columns: {
+  name: 'corpora', tableName: 'corpora', target: CorporaEntity, columns: {
     id: {
-      primary: true,
-      type: 'text',
-      generated: false
-    },
-    side: {
+      primary: true, type: 'text', generated: false
+    }, side: {
       type: 'text'
-    },
-    name: {
+    }, name: {
       type: 'text'
-    },
-    full_name: {
+    }, full_name: {
       type: 'text'
-    },
-    file_name: {
+    }, file_name: {
       type: 'text'
-    },
-    language_id: {
+    }, language_id: {
       type: 'text'
     }
   }
@@ -139,44 +129,31 @@ const wordsOrPartsSchema = new EntitySchema({
   name: 'words_or_parts', tableName: 'words_or_parts', target: WordsOrParts, columns: {
     id: {
       primary: true, type: 'text', generated: false
-    },
-    corpus_id: {
+    }, corpus_id: {
       type: 'text'
-    },
-    text: {
+    }, text: {
       type: 'text'
-    },
-    side: {
+    }, side: {
       type: 'text'
-    },
-    language_id: {
+    }, language_id: {
       type: 'text'
-    },
-    after: {
+    }, after: {
       type: 'text'
-    },
-    gloss: {
+    }, gloss: {
       type: 'text'
-    },
-    position_book: {
+    }, position_book: {
       type: 'integer'
-    },
-    position_chapter: {
+    }, position_chapter: {
       type: 'integer'
-    },
-    position_verse: {
+    }, position_verse: {
       type: 'integer'
-    },
-    position_word: {
+    }, position_word: {
       type: 'integer'
-    },
-    position_part: {
+    }, position_part: {
       type: 'integer'
-    },
-    normalized_text: {
+    }, normalized_text: {
       type: 'text'
-    },
-    source_verse_bcvid: {
+    }, source_verse_bcvid: {
       type: 'text'
     }
   }
@@ -184,19 +161,12 @@ const wordsOrPartsSchema = new EntitySchema({
 
 
 const languageSchema = new EntitySchema({
-  name: 'language',
-  tableName: 'language',
-  target: LanguageEntity,
-  columns: {
+  name: 'language', tableName: 'language', target: LanguageEntity, columns: {
     code: {
-      primary: true,
-      type: 'text',
-      generated: false
-    },
-    font_family: {
+      primary: true, type: 'text', generated: false
+    }, font_family: {
       type: 'text'
-    },
-    text_direction: {
+    }, text_direction: {
       type: 'text'
     }
   }
@@ -208,13 +178,11 @@ class ProjectRepository extends BaseRepository {
     super();
     this.isLoggingTime = true;
     this.dataSources = new Map();
-    this.getDataSource = async (sourceName) => await this.getDataSourceWithEntities(
-      sourceName,
-      [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
-      'sql/clear-aligner-template.sqlite',
-      ProjectDatabaseDirectory
-    );
-    fs.mkdirSync(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), { recursive: true });
+    this.getDataSource = async (sourceName) =>
+      await this.getDataSourceWithEntities(sourceName,
+        [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
+        'sql/clear-aligner-template.sqlite',
+        path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
 
   convertCorpusToDataSource = (corpus) => ({
@@ -279,8 +247,7 @@ class ProjectRepository extends BaseRepository {
         .createQueryBuilder(CorporaTableName)
         .getMany();
       return {
-        id: project.id,
-        sources
+        id: project.id, sources
       };
     } catch (ex) {
       console.error('createSourceFromProject()', ex);
@@ -294,16 +261,13 @@ class ProjectRepository extends BaseRepository {
       const corporaRepository = dataSource.getRepository(CorporaTableName);
       await corporaRepository.save(corpora);
       await dataSource.getRepository(LanguageTableName).upsert(corpora.filter(c => c.language).map(c => ({
-        code: c.language.code,
-        text_direction: c.language.textDirection,
-        font_family: c.language.fontFamily
+        code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
       })), ['code']);
       const sources = await dataSource.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();
       return {
-        id: project.id,
-        sources
+        id: project.id, sources
       };
     } catch (err) {
       console.error('updateSourceFromProject()', err);
@@ -348,8 +312,7 @@ class ProjectRepository extends BaseRepository {
 
   sanitizeWordId(wordId) {
     const wordId1 = wordId.trim();
-    return !!wordId1.match(/^[onON]\d/)
-      ? wordId1.substring(1) : wordId1;
+    return !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
   }
 
 
@@ -404,9 +367,7 @@ class ProjectRepository extends BaseRepository {
           const corpora = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
           await dataSource.getRepository(LanguageTableName)
             .upsert(corpora.filter(c => c.language).map(c => ({
-              code: c.language.code,
-              text_direction: c.language.textDirection,
-              font_family: c.language.fontFamily
+              code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
             })), ['code']);
           await dataSource.getRepository(CorporaTableName)
             .insert(corpora.map(this.convertCorpusToDataSource));
@@ -671,9 +632,7 @@ class ProjectRepository extends BaseRepository {
                                                                                    and w.position_chapter = ?
                                                                                    and w.position_verse = ?
                                                                                  group by ltw.link_id) q
-                                                                           order by q.link_id;`,
-        [bookNum, chapterNum, verseNum,
-          bookNum, chapterNum, verseNum])));
+                                                                           order by q.link_id;`, [bookNum, chapterNum, verseNum, bookNum, chapterNum, verseNum])));
       this.logDatabaseTimeLog('findLinksByBCV()', sourceName, bookNum, chapterNum, verseNum, results?.length ?? results);
       return results;
     } catch (ex) {
@@ -760,11 +719,13 @@ class ProjectRepository extends BaseRepository {
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({
-          id: result.id, name: result.name, fileName: result.fileName,
-          fullName: result.fullName, side: result.side, language: {
-            code: result.code,
-            textDirection: result.textDirection,
-            fontFamily: result.fontFamily
+          id: result.id,
+          name: result.name,
+          fileName: result.fileName,
+          fullName: result.fullName,
+          side: result.side,
+          language: {
+            code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }
         }));
     } catch (ex) {
@@ -1097,7 +1058,7 @@ class ProjectRepository extends BaseRepository {
                             ON ltw.link_id = l.id
         WHERE l.sources_text = '${sourcesText}'
           AND l.targets_text = '${targetsText}'
-            GROUP BY id
+        GROUP BY id
             ${this._buildOrderBy(sort, { ref: 'word_id' })};`))
       .map((link) => link.id);
     const links = [];

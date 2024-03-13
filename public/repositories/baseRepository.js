@@ -42,13 +42,11 @@ class BaseRepository {
   };
 
   getDataDirectory = () => {
-    return isDev
-      ? path.join(path.basename(path.resolve(__dirname, '..')), '../sql')
-      : path.join(app.getPath('appData'), sanitize(app.getName()).slice(0, 40));
+    return isDev ? 'sql' : path.join(app.getPath('appData'), sanitize(app.getName()).slice(0, 40));
   };
 
 
-  getDataSourceWithEntities = async (sourceName, entities, generationFile = "", dir = "") => {
+  getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
     const sourceStatus = this.dataSources.get(sourceName) ?? new DataSourceStatus();
     if (sourceStatus.isLoaded) {
       return sourceStatus.dataSource;
@@ -66,9 +64,9 @@ class BaseRepository {
       this.dataSources.set(sourceName, sourceStatus);
 
       const fileName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sqlite`;
-      const databasePath = path.join(this.getDataDirectory(), dir);
-      fs.mkdirSync(databasePath, { recursive: true });
-      const databaseFile = path.join(databasePath, fileName);
+      const workDatabaseDirectory = databaseDirectory ? databaseDirectory : this.getDataDirectory();
+      fs.mkdirSync(workDatabaseDirectory, { recursive: true });
+      const databaseFile = path.join(workDatabaseDirectory, fileName);
 
       if (!fs.existsSync(databaseFile) && generationFile) {
         fs.copyFileSync(generationFile, databaseFile);
@@ -104,4 +102,4 @@ class BaseRepository {
 
 module.exports = {
   BaseRepository
-}
+};
