@@ -133,7 +133,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     await window.databaseApi.removeTargetWordsOrParts(projectToUpdate.id).catch(console.error);
     const wordsOrParts = [...(projectToUpdate.sourceCorpora?.corpora ?? []), ...(projectToUpdate.targetCorpora?.corpora ?? [])]
       .flatMap(corpus => (corpus.words ?? [])
-        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)) )
+        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
         .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
     for (const chunk of _.chunk(wordsOrParts, 2_000)) {
       // @ts-ignore
@@ -257,11 +257,13 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                          const file = event!.target!.files![0];
                          const content = await file.text();
                          const errorMessages: string[] = [];
-                         const contentLines = content.split('\n');
-                         if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
+                         if (file.type !== 'text/tab-separated-values') {
+                           errorMessages.push('Invalid file type supplied.');
+                         }
+                         if (!['text', 'id'].every(header => content.split('\n')[0].includes(header))) {
                            errorMessages.push('TSV must include \'text\' and \'id\' headers.');
                          }
-                         if (contentLines.some(Boolean)) {
+                         if (content.split('\n').filter(v => v).length < 2) {
                            errorMessages.push('TSV must include at least one row of data.');
                          }
                          if (errorMessages.length) {
