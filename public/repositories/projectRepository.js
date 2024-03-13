@@ -548,34 +548,30 @@ class ProjectRepository extends BaseRepository {
     const entityManager = dataSource.manager;
     let rows;
     if (linkIds.length > 1) {
-      rows = await entityManager.query(`select q.link_id, q.type, q.words
-                                        from (select s.link_id,
-                                                     'sources' as                                         type,
-                                                     json_group_array(replace(s.word_id, 'sources:', '')) words
-                                              from links__source_words s
-                                              where s.link_id in (?)
-                                              group by s.link_id
-                                              union
-                                              select t.link_id,
-                                                     'targets' as                                         type,
-                                                     json_group_array(replace(t.word_id, 'targets:', '')) words
-                                              from links__target_words t
-                                              where t.link_id in (?)
-                                              group by t.link_id) q
-                                        order by q.link_id;`, [linkIds]);
+      rows = await entityManager.query(`select l.id link_id,
+                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
+                                                                filter (where lsw.word_id is not null) sources,
+                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
+                                                                filter (where ltw.word_id is not null) targets
+                                        from links l
+                                                 left join links__source_words lsw on l.id = lsw.link_id
+                                                 left join links__target_words ltw on l.id = ltw.link_id
+                                        where l.id in (?)
+                                        group by l.id
+                                        order by l.id;`, [linkIds]);
     } else {
       const workLinkId = linkIds[0];
-      rows = await entityManager.query(`select s.link_id,
-                                               'sources' as                                         type,
-                                               json_group_array(replace(s.word_id, 'sources:', '')) words
-                                        from links__source_words s
-                                        where s.link_id = ?
-                                        union
-                                        select t.link_id,
-                                               'targets' as                                         type,
-                                               json_group_array(replace(t.word_id, 'targets:', '')) words
-                                        from links__target_words t
-                                        where t.link_id = ?;`, [workLinkId, workLinkId]);
+      rows = await entityManager.query(`select l.id link_id,
+                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
+                                                                filter (where lsw.word_id is not null) sources,
+                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
+                                                                filter (where ltw.word_id is not null) targets
+                                        from links l
+                                                 left join links__source_words lsw on l.id = lsw.link_id
+                                                 left join links__target_words ltw on l.id = ltw.link_id
+                                        where l.id = ?
+                                        group by l.id
+                                        order by l.id;`, [workLinkId]);
     }
     return this.createLinksFromRows(rows);
   };
@@ -584,23 +580,20 @@ class ProjectRepository extends BaseRepository {
     if (!fromLinkId || !toLinkId) {
       return [];
     }
-    return this.createLinksFromRows((await dataSource.manager.query(`select q.link_id, q.type, q.words
-                                                                     from (select s.link_id,
-                                                                                  'sources' as                                         type,
-                                                                                  json_group_array(replace(s.word_id, 'sources:', '')) words
-                                                                           from links__source_words s
-                                                                           where s.link_id >= ?
-                                                                             and s.link_id <= ?
-                                                                           group by s.link_id
-                                                                           union
-                                                                           select t.link_id,
-                                                                                  'targets' as                                         type,
-                                                                                  json_group_array(replace(t.word_id, 'targets:', '')) words
-                                                                           from links__target_words t
-                                                                           where t.link_id >= ?
-                                                                             and t.link_id <= ?
-                                                                           group by t.link_id) q
-                                                                     order by q.link_id;`, [fromLinkId, toLinkId, fromLinkId, toLinkId])));
+    return this.createLinksFromRows((await dataSource.manager.query(`select l.id link_id,
+                                                                            json_group_array(
+                                                                                    replace(lsw.word_id, 'sources:', ''))
+                                                                                    filter (where lsw.word_id is not null) sources,
+                                                                            json_group_array(
+                                                                                    replace(ltw.word_id, 'targets:', ''))
+                                                                                    filter (where ltw.word_id is not null) targets
+                                                                     from links l
+                                                                              left join links__source_words lsw on l.id = lsw.link_id
+                                                                              left join links__target_words ltw on l.id = ltw.link_id
+                                                                     where l.id >= ?
+                                                                       and l.id <= ?
+                                                                     group by l.id
+                                                                     order by l.id;`, [fromLinkId, toLinkId])));
   };
 
   findLinksByWordId = async (sourceName, linkSide, wordId) => {
@@ -774,19 +767,19 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAllLinks = async (dataSource, itemLimit, itemSkip) => this.createLinksFromRows((await dataSource.manager.query(`select q.link_id, q.type, q.words
-                                                                                                                     from (select s.link_id,
-                                                                                                                                  'sources' as                                         type,
-                                                                                                                                  json_group_array(replace(s.word_id, 'sources:', '')) words
-                                                                                                                           from links__source_words s
-                                                                                                                           group by s.link_id
-                                                                                                                           union
-                                                                                                                           select t.link_id,
-                                                                                                                                  'targets' as                                         type,
-                                                                                                                                  json_group_array(replace(t.word_id, 'targets:', '')) words
-                                                                                                                           from links__target_words t
-                                                                                                                           group by t.link_id) q
-                                                                                                                     limit ? offset ?`, [itemLimit * 2, itemSkip])));
+  getAllLinks = async (dataSource, itemLimit, itemSkip) => this.createLinksFromRows((await dataSource.manager.query(`select l.id link_id,
+                                                                                                                            json_group_array(
+                                                                                                                                    replace(lsw.word_id, 'sources:', ''))
+                                                                                                                                    filter (where lsw.word_id is not null) sources,
+                                                                                                                            json_group_array(
+                                                                                                                                    replace(ltw.word_id, 'targets:', ''))
+                                                                                                                                    filter (where ltw.word_id is not null) targets
+                                                                                                                     from links l
+                                                                                                                              left join links__source_words lsw on l.id = lsw.link_id
+                                                                                                                              left join links__target_words ltw on l.id = ltw.link_id
+                                                                                                                     group by l.id
+                                                                                                                     order by l.id
+                                                                                                                     limit ? offset ?;`, [itemLimit, itemSkip])));
 
   updateLinkText = async (sourceName, linkIdOrIds) => {
     if (!linkIdOrIds) {
