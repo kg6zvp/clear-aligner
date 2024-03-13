@@ -36,12 +36,11 @@
     "react-dom": "^18.0.0"
   },
   "scripts": {
-    "prepare": "sql/scripts/create-db.sh --no-remove",
     "start": "craco start",
     "build": "craco build && electron-builder",
-    "build:mac": "sql/scripts/create-db.sh --no-remove && yarn build -m",
-    "build:linux": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"yarn install && yarn build -l\"",
-    "build:win": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"yarn install && yarn build -w\"",
+    "build:mac": "sql/scripts/create-db.sh && yarn build -m",
+    "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"yarn install && yarn build -l\"",
+    "build:win": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"yarn install && yarn build -w\"",
     "test": "craco test",
     "eject": "craco eject",
     "prettier": "prettier --write .",
