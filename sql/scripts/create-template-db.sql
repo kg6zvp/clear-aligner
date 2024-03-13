@@ -86,4 +86,14 @@ CREATE INDEX words_or_parts_text_index
     on words_or_parts (text);
 CREATE INDEX idx__word_or_part_side_index
     on words_or_parts (side);
+
+create index links__source_words_word_id_index
+    on links__source_words (word_id);
+create index links__source_words_link_id_index
+    on links__source_words (link_id);
+create index links__target_words_word_id_index
+    on links__target_words (word_id);
+create index links__target_words_link_id_index
+    on links__target_words (link_id);
+
 COMMIT;

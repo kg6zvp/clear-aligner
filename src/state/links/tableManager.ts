@@ -464,7 +464,7 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
 export const useSaveLink = (link?: Link, saveKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
   }>({});
@@ -478,7 +478,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
     }
     prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveLink(): status', status);
-    linksTable.save(link)
+    projectState?.linksTable.save(link)
       .then(result => {
         const endStatus = {
           ...status,
@@ -487,7 +487,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useSaveLink(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, link, saveKey, status]);
+  }, [projectState?.linksTable, prevSaveKey, link, saveKey, status]);
 
   return { ...status };
 };
@@ -505,7 +505,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
 export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -524,7 +524,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
+    projectState?.linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -533,7 +533,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
         setStatus(endStatus);
         databaseHookDebug('useSaveAlignmentFile(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
+  }, [projectState?.linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -551,7 +551,7 @@ export const useSaveAlignmentFile = (alignmentFile?: AlignmentFile, saveKey?: st
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
 export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpdate: boolean = true) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -570,7 +570,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveAllLinks(): startStatus', startStatus);
-    linksTable.saveAll(links, suppressOnUpdate)
+    projectState?.linksTable.saveAll(links, suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -579,7 +579,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
         setStatus(endStatus);
         databaseHookDebug('useSaveAllLinks(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, links, saveKey, status, suppressOnUpdate]);
+  }, [projectState?.linksTable, prevSaveKey, links, saveKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -596,7 +596,7 @@ export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpda
  * @param existsKey Unique key to control check operation (optional; undefined = will check).
  */
 export const useLinkExists = (linkId?: string, existsKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
   }>({});
@@ -610,7 +610,7 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
     }
     prevExistsKey.current = existsKey;
     databaseHookDebug('useLinkExists(): status', status);
-    linksTable.exists(linkId)
+    projectState?.linksTable.exists(linkId)
       .then(result => {
         const endStatus = {
           ...status,
@@ -619,7 +619,7 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useLinkExists(): endStatus', endStatus);
       });
-  }, [linksTable, prevExistsKey, existsKey, linkId, status]);
+  }, [projectState?.linksTable, prevExistsKey, existsKey, linkId, status]);
 
   return { ...status };
 };
@@ -636,7 +636,7 @@ export const useLinkExists = (linkId?: string, existsKey?: string) => {
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = true).
  */
 export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean = true) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -654,7 +654,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
     setStatus(startStatus);
     prevRemoveKey.current = removeKey;
     databaseHookDebug('useRemoveAllLinks(): startStatus', startStatus);
-    linksTable.removeAll(suppressOnUpdate)
+    projectState?.linksTable.removeAll(suppressOnUpdate)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -663,7 +663,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
         setStatus(endStatus);
         databaseHookDebug('useRemoveAllLinks(): endStatus', endStatus);
       });
-  }, [linksTable, prevRemoveKey, removeKey, status, suppressOnUpdate]);
+  }, [projectState?.linksTable, prevRemoveKey, removeKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -681,7 +681,7 @@ export const useRemoveAllLinks = (removeKey?: string, suppressOnUpdate: boolean 
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
 export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoPreload = false, findKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -696,7 +696,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByWordId(): status', status);
-    linksTable.findByWordId(side, wordId)
+    projectState?.linksTable.findByWordId(side, wordId)
       .then(result => {
         const endStatus = {
           ...status,
@@ -707,11 +707,11 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
           && wordId.book
           && wordId.chapter
           && wordId.verse) {
-          linksTable.preloadByBCV(wordId.book, wordId.chapter, wordId.verse, true);
+          projectState?.linksTable.preloadByBCV(wordId.book, wordId.chapter, wordId.verse, true);
         }
         databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
       });
-  }, [linksTable, isNoPreload, prevFindKey, findKey, side, status, wordId]);
+  }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, side, status, wordId]);
 
   return { ...status };
 };
@@ -731,7 +731,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
 export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -747,7 +747,7 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByBCV(): status', status);
-    linksTable.findByBCV(bookNum, chapterNum, verseNum)
+    projectState?.linksTable.findByBCV(bookNum, chapterNum, verseNum)
       .then(result => {
         const endStatus = {
           ...status,
@@ -755,11 +755,11 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
         };
         setStatus(endStatus);
         if (!isNoPreload) {
-          linksTable.preloadByBCV(bookNum, chapterNum, verseNum, true);
+          projectState?.linksTable.preloadByBCV(bookNum, chapterNum, verseNum, true);
         }
         databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
       });
-  }, [linksTable, isNoPreload, prevFindKey, findKey, bookNum, chapterNum, verseNum, status]);
+  }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, bookNum, chapterNum, verseNum, status]);
 
   return { ...status };
 };
@@ -775,7 +775,7 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
  * @param getKey Unique key to control get operation (optional; undefined = no get).
  */
 export const useGetAllLinks = (getKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
@@ -788,7 +788,7 @@ export const useGetAllLinks = (getKey?: string) => {
     }
     prevGetKey.current = getKey;
     databaseHookDebug('useGetAllLinks(): status', status);
-    linksTable.getAll()
+    projectState?.linksTable.getAll()
       .then(result => {
         const endStatus = {
           ...status,
@@ -797,7 +797,7 @@ export const useGetAllLinks = (getKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
       });
-  }, [linksTable, prevGetKey, getKey, status]);
+  }, [projectState?.linksTable, prevGetKey, getKey, status]);
 
   return { ...status };
 };
@@ -814,7 +814,7 @@ export const useGetAllLinks = (getKey?: string) => {
  * @param getKey Unique key to control get operation (optional; undefined = will get).
  */
 export const useGetLink = (linkId?: string, getKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link | undefined;
   }>({});
@@ -828,7 +828,7 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
     }
     prevGetKey.current = getKey;
     databaseHookDebug('useGetLink(): status', status);
-    linksTable.get(linkId)
+    projectState?.linksTable.get(linkId)
       .then(result => {
         const endStatus = {
           ...status,
@@ -837,7 +837,7 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useGetLink(): endStatus', endStatus);
       });
-  }, [linksTable, prevGetKey, getKey, linkId, status]);
+  }, [projectState?.linksTable, prevGetKey, getKey, linkId, status]);
 
   return { ...status };
 };
@@ -855,7 +855,7 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = false).
  */
 export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
   }>({});
@@ -869,7 +869,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
     }
     prevRemoveKey.current = removeKey;
     databaseHookDebug('useRemoveLink(): status', status);
-    linksTable.remove(linkId, suppressOnUpdate)
+    projectState?.linksTable.remove(linkId, suppressOnUpdate)
       .then(result => {
         const endStatus = {
           ...status,
@@ -878,7 +878,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
         setStatus(endStatus);
         databaseHookDebug('useRemoveLink(): endStatus', endStatus);
       });
-  }, [linksTable, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate]);
+  }, [projectState?.linksTable, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate]);
 
   return { ...status };
 };
@@ -887,7 +887,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
  * Database status hook.
  */
 export const useDatabaseStatus = (checkKey?: string) => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] =
     useState<{
       result: DatabaseStatus
@@ -902,9 +902,10 @@ export const useDatabaseStatus = (checkKey?: string) => {
     }
     prevCheckKey.current = workCheckKey;
     const prevStatus = status.result;
-    const currStatus = linksTable.getDatabaseStatus();
-    if (currStatus.busyInfo.isBusy
-      || !_.isEqual(prevStatus, currStatus)) {
+    const currStatus = projectState?.linksTable.getDatabaseStatus();
+    if (currStatus?.busyInfo
+      && (currStatus.busyInfo.isBusy
+        || !_.isEqual(prevStatus, currStatus))) {
       const endStatus = {
         ...status,
         result: currStatus
@@ -912,18 +913,18 @@ export const useDatabaseStatus = (checkKey?: string) => {
       setStatus(endStatus);
       databaseHookDebug('useDatabaseStatus(): endStatus', endStatus);
     }
-  }, [linksTable, prevCheckKey, checkKey, status]);
+  }, [projectState?.linksTable, prevCheckKey, checkKey, status]);
 
   return { ...status };
 };
 
 export const useDataLastUpdated = () => {
-  const { projectState: { linksTable } } = React.useContext(AppContext);
+  const { projectState } = React.useContext(AppContext);
   const [lastUpdate, setLastUpdate] = useState(0);
 
   useInterval(() => {
-    if (linksTable.lastUpdate && linksTable.lastUpdate !== lastUpdate) {
-      setLastUpdate(linksTable.lastUpdate);
+    if (projectState?.linksTable.lastUpdate && projectState?.linksTable.lastUpdate !== lastUpdate) {
+      setLastUpdate(projectState?.linksTable.lastUpdate);
     }
   }, DatabaseRefreshIntervalInMs);
 

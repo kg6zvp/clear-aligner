@@ -5,13 +5,17 @@ import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
 import { UserPreference } from '../state/preferences/tableManager';
 
-enum InitializationStates {
+export enum InitializationStates {
   UNINITIALIZED,
   INITIALIZING,
   INITIALIZED
 }
 
 let initializationState: InitializationStates = InitializationStates.UNINITIALIZED;
+
+export const getCorporaInitializationState = () => {
+  return initializationState;
+};
 
 export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
   const [header, ...rows] = fileContent.split('\n');
@@ -217,7 +221,7 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
 > => {
   if (initializationState !== InitializationStates.INITIALIZING && !appCtx.preferences?.initialized) {
     corpora = [];
-    appCtx.setPreferences(p => ({...(p ?? {}) as UserPreference, initialized: true}));
+    appCtx.setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: true }));
     initializationState = InitializationStates.INITIALIZING;
 
     // @ts-ignore
