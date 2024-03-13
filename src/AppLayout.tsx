@@ -27,12 +27,11 @@ import {
 } from 'react-router-dom';
 import { AddLink, ManageSearch, LibraryBooks } from '@mui/icons-material';
 import useTrackLocation from './utils/useTrackLocation';
-import { AppContext, AppContextProps } from './App';
+import { AppContext } from './App';
 import { getCorporaInitializationState, InitializationStates } from './workbench/query';
 import { DatabaseStatus } from './state/links/tableManager';
 import { useInterval } from 'usehooks-ts';
 import _ from 'lodash';
-import useInitialization from './utils/useInitialization';
 
 type THEME = 'night' | 'day';
 type THEME_PREFERENCE = THEME | 'auto';
