@@ -1,8 +1,7 @@
 #!/bin/bash -e
 pushd "$(dirname "$0")" || exit
 
-templateDbFile="../clear-aligner-template.sqlite"
-templateDbPath=$(realpath "${templateDbFile}")
+templateDbPath="../clear-aligner-template.sqlite"
 
 if [[ "$*" == *'-h'* || "$*" == *'--help'* ]]; then
   echo "Usage: ${0} [-h|--help] [--no-remove]"
