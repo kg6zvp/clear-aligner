@@ -786,7 +786,7 @@ class ProjectRepository extends BaseRepository {
                                                                                                                                   json_group_array(replace(t.word_id, 'targets:', '')) words
                                                                                                                            from links__target_words t
                                                                                                                            group by t.link_id) q
-                                                                                                                     limit ? offset ?`, [itemLimit, itemSkip])));
+                                                                                                                     limit ? offset ?`, [itemLimit * 2, itemSkip])));
 
   updateLinkText = async (sourceName, linkIdOrIds) => {
     if (!linkIdOrIds) {

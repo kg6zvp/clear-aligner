@@ -100,8 +100,6 @@ export class ProjectTable extends VirtualTable<Project> {
     const sourceCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.SOURCE);
     const targetCorpus = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET)[0];
 
-    console.log("corpora: ", corpora)
-
     return {
       id: dataSource.id,
       name: targetCorpus?.fullName,
