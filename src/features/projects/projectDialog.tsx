@@ -31,6 +31,7 @@ import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import _ from 'lodash';
 import useDatabaseStatusMessage from '../../utils/useDatabaseStatusMessage';
+import { useDatabase } from '../../hooks/useDatabase';
 
 
 enum TextDirection {
@@ -56,6 +57,7 @@ const getInitialProjectState = (): Project => ({
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
   const databaseStatusDialog = useDatabaseStatusMessage();
+  const dbApi = useDatabase();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = React.useState(false);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
@@ -95,53 +97,57 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated, (project.fileName || '').length, (project.name || '').length, (project.abbreviation || '').length, (project.languageCode || '').length]);
 
   const handleSubmit = React.useCallback(async (e: any) => {
-    e.preventDefault();
-    const projectToUpdate = {
-      ...project,
-      id: project.id ?? uuidv4()
-    };
+    return await new Promise((resolve) => {
+      setTimeout(async () => {
+        e.preventDefault();
+        const projectToUpdate = {
+          ...project,
+          id: project.id ?? uuidv4()
+        };
 
-    if (fileContent) {
-      dispatch(resetTextSegments());
-      projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
-      const refCorpus = {
-        id: project.id,
-        name: project.abbreviation,
-        fullName: project.name,
-        fileName: project.fileName,
-        language: {
-          code: project.languageCode,
-          textDirection: (project.textDirection || 'ltr')
-        },
-        words: [],
-        wordsByVerse: {},
-        wordLocation: new Map<string, Set<BCVWP>>(),
-        books: {},
-        side: AlignmentSide.TARGET
-      } as Corpus;
-      const parsedTsvCorpus = parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-      putVersesInCorpus({ ...refCorpus, ...parsedTsvCorpus });
-      projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
-    }
+        if (fileContent) {
+          dispatch(resetTextSegments());
+          projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
+          const refCorpus = {
+            id: project.id,
+            name: project.abbreviation,
+            fullName: project.name,
+            fileName: project.fileName,
+            language: {
+              code: project.languageCode,
+              textDirection: (project.textDirection || 'ltr')
+            },
+            words: [],
+            wordsByVerse: {},
+            wordLocation: new Map<string, Set<BCVWP>>(),
+            books: {},
+            side: AlignmentSide.TARGET
+          } as Corpus;
+          const parsedTsvCorpus = parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
+          putVersesInCorpus({ ...refCorpus, ...parsedTsvCorpus });
+          projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
+        }
 
-    !projectId
-      ? projectState.projectTable?.save?.(projectToUpdate)
-      : projectState.projectTable?.update?.(projectToUpdate);
+        !projectId
+          ? projectState.projectTable?.save?.(projectToUpdate)
+          : projectState.projectTable?.update?.(projectToUpdate);
 
-    setProjects((p: Project[]) => p.map(u => u.id === projectId ? projectToUpdate : u));
-    // @ts-ignore
-    await window.databaseApi.removeTargetWordsOrParts(projectToUpdate.id).catch(console.error);
-    const wordsOrParts = [...(projectToUpdate.sourceCorpora?.corpora ?? []), ...(projectToUpdate.targetCorpora?.corpora ?? [])]
-      .flatMap(corpus => (corpus.words ?? [])
-        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
-        .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
-    for (const chunk of _.chunk(wordsOrParts, 2_000)) {
-      // @ts-ignore
-      await window.databaseApi.insert(projectToUpdate.id, 'words_or_parts', chunk).catch(console.error);
-    }
-    setLoading(false);
-    handleClose();
-  }, [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
+        setProjects((p: Project[]) => p.map(u => u.id === projectId ? projectToUpdate : u));
+        await dbApi.removeTargetWordsOrParts(projectToUpdate.id).catch(console.error);
+        const wordsOrParts = [...(projectToUpdate.sourceCorpora?.corpora ?? []), ...(projectToUpdate.targetCorpora?.corpora ?? [])]
+          .flatMap(corpus => (corpus.words ?? [])
+            .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
+            .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
+
+        const insertPromises = _.chunk(wordsOrParts, 2_000)
+          .map(chunk => dbApi.insert(projectToUpdate.id, 'words_or_parts', chunk).catch(console.error));
+        await Promise.all(insertPromises);
+        setLoading(false);
+        handleClose();
+      }, 100);
+    });
+  }
+  , [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {

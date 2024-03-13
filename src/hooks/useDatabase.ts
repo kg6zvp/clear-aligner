@@ -17,6 +17,8 @@ export interface DatabaseApi {
     tt: string, // targets text
     c: number // frequency
   }[]>;
+  removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
+  insert: <T,>(sourceName: string, table: string, itemOrItems: T[]) => Promise<boolean>;
   corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
   findLinksByBCV: (sourceName: string, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
