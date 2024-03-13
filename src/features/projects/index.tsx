@@ -75,7 +75,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [currentProject, project]);
 
   const updateCurrentProject = React.useCallback(() => {
-    setPreferences((p: UserPreference | undefined) => {
+    setPreferences(() => {
       const updatedPreference = { ...(preferences ?? {}), currentProject: project.id } as UserPreference;
       projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreference);
       return updatedPreference;
@@ -83,11 +83,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   }, [setPreferences, preferences, project.id, projectState.userPreferenceTable]);
 
   return (
-    <Card sx={{
+    <Card sx={theme => ({
       height: 250, width: 250, m: 2.5, '&:hover': {
-        boxShadow: '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
+        boxShadow: (theme.palette as unknown as {mode: string;}).mode === 'dark'
+          ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
+          : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
       }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' }
-    }}>
+    })}>
       <CardContent sx={{
         display: 'flex',
         flexDirection: 'column',

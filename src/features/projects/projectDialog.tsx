@@ -123,7 +123,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       ? projectState.projectTable?.save?.(projectToUpdate)
       : projectState.projectTable?.update?.(projectToUpdate);
 
-    setProjects((p: Project[]) => [...p.filter(u => u.id !== projectId), projectToUpdate]);
+    setProjects((p: Project[]) => p.map(u => u.id === projectId ? projectToUpdate : u));
     // @ts-ignore
     await window.databaseApi.removeTargetWordsOrParts(projectToUpdate.id).catch(console.error);
     const wordsOrParts = [...(projectToUpdate.sourceCorpora?.corpora ?? []), ...(projectToUpdate.targetCorpora?.corpora ?? [])]
