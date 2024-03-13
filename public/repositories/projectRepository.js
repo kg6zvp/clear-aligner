@@ -1014,14 +1014,14 @@ class ProjectRepository extends BaseRepository {
                                 ON l.id = ltw.link_id
                      INNER JOIN words_or_parts tw
                                 ON tw.id = ltw.word_id
-            WHERE sw.normalized_text = ?
+            WHERE sw.normalized_text = :normalizedText
               AND sw.side = 'sources'
               AND l.targets_text <> ''
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, {
                     frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
                 })};`;
-        return await em.query(sourceQueryTextWLang, [normalizedText]);
+        return await em.query(sourceQueryTextWLang, [{ normalizedText }]);
       case 'targets':
         const targetQueryText = `
             SELECT tw.normalized_text   t,
@@ -1039,12 +1039,12 @@ class ProjectRepository extends BaseRepository {
                                 ON l.id = lsw.link_id
                      INNER JOIN words_or_parts sw
                                 ON sw.id = lsw.word_id
-            WHERE tw.normalized_text = ?
+            WHERE tw.normalized_text = :normalizedText
               AND tw.side = 'targets'
               AND l.sources_text <> ''
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
-        return await em.query(targetQueryText, [normalizedText]);
+        return await em.query(targetQueryText, [{ normalizedText }]);
     }
   };
 
@@ -1056,10 +1056,10 @@ class ProjectRepository extends BaseRepository {
         FROM links l
                  INNER JOIN links__target_words ltw
                             ON ltw.link_id = l.id
-        WHERE l.sources_text = '${sourcesText}'
-          AND l.targets_text = '${targetsText}'
+        WHERE l.sources_text = ?
+          AND l.targets_text = ?
         GROUP BY id
-            ${this._buildOrderBy(sort, { ref: 'word_id' })};`))
+            ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [ sourcesText , targetsText ]))
       .map((link) => link.id);
     const links = [];
     for (const linkId of linkIds) {
