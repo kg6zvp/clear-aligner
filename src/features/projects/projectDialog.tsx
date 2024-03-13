@@ -132,7 +132,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     // @ts-ignore
     await window.databaseApi.removeTargetWordsOrParts(projectToUpdate.id).catch(console.error);
     const wordsOrParts = [...(projectToUpdate.sourceCorpora?.corpora ?? []), ...(projectToUpdate.targetCorpora?.corpora ?? [])]
-      .flatMap(corpus => (corpus.words ?? []).map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
+      .flatMap(corpus => (corpus.words ?? [])
+        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)) )
+        .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
     for (const chunk of _.chunk(wordsOrParts, 2_000)) {
       // @ts-ignore
       await window.databaseApi.insert(projectToUpdate.id, 'words_or_parts', chunk).catch(console.error);
