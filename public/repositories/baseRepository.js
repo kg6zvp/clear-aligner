@@ -76,9 +76,9 @@ class BaseRepository {
 
       const fileName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sqlite`;
       const workDatabaseDirectory = databaseDirectory ? databaseDirectory : this.getDataDirectory();
-      fs.mkdirSync(workDatabaseDirectory, { recursive: true });
       const databaseFile = path.join(workDatabaseDirectory, fileName);
 
+      fs.mkdirSync(path.dirname(databaseFile), { recursive: true });
       if (!fs.existsSync(databaseFile) && generationFile) {
         fs.copyFileSync(generationFile, databaseFile);
       }
