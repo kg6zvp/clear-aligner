@@ -46,28 +46,30 @@ sudo apt-get install build-essential clang libdbus-1-dev libgtk-3-dev \
 
 - requires `libfuse2` package
 
-## The Template Database
+## The Template, Default, and User Databases
 
-The template database file is the basis of all project databases and included
-with the platform builds. The file is stored in `sql/clear-aligner-template.sqlite`
-in the project directory during development and the application footprint after
-installation.
-
-The template database file is created automatically when executing `yarn dev-electron`
-or any of the `yarn build*` commands, including the platform builds. These build steps
-will _only_ create the template database file when it's missing. This database may be
-manually recreated at any time by executing the following shell script:
+These database files are the basis of all project databases and included with the platform
+builds. These files are:
 
 ```
-sql/create-template-db.sh
+sql/clear-aligner-template.sqlite
+sql/clear-aligner-user.sqlite
+sql/projects/clear-aligner-default.sqlite
+```
+
+...in the project directory during development and the application footprint after
+installation.
+
+These are created automatically when executing `yarn dev-electron` or any of the
+`yarn build*` commands, including the platform builds. These build steps will
+_only_ create these files when they're missing. These may be manually recreated at
+any time by executing the following shell script:
+
+```
+sql/create-db.sh
 ```
 
 This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
-The SQL commands used by this script to create the database may be found in:
-
-```
-sql/create-template-db.sql
-```
 
 ## Basic Usage
 
