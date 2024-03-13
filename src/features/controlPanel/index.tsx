@@ -1,18 +1,9 @@
-import { ReactElement, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
-import {
-  AddLink,
-  FileDownload,
-  FileUpload,
-  LinkOff,
-  RestartAlt,
-  SwapHoriz,
-  SwapVert,
-  Translate
-} from '@mui/icons-material';
+import { AddLink, LinkOff, RestartAlt, SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import UploadAlignmentGroup from './uploadAlignmentGroup'
+import UploadAlignmentGroup from './uploadAlignmentGroup';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { AppContext } from '../../App';
@@ -207,7 +198,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               variant={preferences?.showGloss ? 'contained' : 'outlined'}
               disabled={!props.containers.some(container => container.corpusAtReferenceString(props.position?.toReferenceString?.() ?? '')?.hasGloss)}
               onClick={() => {
-                const updatedPreferences = {...((preferences ?? {}) as UserPreference), showGloss: !preferences?.showGloss};
+                const updatedPreferences = {
+                  ...((preferences ?? {}) as UserPreference),
+                  showGloss: !preferences?.showGloss
+                };
                 setPreferences(updatedPreferences);
                 projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
               }}
@@ -226,8 +220,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
             >
               {
                 preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
-                ? <SwapHoriz />
-                : <SwapVert />
+                  ? <SwapHoriz />
+                  : <SwapVert />
               }
             </Button>
           </span>
