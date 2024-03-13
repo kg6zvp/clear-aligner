@@ -34,7 +34,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
 
   // set current reference to default if none set
   useEffect(() => {
-    if (!appCtx.preferences?.bcv) {
+    if (!appCtx.preferences?.bcv && appCtx.preferences) {
       appCtx.setPreferences((p: UserPreference | undefined) => ({
         ...(p ?? {}) as UserPreference,
         bcv: new BCVWP(45, 5, 3)

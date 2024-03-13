@@ -7,32 +7,24 @@ const useTrackLocation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { preferences, setPreferences, projectState } = React.useContext(AppContext);
-  const navigated = React.useRef(false);
+  const [redirected, setRedirected] = React.useState(false);
 
-  const [initialPagePreference, setInitialPagePreference] = React.useState(preferences?.page);
-
-  React.useEffect(() => {
-    if (!initialPagePreference && preferences?.page) {
-      setInitialPagePreference(preferences.page);
-    }
-  }, [initialPagePreference, preferences]);
 
   React.useEffect(() => {
-    if (!initialPagePreference) {
-      return;
+    if(preferences?.id && preferences?.page && !redirected) {
+      setRedirected(true);
+      navigate(preferences.page);
     }
-    if (!navigated.current) {
-      navigate(initialPagePreference);
-      navigated.current = true;
-      return;
-    }
+  }, [preferences?.page, redirected]);
+
+  React.useEffect(() => {
     setPreferences((p: UserPreference | undefined) => {
       const updatedPreferences = { ...((p ?? {}) as UserPreference), page: location.pathname };
       projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
       return updatedPreferences;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, initialPagePreference]);
+  }, [location.pathname]);
 };
 
 export default useTrackLocation;
