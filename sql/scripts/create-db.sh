@@ -44,6 +44,9 @@ else
   python3 ./create-db.py \
     -of "${templateDbPath}" \
     -sf 'finalize-db.sql'
+  rm -fv "${templateDbPath}-shm"
+  rm -fv "${templateDbPath}-wal"
+  rm -fv "${templateDbPath}-journal"
 
   echo "...Template database created: '${templateDbPath}'."
 fi
@@ -76,6 +79,9 @@ else
   python3 ./create-db.py \
     -of "${defaultDbPath}" \
     -sf 'finalize-db.sql'
+  rm -fv "${defaultDbPath}-shm"
+  rm -fv "${defaultDbPath}-wal"
+  rm -fv "${defaultDbPath}-journal"
 
   echo "...Default database created: '${defaultDbPath}'."
 fi
@@ -98,6 +104,9 @@ else
   python3 ./create-db.py \
     -of "${userDbPath}" \
     -sf 'finalize-db.sql'
+  rm -fv "${userDbPath}-shm"
+  rm -fv "${userDbPath}-wal"
+  rm -fv "${userDbPath}-journal"
 
   echo "...User database created: '${userDbPath}'."
 fi
