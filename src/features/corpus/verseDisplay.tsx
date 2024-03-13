@@ -52,6 +52,7 @@ export const VerseDisplay = ({
     readonly,
     String(lastUpdated)
   );
+
   const linkMap = useMemo(() => {
     if ((!allLinks || allLinks.length < 1)
       && !onlyLink) {

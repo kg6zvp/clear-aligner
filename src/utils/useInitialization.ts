@@ -44,10 +44,11 @@ const useInitialization = () => {
         });
       }).then(() => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
-          if(res) {
-            setPreferences(res);
-            currUserPreferenceTable.saveOrUpdate?.({...res, currentProject: res.currentProject ?? projects?.[0]?.id ?? "" })
-          }
+          setPreferences({
+            ...(res ?? {}) as UserPreference,
+            currentProject: res?.currentProject ?? projects?.[0]?.id ?? ""
+          });
+          currLinksTable.setSourceName(res?.currentProject ?? projects?.[0]?.id ?? "default");
         });
       });
       initializeProject().catch(console.error);
