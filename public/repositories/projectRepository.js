@@ -619,8 +619,12 @@ class ProjectRepository extends BaseRepository {
       const queryWordId = `${linkSide}:${wordId}`;
       const entityManager = (await this.getDataSource(sourceName)).manager;
       const results = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
-                                                                                  json_group_array(replace(t1.word_id, '${firstTableName}s:', ''))  as '${firstTableName}s',
-                                                                                  json_group_array(replace(t2.word_id, '${secondTableName}s:', '')) as '${secondTableName}s'
+                                                                                  json_group_array(
+                                                                                          replace(t1.word_id, '${firstTableName}s:', ''))
+                                                                                          filter (where t1.word_id is not null) '${firstTableName}s',
+                                                                                  json_group_array(
+                                                                                          replace(t2.word_id, '${secondTableName}s:', ''))
+                                                                                          filter (where t2.word_id is not null) '${secondTableName}s'
                                                                            from 'links__${firstTableName}_words' t1
                                                                                     left join 'links__${secondTableName}_words' t2 on t1.link_id = t2.link_id
                                                                            where t1.word_id = ?;`, [queryWordId])));
@@ -805,7 +809,8 @@ class ProjectRepository extends BaseRepository {
                                                                       and l.id in (?)
                                                                       and w.normalized_text is not null
                                                                     group by w.position_word
-                                                                    order by w.id)), '') WHERE links.id in (?);`, [linkIds, linkIds]);
+                                                                    order by w.id)), '')
+                                 WHERE links.id in (?);`, [linkIds, linkIds]);
       await entityManager.query(`update links
                                  set targets_text = coalesce((select group_concat(words, ' ')
                                                               from (select group_concat(w.normalized_text, '') words
@@ -816,7 +821,8 @@ class ProjectRepository extends BaseRepository {
                                                                       and l.id in (?)
                                                                       and w.normalized_text is not null
                                                                     group by w.position_word
-                                                                    order by w.id)), '') WHERE links.id in (?);`, [linkIds, linkIds]);
+                                                                    order by w.id)), '')
+                                 WHERE links.id in (?);`, [linkIds, linkIds]);
       this.logDatabaseTimeLog('updateLinkText()', sourceName, linkIdOrIds);
       return true;
     } catch (ex) {
