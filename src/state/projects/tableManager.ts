@@ -3,6 +3,7 @@ import { WordsIndex } from '../links/wordsIndex';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { LinksTable } from '../links/tableManager';
 import BCVWP, { BCVWPField } from '../../features/bcvwp/BCVWPSupport';
+import _ from 'lodash';
 
 export interface Project {
   id: string;
@@ -33,6 +34,7 @@ export class ProjectTable extends VirtualTable<Project> {
     try {
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+      await this.insertWordsOrParts(project);
       this.projects.set(createdProject.id, createdProject);
       return createdProject?.[0] ? ProjectTable.convertDataSourceToProject(createdProject?.[0]) : undefined;
     } catch (e) {
@@ -59,6 +61,7 @@ export class ProjectTable extends VirtualTable<Project> {
     try {
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+      await this.insertWordsOrParts(project);
       this.projects.set(updatedProject, updatedProject);
       return updatedProject?.[0] ? ProjectTable.convertDataSourceToProject(updatedProject?.[0]) : undefined;
     } catch (e) {
@@ -67,6 +70,22 @@ export class ProjectTable extends VirtualTable<Project> {
       this._onUpdate(suppressOnUpdate);
     }
   };
+
+  insertWordsOrParts = async (project: Project) => {
+    // @ts-ignore
+    await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
+    const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+      .flatMap(corpus => (corpus.words ?? [])
+        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
+        .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
+
+    const insertPromises = _.chunk(wordsOrParts, 2_000)
+      .map(chunk => {
+        // @ts-ignore
+        window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error);
+      });
+    await Promise.all(insertPromises);
+  }
 
   getDataSourcesAsProjects = async (): Promise<Project[] | undefined> => {
     try {

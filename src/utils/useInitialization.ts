@@ -11,17 +11,6 @@ const useInitialization = () => {
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>()
   const [state, setState] = useState({} as ProjectState);
-  const projectsIdList = useMemo<string>(() => JSON.stringify(projects.map(p => p.id).sort()), [projects]);
-
-  useInterval(() => {
-    state?.projectTable?.getProjects(true).then(res => {
-      const newProjectsList = [...res!.values() ].sort();
-      const newList = JSON.stringify(newProjectsList.map(p => p.id).sort());
-      if (newList !== projectsIdList) {
-        setProjects(newProjectsList);
-      }
-    });
-  }, 5_000);
 
   useEffect(() => {
     if(!isLoaded.current) {

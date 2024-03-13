@@ -29,9 +29,7 @@ import { useAppDispatch } from '../../app';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import _ from 'lodash';
 import useDatabaseStatusMessage from '../../utils/useDatabaseStatusMessage';
-import { useDatabase } from '../../hooks/useDatabase';
 
 
 enum TextDirection {
@@ -57,7 +55,6 @@ const getInitialProjectState = (): Project => ({
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
   const databaseStatusDialog = useDatabaseStatusMessage();
-  const dbApi = useDatabase();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = React.useState(false);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
@@ -128,20 +125,14 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
         }
 
-        !projectId
-          ? projectState.projectTable?.save?.(projectToUpdate)
-          : projectState.projectTable?.update?.(projectToUpdate);
 
-        setProjects((p: Project[]) => p.map(u => u.id === projectId ? projectToUpdate : u));
-        await dbApi.removeTargetWordsOrParts(projectToUpdate.id).catch(console.error);
-        const wordsOrParts = [...(projectToUpdate.sourceCorpora?.corpora ?? []), ...(projectToUpdate.targetCorpora?.corpora ?? [])]
-          .flatMap(corpus => (corpus.words ?? [])
-            .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
-            .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
-
-        const insertPromises = _.chunk(wordsOrParts, 2_000)
-          .map(chunk => dbApi.insert(projectToUpdate.id, 'words_or_parts', chunk).catch(console.error));
-        await Promise.all(insertPromises);
+        if(!projectId) {
+          projectState.projectTable?.save?.(projectToUpdate)
+          setProjects((p: Project[]) => [...p, projectToUpdate]);
+        } else {
+          projectState.projectTable?.update?.(projectToUpdate);
+          setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
+        }
         setLoading(false);
         handleClose();
       }, 100);
