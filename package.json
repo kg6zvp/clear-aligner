@@ -124,11 +124,16 @@
     },
     "extraFiles": [
       {
-        "from": "sql",
-        "to": "sql",
-        "filter": [
-          "!**/.gitignore"
-        ]
+        "from": "sql/projects/clear-aligner-default.sqlite",
+        "to": "sql/projects/clear-aligner-default.sqlite"
+      },
+      {
+        "from": "sql/clear-aligner-template.sqlite",
+        "to": "sql/clear-aligner-template.sqlite"
+      },
+      {
+        "from": "sql/clear-aligner-user.sqlite",
+        "to": "sql/clear-aligner-user.sqlite"
       }
     ]
   },

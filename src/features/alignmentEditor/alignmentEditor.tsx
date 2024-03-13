@@ -56,6 +56,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
 
   React.useEffect(() => {
     const loadSourceWords = async () => {
+      console.log("requerying")
       const containers = await getAvailableCorporaContainers(appCtx);
       const targetCorpora = containers.find(
         (v: CorpusContainer) => v.id === AlignmentSide.TARGET

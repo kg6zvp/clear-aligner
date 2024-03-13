@@ -1,5 +1,5 @@
-import { Grid, Card, CardContent, Typography, Button } from '@mui/material';
-import React, { useState } from 'react';
+import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -7,25 +7,24 @@ import uuid from 'uuid-random';
 import { DefaultProjectName, useGetAllLinks } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
+import saveAlignmentFile from '../../helpers/alignmentFile';
 
 interface ProjectsViewProps {
 }
 
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
   const { projects, preferences } = React.useContext(AppContext);
-
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { result: allLinks } = useGetAllLinks(getAllLinksKey);
-
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
-
   const selectProject = React.useCallback((projectId: string) => {
     setSelectedProjectId(projectId);
     setOpenProjectDialog(true);
   }, [setSelectedProjectId, setOpenProjectDialog]);
+  useEffect(() => {
+    saveAlignmentFile(allLinks ?? []);
+  }, [allLinks]);
 
   return (
     <>
@@ -72,13 +71,17 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick, setGetAllLinksKey }) => {
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
-  const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [currentProject, project]);
+  const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
   const updateCurrentProject = React.useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
     projectState.linksTable.setSourceName(project.id);
     setPreferences(() => {
-      const updatedPreference = { ...(preferences ?? {}), currentProject: project.id, initialized: false } as UserPreference;
+      const updatedPreference = {
+        ...(preferences ?? {}),
+        currentProject: project.id,
+        initialized: false
+      } as UserPreference;
       projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreference);
       return updatedPreference;
     });
@@ -87,7 +90,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   return (
     <Card sx={theme => ({
       height: 250, width: 250, m: 2.5, '&:hover': {
-        boxShadow: (theme.palette as unknown as {mode: string;}).mode === 'dark'
+        boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
           ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
           : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
       }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' }

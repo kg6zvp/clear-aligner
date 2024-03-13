@@ -44,13 +44,14 @@ const useInitialization = () => {
         });
       }).then(() => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
+          console.log("preferences: ", res)
           setPreferences({
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject ?? projects?.[0]?.id ?? ""
           });
           setState({
             ...state,
-            linksTable: state.linksTable ?? new LinksTable(res?.currentProject ?? projects?.[0]?.id),
+            linksTable: new LinksTable(res?.currentProject ?? projects?.[0]?.id),
             projectTable: currProjectTable,
             userPreferenceTable: currUserPreferenceTable
           });

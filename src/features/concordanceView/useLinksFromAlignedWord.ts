@@ -7,25 +7,33 @@ import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableM
 import { AppContext } from '../../App';
 
 export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const db = useDatabase();
   const lastUpdate = useDataLastUpdated();
   const [links, setLinks] = useState<Link[] | undefined>(undefined);
+  const [currentAlignedWord, setCurrentAlignedWord] = useState<AlignedWord | undefined>();
 
   useEffect(() => {
-    if (!alignedWord) return;
+    if (currentAlignedWord !== alignedWord) {
+      setCurrentAlignedWord(alignedWord);
+      setLinks(undefined);
+    }
+  }, [currentAlignedWord, alignedWord]);
+
+  useEffect(() => {
+    if (!currentAlignedWord) return;
     const load = async () => {
-      console.time(`useLinksFromAlignedWord(alignedWord: '${alignedWord.id}')`);
+      console.time(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
       try {
-        const links = await db.corporaGetLinksByAlignedWord(preferences?.currentProject ?? DefaultProjectName, alignedWord.sourceWordTexts.text, alignedWord.targetWordTexts.text, sort);
+        const links = await db.corporaGetLinksByAlignedWord(preferences?.currentProject ?? DefaultProjectName, currentAlignedWord.sourceWordTexts.text, currentAlignedWord.targetWordTexts.text, sort);
         setLinks(links);
       } finally {
-        console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${alignedWord.id}')`);
+        console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
       }
     };
 
     void load();
-  }, [db, alignedWord, sort, setLinks, preferences?.currentProject, lastUpdate]);
+  }, [db, currentAlignedWord, sort, setLinks, preferences?.currentProject, lastUpdate]);
 
   return links;
 };
