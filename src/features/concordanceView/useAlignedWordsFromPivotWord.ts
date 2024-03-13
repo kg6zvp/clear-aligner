@@ -1,13 +1,14 @@
 import { AlignedWord, PivotWord } from './structs';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
-import { DefaultProjectName } from '../../state/links/tableManager';
+import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useLanguages } from '../../hooks/useLanguages';
 import { AppContext } from '../../App';
 
 export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridSortItem | null): AlignedWord[] | undefined => {
   const {preferences} = useContext(AppContext);
+  const lastUpdate = useDataLastUpdated();
   const languages = useLanguages();
   const db = useDatabase();
   const [alignedWords, setAlignedWords] = useState<AlignedWord[] | undefined>(undefined);
@@ -41,7 +42,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
     };
 
     void load();
-  }, [db, sort, setAlignedWords, pivotWord, languages, preferences?.currentProject]);
+  }, [db, sort, setAlignedWords, pivotWord, languages, preferences?.currentProject, lastUpdate]);
 
   return alignedWords;
 };
