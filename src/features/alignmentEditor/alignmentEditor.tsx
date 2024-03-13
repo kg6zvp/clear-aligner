@@ -67,12 +67,13 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
       );
     };
 
-    loadSourceWords().catch(console.error);
+    if(appCtx.projectState.linksTable?.getSourceName?.()) {
+      loadSourceWords().catch(console.error);
+    }
   }, [
     appCtx,
     setAvailableWords,
-    setSelectedCorporaContainers,
-    appCtx.preferences?.initialized
+    setSelectedCorporaContainers
   ]);
 
   useEffect(() => {

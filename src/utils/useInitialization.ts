@@ -48,12 +48,7 @@ const useInitialization = () => {
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject ?? projects?.[0]?.id ?? ""
           });
-          setState({
-            ...state,
-            linksTable: new LinksTable(res?.currentProject ?? projects?.[0]?.id),
-            projectTable: currProjectTable,
-            userPreferenceTable: currUserPreferenceTable
-          });
+          currLinksTable.setSourceName(res?.currentProject ?? projects?.[0]?.id ?? "default");
         });
       });
       initializeProject().catch(console.error);
