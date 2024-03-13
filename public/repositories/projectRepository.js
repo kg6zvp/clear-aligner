@@ -665,7 +665,8 @@ class ProjectRepository extends BaseRepository {
                                                                                    and w.position_book = ?
                                                                                    and w.position_chapter = ?
                                                                                    and w.position_verse = ?
-                                                                                 group by ltw.link_id) q;`,
+                                                                                 group by ltw.link_id) q
+                                                                           order by q.link_id;`,
         [bookNum, chapterNum, verseNum,
           bookNum, chapterNum, verseNum])));
       this.logDatabaseTimeLog('findLinksByBCV()', sourceName, bookNum, chapterNum, verseNum, results?.length ?? results);
