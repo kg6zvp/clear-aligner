@@ -10,7 +10,7 @@ import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 
 const DatabaseInsertChunkSize = 10_000;
-const DatabaseSelectChunkSize = 20_000;
+const DatabaseSelectChunkSize = 25_000;
 const DatabaseWaitInMs = 1_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
