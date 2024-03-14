@@ -18,6 +18,5 @@ export const useBooksWithNavigationInfo = (words?: Word[]): NavigableBook[] => {
     }
   }, [words]);
 
-  console.log('return');
   return [ ...(availableBooks ?? []) ];
 }

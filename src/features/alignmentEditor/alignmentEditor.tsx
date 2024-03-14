@@ -75,7 +75,6 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     if (!sourceContainer || !targetContainer) return;
     const loadSourceWords = async () => {
       setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
-      console.error('setting words');
       setAvailableWords(
         targetContainer?.corpora.flatMap(({ words }) => words) ?? []
       );
