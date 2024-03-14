@@ -79,12 +79,13 @@ export class ProjectTable extends VirtualTable<Project> {
         .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
         .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-    const insertPromises = _.chunk(wordsOrParts, 2_000)
-      .map(chunk => {
+    const insertPromises: Promise<Project>[] = _.chunk(wordsOrParts, 2_000)
+      .map(chunk =>
         // @ts-ignore
-        window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error);
-      });
+        window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error)
+      )
     await Promise.all(insertPromises);
+    console.log('insertPRomises is: ', insertPromises)
   }
 
   getDataSourcesAsProjects = async (): Promise<Project[] | undefined> => {

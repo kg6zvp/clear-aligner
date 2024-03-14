@@ -103,6 +103,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         };
 
         if (fileContent) {
+          console.log('inside fileContent if block')
           dispatch(resetTextSegments());
           projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
           const refCorpus = {
@@ -127,15 +128,19 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
 
 
         if(!projectId) {
+          console.log('inside !projectId if block')
           projectState.projectTable?.save?.(projectToUpdate)
           setProjects((p: Project[]) => [...p, projectToUpdate]);
         } else {
+          console.log('inside !projectId else block')
           projectState.projectTable?.update?.(projectToUpdate);
           setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
         }
+        console.log('about to run setLoading(false)')
         setLoading(false);
+        console.log('about to run handleClose')
         handleClose();
-      }, 100);
+      }, 10000);
     });
   }
   , [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
