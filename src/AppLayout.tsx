@@ -1,7 +1,13 @@
 import {
   AppBar,
+  Box,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogContentText,
   Drawer,
   FormControl,
+  Grid,
   IconButton,
   InputLabel,
   List,
@@ -12,24 +18,18 @@ import {
   MenuItem,
   Select,
   Toolbar,
-  useMediaQuery,
   Typography,
-  Grid, DialogContent, Box, CircularProgress, DialogContentText, Dialog
+  useMediaQuery
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import Themed from './features/themed';
-import {
-  createSearchParams,
-  Outlet,
-  useNavigate,
-  useSearchParams,
-} from 'react-router-dom';
-import { AddLink, ManageSearch, LibraryBooks } from '@mui/icons-material';
+import { createSearchParams, Outlet, useNavigate, useSearchParams } from 'react-router-dom';
+import { AddLink, LibraryBooks, ManageSearch } from '@mui/icons-material';
 import useTrackLocation from './utils/useTrackLocation';
 import { AppContext } from './App';
 import { getCorporaInitializationState, InitializationStates } from './workbench/query';
-import { DatabaseStatus } from './state/links/tableManager';
+import { DatabaseBusyInfo } from './state/links/tableManager';
 import { useInterval } from 'usehooks-ts';
 import _ from 'lodash';
 
@@ -49,7 +49,6 @@ export const LayoutContext = createContext({} as LayoutContextProps);
 // Needed for the Busybox/Dialog to work properly down below
 const BusyRefreshTimeInMs = 500;
 
-
 export const AppLayout = () => {
   useTrackLocation();
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -57,11 +56,9 @@ export const AppLayout = () => {
     () => (prefersDarkMode ? 'night' : 'day'),
     [prefersDarkMode]
   );
-
   const [preferredTheme, setPreferredTheme] = useState(
     'auto' as THEME_PREFERENCE
   );
-
   const theme = useMemo(() => {
     switch (preferredTheme) {
       case 'auto':
@@ -70,7 +67,6 @@ export const AppLayout = () => {
         return preferredTheme;
     }
   }, [themeDefault, preferredTheme]);
-
   const [showMenu, setShowMenu] = useState(false);
   const [menuBarDelegate, setMenuBarDelegate] = useState(
     null as JSX.Element | string | null
@@ -79,32 +75,42 @@ export const AppLayout = () => {
     () => ({
       windowTitle: document.title,
       setWindowTitle: (title) => (document.title = title),
-      setMenuBarDelegate,
+      setMenuBarDelegate
     }),
     [setMenuBarDelegate]
   );
-
   const [searchParams] = useSearchParams();
-
   const navigate = useNavigate();
-
-  const {preferences, projects, projectState} = useContext(AppContext);
+  const { preferences, projects, projectState } = useContext(AppContext);
   const projectName = useMemo(() => (
-    (projects || []).find(p => p.id === preferences?.currentProject)?.name ?? projects?.[0]?.name ?? ""
-  ), [projects, preferences]);
+    (projects || []).find(p => p.id === preferences?.currentProject)?.name ?? projects?.[0]?.name ?? ''
+  ), [projects, preferences?.currentProject]);
 
   // code needed for the Dialog/BusyBox to work properly down below
   const [initializationState, setInitializationState] = useState<InitializationStates>();
-  const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus>();
+  const [databaseBusyInfo, setDatabaseBusyInfo] = useState<DatabaseBusyInfo>();
+  const [numProjects, setNumProjects] = useState<number>();
   useInterval(() => {
     const newDatabaseStatus = projectState?.linksTable.getDatabaseStatus();
-    if (!_.isEqual(newDatabaseStatus, databaseStatus)) {
-      setDatabaseStatus(newDatabaseStatus);
+    if (!_.isEqual(newDatabaseStatus?.busyInfo, databaseBusyInfo)) {
+      setDatabaseBusyInfo(newDatabaseStatus?.busyInfo);
     }
     const newInitializationState = getCorporaInitializationState();
     if (newInitializationState !== initializationState) {
       setInitializationState(newInitializationState);
+      projectState?.projectTable?.getProjects(true)
+        .then(newProjects => {
+          if (newProjects?.size !== numProjects) {
+            setNumProjects(newProjects?.size);
+          }
+        });
     }
+    projectState?.projectTable?.getProjects(false)
+      .then(newProjects => {
+        if (newProjects?.size !== numProjects) {
+          setNumProjects(newProjects?.size);
+        }
+      });
   }, BusyRefreshTimeInMs);
   const spinnerParams = useMemo<{
     isBusy?: boolean,
@@ -112,7 +118,7 @@ export const AppLayout = () => {
     variant?: 'determinate' | 'indeterminate',
     value?: number
   }>(() => {
-    const busyInfo = databaseStatus?.busyInfo;
+    const busyInfo = databaseBusyInfo;
     if (busyInfo?.isBusy) {
       const progressCtr = busyInfo?.progressCtr ?? 0;
       const progressMax = busyInfo?.progressMax ?? 0;
@@ -134,10 +140,12 @@ export const AppLayout = () => {
         };
       }
     }
-    if (initializationState === InitializationStates.INITIALIZING) {
+    if (initializationState !== InitializationStates.INITIALIZED) {
       return {
         isBusy: true,
-        text: 'Loading corpora...',
+        text: !numProjects
+          ? 'Starting up...'
+          : 'Loading project & corpora...',
         variant: 'indeterminate',
         value: undefined
       };
@@ -148,7 +156,7 @@ export const AppLayout = () => {
       variant: 'indeterminate',
       value: undefined
     };
-  }, [databaseStatus?.busyInfo, initializationState]);
+  }, [databaseBusyInfo, initializationState, numProjects]);
 
 
   return (
@@ -182,16 +190,22 @@ export const AppLayout = () => {
         </Dialog>
 
         <AppBar position={'fixed'} enableColorOnDark={theme !== 'night'}>
-          <Grid container justifyContent="space-between" alignItems="center" sx={{position: 'relative'}}>
-          <Toolbar aria-label={'Menu'} onClick={() => setShowMenu(!showMenu)}>
-            <IconButton>
-              <MenuIcon {...(theme !== 'night' && { htmlColor: 'white' })} />
-            </IconButton>
-            <div style={{ width: '100%' }} onClick={() => setShowMenu(true)}>
-              {menuBarDelegate ?? <></>}
-            </div>
-          </Toolbar>
-            <Typography variant="h6" sx={{fontWeight: 'bold', position: 'absolute', top: "50%", left: '50%', transform: 'translate(-50%, -50%)'}}>
+          <Grid container justifyContent="space-between" alignItems="center" sx={{ position: 'relative' }}>
+            <Toolbar aria-label={'Menu'} onClick={() => setShowMenu(!showMenu)}>
+              <IconButton>
+                <MenuIcon {...(theme !== 'night' && { htmlColor: 'white' })} />
+              </IconButton>
+              <div style={{ width: '100%' }} onClick={() => setShowMenu(true)}>
+                {menuBarDelegate ?? <></>}
+              </div>
+            </Toolbar>
+            <Typography variant="h6" sx={{
+              fontWeight: 'bold',
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)'
+            }}>
               {projectName}
             </Typography>
           </Grid>
@@ -208,7 +222,7 @@ export const AppLayout = () => {
                       setShowMenu(false);
                       navigate({
                         pathname: '/',
-                        search: createSearchParams(searchParams).toString(),
+                        search: createSearchParams(searchParams).toString()
                       });
                     }}
                   >
@@ -224,7 +238,7 @@ export const AppLayout = () => {
                       setShowMenu(false);
                       navigate({
                         pathname: '/concordance',
-                        search: createSearchParams(searchParams).toString(),
+                        search: createSearchParams(searchParams).toString()
                       });
                     }}
                   >
@@ -239,14 +253,14 @@ export const AppLayout = () => {
                     onClick={() => {
                       setShowMenu(false);
                       navigate({
-                        pathname: '/projects',
+                        pathname: '/projects'
                       });
                     }}
                   >
                     <ListItemIcon>
                       <LibraryBooks />
                     </ListItemIcon>
-                    <ListItemText primary='Projects' />
+                    <ListItemText primary="Projects" />
                   </ListItemButton>
                 </ListItem>
               </List>

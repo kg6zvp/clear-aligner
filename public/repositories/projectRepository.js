@@ -212,7 +212,9 @@ class ProjectRepository extends BaseRepository {
   getDataSources = async () => new Promise((res, err) => {
     const sources = [];
     try {
-      fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
+      const dataSourceDirectory = path.join(this.getDataDirectory(), ProjectDatabaseDirectory);
+      fs.mkdirSync(dataSourceDirectory, { recursive: true });
+      fs.readdir(dataSourceDirectory, async (err, files) => {
         if (err) {
           console.error('There was an error accessing the data source directory: ', err);
           return sources;
@@ -283,23 +285,26 @@ class ProjectRepository extends BaseRepository {
       const firstBcv = await entityManager.query(`select replace(id, 'targets:', '') id
                                                   from words_or_parts
                                                   where side = 'targets'
-                                                  order by id asc limit 1;`);
+                                                  order by id asc
+                                                  limit 1;`);
       return firstBcv[0];
     } catch (err) {
       console.error('getFirstBcvFromSource()', err);
     }
-  }
+  };
 
   hasBcvInSource = async (sourceName, bcvId) => {
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const hasBcv = await entityManager.query(`select count(1) bcv from words_or_parts where id like 'targets:${bcvId}%'`);
+      const hasBcv = await entityManager.query(`select count(1) bcv
+                                                from words_or_parts
+                                                where id like 'targets:${bcvId}%'`);
       return !!hasBcv[0]?.bcv;
 
     } catch (err) {
-      console.error('hasBcvInSource()', err)
+      console.error('hasBcvInSource()', err);
     }
-  }
+  };
 
   removeSource = async (projectId) => {
     fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
