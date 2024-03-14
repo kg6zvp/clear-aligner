@@ -9,6 +9,7 @@ import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
 import { UserPreference } from 'state/preferences/tableManager';
 import { DefaultProjectName } from '../../state/links/tableManager';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -68,16 +69,14 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     }
   }, [appCtx.preferences?.bcv, layoutCtx]);
 
-  React.useEffect(() => {
-    const loadSourceWords = async () => {
-      const containers = await getAvailableCorporaContainers(appCtx);
-      const targetCorpora = containers.find(
-        (v: CorpusContainer) => v.id === AlignmentSide.TARGET
-      );
+  const { sourceContainer, targetContainer } = useCorpusContainers();
 
-      setSelectedCorporaContainers(containers);
+  React.useEffect(() => {
+    if (!sourceContainer || !targetContainer) return;
+    const loadSourceWords = async () => {
+      setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
       setAvailableWords(
-        targetCorpora?.corpora.flatMap(({ words }) => words) ?? []
+        targetContainer?.corpora.flatMap(({ words }) => words) ?? []
       );
     };
 
@@ -85,7 +84,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
       loadSourceWords().catch(console.error);
     }
   }, [
-    appCtx,
+    targetContainer,
     setAvailableWords,
     setSelectedCorporaContainers,
     appCtx.projects

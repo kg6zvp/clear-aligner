@@ -62,25 +62,23 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
   const [fileContent, setFileContent] = React.useState('');
   const [projectUpdated, setProjectUpdated] = React.useState(false);
-
-  const languageOptions = useMemo(() => ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])].sort((a, b) => a.localeCompare(b)), [ISO6393]);
-
+  const languageOptions = useMemo(() =>
+    ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
+      .sort((a, b) => a.localeCompare(b)), [ISO6393]);
   const allowDelete = React.useMemo(() => projectId !== DefaultProjectName, [projectId]);
-
   const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
     if (!projectUpdated) {
       setProjectUpdated(true);
     }
     setProject((p: Project) => ({ ...p, ...updatedProjectFields }));
   }, [projectUpdated, setProject]);
-
   const handleClose = React.useCallback(() => {
-    setFileContent('')
+    setFileContent('');
     setProjectUpdated(false);
     setUploadErrors([]);
     setProject(getInitialProjectState());
     closeCallback();
-  }, [closeCallback, setProject, setUploadErrors]);
+  }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
@@ -93,56 +91,56 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated, (project.fileName || '').length, (project.name || '').length, (project.abbreviation || '').length, (project.languageCode || '').length]);
 
   const handleSubmit = React.useCallback(async (e: any) => {
-    return await new Promise((resolve) => {
-      setTimeout(async () => {
-        e.preventDefault();
-        const projectToUpdate = {
-          ...project,
-          id: project.id ?? uuidv4()
-        };
+      return await new Promise((resolve) => {
+        setTimeout(async () => {
+          e.preventDefault();
+          const projectToUpdate = {
+            ...project,
+            id: project.id ?? uuidv4()
+          };
 
-        const targetCorpus = {
-          id: project.id,
-          name: project.abbreviation,
-          fullName: project.name,
-          fileName: project.fileName,
-          language: {
-            code: project.languageCode,
-            textDirection: (project.textDirection || 'ltr')
-          },
-          words: [],
-          wordsByVerse: {},
-          wordLocation: new Map<string, Set<BCVWP>>(),
-          books: {},
-          side: AlignmentSide.TARGET
-        } as Corpus;
+          const targetCorpus = {
+            id: project.id,
+            name: project.abbreviation,
+            fullName: project.name,
+            fileName: project.fileName,
+            language: {
+              code: project.languageCode,
+              textDirection: (project.textDirection || 'ltr')
+            },
+            words: [],
+            wordsByVerse: {},
+            wordLocation: new Map<string, Set<BCVWP>>(),
+            books: {},
+            side: AlignmentSide.TARGET
+          } as Corpus;
 
-        if (fileContent) {
-          dispatch(resetTextSegments());
-          projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
+          if (fileContent) {
+            dispatch(resetTextSegments());
+            projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
 
-          const parsedTsvCorpus = parseTsv(fileContent, targetCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-          putVersesInCorpus({ ...targetCorpus, ...parsedTsvCorpus });
-          projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
-        } else {
-          projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [{
-            ...targetCorpus,
-            id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
-          }]);
-        }
+            const parsedTsvCorpus = parseTsv(fileContent, targetCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
+            putVersesInCorpus({ ...targetCorpus, ...parsedTsvCorpus });
+            projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
+          } else {
+            projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [{
+              ...targetCorpus,
+              id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
+            }]);
+          }
 
-        setPreferences(p => ({...(p ?? {}) as UserPreference, initialized: false}));
-        if(!projectId) {
-          setProjects((p: Project[]) => [...p, projectToUpdate]);
-          resolve(projectState.projectTable?.save?.(projectToUpdate, !!fileContent))
-        } else {
-          setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
-          resolve(projectState.projectTable?.update?.(projectToUpdate, !!fileContent));
-        }
-      }, 100);
-    });
-  }
-  , [project, fileContent, handleClose, dispatch, preferences, setProjects]);
+          setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: false }));
+          if (!projectId) {
+            setProjects((p: Project[]) => [...p, projectToUpdate]);
+            resolve(projectState.projectTable?.save?.(projectToUpdate, !!fileContent));
+          } else {
+            setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
+            resolve(projectState.projectTable?.update?.(projectToUpdate, !!fileContent));
+          }
+        }, 100);
+      });
+    }
+    , [project, fileContent, dispatch, preferences, setProjects, setPreferences]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
@@ -257,13 +255,18 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                          const file = event!.target!.files![0];
                          const content = await file.text();
                          const errorMessages: string[] = [];
-                         if (file.type !== 'text/tab-separated-values') {
-                           errorMessages.push('Invalid file type supplied.');
-                         }
-                         if (!['text', 'id'].every(header => content.split('\n')[0].includes(header))) {
+                         const contentLines = content.split('\n');
+                         if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
                            errorMessages.push('TSV must include \'text\' and \'id\' headers.');
                          }
-                         if (content.split('\n').filter(v => v).length < 2) {
+                         let goodCtr = 0;
+                         for (const contentLine of contentLines) {
+                           goodCtr += !!contentLine ? 1 : 0;
+                           if (goodCtr > 1) {
+                             break;
+                           }
+                         }
+                         if (goodCtr < 2) {
                            errorMessages.push('TSV must include at least one row of data.');
                          }
                          if (errorMessages.length) {
@@ -306,7 +309,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                 handleSubmit(e).then(() => {
                   // handleClose() in the .then() ensures dialog doesn't close prematurely
                   handleClose();
-                  })
+                });
               }}
             >
               {projectId ? 'Update' : 'Create'}
