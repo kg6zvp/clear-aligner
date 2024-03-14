@@ -127,9 +127,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         }
 
 
-        if(!projectId) {
+        if (!projectId) {
           console.log('inside !projectId if block (top)')
-          projectState.projectTable?.save?.(projectToUpdate)
+          resolve(projectState.projectTable?.save?.(projectToUpdate))
           setProjects((p: Project[]) => [...p, projectToUpdate]);
           console.log('inside !projectId if block (bottom)')
         } else {
@@ -137,14 +137,13 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           projectState.projectTable?.update?.(projectToUpdate);
           setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
         }
-
-      }, 1000);
-    }).finally(() => {
-      console.log('about to run setLoading(false)')
-      setLoading(false);
-      console.log('about to run handleClose')
-      handleClose();
-    });
+      }, 100);
+    }).then((e) => {
+      console.log('inside .then of handleSubmit, e is: ', e)
+    })
+      .finally(() => {
+        console.log('inside .finally of handleSubmit, e is: ', e)
+      });
   }
   , [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
 
@@ -181,7 +180,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       {databaseStatusDialog}
       <Dialog
         open={open}
-        onClose={handleClose}
       >
         <DialogTitle>
           <Grid container justifyContent="space-between">
@@ -310,7 +308,16 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               {...(loading ? { startIcon: <CircularProgress size={10} /> } : {})}
               onClick={e => {
                 setLoading(true);
-                handleSubmit(e).catch(console.error);
+                handleSubmit(e)
+                  .then(() => {
+                    console.log('got inside the then in the button');
+                    console.log('about to run setLoading(false)')
+                    setLoading(false);
+                    console.log('about to run handleClose')
+                    handleClose();
+                    console.log('**leaving the then')
+                  })
+                  .catch(console.error).finally(() => console.log('got inside the finally in the button'));
               }}
             >
               {projectId ? 'Update' : 'Create'}
