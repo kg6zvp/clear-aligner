@@ -8,6 +8,7 @@ import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
 import { UserPreference } from 'state/preferences/tableManager';
+import { DefaultProjectName } from '../../state/links/tableManager';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -32,15 +33,28 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     });
   }, [appCtx]);
 
-  // set current reference to default if none set
-  useEffect(() => {
-    if (!appCtx.preferences?.bcv && appCtx.preferences) {
+  const setDefaultBcv = React.useCallback(async () => {
+    if(!appCtx.preferences?.currentProject) return;
+    const hasBcv = appCtx?.preferences?.bcv?.toReferenceString?.() && await appCtx.projectState?.projectTable?.hasBcvInSource?.(
+      appCtx.preferences.currentProject,
+      appCtx.preferences.bcv?.toReferenceString?.() ?? ""
+    );
+
+    if (!hasBcv && hasBcv !== undefined) {
+      const defaultBcv = await appCtx.projectState?.userPreferenceTable?.getFirstBcvFromSource?.(appCtx?.preferences?.currentProject);
       appCtx.setPreferences((p: UserPreference | undefined) => ({
         ...(p ?? {}) as UserPreference,
-        bcv: new BCVWP(45, 5, 3)
+        bcv: defaultBcv?.id
+            ? BCVWP.parseFromString(defaultBcv.id)
+            : new BCVWP(45, 5, 3)
       })); // set current reference to default
     }
   }, [appCtx, appCtx.preferences, appCtx.setPreferences, updatePreferences]);
+
+  // set current reference to default if none set
+  useEffect(() => {
+    setDefaultBcv().catch(console.error);
+  }, [appCtx.preferences?.currentProject]);
 
   React.useEffect(() => {
     if (appCtx.preferences?.bcv) {

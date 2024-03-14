@@ -279,6 +279,30 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
+  getFirstBcvFromSource = async (sourceName) => {
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const firstBcv = await entityManager.query(`select replace(id, 'targets:', '') id
+                                                  from words_or_parts
+                                                  where side = 'targets'
+                                                  order by id asc limit 1;`);
+      return firstBcv[0];
+    } catch (err) {
+      console.error('getFirstBcvFromSource()', err);
+    }
+  }
+
+  hasBcvInSource = async (sourceName, bcvId) => {
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const hasBcv = await entityManager.query(`select count(1) bcv from words_or_parts where id like 'targets:${bcvId}%'`);
+      return !!hasBcv[0]?.bcv;
+
+    } catch (err) {
+      console.error('hasBcvInSource()', err)
+    }
+  }
+
   removeSource = async (projectId) => {
     fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
       if (err) {
@@ -801,7 +825,8 @@ class ProjectRepository extends BaseRepository {
   };
 
   updateAllLinkText = async (sourceName) => {
-    this.logDatabaseTime('updateAllLinkText()');
+    const logText = `updateAllLinkText(sourceName: '${sourceName}')`;
+    this.logDatabaseTime(logText);
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
       await entityManager.query(`update links
@@ -827,10 +852,10 @@ class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('updateAllLinkText()', sourceName);
       return true;
     } catch (ex) {
-      console.error('updateAllLinkText()', ex);
+      console.error(logText, ex);
       return false;
     } finally {
-      this.logDatabaseTimeEnd('updateAllLinkText()');
+      this.logDatabaseTimeEnd(logText);
     }
   };
 
@@ -862,7 +887,7 @@ class ProjectRepository extends BaseRepository {
     if (!itemLimit) {
       return [];
     }
-    this.logDatabaseTime('getAll()');
+    this.logDatabaseTime(`getAll('${sourceName}', '${table}')`);
     try {
       const dataSource = await this.getDataSource(sourceName);
       let result;
@@ -883,9 +908,9 @@ class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('getAll()', sourceName, table, itemLimit, itemSkip, result.length);
       return result;
     } catch (ex) {
-      console.error('getAll()', ex);
+      console.error(`getAll('${sourceName}', '${table}')`, ex);
     } finally {
-      this.logDatabaseTimeEnd('getAll()');
+      this.logDatabaseTimeEnd(`getAll('${sourceName}', '${table}')`);
     }
   };
 
