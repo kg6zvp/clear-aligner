@@ -54,16 +54,21 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         }
         wordRef = BCVWP.parseFromString(id);
         pos = +id.substring(8, 11); // grab word position
+        const wordText = values[headerMap['text']] || values[headerMap['lemma']];
+        if (!wordText) return;
+        const normalizedText = wordText.replace(/^[\s\p{P}]*/u, '').replace(/[\s\p{P}]*$/u, '').toLowerCase();
+        if (normalizedText.length < 1) return;
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
           corpusId: refCorpus.id,
-          text: values[headerMap['text']] || values[headerMap['lemma']] || '',
+          text: wordText,
           position: pos,
-          sourceVerse: values[headerMap['source_verse']] || ''
+          sourceVerse: values[headerMap['source_verse']] || '',
+          normalizedText
         };
 
-        wordKey = word.text.toLowerCase();
+        wordKey = normalizedText;
         if (refCorpus.wordLocation.has(wordKey)) {
           refCorpus.wordLocation.get(wordKey)?.add(wordRef);
         } else {

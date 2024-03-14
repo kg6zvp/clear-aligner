@@ -111,7 +111,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
                 'position_verse': bcvwp.get('verse'),
                 'position_word': bcvwp.get('word'),
                 'position_part': bcvwp.get('part'),
-                'normalized_text': text.lower().strip(),
+                'normalized_text': text.lower().strip(string.punctuation + string.whitespace),
                 'source_verse_bcvid': source_verse,
             })
             current_percentage = math.floor((idx / total_rows) * 100)

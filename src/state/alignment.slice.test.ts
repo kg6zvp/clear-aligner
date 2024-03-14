@@ -25,6 +25,7 @@ const sourceWord1: Word = {
   side: AlignmentSide.SOURCE,
   text: '',
   position: 0,
+  normalizedText: ''
 };
 
 const targetWord1: Word = {
@@ -33,6 +34,7 @@ const targetWord1: Word = {
   side: AlignmentSide.TARGET,
   text: '',
   position: 1,
+  normalizedText: ''
 };
 const targetWord2: Word = {
   id: 'leb_2',
@@ -40,6 +42,7 @@ const targetWord2: Word = {
   side: AlignmentSide.TARGET,
   text: '',
   position: 2,
+  normalizedText: ''
 };
 
 describe('alignmentSlice reducer', () => {
@@ -342,6 +345,7 @@ describe('alignmentSlice reducer', () => {
             side: AlignmentSide.TARGET,
             text: 'some word',
             position: 4,
+            normalizedText: 'some word'
           },
         })
       );
@@ -393,6 +397,7 @@ describe('alignmentSlice reducer', () => {
               side: AlignmentSide.SOURCE,
               text: 'some word',
               position: 6,
+              normalizedText: 'some word'
             },
           })
         );
@@ -439,6 +444,7 @@ describe('alignmentSlice reducer', () => {
             // role: CorpusRole.Target,
             text: 'asdf',
             position: 3,
+            normalizedText: 'asdf'
           },
         })
       );

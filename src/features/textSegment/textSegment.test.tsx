@@ -25,6 +25,7 @@ describe('TextSegment', () => {
           side: AlignmentSide.TARGET,
           text: 'mikey',
           position: 0,
+          normalizedText: 'mikey'
         }}
       />,
       null
@@ -40,6 +41,7 @@ describe('TextSegment', () => {
           side: AlignmentSide.SOURCE,
           text: 'mikey',
           position: 0,
+          normalizedText: 'mikey'
         }}
       />,
       testState
