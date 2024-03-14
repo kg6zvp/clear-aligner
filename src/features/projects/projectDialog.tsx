@@ -124,7 +124,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
 
             const parsedTsvCorpus = parseTsv(fileContent, targetCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-            putVersesInCorpus(c{ ...targetCorpus, ...parsedTsvCorpus });
+            putVersesInCorpus({ ...targetCorpus, ...parsedTsvCorpus });
             projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
           } else {
             projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [{
