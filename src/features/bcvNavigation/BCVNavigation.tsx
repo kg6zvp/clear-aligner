@@ -54,7 +54,7 @@ const BCVNavigation = ({
 
   const findAvailableChaptersByBook = (books?: NavigableBook[], bookNum?: number) => {
     return (books && bookNum
-      ? books[(bookNum ?? 0)]?.chapters : []) ?? [];
+      ? books.find((book) => book.BookNumber === bookNum)?.chapters : []) ?? [];
   };
   const findAvailableVersesByChapter = (chapters?: Chapter[], chapterNum?: number) => {
     return (chapters && chapterNum
