@@ -295,8 +295,8 @@ class ProjectRepository extends BaseRepository {
   hasBcvInSource = async (sourceName, bcvId) => {
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const hasBcv = await entityManager.query(`select count(1) bvc from words_or_parts where id like 'targets:${bcvId}%'`);
-      return hasBcv[0];
+      const hasBcv = await entityManager.query(`select count(1) bcv from words_or_parts where id like 'targets:${bcvId}%'`);
+      return !!hasBcv[0]?.bcv;
 
     } catch (err) {
       console.error('hasBcvInSource()', err)

@@ -34,17 +34,19 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   }, [appCtx]);
 
   const setDefaultBcv = React.useCallback(async () => {
-    if (!appCtx.preferences?.bcv && appCtx.preferences?.currentProject) {
+    if(!appCtx.preferences?.currentProject) return;
+    const hasBcv = appCtx?.preferences?.bcv?.toReferenceString?.() && await appCtx.projectState?.projectTable?.hasBcvInSource?.(
+      appCtx.preferences.currentProject,
+      appCtx.preferences.bcv?.toReferenceString?.() ?? ""
+    );
+
+    if (!hasBcv && hasBcv !== undefined) {
       const defaultBcv = await appCtx.projectState?.userPreferenceTable?.getFirstBcvFromSource?.(appCtx?.preferences?.currentProject);
-      const hasBcv = appCtx?.preferences?.bcv?.toReferenceString?.() && await appCtx.projectState?.projectTable?.hasBcvInSource?.(
-        appCtx.preferences.currentProject,
-        appCtx.preferences.bcv?.toReferenceString?.() ?? ""
-      );
       appCtx.setPreferences((p: UserPreference | undefined) => ({
         ...(p ?? {}) as UserPreference,
-        bcv: hasBcv && p?.bcv ? p.bcv : (defaultBcv?.id
+        bcv: defaultBcv?.id
             ? BCVWP.parseFromString(defaultBcv.id)
-            : new BCVWP(45, 5, 3))
+            : new BCVWP(45, 5, 3)
       })); // set current reference to default
     }
   }, [appCtx, appCtx.preferences, appCtx.setPreferences, updatePreferences]);
@@ -52,7 +54,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   // set current reference to default if none set
   useEffect(() => {
     setDefaultBcv().catch(console.error);
-  }, [setDefaultBcv]);
+  }, [appCtx.preferences?.currentProject]);
 
   React.useEffect(() => {
     if (appCtx.preferences?.bcv) {

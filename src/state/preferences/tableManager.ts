@@ -77,7 +77,7 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
   getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{id?: string}> => {
     try {
       // @ts-ignore
-      return await window.databaseApi.getFirstBcvFromSource(sourceName ?? DefaultProjectName);
+      return await window.databaseApi.getFirstBcvFromSource(sourceName);
     } catch (e) {
       return {};
     } finally {
