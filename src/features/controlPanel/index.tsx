@@ -203,11 +203,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           </span>
         </Tooltip>
       </ButtonGroup>
-
-      <UploadAlignmentGroup
-        allowImport
-        containers={props.containers}
-      />
     </Stack>
   );
 };
