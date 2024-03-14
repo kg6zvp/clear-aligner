@@ -1,18 +1,18 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';
-import { useSaveAlignmentFile } from '../../state/links/tableManager';
+import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button, ButtonGroup, Tooltip } from '@mui/material';
 import { FileDownload, FileUpload } from '@mui/icons-material';
 import uuid from 'uuid-random';
+import saveAlignmentFile from '../../helpers/alignmentFile';
 
 
-const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, setGetAllLinksKey }: {
-  projectId: string,
+const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
+  projectId?: string,
   containers: CorpusContainer[],
   size?: string,
   allowImport?: boolean;
-  setGetAllLinksKey: CallableFunction
 }) => {
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -21,7 +21,12 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, setGet
     alignmentFile?: AlignmentFile,
     saveKey?: string
   }>();
-  useSaveAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  const [ getAllLinksKey, setGetAllLinksKey ] = useState<string>();
+  const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
+  useEffect(() => {
+    saveAlignmentFile(allLinks ?? []);
+  }, [allLinks]);
 
   return (
     <ButtonGroup>
@@ -70,7 +75,12 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, setGet
               size={size as 'medium' | 'small' | undefined}
               disabled={containers.length === 0}
               variant="contained"
-              onClick={() => setGetAllLinksKey()}
+              onClick={() => new Promise<undefined>((resolve) => {
+                setTimeout(async () => {
+                  setGetAllLinksKey(String(Date.now()));
+                  resolve(undefined);
+                }, 20);
+              })}
             >
               <FileDownload />
             </Button>

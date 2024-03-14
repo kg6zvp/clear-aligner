@@ -6,14 +6,13 @@ import useDebug from 'hooks/useDebug';
 import UploadAlignmentGroup from './uploadAlignmentGroup';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AppContext } from '../../App';
-import { useGetAllLinks, useRemoveLink, useSaveLink } from '../../state/links/tableManager';
+import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, UserPreference } from '../../state/preferences/tableManager';
 
 import { WordsIndex } from '../../state/links/wordsIndex';
 import uuid from 'uuid-random';
 import { resetTextSegments } from '../../state/alignment.slice';
-import saveAlignmentFile from '../../helpers/alignmentFile';
 
 interface ControlPanelProps {
   containers: CorpusContainer[];
@@ -31,8 +30,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     linkId?: string,
     removeKey?: string,
   }>();
-  const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
-
   const { projectState, setProjectState, preferences, setPreferences } = useContext(AppContext);
 
   const [formats, setFormats] = useState([] as string[]);
@@ -44,7 +41,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
   useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
-  const { result: allLinks } = useGetAllLinks(getAllLinksKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
   const linkHasBothSides = useMemo(
@@ -94,9 +90,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectState?.linksTable, projectState?.linksIndexes]);
-  useEffect(() => {
-    saveAlignmentFile(allLinks ?? []);
-  }, [allLinks]);
 
   const saveControlPanelFormat = useCallback(async () => {
     const alignmentDirection = preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
@@ -212,12 +205,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
       </ButtonGroup>
 
       <UploadAlignmentGroup
-        projectId={preferences?.id ?? ''}
         allowImport
         containers={props.containers}
-        setGetAllLinksKey={() => {
-          setGetAllLinksKey(uuid());
-        }}
       />
     </Stack>
   );
