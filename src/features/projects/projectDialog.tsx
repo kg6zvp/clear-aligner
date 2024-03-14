@@ -91,6 +91,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated, (project.fileName || '').length, (project.name || '').length, (project.abbreviation || '').length, (project.languageCode || '').length]);
 
   const handleSubmit = React.useCallback(async (e: any) => {
+      projectState.projectTable?.incrDatabaseBusyCtr();
+      while (!projectState.projectTable?.isDatabaseBusy()) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       return await new Promise((resolve) => {
         setTimeout(async () => {
           e.preventDefault();
@@ -120,7 +124,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
 
             const parsedTsvCorpus = parseTsv(fileContent, targetCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-            putVersesInCorpus({ ...targetCorpus, ...parsedTsvCorpus });
+            putVersesInCorpus(c{ ...targetCorpus, ...parsedTsvCorpus });
             projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
           } else {
             projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [{
@@ -130,6 +134,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           }
 
           setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: false }));
+          projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             setProjects((p: Project[]) => [...p, projectToUpdate]);
             resolve(projectState.projectTable?.save?.(projectToUpdate, !!fileContent));
@@ -137,10 +142,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
             resolve(projectState.projectTable?.update?.(projectToUpdate, !!fileContent));
           }
-        }, 100);
+        }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
-    , [project, fileContent, dispatch, preferences, setProjects, setPreferences]);
+    , [project, fileContent, dispatch, preferences, setProjects, setPreferences, projectState]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
