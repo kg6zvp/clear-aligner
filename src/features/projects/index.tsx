@@ -85,7 +85,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
       projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreference);
       return updatedPreference;
     });
-  }, [setPreferences, preferences, project.id, projectState.userPreferenceTable]);
+  }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   return (
     <Card sx={theme => ({
@@ -123,6 +123,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid>
           <Grid item>
             <UploadAlignmentGroup
+              projectId={project.id}
               size="small"
               containers={[
                 ...(project.sourceCorpora ? [project.sourceCorpora] : []),

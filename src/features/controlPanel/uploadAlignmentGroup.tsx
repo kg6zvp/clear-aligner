@@ -7,7 +7,8 @@ import { FileDownload, FileUpload } from '@mui/icons-material';
 import uuid from 'uuid-random';
 
 
-const UploadAlignmentGroup = ({ containers, size, allowImport, setGetAllLinksKey }: {
+const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, setGetAllLinksKey }: {
+  projectId: string,
   containers: CorpusContainer[],
   size?: string,
   allowImport?: boolean;
@@ -20,7 +21,7 @@ const UploadAlignmentGroup = ({ containers, size, allowImport, setGetAllLinksKey
     alignmentFile?: AlignmentFile,
     saveKey?: string
   }>();
-  useSaveAlignmentFile(alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useSaveAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
 
   return (
     <ButtonGroup>
