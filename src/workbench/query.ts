@@ -41,7 +41,7 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         if ([
           values[headerMap['token']],
           values[headerMap['text']]
-        ].some(v => !!(v ?? '').match(/^\p{P}$/gu))
+        ].some(v => !!(v ?? '').match(/^[\p{P}\s]*$/gu))
         ) {
           // skip punctuation
           return;
@@ -54,10 +54,9 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         }
         wordRef = BCVWP.parseFromString(id);
         pos = +id.substring(8, 11); // grab word position
-        const wordText = values[headerMap['text']] || values[headerMap['lemma']];
-        if (!wordText) return;
-        const normalizedText = wordText.replace(/^[\s\p{P}]*/u, '').replace(/[\s\p{P}]*$/u, '').toLowerCase();
-        if (normalizedText.length < 1) return;
+        const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
+        if (!wordText || wordText.length < 1) return;
+        const normalizedText = wordText.toLowerCase();
         word = {
           id: id, // standardize n40001001002 to  40001001002
           side,
