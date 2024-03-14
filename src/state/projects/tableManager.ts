@@ -21,6 +21,8 @@ export interface Project {
   targetCorpora?: CorpusContainer;
 }
 
+const UIInsertChunkSize = 100_000;
+const DatabaseInsertChunkSize = 2_000;
 
 export class ProjectTable extends VirtualTable<Project> {
   private projects: Map<string, Project>;
@@ -44,7 +46,7 @@ export class ProjectTable extends VirtualTable<Project> {
       console.error('Error creating project: ', e);
       return undefined;
     } finally {
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -59,7 +61,7 @@ export class ProjectTable extends VirtualTable<Project> {
     } catch (e) {
       console.error('Error deleting project: ', e);
     } finally {
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -74,9 +76,9 @@ export class ProjectTable extends VirtualTable<Project> {
       this.decrDatabaseBusyCtr();
       return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
     } catch (e) {
-      console.error("Error updating project: ", e);
+      console.error('Error updating project: ', e);
     } finally {
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -144,7 +146,7 @@ export class ProjectTable extends VirtualTable<Project> {
   hasBcvInSource = async (sourceName: string, bcvId: string) => {
     // @ts-ignore
     return await window.databaseApi.hasBcvInSource(sourceName, bcvId.trim()).catch(console.error);
-  }
+  };
 
   static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {
     const corpora = dataSource?.corpora || [];

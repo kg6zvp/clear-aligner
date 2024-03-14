@@ -10,6 +10,7 @@ import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
 
+const UIInsertChunkSize = 100_000;
 const DatabaseInsertChunkSize = 10_000;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
@@ -148,8 +149,8 @@ export class LinksTable extends VirtualTable<Link> {
       busyInfo.userText = `Saving ${outputLinks.length.toLocaleString()} links...`;
       busyInfo.progressCtr = 0;
       busyInfo.progressMax = outputLinks.length;
-      for (const chunk of _.chunk(outputLinks, DatabaseInsertChunkSize)) {
-        await dbApi.insert(this.sourceName ?? DefaultProjectName, LinkTableName, chunk);
+      for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
+        await dbApi.insert(this.sourceName ?? DefaultProjectName, LinkTableName, chunk, DatabaseInsertChunkSize);
         busyInfo.progressCtr += chunk.length;
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -288,10 +289,10 @@ export class LinksTable extends VirtualTable<Link> {
       await this.linksByLinkIdCache.reset();
       return true;
     } catch (e) {
-      console.error("Error clearing links table cache: ", e);
+      console.error('Error clearing links table cache: ', e);
       return false;
     }
-  }
+  };
 
   override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;

@@ -1,13 +1,11 @@
 import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
-import uuid from 'uuid-random';
-import { DefaultProjectName, useGetAllLinks } from '../../state/links/tableManager';
+import { DefaultProjectName } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import saveAlignmentFile from '../../helpers/alignmentFile';
 
 interface ProjectsViewProps {
 }
