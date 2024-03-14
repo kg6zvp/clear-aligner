@@ -3,7 +3,6 @@ import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt, SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import UploadAlignmentGroup from './uploadAlignmentGroup';
 import { AlignmentSide, CorpusContainer, Link } from '../../structs';
 import { AppContext } from '../../App';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
@@ -203,11 +202,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           </span>
         </Tooltip>
       </ButtonGroup>
-
-      <UploadAlignmentGroup
-        allowImport
-        containers={props.containers}
-      />
     </Stack>
   );
 };

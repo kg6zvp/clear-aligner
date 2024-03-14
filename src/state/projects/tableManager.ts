@@ -2,7 +2,7 @@ import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import { WordsIndex } from '../links/wordsIndex';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { LinksTable } from '../links/tableManager';
-import BCVWP, { BCVWPField } from '../../features/bcvwp/BCVWPSupport';
+import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 
 export interface Project {
@@ -79,11 +79,11 @@ export class ProjectTable extends VirtualTable<Project> {
         .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
         .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-    const insertPromises = _.chunk(wordsOrParts, 2_000)
-      .map(chunk => {
+    const insertPromises: Promise<Project>[] = _.chunk(wordsOrParts, 2_000)
+      .map(chunk =>
         // @ts-ignore
-        window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error);
-      });
+        window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error)
+      )
     await Promise.all(insertPromises);
   }
 

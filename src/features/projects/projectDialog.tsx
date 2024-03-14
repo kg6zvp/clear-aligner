@@ -20,9 +20,9 @@ import {
 import { Close, DeleteOutline } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
-import { Project, ProjectTable } from '../../state/projects/tableManager';
+import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
-import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Word } from '../../structs';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
 import { parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app';
@@ -133,17 +133,14 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           }]);
         }
 
-        if(!projectId) {
-          await projectState.projectTable?.save?.(projectToUpdate, !!fileContent)
-          setProjects((p: Project[]) => [...p, projectToUpdate]);
-        } else {
-          await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
-          setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
-        }
         setPreferences(p => ({...(p ?? {}) as UserPreference, initialized: false}));
-
-        setLoading(false);
-        handleClose();
+        if(!projectId) {
+          setProjects((p: Project[]) => [...p, projectToUpdate]);
+          resolve(projectState.projectTable?.save?.(projectToUpdate, !!fileContent))
+        } else {
+          setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
+          resolve(projectState.projectTable?.update?.(projectToUpdate, !!fileContent));
+        }
       }, 100);
     });
   }
@@ -182,7 +179,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       {databaseStatusDialog}
       <Dialog
         open={open}
-        onClose={handleClose}
       >
         <DialogTitle>
           <Grid container justifyContent="space-between">
@@ -311,7 +307,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               {...(loading ? { startIcon: <CircularProgress size={10} /> } : {})}
               onClick={e => {
                 setLoading(true);
-                handleSubmit(e).catch(console.error);
+                handleSubmit(e).then(() => {
+                  // handleClose() in the .then() ensures dialog doesn't close prematurely
+                  setLoading(false);
+                  handleClose();
+                  })
               }}
             >
               {projectId ? 'Update' : 'Create'}
