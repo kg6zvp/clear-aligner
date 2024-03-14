@@ -222,7 +222,7 @@ class ProjectRepository extends BaseRepository {
           if (!file.endsWith('.sqlite')) continue;
           const sourceName = file.slice(app.getName().length + 1, -7);
           const corpora = await this.getAllCorpora(sourceName);
-          sources.push({ id: sourceName, corpora: corpora });
+          sources.push({ id: sourceName, corpora });
         }
         res(sources);
       });
@@ -271,9 +271,7 @@ class ProjectRepository extends BaseRepository {
       const sources = await dataSource.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();
-      return {
-        id: project.id, sources
-      };
+      return { id: project.id, sources };
     } catch (err) {
       console.error('updateSourceFromProject()', err);
     }
@@ -744,7 +742,6 @@ class ProjectRepository extends BaseRepository {
                                                          l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
-      this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({

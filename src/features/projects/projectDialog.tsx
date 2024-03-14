@@ -76,6 +76,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   }, [projectUpdated, setProject]);
 
   const handleClose = React.useCallback(() => {
+    setFileContent('')
     setProjectUpdated(false);
     setLoading(false);
     setUploadErrors([]);
@@ -102,37 +103,45 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           id: project.id ?? uuidv4()
         };
 
+        const targetCorpus = {
+          id: project.id,
+          name: project.abbreviation,
+          fullName: project.name,
+          fileName: project.fileName,
+          language: {
+            code: project.languageCode,
+            textDirection: (project.textDirection || 'ltr')
+          },
+          words: [],
+          wordsByVerse: {},
+          wordLocation: new Map<string, Set<BCVWP>>(),
+          books: {},
+          side: AlignmentSide.TARGET
+        } as Corpus;
+
         if (fileContent) {
           dispatch(resetTextSegments());
           projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
-          const refCorpus = {
-            id: project.id,
-            name: project.abbreviation,
-            fullName: project.name,
-            fileName: project.fileName,
-            language: {
-              code: project.languageCode,
-              textDirection: (project.textDirection || 'ltr')
-            },
-            words: [],
-            wordsByVerse: {},
-            wordLocation: new Map<string, Set<BCVWP>>(),
-            books: {},
-            side: AlignmentSide.TARGET
-          } as Corpus;
-          const parsedTsvCorpus = parseTsv(fileContent, refCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
-          putVersesInCorpus({ ...refCorpus, ...parsedTsvCorpus });
-          projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
-        }
 
+          const parsedTsvCorpus = parseTsv(fileContent, targetCorpus, AlignmentSide.TARGET, CorpusFileFormat.TSV_TARGET);
+          putVersesInCorpus({ ...targetCorpus, ...parsedTsvCorpus });
+          projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
+        } else {
+          projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [{
+            ...targetCorpus,
+            id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
+          }]);
+        }
 
         if(!projectId) {
-          projectState.projectTable?.save?.(projectToUpdate)
+          await projectState.projectTable?.save?.(projectToUpdate, !!fileContent)
           setProjects((p: Project[]) => [...p, projectToUpdate]);
         } else {
-          projectState.projectTable?.update?.(projectToUpdate);
+          await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
         }
+        setPreferences(p => ({...(p ?? {}) as UserPreference, initialized: false}));
+
         setLoading(false);
         handleClose();
       }, 100);

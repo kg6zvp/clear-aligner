@@ -87,7 +87,8 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   }, [
     appCtx,
     setAvailableWords,
-    setSelectedCorporaContainers
+    setSelectedCorporaContainers,
+    appCtx.projects
   ]);
 
   useEffect(() => {

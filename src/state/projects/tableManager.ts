@@ -30,11 +30,11 @@ export class ProjectTable extends VirtualTable<Project> {
     this.projects = new Map();
   }
 
-  save = async (project: Project, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
+  save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
     try {
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
-      await this.insertWordsOrParts(project);
+      updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(createdProject.id, createdProject);
       return createdProject?.[0] ? ProjectTable.convertDataSourceToProject(createdProject?.[0]) : undefined;
     } catch (e) {
@@ -57,15 +57,15 @@ export class ProjectTable extends VirtualTable<Project> {
     }
   };
 
-  update = async (project: Project, suppressOnUpdate = false): Promise<Project | undefined> => {
+  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
     try {
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
-      await this.insertWordsOrParts(project);
+      updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(updatedProject, updatedProject);
-      return updatedProject?.[0] ? ProjectTable.convertDataSourceToProject(updatedProject?.[0]) : undefined;
+      return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
     } catch (e) {
-      return undefined;
+      console.error("Error updating project: ", e);
     } finally {
       this._onUpdate(suppressOnUpdate);
     }
