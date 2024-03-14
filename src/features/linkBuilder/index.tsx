@@ -72,7 +72,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     return state.app.theme;
   });
 
-  if (!Object.keys(selectedWords).length) {
+  if (!selectedWords?.sources?.length && !selectedWords?.targets?.length) {
     return (
       <>
         <div
@@ -117,7 +117,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           if (!container) return <div key={index} />;
 
           const selectedPartsForText = selectedWords[textId];
-          const sortedSelectedPartsForText = selectedPartsForText.filter(p => p).sort(
+          const sortedSelectedPartsForText = selectedPartsForText.sort(
             (a: Word, b: Word) => {
               if (a.position === b.position) {
                 return a.id > b.id ? 1 : -1;
@@ -152,11 +152,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
           : undefined;
 
-          if (!corpusAtRef?.name) return <div key={index} />;
+          const corpus = (container.corpora || [])[0];
 
           return (
             <div
-              key={`linkBuilder_${corpusAtRef?.name}`}
+              key={`linkBuilder_${corpus?.name}`}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -168,7 +168,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               }}
             >
               <Typography variant="h6" style={{ textAlign: 'right' }}>
-                {corpusAtRef?.name}
+                {corpus?.name}
               </Typography>
               <div style={{ marginBottom: '8px' }}>
                 <Divider />
