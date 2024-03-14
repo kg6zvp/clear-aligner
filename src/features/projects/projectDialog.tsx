@@ -128,19 +128,22 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
 
 
         if(!projectId) {
-          console.log('inside !projectId if block')
+          console.log('inside !projectId if block (top)')
           projectState.projectTable?.save?.(projectToUpdate)
           setProjects((p: Project[]) => [...p, projectToUpdate]);
+          console.log('inside !projectId if block (bottom)')
         } else {
           console.log('inside !projectId else block')
           projectState.projectTable?.update?.(projectToUpdate);
           setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
         }
-        console.log('about to run setLoading(false)')
-        setLoading(false);
-        console.log('about to run handleClose')
-        handleClose();
-      }, 10000);
+
+      }, 1000);
+    }).finally(() => {
+      console.log('about to run setLoading(false)')
+      setLoading(false);
+      console.log('about to run handleClose')
+      handleClose();
     });
   }
   , [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
