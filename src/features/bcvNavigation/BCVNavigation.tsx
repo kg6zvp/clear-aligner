@@ -22,6 +22,7 @@ import {
   NavigableBook,
   Verse,
 } from './structs';
+import { useBooksWithNavigationInfo } from './useBooksWithNavigationInfo';
 
 export interface BCVNavigationProps {
   sx?: SxProps<Theme>;
@@ -51,7 +52,7 @@ const BCVNavigation = ({
   onNavigate,
   horizontal,
 }: BCVNavigationProps) => {
-  const [availableBooks, setAvailableBooks] = useState([] as NavigableBook[]);
+  const availableBooks = useBooksWithNavigationInfo(words);
   const [selectedBook, setSelectedBook] = useState(
     null as NavigableBook | null
   );
@@ -59,18 +60,6 @@ const BCVNavigation = ({
     null as Chapter | null
   );
   const [selectedVerse, setSelectedVerse] = useState(null as Verse | null);
-
-  const getBooksWithNavigationInfo = async (words: Word[]) => {
-    const referenceList = getReferenceListFromWords(words);
-    setAvailableBooks(referenceList ?? []);
-  };
-
-  /**
-   * asynchronously initialize the book->chapter->verse listings from the given word list
-   */
-  useEffect(() => {
-    void getBooksWithNavigationInfo(words ?? []);
-  }, [words]);
 
   /**
    * when the book->chapter->verse listings are ready and there is a value for "currentPosition.book", set the selected book based on it
