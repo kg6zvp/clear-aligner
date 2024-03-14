@@ -29,9 +29,9 @@ import { AddLink, ManageSearch, LibraryBooks } from '@mui/icons-material';
 import useTrackLocation from './utils/useTrackLocation';
 import { AppContext } from './App';
 import { getCorporaInitializationState, InitializationStates } from './workbench/query';
-import { DatabaseStatus } from './state/links/tableManager';
 import { useInterval } from 'usehooks-ts';
 import _ from 'lodash';
+import { DatabaseStatus } from './state/databaseManagement';
 
 type THEME = 'night' | 'day';
 type THEME_PREFERENCE = THEME | 'auto';
@@ -95,11 +95,18 @@ export const AppLayout = () => {
 
   // code needed for the Dialog/BusyBox to work properly down below
   const [initializationState, setInitializationState] = useState<InitializationStates>();
-  const [databaseStatus, setDatabaseStatus] = useState<DatabaseStatus>();
+  const [databaseStatus, setDatabaseStatus] = useState<{
+    projects: DatabaseStatus,
+    links: DatabaseStatus
+  }>();
   useInterval(() => {
-    const newDatabaseStatus = projectState?.linksTable.getDatabaseStatus();
-    if (!_.isEqual(newDatabaseStatus, databaseStatus)) {
-      setDatabaseStatus(newDatabaseStatus);
+    const linkStatus = projectState?.linksTable.getDatabaseStatus();
+    const projectStatus = projectState?.projectTable.getDatabaseStatus();
+    if (!_.isEqual({projects: projectStatus, links: linkStatus}, databaseStatus)) {
+      setDatabaseStatus({
+        projects: projectStatus,
+        links: linkStatus
+      });
     }
     const newInitializationState = getCorporaInitializationState();
     if (newInitializationState !== initializationState) {
@@ -112,7 +119,9 @@ export const AppLayout = () => {
     variant?: 'determinate' | 'indeterminate',
     value?: number
   }>(() => {
-    const busyInfo = databaseStatus?.busyInfo;
+    const busyKey = Object.keys(databaseStatus ?? {}).find(key =>
+      databaseStatus?.[key as keyof typeof databaseStatus]?.busyInfo?.isBusy)
+    const busyInfo = databaseStatus?.[(busyKey ?? "") as keyof typeof databaseStatus]?.busyInfo;
     if (busyInfo?.isBusy) {
       const progressCtr = busyInfo?.progressCtr ?? 0;
       const progressMax = busyInfo?.progressMax ?? 0;
@@ -148,7 +157,7 @@ export const AppLayout = () => {
       variant: 'indeterminate',
       value: undefined
     };
-  }, [databaseStatus?.busyInfo, initializationState]);
+  }, [databaseStatus?.projects?.busyInfo, databaseStatus?.links?.busyInfo, initializationState]);
 
 
   return (

@@ -1,6 +1,6 @@
 import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
-import { SecondaryIndex, VirtualTable } from '../databaseManagement';
+import { DatabaseStatus, InitialDatabaseStatus, SecondaryIndex, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +12,6 @@ import { DatabaseApi } from '../../hooks/useDatabase';
 
 const DatabaseInsertChunkSize = 10_000;
 const DatabaseSelectChunkSize = 25_000;
-const DatabaseWaitInMs = 1_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
@@ -25,34 +24,10 @@ const PreloadVerseRange = 3;
 // @ts-ignore
 const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
 
-export interface DatabaseLoadState {
-  isLoaded: boolean,
-  isLoading: boolean
-}
 
-export interface DatabaseBusyInfo {
-  isBusy?: boolean,
-  userText?: string,
-  progressCtr?: number,
-  progressMax?: number,
-}
-
-export interface DatabaseStatus {
-  busyInfo: DatabaseBusyInfo,
-  databaseLoadState: DatabaseLoadState,
-  lastUpdateTime?: number,
-}
-
-const InitialDatabaseStatus = {
-  busyInfo: { isBusy: false, progressCtr: 0, progressMax: 0 },
-  databaseLoadState: { isLoaded: false, isLoading: false }
-} as DatabaseStatus;
 
 export class LinksTable extends VirtualTable<Link> {
   private sourceName?: string;
-  private readonly isLoggingTime = true;
-  private readonly databaseStatus: DatabaseStatus;
-  private databaseBusyCtr = 0;
   private linksByWordIdCache: MemoryCache;
   private linksByBCVCache: MemoryCache;
   private linksByLinkIdCache: MemoryCache;
@@ -60,7 +35,6 @@ export class LinksTable extends VirtualTable<Link> {
   constructor(sourceName?: string) {
     super();
     this.sourceName = sourceName;
-    this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
     this.linksByWordIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
     this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
     this.linksByLinkIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
@@ -73,11 +47,11 @@ export class LinksTable extends VirtualTable<Link> {
   getSourceName = () => this.sourceName;
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
-    if (!isForced && this._isDatabaseBusy()) {
+    if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
 
-    this._logDatabaseTime('save()');
+    this.logDatabaseTime('save()');
     try {
       await this.remove(link.id, true, true);
       const newLink: Link = {
@@ -106,12 +80,12 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   removeAll = async (suppressOnUpdate = false, isForced = false) => {
-    if (!isForced && this._isDatabaseBusy()) {
+    if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
 
-    this._logDatabaseTime('removeAll()');
-    this._incrDatabaseBusyCtr();
+    this.logDatabaseTime('removeAll()');
+    this.incrDatabaseBusyCtr();
     this.databaseStatus.busyInfo.userText = 'Removing old links...';
     try {
       await this.checkDatabase();
@@ -123,8 +97,8 @@ export class LinksTable extends VirtualTable<Link> {
       console.error('error removing all links', ex);
       return false;
     } finally {
-      this._decrDatabaseBusyCtr();
-      this._logDatabaseTimeEnd('removeAll()');
+      this.decrDatabaseBusyCtr();
+      this.logDatabaseTimeEnd('removeAll()');
     }
   };
 
@@ -145,19 +119,19 @@ export class LinksTable extends VirtualTable<Link> {
                    isForced = false) => {
     // reentry is possible because everything is
     // done in chunks with promises
-    if (!isForced && this._isDatabaseBusy()) {
+    if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
 
-    this._logDatabaseTime('saveAll(): complete');
-    this._incrDatabaseBusyCtr();
+    this.logDatabaseTime('saveAll(): complete');
+    this.incrDatabaseBusyCtr();
     this.databaseStatus.busyInfo.userText = `Loading ${inputLinks.length.toLocaleString()} links...`;
     try {
       await this.removeAll(true, true);
       await this.checkDatabase();
 
       this.databaseStatus.busyInfo.userText = `Sorting ${inputLinks.length.toLocaleString()} links...`;
-      this._logDatabaseTime('saveAll(): sorted');
+      this.logDatabaseTime('saveAll(): sorted');
       const outputLinks = inputLinks.map(link =>
         ({
           id: link.id ?? LinksTable.createLinkId(link),
@@ -167,9 +141,9 @@ export class LinksTable extends VirtualTable<Link> {
       outputLinks.sort((l1, l2) =>
         (l1.id ?? EmptyWordId)
           .localeCompare(l2.id ?? EmptyWordId));
-      this._logDatabaseTimeEnd('saveAll(): sorted');
+      this.logDatabaseTimeEnd('saveAll(): sorted');
 
-      this._logDatabaseTime('saveAll(): saved');
+      this.logDatabaseTime('saveAll(): saved');
       const busyInfo = this.databaseStatus.busyInfo;
       busyInfo.userText = `Saving ${outputLinks.length.toLocaleString()} links...`;
       busyInfo.progressCtr = 0;
@@ -184,14 +158,14 @@ export class LinksTable extends VirtualTable<Link> {
           ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} links)...`
           : `Loading ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} links)...`;
 
-        this._logDatabaseTimeLog('saveAll(): saved', busyInfo.progressCtr, busyInfo.progressMax);
+        this.logDatabaseTimeLog('saveAll(): saved', busyInfo.progressCtr, busyInfo.progressMax);
       }
-      this._logDatabaseTimeEnd('saveAll(): saved');
+      this.logDatabaseTimeEnd('saveAll(): saved');
 
-      this._logDatabaseTime('saveAll(): text');
+      this.logDatabaseTime('saveAll(): text');
       busyInfo.userText = 'Updating link text...';
       await dbApi.updateAllLinkText(this.sourceName ?? DefaultProjectName);
-      this._logDatabaseTimeEnd('saveAll(): text');
+      this.logDatabaseTimeEnd('saveAll(): text');
 
       return true;
     } catch (ex) {
@@ -199,8 +173,8 @@ export class LinksTable extends VirtualTable<Link> {
       return false;
     } finally {
       await this._onUpdate(suppressOnUpdate);
-      this._decrDatabaseBusyCtr();
-      this._logDatabaseTimeEnd('saveAll(): complete');
+      this.decrDatabaseBusyCtr();
+      this.logDatabaseTimeEnd('saveAll(): complete');
     }
   };
 
@@ -242,19 +216,19 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   getAll = async (isForced = false): Promise<Link[]> => {
-    if (!isForced && this._isDatabaseBusy()) {
+    if (!isForced && this.isDatabaseBusy()) {
       return [];
     }
 
-    this._logDatabaseTime('getAll()');
-    this._incrDatabaseBusyCtr();
+    this.logDatabaseTime('getAll()');
+    this.incrDatabaseBusyCtr();
     this.databaseStatus.busyInfo.userText = 'Saving links...';
     try {
       const results: Link[] = [];
       let offset = 0;
       while (true) {
         const links = ((await dbApi.getAll<Link>(this.sourceName ?? DefaultProjectName, LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
-        this._logDatabaseTimeLog('getAll()', DatabaseSelectChunkSize, offset, links?.length ?? 0);
+        this.logDatabaseTimeLog('getAll()', DatabaseSelectChunkSize, offset, links?.length ?? 0);
         if (!links
           || links.length < 1) {
           break;
@@ -273,8 +247,8 @@ export class LinksTable extends VirtualTable<Link> {
       console.error('error getting all links', ex);
       return [];
     } finally {
-      this._decrDatabaseBusyCtr();
-      this._logDatabaseTimeEnd('getAll()');
+      this.decrDatabaseBusyCtr();
+      this.logDatabaseTimeEnd('getAll()');
     }
   };
 
@@ -288,11 +262,11 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
-    if (!isForced && this._isDatabaseBusy()) {
+    if (!isForced && this.isDatabaseBusy()) {
       return;
     }
 
-    this._logDatabaseTime('remove()');
+    this.logDatabaseTime('remove()');
     try {
       await this.checkDatabase();
       // @ts-ignore
@@ -303,7 +277,7 @@ export class LinksTable extends VirtualTable<Link> {
       console.error('error removing link', ex);
       return false;
     } finally {
-      this._logDatabaseTimeEnd('remove()');
+      this.logDatabaseTimeEnd('remove()');
     }
   };
 
@@ -327,47 +301,6 @@ export class LinksTable extends VirtualTable<Link> {
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
   };
 
-  getDatabaseStatus = (): DatabaseStatus => ({
-    ..._.cloneDeep(this.databaseStatus)
-  });
-
-  /**
-   * Checks to see if the database is loaded and,
-   * if not, loads it.
-   *
-   * Returns true if the database was loaded in this step,
-   * false otherwise.
-   */
-  public checkDatabase = async (): Promise<boolean> => {
-    const loadState = this.databaseStatus.databaseLoadState;
-    if (loadState.isLoading) {
-      await this._waitForDatabase();
-    }
-    if (loadState.isLoaded) return false;
-
-    this._logDatabaseTime('checkDatabase(): loading');
-    loadState.isLoading = true;
-    try {
-      // @ts-ignore
-      await window.databaseApi.createDataSource(this.sourceName ?? DefaultProjectName);
-      loadState.isLoaded = true;
-
-      return true;
-    } catch (ex) {
-      console.error('error checking database', ex);
-      return false;
-    } finally {
-      loadState.isLoading = false;
-      this._logDatabaseTimeEnd('checkDatabase(): loading');
-    }
-  };
-
-  /**
-   * Checks to see if the links DB has been created without using a promise.
-   * Does not guarantee the database is not in the process of being created.
-   */
-  private _quickCheckDatabase = () => this.databaseStatus.databaseLoadState.isLoaded;
-
   /**
    * Checks to see if the database and all tables are loaded and
    * if not, loads it.
@@ -376,11 +309,11 @@ export class LinksTable extends VirtualTable<Link> {
    * false otherwise.
    */
   public checkAllTables = async () => {
-    this._logDatabaseTime('checkAllTables(): loading');
+    this.logDatabaseTime('checkAllTables(): loading');
     try {
       return await this.checkDatabase();
     } finally {
-      this._logDatabaseTimeEnd('checkAllTables(): loading');
+      this.logDatabaseTimeEnd('checkAllTables(): loading');
     }
   };
 
@@ -394,48 +327,6 @@ export class LinksTable extends VirtualTable<Link> {
       Math.abs(verseNum - v2));
     return verseNumbers;
   }
-
-  private _isDatabaseBusy = () => this.databaseBusyCtr > 0;
-
-  private _incrDatabaseBusyCtr = () => this._updateDatabaseBusyCtr(+1);
-
-  private _decrDatabaseBusyCtr = () => this._updateDatabaseBusyCtr(-1);
-
-  private _updateDatabaseBusyCtr = (ctrDelta: number) => {
-    const busyInfo = this.databaseStatus.busyInfo;
-    const wasBusy = busyInfo.isBusy;
-    this.databaseBusyCtr = Math.max(this.databaseBusyCtr + ctrDelta, 0);
-    busyInfo.isBusy = this.databaseBusyCtr > 0;
-    if (wasBusy && !busyInfo.isBusy) {
-      busyInfo.userText = undefined;
-      busyInfo.progressCtr = 0;
-      busyInfo.progressMax = 0;
-    }
-  };
-
-  private _waitForDatabase = async () => {
-    while (this.databaseStatus.databaseLoadState.isLoading) {
-      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
-    }
-  };
-
-  private _logDatabaseTime = (label: string) => {
-    if (this.isLoggingTime) {
-      console.time(label);
-    }
-  };
-
-  private _logDatabaseTimeLog = (label: string, ...args: any[]) => {
-    if (this.isLoggingTime) {
-      console.timeLog(label, ...args);
-    }
-  };
-
-  private _logDatabaseTimeEnd = (label: string) => {
-    if (this.isLoggingTime) {
-      console.timeEnd(label);
-    }
-  };
 
   static createLinkTitle = (link: Link): string => {
     const bcvwp = BCVWP.parseFromString(link?.targets?.[0] ?? EmptyWordId);

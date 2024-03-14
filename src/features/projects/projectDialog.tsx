@@ -56,7 +56,6 @@ const getInitialProjectState = (): Project => ({
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
   const databaseStatusDialog = useDatabaseStatusMessage();
   const dispatch = useAppDispatch();
-  const [loading, setLoading] = React.useState(false);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
@@ -78,11 +77,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const handleClose = React.useCallback(() => {
     setFileContent('')
     setProjectUpdated(false);
-    setLoading(false);
     setUploadErrors([]);
     setProject(getInitialProjectState());
     closeCallback();
-  }, [closeCallback, setProject, setLoading, setUploadErrors]);
+  }, [closeCallback, setProject, setUploadErrors]);
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
@@ -144,7 +142,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       }, 100);
     });
   }
-  , [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
+  , [project, fileContent, handleClose, dispatch, preferences, setProjects]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
@@ -303,13 +301,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             <Button
               variant="contained"
               sx={{ textTransform: 'none' }}
-              disabled={!enableCreate || loading}
-              {...(loading ? { startIcon: <CircularProgress size={10} /> } : {})}
+              disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy()}
               onClick={e => {
-                setLoading(true);
                 handleSubmit(e).then(() => {
                   // handleClose() in the .then() ensures dialog doesn't close prematurely
-                  setLoading(false);
                   handleClose();
                   })
               }}
@@ -329,8 +324,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
             <Grid item>
               <Grid container>
-                <Button variant="text" onClick={() => setOpenConfirmDelete(false)} sx={{ textTransform: 'none' }}>Go
-                  Back</Button>
+                <Button variant="text" onClick={() => setOpenConfirmDelete(false)} sx={{ textTransform: 'none' }}>
+                  Go Back
+                </Button>
                 <Button variant="contained" onClick={handleDelete} sx={{ ml: 2, textTransform: 'none' }}>Delete</Button>
               </Grid>
             </Grid>

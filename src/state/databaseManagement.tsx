@@ -2,6 +2,7 @@ import { LinksTable } from './links/tableManager';
 import { WordsIndex } from './links/wordsIndex';
 import { UserPreferenceTable } from './preferences/tableManager';
 import { ProjectTable } from './projects/tableManager';
+import _ from 'lodash';
 
 /**
  * denotes the type of change being made to a database
@@ -41,6 +42,32 @@ export type SecondaryIndex<Link> = {
   isLoading(): boolean;
 }
 
+const DatabaseWaitInMs = 1_000;
+
+export interface DatabaseLoadState {
+  isLoaded: boolean,
+  isLoading: boolean
+}
+
+export interface DatabaseBusyInfo {
+  isBusy?: boolean,
+  userText?: string,
+  progressCtr?: number,
+  progressMax?: number,
+}
+
+export interface DatabaseStatus {
+  busyInfo: DatabaseBusyInfo,
+  databaseLoadState: DatabaseLoadState,
+  lastUpdateTime?: number,
+}
+
+export const InitialDatabaseStatus = {
+  busyInfo: { isBusy: false, progressCtr: 0, progressMax: 0 },
+  databaseLoadState: { isLoaded: false, isLoading: false }
+} as DatabaseStatus;
+
+
 /**
  * intended to provide functionality common to any virtual table
  *
@@ -51,11 +78,92 @@ export type SecondaryIndex<Link> = {
 export abstract class VirtualTable<T> {
   lastUpdate: number;
   secondaryIndexes: Set<SecondaryIndex<T>>;
+  readonly databaseStatus: DatabaseStatus;
+  databaseBusyCtr = 0;
+  readonly isLoggingTime = true;
 
   protected constructor() {
     this.lastUpdate = Date.now();
     this.secondaryIndexes = new Set();
+    this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   }
+
+  getDatabaseStatus = (): DatabaseStatus => ({
+    ..._.cloneDeep(this.databaseStatus)
+  });
+
+  isDatabaseBusy = () => this.databaseBusyCtr > 0;
+
+  incrDatabaseBusyCtr = () => this.updateDatabaseBusyCtr(+1);
+
+  decrDatabaseBusyCtr = () => this.updateDatabaseBusyCtr(-1);
+
+  updateDatabaseBusyCtr = (ctrDelta: number) => {
+    const busyInfo = this.databaseStatus.busyInfo;
+    const wasBusy = busyInfo.isBusy;
+    this.databaseBusyCtr = Math.max(this.databaseBusyCtr + ctrDelta, 0);
+    busyInfo.isBusy = this.databaseBusyCtr > 0;
+    if (wasBusy && !busyInfo.isBusy) {
+      busyInfo.userText = undefined;
+      busyInfo.progressCtr = 0;
+      busyInfo.progressMax = 0;
+    }
+  };
+
+  /**
+   * Checks to see if the database is loaded and,
+   * if not, loads it.
+   *
+   * Returns true if the database was loaded in this step,
+   * false otherwise.
+   */
+  public checkDatabase = async (): Promise<boolean> => {
+    const loadState = this.databaseStatus.databaseLoadState;
+    if (loadState.isLoading) {
+      await this.waitForDatabase();
+    }
+    if (loadState.isLoaded) return false;
+
+    this.logDatabaseTime('checkDatabase(): loading');
+    loadState.isLoading = true;
+    try {
+      // @ts-ignore
+      await window.databaseApi.createDataSource(this.sourceName ?? DefaultProjectName);
+      loadState.isLoaded = true;
+
+      return true;
+    } catch (ex) {
+      console.error('error checking database', ex);
+      return false;
+    } finally {
+      loadState.isLoading = false;
+      this.logDatabaseTimeEnd('checkDatabase(): loading');
+    }
+  };
+
+  waitForDatabase = async () => {
+    while (this.databaseStatus.databaseLoadState.isLoading) {
+      await new Promise(resolve => window.setTimeout(resolve, DatabaseWaitInMs));
+    }
+  };
+
+  logDatabaseTime = (label: string) => {
+    if (this.isLoggingTime) {
+      console.time(label);
+    }
+  };
+
+  logDatabaseTimeLog = (label: string, ...args: any[]) => {
+    if (this.isLoggingTime) {
+      console.timeLog(label, ...args);
+    }
+  };
+
+  logDatabaseTimeEnd = (label: string) => {
+    if (this.isLoggingTime) {
+      console.timeEnd(label);
+    }
+  };
 
   /**
    * register a secondary index

@@ -1,7 +1,7 @@
 import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import { WordsIndex } from '../links/wordsIndex';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
-import { LinksTable } from '../links/tableManager';
+import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 
@@ -32,10 +32,13 @@ export class ProjectTable extends VirtualTable<Project> {
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
     try {
+      if(this.isDatabaseBusy()) return;
+      this.incrDatabaseBusyCtr();
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
       updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(createdProject.id, createdProject);
+      this.decrDatabaseBusyCtr();
       return createdProject?.[0] ? ProjectTable.convertDataSourceToProject(createdProject?.[0]) : undefined;
     } catch (e) {
       console.error('Error creating project: ', e);
@@ -47,9 +50,12 @@ export class ProjectTable extends VirtualTable<Project> {
 
   remove = async (projectId: string, suppressOnUpdate = false) => {
     try {
+      if(this.isDatabaseBusy()) return;
+      this.incrDatabaseBusyCtr();
       // @ts-ignore
       await window.databaseApi.removeSource(projectId);
       this.projects.delete(projectId);
+      this.decrDatabaseBusyCtr();
     } catch (e) {
       console.error('Error deleting project: ', e);
     } finally {
@@ -59,10 +65,13 @@ export class ProjectTable extends VirtualTable<Project> {
 
   update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
     try {
+      if(this.isDatabaseBusy()) return;
+      this.incrDatabaseBusyCtr();
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
       updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(updatedProject, updatedProject);
+      this.decrDatabaseBusyCtr();
       return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
     } catch (e) {
       console.error("Error updating project: ", e);
@@ -72,19 +81,38 @@ export class ProjectTable extends VirtualTable<Project> {
   };
 
   insertWordsOrParts = async (project: Project) => {
-    // @ts-ignore
-    await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
+    this.incrDatabaseBusyCtr();
     const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
       .flatMap(corpus => (corpus.words ?? [])
         .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
         .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-    const insertPromises: Promise<Project>[] = _.chunk(wordsOrParts, 2_000)
-      .map(chunk =>
-        // @ts-ignore
-        window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error)
-      )
-    await Promise.all(insertPromises);
+    // @ts-ignore
+    await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
+
+    const busyInfo = this.databaseStatus.busyInfo;
+    busyInfo.userText = `Saving ${wordsOrParts.length.toLocaleString()} words or parts...`;
+    busyInfo.progressCtr = 0;
+    busyInfo.progressMax = wordsOrParts.length;
+    for (const chunk of _.chunk(wordsOrParts, 2_000)) {
+      // @ts-ignore
+      await window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error);
+      busyInfo.progressCtr += chunk.length;
+
+      const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
+      const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
+      busyInfo.userText = chunk.length === busyInfo.progressMax
+        ? `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} words or parts)...`
+        : `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} words or parts)...`;
+
+    }
+    busyInfo.userText = 'Finishing project creation...';
+    this.decrDatabaseBusyCtr();
+  }
+
+  static createWordsOrPartsTitle = (word: {id: string}) => {
+    const bcvwp = BCVWP.parseFromString((word.id ?? "").split(":")[1] ?? EmptyWordId);
+    return `${bcvwp?.getBookInfo()?.ParaText ?? '???'} ${bcvwp.chapter ?? 1}:${bcvwp.verse ?? 1}`;
   }
 
   getDataSourcesAsProjects = async (): Promise<Project[] | undefined> => {
