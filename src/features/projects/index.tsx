@@ -14,17 +14,12 @@ interface ProjectsViewProps {
 
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
   const { projects, preferences } = React.useContext(AppContext);
-  const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
-  const { result: allLinks } = useGetAllLinks(getAllLinksKey);
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
   const selectProject = React.useCallback((projectId: string) => {
     setSelectedProjectId(projectId);
     setOpenProjectDialog(true);
   }, [setSelectedProjectId, setOpenProjectDialog]);
-  useEffect(() => {
-    saveAlignmentFile(allLinks ?? []);
-  }, [allLinks]);
 
   return (
     <>
@@ -45,7 +40,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
                 project={project}
                 onClick={selectProject}
                 currentProject={projects.find((p: Project) => p.id === preferences?.currentProject) ?? projects?.[0]}
-                setGetAllLinksKey={setGetAllLinksKey}
               />
             ))}
         </Grid>
@@ -66,10 +60,9 @@ interface ProjectCardProps {
   project: Project;
   currentProject: Project | undefined;
   onClick: (id: string) => void;
-  setGetAllLinksKey: CallableFunction;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick, setGetAllLinksKey }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
@@ -130,7 +123,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
                 ...(project.targetCorpora ? [project.targetCorpora] : [])
               ]}
               allowImport={isCurrentProject}
-              setGetAllLinksKey={() => setGetAllLinksKey(uuid())}
             />
           </Grid>
         </Grid>

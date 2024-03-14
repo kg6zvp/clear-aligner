@@ -8,6 +8,7 @@ import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
+import { DatabaseApi } from '../../hooks/useDatabase';
 
 const DatabaseInsertChunkSize = 10_000;
 const DatabaseSelectChunkSize = 25_000;
@@ -20,6 +21,9 @@ export const DefaultProjectName = 'default';
 export const LinkTableName = 'links';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
+
+// @ts-ignore
+const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
 
 export interface DatabaseLoadState {
   isLoaded: boolean,
@@ -171,8 +175,7 @@ export class LinksTable extends VirtualTable<Link> {
       busyInfo.progressCtr = 0;
       busyInfo.progressMax = outputLinks.length;
       for (const chunk of _.chunk(outputLinks, DatabaseInsertChunkSize)) {
-        // @ts-ignore
-        await window.databaseApi.insert(this.sourceName ?? DefaultProjectName, LinkTableName, chunk);
+        await dbApi.insert(this.sourceName ?? DefaultProjectName, LinkTableName, chunk);
         busyInfo.progressCtr += chunk.length;
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -187,8 +190,7 @@ export class LinksTable extends VirtualTable<Link> {
 
       this._logDatabaseTime('saveAll(): text');
       busyInfo.userText = 'Updating link text...';
-      // @ts-ignore
-      await window.databaseApi.updateAllLinkText(this.sourceName ?? DefaultProjectName);
+      await dbApi.updateAllLinkText(this.sourceName ?? DefaultProjectName);
       this._logDatabaseTimeEnd('saveAll(): text');
 
       return true;
@@ -251,8 +253,7 @@ export class LinksTable extends VirtualTable<Link> {
       const results: Link[] = [];
       let offset = 0;
       while (true) {
-        // @ts-ignore
-        const links = ((await window.databaseApi.getAll(this.sourceName ?? DefaultProjectName, LinkTableName, DatabaseSelectChunkSize, offset)) ?? []) as Link[];
+        const links = ((await dbApi.getAll<Link>(this.sourceName ?? DefaultProjectName, LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
         this._logDatabaseTimeLog('getAll()', DatabaseSelectChunkSize, offset, links?.length ?? 0);
         if (!links
           || links.length < 1) {
@@ -505,24 +506,30 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
 };
 
 /**
- * Save alignment file hook.
+ * Import alignment file hook.
  *<p>
  * Key parameters are used to control operations that may be destructive or time-consuming
  * on re-render. A constant value will ensure an operation only happens once, and a UUID
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
  *<p>
+ * @param projectId project id of the alignment file to save
  * @param alignmentFile Alignment file to save (optional; undefined = no save).
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
-export const useSaveAlignmentFile = (projectId: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
-  //const { projectState } = React.useContext(AppContext);
+export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
+  const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
   const prevSaveKey = useRef<string | undefined>();
-  const linksTable = useMemo(() => new LinksTable(projectId), [projectId]);
+  const linksTable = useMemo(() => {
+    if (!projectId) {
+      return projectState.linksTable;
+    }
+    return new LinksTable(projectId);
+  }, [projectId]);
 
   useEffect(() => {
     if (!alignmentFile
@@ -536,7 +543,7 @@ export const useSaveAlignmentFile = (projectId: string, alignmentFile?: Alignmen
     };
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
-    databaseHookDebug('useSaveAlignmentFile(): startStatus', startStatus);
+    databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
     linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
       .then(() => {
         const endStatus = {
@@ -544,7 +551,7 @@ export const useSaveAlignmentFile = (projectId: string, alignmentFile?: Alignmen
           isPending: false
         };
         setStatus(endStatus);
-        databaseHookDebug('useSaveAlignmentFile(): endStatus', endStatus);
+        databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
   }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
 
@@ -785,14 +792,21 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
  *<p>
+ * @param projectId optional project name to specify
  * @param getKey Unique key to control get operation (optional; undefined = no get).
  */
-export const useGetAllLinks = (getKey?: string) => {
+export const useGetAllLinks = (projectId?: string, getKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
   }>({});
   const prevGetKey = useRef<string | undefined>();
+  const linksTable = useMemo(() => {
+    if (!projectId) {
+      return projectState.linksTable;
+    }
+    return new LinksTable(projectId);
+  }, [projectId]);
 
   useEffect(() => {
     if (!getKey
@@ -801,7 +815,7 @@ export const useGetAllLinks = (getKey?: string) => {
     }
     prevGetKey.current = getKey;
     databaseHookDebug('useGetAllLinks(): status', status);
-    projectState?.linksTable.getAll()
+    linksTable.getAll()
       .then(result => {
         const endStatus = {
           ...status,
@@ -810,7 +824,7 @@ export const useGetAllLinks = (getKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useGetAllLinks(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, prevGetKey, getKey, status]);
+  }, [linksTable, prevGetKey, getKey, status]);
 
   return { ...status };
 };

@@ -825,7 +825,8 @@ class ProjectRepository extends BaseRepository {
   };
 
   updateAllLinkText = async (sourceName) => {
-    this.logDatabaseTime('updateAllLinkText()');
+    const logText = `updateAllLinkText(sourceName: '${sourceName}')`;
+    this.logDatabaseTime(logText);
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
       await entityManager.query(`update links
@@ -851,10 +852,10 @@ class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('updateAllLinkText()', sourceName);
       return true;
     } catch (ex) {
-      console.error('updateAllLinkText()', ex);
+      console.error(logText, ex);
       return false;
     } finally {
-      this.logDatabaseTimeEnd('updateAllLinkText()');
+      this.logDatabaseTimeEnd(logText);
     }
   };
 
@@ -886,7 +887,7 @@ class ProjectRepository extends BaseRepository {
     if (!itemLimit) {
       return [];
     }
-    this.logDatabaseTime('getAll()');
+    this.logDatabaseTime(`getAll('${sourceName}', '${table}')`);
     try {
       const dataSource = await this.getDataSource(sourceName);
       let result;
@@ -907,9 +908,9 @@ class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('getAll()', sourceName, table, itemLimit, itemSkip, result.length);
       return result;
     } catch (ex) {
-      console.error('getAll()', ex);
+      console.error(`getAll('${sourceName}', '${table}')`, ex);
     } finally {
-      this.logDatabaseTimeEnd('getAll()');
+      this.logDatabaseTimeEnd(`getAll('${sourceName}', '${table}')`);
     }
   };
 
