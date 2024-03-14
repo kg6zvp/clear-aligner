@@ -31,7 +31,6 @@ export class ProjectTable extends VirtualTable<Project> {
   }
 
   save = async (project: Project, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
-    console.log('inside save / top of function')
     try {
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
@@ -59,7 +58,6 @@ export class ProjectTable extends VirtualTable<Project> {
   };
 
   update = async (project: Project, suppressOnUpdate = false): Promise<Project | undefined> => {
-    console.log('inside update')
     try {
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
@@ -86,9 +84,7 @@ export class ProjectTable extends VirtualTable<Project> {
         // @ts-ignore
         window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error)
       )
-    console.log('insertPromises is: ', insertPromises)
     await Promise.all(insertPromises);
-    console.log('end of insertWordsOrParts')
   }
 
   getDataSourcesAsProjects = async (): Promise<Project[] | undefined> => {

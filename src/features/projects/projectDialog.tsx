@@ -103,7 +103,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         };
 
         if (fileContent) {
-          console.log('inside fileContent if block')
           dispatch(resetTextSegments());
           projectState.userPreferenceTable?.saveOrUpdate?.({ ...(preferences ?? {}), bcv: null } as UserPreference);
           const refCorpus = {
@@ -126,24 +125,15 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           projectToUpdate.targetCorpora = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [parsedTsvCorpus]);
         }
 
-
         if (!projectId) {
-          console.log('inside !projectId if block (top)')
           resolve(projectState.projectTable?.save?.(projectToUpdate))
           setProjects((p: Project[]) => [...p, projectToUpdate]);
-          console.log('inside !projectId if block (bottom)')
         } else {
-          console.log('inside !projectId else block')
           projectState.projectTable?.update?.(projectToUpdate);
           setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
         }
       }, 100);
-    }).then((e) => {
-      console.log('inside .then of handleSubmit, e is: ', e)
     })
-      .finally(() => {
-        console.log('inside .finally of handleSubmit, e is: ', e)
-      });
   }
   , [project, fileContent, handleClose, dispatch, preferences, setProjects, setLoading]);
 
@@ -308,16 +298,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               {...(loading ? { startIcon: <CircularProgress size={10} /> } : {})}
               onClick={e => {
                 setLoading(true);
-                handleSubmit(e)
-                  .then(() => {
-                    console.log('got inside the then in the button');
-                    console.log('about to run setLoading(false)')
-                    setLoading(false);
-                    console.log('about to run handleClose')
-                    handleClose();
-                    console.log('**leaving the then')
+                handleSubmit(e).then(() => {
+                  // handleClose() in the .then() ensures dialog doesn't close prematurely
+                  setLoading(false);
+                  handleClose();
                   })
-                  .catch(console.error).finally(() => console.log('got inside the finally in the button'));
               }}
             >
               {projectId ? 'Update' : 'Create'}
