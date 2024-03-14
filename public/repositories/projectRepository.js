@@ -265,7 +265,7 @@ class ProjectRepository extends BaseRepository {
       const dataSource = await this.getDataSource(project.id);
       const corporaRepository = dataSource.getRepository(CorporaTableName);
       await corporaRepository.save(corpora);
-      await dataSource.getRepository(LanguageTableName).upsert(corpora.filter(c => c.language).map(c => ({
+      await dataSource.getRepository(LanguageTableName).upsert(project.corpora.filter(c => c.language).map(c => ({
         code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
       })), ['code']);
       const sources = await dataSource.getRepository(CorporaTableName)
