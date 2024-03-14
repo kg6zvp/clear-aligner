@@ -12,6 +12,7 @@ import {
   getReferenceListFromWords
 } from '../bcvNavigation/structs';
 import { AppContext } from '../../App';
+
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
   viewportIndex: number;
@@ -97,7 +98,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
     // displaying source
     if (!props.position || !containers.targets) return null;
     const verseString = containers.targets.verseByReference(props.position)?.sourceVerse;
-    if (verseString) return BCVWP.parseFromString(verseString);
+    if ((verseString ?? '').trim().length) return BCVWP.parseFromString(verseString!);
     return props.position;
   }, [viewCorpora.id, props.position, containers.targets]);
 
@@ -286,10 +287,11 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         container
         sx={{ pl: 4, flex: 8, overflow: 'auto' }}
       >
-        {verseElement
-          ?? (
-            <Typography>No verse data for this reference.</Typography>
-          )}
+        {
+          verseElement && computedPosition && viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())
+            ? verseElement
+            : <Typography>No verse data for this reference.</Typography>
+        }
       </Grid>
     </Grid>
   );

@@ -279,6 +279,30 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
+  getFirstBcvFromSource = async (sourceName) => {
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const firstBcv = await entityManager.query(`select replace(id, 'targets:', '') id
+                                                  from words_or_parts
+                                                  where side = 'targets'
+                                                  order by id asc limit 1;`);
+      return firstBcv[0];
+    } catch (err) {
+      console.error('getFirstBcvFromSource()', err);
+    }
+  }
+
+  hasBcvInSource = async (sourceName, bcvId) => {
+    try {
+      const entityManager = (await this.getDataSource(sourceName)).manager;
+      const hasBcv = await entityManager.query(`select count(1) bvc from words_or_parts where id like 'targets:${bcvId}%'`);
+      return hasBcv[0];
+
+    } catch (err) {
+      console.error('hasBcvInSource()', err)
+    }
+  }
+
   removeSource = async (projectId) => {
     fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
       if (err) {

@@ -113,6 +113,12 @@ export class ProjectTable extends VirtualTable<Project> {
     return this.projects;
   };
 
+  hasBcvInSource = async (sourceName: string, bcvId: string) => {
+    // @ts-ignore
+    const hasBcv = await window.databaseApi.hasBcvInSource(sourceName, bcvId.trim()).catch(console.error);
+    return hasBcv?.bcv;
+  }
+
   static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {
     const corpora = dataSource?.corpora || [];
     const sourceCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.SOURCE);

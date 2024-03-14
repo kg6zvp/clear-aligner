@@ -1,6 +1,7 @@
 import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
+import { DefaultProjectName } from '../links/tableManager';
 export enum ControlPanelFormat {
   VERTICAL,
   HORIZONTAL
@@ -71,6 +72,17 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
     }
 
     return this.preferences;
+  }
+
+  getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{id?: string}> => {
+    try {
+      // @ts-ignore
+      return await window.databaseApi.getFirstBcvFromSource(sourceName ?? DefaultProjectName);
+    } catch (e) {
+      return {};
+    } finally {
+      this._onUpdate(suppressOnUpdate);
+    }
   }
 
   getPreferencesSync = () => this.preferences;

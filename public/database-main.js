@@ -41,6 +41,8 @@ module.exports = {
       ipcMain.handle(`${ChannelPrefix}:getDataSources`, async (event, ...args) => {return await ProjectRepositoryInstance.getDataSources(...args);});
       ipcMain.handle(`${ChannelPrefix}:createSourceFromProject`, async (event, ...args) => {return await ProjectRepositoryInstance.createSourceFromProject(...args);});
       ipcMain.handle(`${ChannelPrefix}:removeTargetWordsOrParts`, async (event, ...args) => {return await ProjectRepositoryInstance.removeTargetWordsOrParts(...args);});
+      ipcMain.handle(`${ChannelPrefix}:getFirstBcvFromSource`, async (event, ...args) => {return await ProjectRepositoryInstance.getFirstBcvFromSource(...args);});
+      ipcMain.handle(`${ChannelPrefix}:hasBcvInSource`, async (event, ...args) => {return await ProjectRepositoryInstance.hasBcvInSource(...args);});
     } catch (ex) {
       console.error('ipcMain.handle()', ex);
     }

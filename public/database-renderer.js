@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('databaseApi', {
   updateSourceFromProject: (project) => ipcRenderer.invoke(`${ChannelPrefix}:updateSourceFromProject`, project),
   removeSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:removeSource`, sourceName),
   removeTargetWordsOrParts: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:removeTargetWordsOrParts`, sourceName),
+  getFirstBcvFromSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:getFirstBcvFromSource`, sourceName),
+  hasBcvInSource: (sourceName, bcvId) => ipcRenderer.invoke(`${ChannelPrefix}:hasBcvInSource`, sourceName, bcvId),
 
   createDataSource: (database) => ipcRenderer.invoke(`${ChannelPrefix}:createDataSource`, database),
   insert: (database, table, itemOrItems) => ipcRenderer.invoke(`${ChannelPrefix}:insert`, database, table, itemOrItems),
