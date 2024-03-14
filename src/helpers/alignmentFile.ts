@@ -2,11 +2,8 @@ import { AlignmentFile, AlignmentRecord } from '../structs/alignmentFile';
 import { Link } from '../structs';
 
 
-const saveAlignmentFile = (links: Link[]) => {
-  if (!links
-    || links.length < 1) {
-    return;
-  }
+const saveAlignmentFile = (links: Link[] | undefined) => {
+  if (!links) return;
   // create starting instance
   const alignmentExport: AlignmentFile = {
     type: 'translation',
