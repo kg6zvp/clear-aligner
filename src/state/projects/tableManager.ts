@@ -2,7 +2,7 @@ import { SecondaryIndex, VirtualTable } from '../databaseManagement';
 import { WordsIndex } from '../links/wordsIndex';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { LinksTable } from '../links/tableManager';
-import BCVWP, { BCVWPField } from '../../features/bcvwp/BCVWPSupport';
+import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 
 export interface Project {

@@ -20,9 +20,9 @@ import {
 import { Close, DeleteOutline } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
-import { Project, ProjectTable } from '../../state/projects/tableManager';
+import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
-import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Word } from '../../structs';
+import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
 import { parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app';
