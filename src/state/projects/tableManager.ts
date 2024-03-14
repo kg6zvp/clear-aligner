@@ -148,7 +148,7 @@ export class ProjectTable extends VirtualTable<Project> {
       position_verse: bcv.verse,
       position_word: bcv.word,
       position_part: bcv.part,
-      normalized_text: (word.text || '').toLowerCase(),
+      normalized_text: word.normalizedText,
       source_verse_bcvid: word.sourceVerse,
       language_id: corpus.language.code,
       side: word.side
