@@ -529,7 +529,7 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
       return projectState.linksTable;
     }
     return new LinksTable(projectId);
-  }, [projectId]);
+  }, [projectId, projectState.linksTable]);
 
   useEffect(() => {
     if (!alignmentFile
@@ -806,7 +806,7 @@ export const useGetAllLinks = (projectId?: string, getKey?: string) => {
       return projectState.linksTable;
     }
     return new LinksTable(projectId);
-  }, [projectId]);
+  }, [projectId, projectState.linksTable]);
 
   useEffect(() => {
     if (!getKey

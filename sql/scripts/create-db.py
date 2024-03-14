@@ -9,7 +9,7 @@ import string
 
 prefixed_bcvwp = re.compile("^[onON]\d")
 gloss_needing_cleanup = re.compile('^(.+\..+)+$')
-punctuation = re.compile(f'[{string.punctuation}]', re.U)
+punctuation = re.compile(f'^[{string.punctuation}]$', re.U)
 
 
 def sanitize_bcvwp(bcv_id):
