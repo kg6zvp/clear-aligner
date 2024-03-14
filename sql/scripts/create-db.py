@@ -3,13 +3,12 @@ import argparse
 import csv
 import math
 import os
-import re
 import sqlite3
-import string
+import regex as re
 
 prefixed_bcvwp = re.compile("^[onON]\d")
 gloss_needing_cleanup = re.compile('^(.+\..+)+$')
-punctuation = re.compile(f'^[{string.punctuation}]$', re.U)
+punctuation_or_whitespace_only = re.compile('^[\p{P}\s]*$', re.U)
 
 
 def sanitize_bcvwp(bcv_id):
@@ -93,7 +92,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
         for row in corpus:
             row_id = sanitize_bcvwp(row[idx_id])
             text = row[idx_text] or row[idx_lemma]
-            if corpus_side == 'targets' and (text is None or punctuation.match(text)):
+            if corpus_side == 'targets' and (text is None or punctuation_or_whitespace_only.match(text)):
                 continue
             after = row[idx_after] if idx_after >= 0 else ""
             gloss = cleanup_gloss(row[idx_gloss] or row[idx_english]) if idx_gloss >= 0 or idx_english >= 0 else ""
@@ -111,7 +110,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
                 'position_verse': bcvwp.get('verse'),
                 'position_word': bcvwp.get('word'),
                 'position_part': bcvwp.get('part'),
-                'normalized_text': text.lower().strip(string.punctuation + string.whitespace),
+                'normalized_text': text.lower(),
                 'source_verse_bcvid': source_verse,
             })
             current_percentage = math.floor((idx / total_rows) * 100)
