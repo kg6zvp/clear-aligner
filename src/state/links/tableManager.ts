@@ -28,17 +28,23 @@ const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
 
 export class LinksTable extends VirtualTable<Link> {
   private static latestLastUpdate?: number;
+  private static linksByWordIdCache: MemoryCache = createCache(memoryStore(), {
+    ttl: DatabaseCacheTTLMs,
+    max: DatabaseCacheMaxSize
+  });
+  private static linksByBCVCache: MemoryCache = createCache(memoryStore(), {
+    ttl: DatabaseCacheTTLMs,
+    max: DatabaseCacheMaxSize
+  });
+  private static linksByLinkIdCache: MemoryCache = createCache(memoryStore(), {
+    ttl: DatabaseCacheTTLMs,
+    max: DatabaseCacheMaxSize
+  });
   private sourceName?: string;
-  private linksByWordIdCache: MemoryCache;
-  private linksByBCVCache: MemoryCache;
-  private linksByLinkIdCache: MemoryCache;
 
   constructor(sourceName?: string) {
     super();
     this.sourceName = sourceName;
-    this.linksByWordIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
-    this.linksByBCVCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
-    this.linksByLinkIdCache = createCache(memoryStore(), { ttl: DatabaseCacheTTLMs, max: DatabaseCacheMaxSize });
   }
 
   setSourceName = (sourceName?: string) => {
@@ -192,8 +198,8 @@ export class LinksTable extends VirtualTable<Link> {
 
   findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
     const referenceString = wordId.toReferenceString();
-    const cacheKey = [side, referenceString, LinksTable.latestLastUpdate].join('|');
-    return this.linksByWordIdCache.wrap(cacheKey, async () => {
+    const cacheKey = [side, referenceString, this.getSourceName(), LinksTable.getLatestLastUpdate()].join('|');
+    return LinksTable.linksByWordIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
         .findLinksByWordId(this.getSourceName(), side, referenceString);
@@ -201,8 +207,8 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   findByBCV = async (bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    const cacheKey = [bookNum, chapterNum, verseNum, LinksTable.latestLastUpdate].join('|');
-    return this.linksByBCVCache.wrap(cacheKey, async () => {
+    const cacheKey = [bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdate()].join('|');
+    return LinksTable.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
         .findLinksByBCV(this.getSourceName(), bookNum, chapterNum, verseNum);
@@ -254,7 +260,8 @@ export class LinksTable extends VirtualTable<Link> {
 
   get = async (id?: string): Promise<Link | undefined> => {
     if (!id) return undefined;
-    return this.linksByLinkIdCache.wrap(id, async () => {
+    const cacheKey = [id, this.getSourceName(), LinksTable.getLatestLastUpdate()].join('|');
+    return LinksTable.linksByLinkIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
         .findOneById(this.getSourceName(), LinkTableName, id);
@@ -283,9 +290,9 @@ export class LinksTable extends VirtualTable<Link> {
 
   reset = async () => {
     try {
-      await this.linksByWordIdCache.reset();
-      await this.linksByBCVCache.reset();
-      await this.linksByLinkIdCache.reset();
+      await LinksTable.linksByWordIdCache.reset();
+      await LinksTable.linksByBCVCache.reset();
+      await LinksTable.linksByLinkIdCache.reset();
       return true;
     } catch (e) {
       console.error('Error clearing links table cache: ', e);
