@@ -10,7 +10,7 @@ import { LinksTable } from '../state/links/tableManager';
 const BusyRefreshTimeInMs = 500;
 const DefaultWaitMessage = 'Please wait...';
 
-const useDatabaseStatusDialog = () => {
+const useBusyDialog = () => {
   const { projectState } = useContext(AppContext);
   const [initializationState, setInitializationState] = useState<InitializationStates>();
   const [databaseStatus, setDatabaseStatus] = useState<{
@@ -122,4 +122,4 @@ const useDatabaseStatusDialog = () => {
   );
 };
 
-export default useDatabaseStatusDialog;
+export default useBusyDialog;

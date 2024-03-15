@@ -24,7 +24,7 @@ import { AddLink, LibraryBooks, ManageSearch } from '@mui/icons-material';
 import useTrackLocation from './utils/useTrackLocation';
 import { AppContext } from './App';
 import { DefaultProjectName } from './state/links/tableManager';
-import useDatabaseStatusDialog from './utils/useDatabaseStatusDialog';
+import useBusyDialog from './utils/useBusyDialog';
 
 type THEME = 'night' | 'day';
 type THEME_PREFERENCE = THEME | 'auto';
@@ -41,7 +41,7 @@ export const LayoutContext = createContext({} as LayoutContextProps);
 
 export const AppLayout = () => {
   useTrackLocation();
-  const databaseStatusDialog = useDatabaseStatusDialog();
+  const busyDialog = useBusyDialog();
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const themeDefault: THEME = useMemo(
     () => (prefersDarkMode ? 'night' : 'day'),
@@ -83,7 +83,7 @@ export const AppLayout = () => {
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
-        {databaseStatusDialog}
+        {busyDialog}
         <AppBar position={'fixed'} enableColorOnDark={theme !== 'night'}>
           <Grid container justifyContent="space-between" alignItems="center" sx={{ position: 'relative' }}>
             <Toolbar aria-label={'Menu'} onClick={() => setShowMenu(!showMenu)}>

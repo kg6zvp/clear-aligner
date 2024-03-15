@@ -28,7 +28,7 @@ import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import useDatabaseStatusDialog from '../../utils/useDatabaseStatusDialog';
+import useBusyDialog from '../../utils/useBusyDialog';
 import { useInterval } from 'usehooks-ts';
 
 
@@ -54,7 +54,7 @@ const getInitialProjectState = (): Project => ({
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
-  const databaseStatusDialog = useDatabaseStatusDialog();
+  const busyDialog = useBusyDialog();
   const dispatch = useAppDispatch();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
@@ -182,7 +182,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
 
   return (
     <>
-      {databaseStatusDialog}
+      {busyDialog}
       <Dialog
         open={open}
       >
