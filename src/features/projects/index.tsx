@@ -1,5 +1,5 @@
 import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -7,6 +7,8 @@ import { DefaultProjectName } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
+import { InitializationStates } from '../../workbench/query';
+import { LayoutContext } from '../../AppLayout';
 
 interface ProjectsViewProps {
 }
@@ -19,6 +21,15 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
     setSelectedProjectId(projectId);
     setOpenProjectDialog(true);
   }, [setSelectedProjectId, setOpenProjectDialog]);
+  const layoutCtx = useContext(LayoutContext);
+
+  useEffect(() => {
+    layoutCtx.setMenuBarDelegate(
+      <Typography sx={{ textAlign: 'center' }}>
+        Projects
+      </Typography>
+    )
+  }, [layoutCtx, preferences?.currentProject]);
 
   return (
     <>
@@ -74,7 +85,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
       const updatedPreference = {
         ...(preferences ?? {}),
         currentProject: project.id,
-        initialized: false
+        initialized: InitializationStates.UNINITIALIZED
       } as UserPreference;
       projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreference);
       return updatedPreference;

@@ -2,6 +2,7 @@ import { VirtualTable } from '../databaseManagement';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
 import { DefaultProjectName } from '../links/tableManager';
+import { InitializationStates } from '../../workbench/query';
 
 export enum ControlPanelFormat {
   VERTICAL,
@@ -15,7 +16,7 @@ export interface UserPreference {
   page: string;
   showGloss: boolean;
   currentProject: string;
-  initialized?: boolean;
+  initialized?: InitializationStates;
 }
 
 interface UserPreferenceDto {

@@ -5,8 +5,8 @@ import { ProjectState } from '../state/databaseManagement';
 import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
-import { AlignmentSide } from '../structs';
-import { getAvailableCorporaContainers } from '../workbench/query';
+import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -23,8 +23,30 @@ const useInitialization = () => {
     setUpdatedPreferences(preferences);
   }, [preferences, setUpdatedPreferences]);
 
+  /*
+   * if there's no bcv saved or the corpus for the current project doesn't contain the currently saved bcv, update it to be within the available words
+   */
+  const checkIfBCVIsOkay = useCallback(() => {
+    if (!containers?.targetContainer) return;
+    if (!preferences?.bcv
+      || !containers.targetContainer?.corpusAtReferenceString(preferences.bcv.toReferenceString())
+      || !containers.targetContainer?.corpusAtReferenceString(preferences.bcv.toReferenceString())?.wordsByVerse[preferences.bcv.toTruncatedReferenceString(BCVWPField.Verse)]) {
+      const targetWord = containers.targetContainer?.corpora.find(_ => true)?.words.find(_ => true);
+      if (targetWord) {
+        const newPosition = BCVWP.parseFromString(targetWord.id);
+        setPreferences((oldPreferences): UserPreference => ({
+          ...oldPreferences as UserPreference,
+          bcv: newPosition
+        }));
+      }
+    }
+  }, [preferences?.bcv, containers.targetContainer, setPreferences]);
+
+  useEffect(() => checkIfBCVIsOkay(), [containers.targetContainer]);
+
   useEffect(() => {
     const loadContainers = async () => {
+      console.time('loading corpora');
       const newContainers = (await getAvailableCorporaContainers({
         projectState: state,
         setProjectState: setState,
@@ -32,19 +54,18 @@ const useInitialization = () => {
         setPreferences,
         projects,
         setProjects
-      } as AppContextProps))
-        .reduce((container, currentValue): Containers => {
-          if (currentValue.id === AlignmentSide.SOURCE) {
-            container.sourceContainer = currentValue;
-          } else if (currentValue.id === AlignmentSide.TARGET) {
-            container.targetContainer = currentValue;
-          }
-          return container;
-        }, { sourceContainer: undefined, targetContainer: undefined } as Containers);
+      } as AppContextProps));
+      console.timeEnd('loading corpora');
       setContainers(newContainers);
+      setPreferences((oldPreferences) => ({
+        ...(oldPreferences ?? {}) as UserPreference,
+        initialized: InitializationStates.INITIALIZED
+      }));
     };
-    void loadContainers();
-  }, [preferences, preferences?.currentProject, projects, setContainers, state]);
+    if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
+      void loadContainers();
+    }
+  }, [preferences, preferences?.currentProject, projects, containers, setContainers, state]);
 
   useEffect(() => {
     if (!isLoaded.current) {

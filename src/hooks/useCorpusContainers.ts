@@ -3,6 +3,7 @@ import { useContext } from 'react';
 import { AppContext } from '../App';
 
 export interface Containers {
+  projectId?: string;
   sourceContainer?: CorpusContainer;
   targetContainer?: CorpusContainer;
 }

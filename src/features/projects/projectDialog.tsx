@@ -22,7 +22,7 @@ import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
-import { parseTsv, putVersesInCorpus } from '../../workbench/query';
+import { InitializationStates, parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
@@ -139,7 +139,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             }]);
           }
 
-          setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: false }));
+          setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: InitializationStates.UNINITIALIZED }));
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             setProjects((p: Project[]) => [...p, projectToUpdate]);
@@ -161,7 +161,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
           currentProject: DefaultProjectName,
-          initialized: false
+          initialized: InitializationStates.UNINITIALIZED
         }));
       }
       setOpenConfirmDelete(false);

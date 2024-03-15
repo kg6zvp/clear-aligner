@@ -1,8 +1,8 @@
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
-
 import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
+import { Containers } from '../hooks/useCorpusContainers';
 import { UserPreference } from '../state/preferences/tableManager';
 
 export enum InitializationStates {
@@ -10,12 +10,6 @@ export enum InitializationStates {
   INITIALIZING,
   INITIALIZED
 }
-
-let initializationState: InitializationStates = InitializationStates.UNINITIALIZED;
-
-export const getCorporaInitializationState = () => {
-  return initializationState;
-};
 
 export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
   const [header, ...rows] = fileContent.split('\n');
@@ -162,12 +156,6 @@ export const putVersesInCorpus = (corpus: Corpus) =>
     putVerseInCorpus(corpus, verse)
   );
 
-const waitForInitialization = async () => {
-  while (initializationState !== InitializationStates.INITIALIZED) {
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-};
-
 const WordQueryBatchSize = 100_000;
 
 export const getCorpusFromDatabase = async (
@@ -213,45 +201,42 @@ export const getCorpusFromDatabase = async (
 };
 
 export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Promise<
-  CorpusContainer[]
+  Containers
 > => {
   console.log(`getAvailableCorporaContainers(sourceName = '${appCtx.preferences?.currentProject}')`, appCtx.preferences?.currentProject);
   if (!appCtx.preferences?.currentProject) {
-    return [];
-  }
-  const corpora = [];
-  if (initializationState !== InitializationStates.INITIALIZING && !appCtx.preferences?.initialized) {
-    initializationState = InitializationStates.INITIALIZING;
-
-    // @ts-ignore
-    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
-    const corpusPromises: Promise<Corpus>[] = inputCorpora
-      .map(inputCorpus =>
-        getCorpusFromDatabase({
-          ...inputCorpus,
-          words: [],
-          wordsByVerse: {},
-          wordLocation: new Map<string, Set<BCVWP>>(),
-          books: {},
-          hasGloss: inputCorpus.side === AlignmentSide.SOURCE
-        }, appCtx.preferences?.currentProject));
-    const outputCorpora: Corpus[] =
-      (await Promise.all(corpusPromises));
-    outputCorpora.forEach(
-      outputCorpus => putVersesInCorpus(outputCorpus));
-
-    const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
-      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
-    const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
-      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
-
-    corpora.push(sourceContainer);
-    corpora.push(targetContainer);
-    initializationState = InitializationStates.INITIALIZED;
-    appCtx.setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: true }));
-  } else if (initializationState === InitializationStates.INITIALIZING) {
-    await waitForInitialization();
+    return {
+      projectId: appCtx.preferences?.currentProject,
+      sourceContainer: undefined,
+      targetContainer: undefined
+    };
   }
 
-  return corpora;
+  // @ts-ignore
+  const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
+  const corpusPromises: Promise<Corpus>[] = inputCorpora
+    .map(inputCorpus =>
+      getCorpusFromDatabase({
+        ...inputCorpus,
+        words: [],
+        wordsByVerse: {},
+        wordLocation: new Map<string, Set<BCVWP>>(),
+        books: {},
+        hasGloss: inputCorpus.side === AlignmentSide.SOURCE
+      }, appCtx.preferences?.currentProject));
+  const outputCorpora: Corpus[] =
+    (await Promise.all(corpusPromises));
+  outputCorpora.forEach(
+    outputCorpus => putVersesInCorpus(outputCorpus));
+
+  const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
+    outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
+  const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
+    outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
+
+  return {
+    projectId: appCtx.preferences?.currentProject,
+    sourceContainer,
+    targetContainer
+  };
 };
