@@ -22,8 +22,7 @@ export const LinkTableName = 'links';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
 
-// @ts-ignore
-const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
+const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
 
 export class LinksTable extends VirtualTable {
@@ -45,6 +44,7 @@ export class LinksTable extends VirtualTable {
 
   constructor(sourceName?: string) {
     super();
+    console.log('creating links', sourceName);
     this.sourceName = sourceName;
   }
 
