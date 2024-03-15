@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
@@ -25,29 +25,31 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   const appCtx = useContext(AppContext);
   const [currentPosition, setCurrentPosition] =
     useState<BCVWP | undefined>(appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1));
+  const savedPosition = useRef<BCVWP | undefined>();
 
   useEffect(() => {
-    if (currentPosition
-      || _.isEqual(currentPosition, appCtx.preferences?.bcv)) {
+    if (!currentPosition
+      || _.isEqual(currentPosition, savedPosition.current)) {
       return;
     }
+    savedPosition.current = currentPosition;
     appCtx.setPreferences((p: UserPreference | undefined) => ({
       ...(p ?? {}) as UserPreference,
       currentBCV: currentPosition
     }));
-  }, [appCtx, currentPosition]);
+  }, [appCtx, currentPosition, savedPosition]);
 
   useEffect(() => {
-    if (appCtx.preferences?.bcv) {
+    if (currentPosition) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          appCtx.preferences?.bcv?.getBookInfo()?.EnglishBookName
-        } ${appCtx.preferences?.bcv?.chapter}:${appCtx.preferences?.bcv?.verse}`
+          currentPosition.getBookInfo()?.EnglishBookName
+        } ${currentPosition?.chapter}:${currentPosition?.verse}`
       );
     } else {
       layoutCtx.setWindowTitle(defaultDocumentTitle);
     }
-  }, [appCtx.preferences?.bcv, layoutCtx]);
+  }, [currentPosition, layoutCtx]);
 
   const { sourceContainer, targetContainer } = useCorpusContainers();
 
@@ -59,7 +61,6 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
         targetContainer?.corpora.flatMap(({ words }) => words) ?? []
       );
     };
-
     if (appCtx.projectState.linksTable?.getSourceName?.()) {
       loadSourceWords().catch(console.error);
     }

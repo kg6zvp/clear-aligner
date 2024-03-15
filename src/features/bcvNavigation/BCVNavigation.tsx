@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
@@ -44,13 +44,13 @@ const BCVNavigation = ({
                          horizontal
                        }: BCVNavigationProps) => {
   const allAvailableBooks = useBooksWithNavigationInfo(words);
-  const [isPositionReset, setIsPositionReset] = useState<boolean>(true);
   const [selectedBook, setSelectedBook] = useState<NavigableBook | null>(null);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
   const [availableBooks, setAvailableBooks] = useState<NavigableBook[]>([]);
   const [availableChapters, setAvailableChapters] = useState<Chapter[]>([]);
   const [availableVerses, setAvailableVerses] = useState<Verse[]>([]);
+  const isPositionReset = useRef<boolean>(true);
 
   const findAvailableChaptersByBook = (books?: NavigableBook[], bookNum?: number) => {
     return (books && bookNum
@@ -64,10 +64,10 @@ const BCVNavigation = ({
   useEffect(() => {
     if (!currentPosition
       || !allAvailableBooks?.length
-      || !isPositionReset) {
+      || !isPositionReset.current) {
       return;
     }
-    setIsPositionReset(false);
+    isPositionReset.current = false;
 
     const nextAvailableBooks = [...allAvailableBooks];
     const nextSelectedBook = findBookInNavigableBooksByBookNumber(nextAvailableBooks, currentPosition?.book);
@@ -106,7 +106,7 @@ const BCVNavigation = ({
   };
 
   const resetSelectedPosition = () => {
-    setIsPositionReset(true);
+    isPositionReset.current = true;
   };
 
   const previousNavigableVerse: BCVWP | null = useMemo(
