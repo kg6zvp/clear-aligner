@@ -6,7 +6,6 @@ import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { DefaultProjectName, useGetAllLinks } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 interface ProjectsViewProps {
 }

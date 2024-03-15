@@ -66,7 +66,7 @@ export const VerseDisplay = ({
         : link!.targets) ?? [])
         .forEach(wordId => result.set(wordId, link!)));
     return result;
-  }, [allLinks, onlyLink, alignmentSide]);
+  }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
   return (
     <>

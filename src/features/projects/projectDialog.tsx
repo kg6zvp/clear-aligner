@@ -3,7 +3,6 @@ import {
   Autocomplete,
   Box,
   Button,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -25,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
 import { parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { useAppDispatch } from '../../app';
+import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';

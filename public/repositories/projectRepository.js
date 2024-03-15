@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const sanitize = require('sanitize-filename');
 const { app } = require('electron');
+const { chunk } = require('lodash');
 const uuid = require('uuid-random');
 const LinkTableName = 'links';
 const CorporaTableName = 'corpora';
@@ -178,16 +179,7 @@ class ProjectRepository extends BaseRepository {
     super();
     this.isLoggingTime = true;
     this.dataSources = new Map();
-    this.getDataSource = async (sourceName) =>
-      await this.getDataSourceWithEntities(
-        sourceName,
-        [corporaSchema, linkSchema, wordsOrPartsSchema,
-          linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
-        path.join(this.getTemplatesDirectory(),
-          DefaultProjectName === sourceName
-            ? 'projects/clear-aligner-default.sqlite'
-            : 'clear-aligner-template.sqlite'),
-        path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
+    this.getDataSource = async (sourceName) => await this.getDataSourceWithEntities(sourceName, [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema], path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName ? 'projects/clear-aligner-default.sqlite' : 'clear-aligner-template.sqlite'), path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
 
   convertCorpusToDataSource = (corpus) => ({
@@ -379,37 +371,40 @@ class ProjectRepository extends BaseRepository {
     return result;
   };
 
-  insert = async (sourceName, table, itemOrItems) => {
+  insert = async (sourceName, table, itemOrItems, chunkSize) => {
     this.logDatabaseTime('insert()');
     try {
       const dataSource = await this.getDataSource(sourceName);
-      switch (table) {
-        case LinkTableName:
-          const links = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-          await dataSource.getRepository(LinkTableName)
-            .insert(links.map(link => ({
-              id: link.id
-            })));
-          await dataSource.getRepository(LinksToSourceWordsName)
-            .insert(this.createLinksToSource(links));
-          await dataSource.getRepository(LinksToTargetWordsName)
-            .insert(this.createLinksToTarget(links));
-          break;
-        case CorporaTableName:
-          const corpora = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-          await dataSource.getRepository(LanguageTableName)
-            .upsert(corpora.filter(c => c.language).map(c => ({
-              code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
-            })), ['code']);
-          await dataSource.getRepository(CorporaTableName)
-            .insert(corpora.map(this.convertCorpusToDataSource));
-          break;
-        default:
-          await dataSource.getRepository(table)
-            .insert(itemOrItems);
-          break;
+      const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+      const chunks = chunkSize ? chunk(items, chunkSize) : [items];
+      const promises = [];
+      for (const chunk of chunks) {
+        switch (table) {
+          case LinkTableName:
+            promises.push(dataSource.getRepository(LinkTableName)
+              .insert(chunk.map(link => ({
+                id: link.id
+              }))), dataSource.getRepository(LinksToSourceWordsName)
+              .insert(this.createLinksToSource(chunk)), dataSource.getRepository(LinksToTargetWordsName)
+              .insert(this.createLinksToTarget(chunk)));
+            break;
+          case CorporaTableName:
+            promises.push(dataSource.getRepository(LanguageTableName)
+              .upsert(chunk.filter(c => c.language).map(c => ({
+                code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
+              })), ['code']), dataSource.getRepository(CorporaTableName)
+              .insert(chunk.map(this.convertCorpusToDataSource)));
+            break;
+          default:
+            promises.push(dataSource.getRepository(table)
+              .insert(chunk));
+            break;
+        }
       }
-      this.logDatabaseTimeLog('insert()', sourceName, table, itemOrItems?.length ?? itemOrItems);
+      await Promise.all(promises);
+      this.logDatabaseTimeLog('insert()',
+        sourceName, table, itemOrItems?.length ?? itemOrItems,
+        chunkSize, chunks?.length, promises?.length);
       return true;
     } catch (ex) {
       console.error('insert()', ex);

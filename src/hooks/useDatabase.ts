@@ -18,7 +18,7 @@ export interface DatabaseApi {
     c: number // frequency
   }[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
-  insert: <T,>(sourceName: string, table: string, itemOrItems: T[]) => Promise<boolean>;
+  insert: <T,>(sourceName: string, table: string, itemOrItems: T[], chunkSize?: number) => Promise<boolean>;
   getAll: <T,>(sourceName: string, table: string, itemLimit: number, itemSkip?: number) => Promise<T[]>;
   updateAllLinkText: (sourceName: string) => Promise<boolean>;
   corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
