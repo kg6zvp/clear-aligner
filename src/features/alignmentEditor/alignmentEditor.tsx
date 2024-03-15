@@ -25,28 +25,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   const appCtx = useContext(AppContext);
   const [currentPosition, setCurrentPosition] =
     useState<BCVWP | undefined>(appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1));
-  // const setDefaultBcv = React.useCallback(async () => {
-  //   if (!appCtx.preferences?.currentProject) return;
-  //   const hasBcv = appCtx?.preferences?.bcv?.toReferenceString?.() && await appCtx.projectState?.projectTable?.hasBcvInSource?.(
-  //     appCtx.preferences.currentProject,
-  //     appCtx.preferences.bcv?.toReferenceString?.() ?? ''
-  //   );
-  //
-  //   if (!hasBcv && hasBcv !== undefined) {
-  //     const defaultBcv = await appCtx.projectState?.userPreferenceTable?.getFirstBcvFromSource?.(appCtx?.preferences?.currentProject);
-  //     appCtx.setPreferences((p: UserPreference | undefined) => ({
-  //       ...(p ?? {}) as UserPreference,
-  //       bcv: defaultBcv?.id
-  //         ? BCVWP.parseFromString(defaultBcv.id)
-  //         : new BCVWP(1, 1, 1)
-  //     })); // set current reference to default
-  //   }
-  // }, [appCtx, appCtx?.preferences?.bcv, appCtx.projectState?.projectTable, appCtx.projectState?.userPreferenceTable]);
 
-  // set current reference to default if none set
-  // useEffect(() => {
-  //   setDefaultBcv().catch(console.error);
-  // }, [appCtx.preferences?.currentProject]);
   useEffect(() => {
     if (currentPosition
       || _.isEqual(currentPosition, appCtx.preferences?.bcv)) {
@@ -58,7 +37,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     }));
   }, [appCtx, currentPosition]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (appCtx.preferences?.bcv) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
@@ -72,7 +51,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
 
   const { sourceContainer, targetContainer } = useCorpusContainers();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!sourceContainer || !targetContainer) return;
     const loadSourceWords = async () => {
       setSelectedCorporaContainers([sourceContainer, targetContainer]);
