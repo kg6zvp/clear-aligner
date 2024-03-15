@@ -1,10 +1,5 @@
 import {
   AppBar,
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogContentText,
   Drawer,
   FormControl,
   Grid,
@@ -28,11 +23,8 @@ import { createSearchParams, Outlet, useNavigate, useSearchParams } from 'react-
 import { AddLink, LibraryBooks, ManageSearch } from '@mui/icons-material';
 import useTrackLocation from './utils/useTrackLocation';
 import { AppContext } from './App';
-import { getCorporaInitializationState, InitializationStates } from './workbench/query';
-import { useInterval } from 'usehooks-ts';
-import _ from 'lodash';
-import { DatabaseStatus } from './state/databaseManagement';
 import { DefaultProjectName } from './state/links/tableManager';
+import useDatabaseStatusDialog from './utils/useDatabaseStatusDialog';
 
 type THEME = 'night' | 'day';
 type THEME_PREFERENCE = THEME | 'auto';
@@ -47,11 +39,9 @@ export interface LayoutContextProps {
 
 export const LayoutContext = createContext({} as LayoutContextProps);
 
-// Needed for the Busybox/Dialog to work properly down below
-const BusyRefreshTimeInMs = 500;
-
 export const AppLayout = () => {
   useTrackLocation();
+  const databaseStatusDialog = useDatabaseStatusDialog();
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const themeDefault: THEME = useMemo(
     () => (prefersDarkMode ? 'night' : 'day'),
@@ -82,7 +72,7 @@ export const AppLayout = () => {
   );
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { preferences, projects, projectState } = useContext(AppContext);
+  const { preferences, projects } = useContext(AppContext);
   const projectName = useMemo(() => (
     (projects || []).find(p =>
       p.id === preferences?.currentProject)?.name
@@ -90,119 +80,10 @@ export const AppLayout = () => {
     ?? DefaultProjectName
   ), [projects, preferences?.currentProject]);
 
-  // code needed for the Dialog/BusyBox to work properly down below
-  const [initializationState, setInitializationState] = useState<InitializationStates>();
-  const [databaseStatus, setDatabaseStatus] = useState<{
-    projects: DatabaseStatus,
-    links: DatabaseStatus
-  }>();
-  const [numProjects, setNumProjects] = useState<number>();
-
-  useInterval(() => {
-    const linkStatus = projectState?.linksTable.getDatabaseStatus();
-    const projectStatus = projectState?.projectTable.getDatabaseStatus();
-    if (!_.isEqual({ projects: projectStatus, links: linkStatus }, databaseStatus)) {
-      setDatabaseStatus({
-        projects: projectStatus,
-        links: linkStatus
-      });
-    }
-    const newInitializationState = getCorporaInitializationState();
-    if (newInitializationState !== initializationState) {
-      setInitializationState(newInitializationState);
-      projectState?.projectTable?.getProjects(true)
-        .then(newProjects => {
-          if (newProjects?.size !== numProjects) {
-            setNumProjects(newProjects?.size);
-          }
-        });
-    }
-    projectState?.projectTable?.getProjects(false)
-      .then(newProjects => {
-        if (newProjects?.size !== numProjects) {
-          setNumProjects(newProjects?.size);
-        }
-      });
-  }, BusyRefreshTimeInMs);
-  const spinnerParams = useMemo<{
-    isBusy?: boolean,
-    text?: string,
-    variant?: 'determinate' | 'indeterminate',
-    value?: number
-  }>(() => {
-    const busyKey = Object.keys(databaseStatus ?? {}).find(key =>
-      databaseStatus?.[key as keyof typeof databaseStatus]?.busyInfo?.isBusy);
-    const busyInfo = databaseStatus?.[(busyKey ?? '') as keyof typeof databaseStatus]?.busyInfo;
-    if (busyInfo?.isBusy) {
-      const progressCtr = busyInfo?.progressCtr ?? 0;
-      const progressMax = busyInfo?.progressMax ?? 0;
-      if (progressMax > 0
-        && progressMax >= progressCtr) {
-        const percentProgress = Math.round((progressCtr / progressMax) * 100.0);
-        return {
-          isBusy: true,
-          text: busyInfo?.userText ?? 'The database is busy...',
-          variant: percentProgress < 100 ? 'determinate' : 'indeterminate',
-          value: percentProgress < 100 ? percentProgress : undefined
-        };
-      } else {
-        return {
-          isBusy: true,
-          text: busyInfo?.userText ?? 'The database is busy...',
-          variant: 'indeterminate',
-          value: undefined
-        };
-      }
-    }
-    if (initializationState !== InitializationStates.INITIALIZED) {
-      return {
-        isBusy: true,
-        text: !numProjects
-          ? 'Starting up...'
-          : 'Loading project & corpora...',
-        variant: 'indeterminate',
-        value: undefined
-      };
-    }
-    return {
-      isBusy: false,
-      text: undefined,
-      variant: 'indeterminate',
-      value: undefined
-    };
-  }, [databaseStatus?.projects?.busyInfo, databaseStatus?.links?.busyInfo, initializationState, numProjects]);
-
-
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
-        <Dialog
-          open={!!spinnerParams.isBusy}>
-          <DialogContent>
-            <Box sx={{
-              display: 'flex',
-              margin: 'auto',
-              position: 'relative'
-            }}>
-              <CircularProgress sx={{ margin: 'auto' }}
-                                variant={spinnerParams.variant ?? 'indeterminate'}
-                                value={spinnerParams.value} />
-              {!!spinnerParams.value && <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)'
-                }}>
-                <Typography variant="caption">{`${spinnerParams.value}%`}</Typography>
-              </Box>}
-            </Box>
-            <DialogContentText>
-              {spinnerParams.text}
-            </DialogContentText>
-          </DialogContent>
-        </Dialog>
-
+        {databaseStatusDialog}
         <AppBar position={'fixed'} enableColorOnDark={theme !== 'night'}>
           <Grid container justifyContent="space-between" alignItems="center" sx={{ position: 'relative' }}>
             <Toolbar aria-label={'Menu'} onClick={() => setShowMenu(!showMenu)}>

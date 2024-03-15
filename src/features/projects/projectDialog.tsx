@@ -28,7 +28,7 @@ import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import useDatabaseStatusMessage from '../../utils/useDatabaseStatusMessage';
+import useDatabaseStatusDialog from '../../utils/useDatabaseStatusDialog';
 import { useInterval } from 'usehooks-ts';
 
 
@@ -54,7 +54,7 @@ const getInitialProjectState = (): Project => ({
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
-  const databaseStatusDialog = useDatabaseStatusMessage();
+  const databaseStatusDialog = useDatabaseStatusDialog();
   const dispatch = useAppDispatch();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
@@ -150,7 +150,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
-    , [project, fileContent, dispatch, preferences, setProjects, setPreferences, projectState]);
+    , [projectState.projectTable, projectState.userPreferenceTable, project, fileContent, setPreferences, projectId, dispatch, preferences, setProjects]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
