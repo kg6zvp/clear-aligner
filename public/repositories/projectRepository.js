@@ -380,37 +380,46 @@ class ProjectRepository extends BaseRepository {
   insert = async (sourceName, table, itemOrItems, chunkSize) => {
     this.logDatabaseTime('insert()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
-      const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-      const chunks = chunkSize ? chunk(items, chunkSize) : [items];
-      const promises = [];
-      for (const chunk of chunks) {
-        switch (table) {
-          case LinkTableName:
-            promises.push(dataSource.getRepository(LinkTableName)
-              .insert(chunk.map(link => ({
-                id: link.id
-              }))), dataSource.getRepository(LinksToSourceWordsName)
-              .insert(this.createLinksToSource(chunk)), dataSource.getRepository(LinksToTargetWordsName)
-              .insert(this.createLinksToTarget(chunk)));
-            break;
-          case CorporaTableName:
-            promises.push(dataSource.getRepository(LanguageTableName)
-              .upsert(chunk.filter(c => c.language).map(c => ({
-                code: c.language.code, text_direction: c.language.textDirection, font_family: c.language.fontFamily
-              })), ['code']), dataSource.getRepository(CorporaTableName)
-              .insert(chunk.map(this.convertCorpusToDataSource)));
-            break;
-          default:
-            promises.push(dataSource.getRepository(table)
-              .insert(chunk));
-            break;
-        }
-      }
-      await Promise.all(promises);
-      this.logDatabaseTimeLog('insert()',
-        sourceName, table, itemOrItems?.length ?? itemOrItems,
-        chunkSize, chunks?.length, promises?.length);
+      await (await this.getDataSource(sourceName))
+        .transaction(async (entityManager) => {
+          const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+          const chunks = chunkSize ? chunk(items, chunkSize) : [items];
+          const promises = [];
+          for (const chunk of chunks) {
+            switch (table) {
+              case LinkTableName:
+                promises.push(
+                  entityManager.getRepository(LinkTableName)
+                    .insert(chunk.map(link => ({
+                      id: link.id
+                    }))),
+                  entityManager.getRepository(LinksToSourceWordsName)
+                    .insert(this.createLinksToSource(chunk)),
+                  entityManager.getRepository(LinksToTargetWordsName)
+                    .insert(this.createLinksToTarget(chunk)));
+                break;
+              case CorporaTableName:
+                promises.push(
+                  entityManager.getRepository(LanguageTableName)
+                    .upsert(chunk.filter(c => c.language).map(c => ({
+                      code: c.language.code,
+                      text_direction: c.language.textDirection,
+                      font_family: c.language.fontFamily
+                    })), ['code']),
+                  entityManager.getRepository(CorporaTableName)
+                    .insert(chunk.map(this.convertCorpusToDataSource)));
+                break;
+              default:
+                promises.push(entityManager.getRepository(table)
+                  .insert(chunk));
+                break;
+            }
+          }
+          await Promise.all(promises);
+          this.logDatabaseTimeLog('insert()',
+            sourceName, table, itemOrItems?.length ?? itemOrItems,
+            chunkSize, chunks?.length, promises?.length);
+        });
       return true;
     } catch (ex) {
       console.error('insert()', ex);
