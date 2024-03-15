@@ -37,12 +37,9 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
 
     switch (fileType) {
       case CorpusFileFormat.TSV_TARGET:
+        const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
         // filter out punctuation in content
-        if ([
-          values[headerMap['token']],
-          values[headerMap['text']]
-        ].some(v => !!(v ?? '').match(/^[\p{P}\s]*$/gu))
-        ) {
+        if (wordText.match(/^[\p{P}\s]*$/gu)) {
           // skip punctuation
           return;
         }
@@ -54,7 +51,6 @@ export const parseTsv = (fileContent: string, refCorpus: Corpus, side: Alignment
         }
         wordRef = BCVWP.parseFromString(id);
         pos = +id.substring(8, 11); // grab word position
-        const wordText = (values[headerMap['text']] || values[headerMap['lemma']] || '');
         if (!wordText || wordText.length < 1) return;
         const normalizedText = wordText.toLowerCase();
         word = {
