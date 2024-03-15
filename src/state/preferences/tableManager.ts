@@ -94,7 +94,7 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
       alignment_view: userPreference.alignmentDirection ?? ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
       current_project: userPreference.currentProject ?? "",
       page: userPreference.page,
-      show_gloss: userPreference.showGloss
+      show_gloss: !!userPreference.showGloss
     }
   }
   catchUpIndex = async (_index: SecondaryIndex<UserPreference>) => {};
