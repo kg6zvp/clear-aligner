@@ -8,7 +8,7 @@ import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 
 const BusyRefreshTimeInMs = 500;
-const DefaultWaitMessage = 'Please wait...';
+const DefaultBusyMessage = 'Please wait...';
 
 const useBusyDialog = () => {
   const { projectState } = useContext(AppContext);
@@ -61,14 +61,14 @@ const useBusyDialog = () => {
         const percentProgress = Math.round((progressCtr / progressMax) * 100.0);
         return {
           isBusy: true,
-          text: busyInfo?.userText ?? DefaultWaitMessage,
+          text: busyInfo?.userText ?? DefaultBusyMessage,
           variant: percentProgress < 100 ? 'determinate' : 'indeterminate',
           value: percentProgress < 100 ? percentProgress : undefined
         };
       } else {
         return {
           isBusy: true,
-          text: busyInfo?.userText ?? DefaultWaitMessage,
+          text: busyInfo?.userText ?? DefaultBusyMessage,
           variant: 'indeterminate',
           value: undefined
         };
