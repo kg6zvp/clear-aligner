@@ -8,6 +8,7 @@ import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 
 const BusyRefreshTimeInMs = 500;
+const DefaultWaitMessage = 'Please wait...';
 
 const useDatabaseStatusDialog = () => {
   const { projectState } = useContext(AppContext);
@@ -60,14 +61,14 @@ const useDatabaseStatusDialog = () => {
         const percentProgress = Math.round((progressCtr / progressMax) * 100.0);
         return {
           isBusy: true,
-          text: busyInfo?.userText ?? 'The database is busy...',
+          text: busyInfo?.userText ?? DefaultWaitMessage,
           variant: percentProgress < 100 ? 'determinate' : 'indeterminate',
           value: percentProgress < 100 ? percentProgress : undefined
         };
       } else {
         return {
           isBusy: true,
-          text: busyInfo?.userText ?? 'The database is busy...',
+          text: busyInfo?.userText ?? DefaultWaitMessage,
           variant: 'indeterminate',
           value: undefined
         };
