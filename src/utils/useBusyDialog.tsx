@@ -6,7 +6,6 @@ import _ from 'lodash';
 import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 import { InitializationStates } from '../workbench/query';
-import { UserPreference } from '../state/preferences/tableManager';
 
 const BusyRefreshTimeInMs = 500;
 const DefaultBusyMessage = 'Please wait...';
@@ -18,7 +17,7 @@ const useBusyDialog = () => {
     links: DatabaseStatus
   }>();
   const [numProjects, setNumProjects] = useState<number>();
-  const initializationState = useMemo<InitializationStates|undefined>(() => preferences?.initialized, [preferences?.initialized])
+  const [initializationState, setInitializationState] = useState<InitializationStates>();
   useInterval(() => {
     const linkStatus = LinksTable.getLatestDatabaseStatus();
     const projectStatus = projectState?.projectTable.getDatabaseStatus();
@@ -34,6 +33,9 @@ const useBusyDialog = () => {
           setNumProjects(newProjects?.size);
         }
       });
+    if (preferences?.initialized !== initializationState) {
+      setInitializationState(preferences?.initialized);
+    }
   }, BusyRefreshTimeInMs);
   const spinnerParams = useMemo<{
     isBusy?: boolean,
