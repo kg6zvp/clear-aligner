@@ -2,7 +2,7 @@ import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
-import { useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
+import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -35,6 +35,7 @@ export const VerseDisplay = ({
                                onlyLinkIds,
                                allowGloss = false
                              }: VerseDisplayProps) => {
+  const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
@@ -42,14 +43,14 @@ export const VerseDisplay = ({
   const alignmentSide = useMemo(() => corpus?.side as AlignmentSide, [corpus?.side]);
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
-    verse.bcvId?.toReferenceString()
+    `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
   );
   const { result: allLinks } = useFindLinksByBCV(
     (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.book : undefined,
     verse.bcvId.chapter,
     verse.bcvId.verse,
     readonly,
-    verse.bcvId?.toReferenceString()
+    `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
   );
 
   const linkMap = useMemo(() => {
