@@ -10,6 +10,10 @@ export enum InitializationStates {
   INITIALIZED
 }
 
+let IsLoadingAnyCorpora = false;
+
+export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
+
 export const parseTsv = (fileContent: string, refCorpus: Corpus, side: AlignmentSide, fileType: CorpusFileFormat) => {
   const [header, ...rows] = fileContent.split('\n');
   const headerMap: Record<string, number> = {};
@@ -210,31 +214,36 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
     };
   }
 
-  // @ts-ignore
-  const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
-  const corpusPromises: Promise<Corpus>[] = inputCorpora
-    .map(inputCorpus =>
-      getCorpusFromDatabase({
-        ...inputCorpus,
-        words: [],
-        wordsByVerse: {},
-        wordLocation: new Map<string, Set<BCVWP>>(),
-        books: {},
-        hasGloss: inputCorpus.side === AlignmentSide.SOURCE
-      }, appCtx.preferences?.currentProject));
-  const outputCorpora: Corpus[] =
-    (await Promise.all(corpusPromises));
-  outputCorpora.forEach(
-    outputCorpus => putVersesInCorpus(outputCorpus));
+  IsLoadingAnyCorpora = true;
+  try {
+    // @ts-ignore
+    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
+    const corpusPromises: Promise<Corpus>[] = inputCorpora
+      .map(inputCorpus =>
+        getCorpusFromDatabase({
+          ...inputCorpus,
+          words: [],
+          wordsByVerse: {},
+          wordLocation: new Map<string, Set<BCVWP>>(),
+          books: {},
+          hasGloss: inputCorpus.side === AlignmentSide.SOURCE
+        }, appCtx.preferences?.currentProject));
+    const outputCorpora: Corpus[] =
+      (await Promise.all(corpusPromises));
+    outputCorpora.forEach(
+      outputCorpus => putVersesInCorpus(outputCorpus));
 
-  const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
-    outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
-  const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
-    outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
+    const sourceContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE,
+      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.SOURCE));
+    const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
+      outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
 
-  return {
-    projectId: appCtx.preferences?.currentProject,
-    sourceContainer,
-    targetContainer
-  };
+    return {
+      projectId: appCtx.preferences?.currentProject,
+      sourceContainer,
+      targetContainer
+    };
+  } finally {
+    IsLoadingAnyCorpora = false;
+  }
 };

@@ -5,26 +5,26 @@ import { DatabaseStatus } from '../state/databaseManagement';
 import _ from 'lodash';
 import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
-import { InitializationStates } from '../workbench/query';
+import { isLoadingAnyCorpora } from '../workbench/query';
 
 const BusyRefreshTimeInMs = 500;
 const DefaultBusyMessage = 'Please wait...';
 
 const useBusyDialog = () => {
-  const { projectState, preferences } = useContext(AppContext);
+  const { projectState } = useContext(AppContext);
   const [databaseStatus, setDatabaseStatus] = useState<{
     projects: DatabaseStatus,
     links: DatabaseStatus
   }>();
   const [numProjects, setNumProjects] = useState<number>();
-  const [initializationState, setInitializationState] = useState<InitializationStates>();
+  const [isLoadingCorpora, setIsLoadingCorpora] = useState<boolean>();
   useInterval(() => {
-    const linkStatus = LinksTable.getLatestDatabaseStatus();
-    const projectStatus = projectState?.projectTable.getDatabaseStatus();
-    if (!_.isEqual({ projects: projectStatus, links: linkStatus }, databaseStatus)) {
+    const newLinkStatus = LinksTable.getLatestDatabaseStatus();
+    const newProjectStatus = projectState?.projectTable.getDatabaseStatus();
+    if (!_.isEqual({ projects: newProjectStatus, links: newLinkStatus }, databaseStatus)) {
       setDatabaseStatus({
-        projects: projectStatus,
-        links: linkStatus
+        projects: newProjectStatus,
+        links: newLinkStatus
       });
     }
     projectState?.projectTable?.getProjects(false)
@@ -33,8 +33,9 @@ const useBusyDialog = () => {
           setNumProjects(newProjects?.size);
         }
       });
-    if (preferences?.initialized !== initializationState) {
-      setInitializationState(preferences?.initialized);
+    const newIsLoadingCorpora = isLoadingAnyCorpora();
+    if (newIsLoadingCorpora !== isLoadingCorpora) {
+      setIsLoadingCorpora(newIsLoadingCorpora);
     }
   }, BusyRefreshTimeInMs);
   const spinnerParams = useMemo<{
@@ -43,9 +44,12 @@ const useBusyDialog = () => {
     variant?: 'determinate' | 'indeterminate',
     value?: number
   }>(() => {
-    const busyKey = Object.keys(databaseStatus ?? {}).find(key =>
-      databaseStatus?.[key as keyof typeof databaseStatus]?.busyInfo?.isBusy);
-    const busyInfo = databaseStatus?.[(busyKey ?? '') as keyof typeof databaseStatus]?.busyInfo;
+    const busyInfo =
+      [databaseStatus?.projects, databaseStatus?.links]
+        .filter(Boolean)
+        .map(itemStatus => itemStatus?.busyInfo)
+        .filter(Boolean)
+        .find(busyInfo => busyInfo?.isBusy);
     if (busyInfo?.isBusy) {
       const progressCtr = busyInfo?.progressCtr ?? 0;
       const progressMax = busyInfo?.progressMax ?? 0;
@@ -67,12 +71,13 @@ const useBusyDialog = () => {
         };
       }
     }
-    if (initializationState !== InitializationStates.INITIALIZED) {
+    if (isLoadingCorpora
+      || !numProjects) {
       return {
         isBusy: true,
-        text: !numProjects
-          ? 'Starting up...'
-          : 'Loading project & corpora...',
+        text: isLoadingCorpora
+          ? 'Loading project & corpora...'
+          : 'Starting up...',
         variant: 'indeterminate',
         value: undefined
       };
@@ -83,7 +88,7 @@ const useBusyDialog = () => {
       variant: 'indeterminate',
       value: undefined
     };
-  }, [databaseStatus, initializationState, numProjects]);
+  }, [databaseStatus, isLoadingCorpora, numProjects]);
 
   return (
     <Dialog
