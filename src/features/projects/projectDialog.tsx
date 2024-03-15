@@ -57,7 +57,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const busyDialog = useBusyDialog();
   const dispatch = useAppDispatch();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
-  const [project, setProject] = React.useState<Project>(getInitialProjectState());
+  const initialProjectState = useMemo<Project>(() => getInitialProjectState(), [getInitialProjectState]);
+  const [project, setProject] = React.useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
   const [fileContent, setFileContent] = React.useState('');
