@@ -18,11 +18,7 @@ const useTrackLocation = () => {
   }, [navigate, preferences?.page, preferences?.id, redirected]);
 
   React.useEffect(() => {
-    setPreferences((p: UserPreference | undefined) => {
-      const updatedPreferences = { ...((p ?? {}) as UserPreference), page: location.pathname };
-      projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
-      return updatedPreferences;
-    });
+    setPreferences((p: UserPreference | undefined) => ({ ...((p ?? {}) as UserPreference), page: location.pathname }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 };

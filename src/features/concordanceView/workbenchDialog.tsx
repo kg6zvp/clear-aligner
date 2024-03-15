@@ -28,11 +28,7 @@ const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignme
 
   React.useEffect(() => {
     if (alignment) {
-      setPreferences((p: UserPreference | undefined) => {
-        const updatedPreferences = { ...(p ?? {}) as UserPreference, bcv: alignment };
-        projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
-        return updatedPreferences;
-      });
+      setPreferences((p: UserPreference | undefined) => ({ ...(p ?? {}) as UserPreference, bcv: alignment }));
     }
   }, [projectState.userPreferenceTable, alignment, setPreferences]);
 

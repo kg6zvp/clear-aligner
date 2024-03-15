@@ -88,7 +88,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
                   showGloss: !preferences?.showGloss
                 };
                 setPreferences(updatedPreferences);
-                projectState.userPreferenceTable?.saveOrUpdate?.(updatedPreferences);
               }}
             >
               <Translate />
