@@ -44,7 +44,6 @@ export class LinksTable extends VirtualTable {
 
   constructor(sourceName?: string) {
     super();
-    console.log('creating links', sourceName);
     this.sourceName = sourceName;
   }
 

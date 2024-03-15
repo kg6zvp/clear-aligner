@@ -7,6 +7,7 @@ import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { AlignmentSide } from '../structs';
 import { getAvailableCorporaContainers } from '../workbench/query';
+import { useInterval } from 'usehooks-ts';
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -18,6 +19,15 @@ const useInitialization = () => {
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
   }, [state.userPreferenceTable]);
+
+  useInterval(async () => {
+    const currentProjects = await state.projectTable?.getProjects(false);
+    if(!currentProjects?.size) {
+      state.projectTable?.getProjects(true).then(res => {
+        res && setProjects(p => [...(res.values() ?? p)]);
+      });
+    }
+  }, 1000);
 
   useEffect(() => {
     setUpdatedPreferences(preferences);
@@ -47,7 +57,7 @@ const useInitialization = () => {
   }, [preferences?.currentProject, setContainers]);
 
   useEffect(() => {
-    if(!isLoaded.current && !projects.length) {
+    if(!isLoaded.current) {
       const currLinksTable = state.linksTable ?? new LinksTable();
       const currProjectTable = state.projectTable ?? new ProjectTable();
       const currUserPreferenceTable = state.userPreferenceTable ?? new UserPreferenceTable();
@@ -59,10 +69,9 @@ const useInitialization = () => {
         userPreferenceTable: currUserPreferenceTable
       });
       const initializeProject = () => new Promise((resolve) => {
-        currProjectTable.getProjects(true).then(res => {
           let projects: Project[] = [];
+        currProjectTable.getProjects(true).then(res => {
           projects = [...res!.values()];
-          isLoaded.current = !!projects.length;
           setProjects(projects);
           resolve(projects);
         });
@@ -80,9 +89,10 @@ const useInitialization = () => {
         });
       });
       initializeProject().catch(console.error);
+      isLoaded.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects]);
+  }, []);
 
   return {
     projectState: state,

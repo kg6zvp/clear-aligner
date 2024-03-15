@@ -215,7 +215,6 @@ export const getCorpusFromDatabase = async (
 export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Promise<
   CorpusContainer[]
 > => {
-  console.log(`getAvailableCorporaContainers(sourceName = '${appCtx.preferences?.currentProject}')`, appCtx.preferences?.currentProject);
   if (!appCtx.preferences?.currentProject) {
     return [];
   }
