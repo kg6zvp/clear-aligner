@@ -3,7 +3,7 @@ import React from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
-import { DefaultProjectName, useGetAllLinks } from '../../state/links/tableManager';
+import { DefaultProjectName } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
@@ -38,7 +38,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
                 key={project.id ?? project.name}
                 project={project}
                 onClick={selectProject}
-                currentProject={projects.find((p: Project) => p.id === preferences?.currentProject) ?? projects?.[0]}
+                currentProject={projects.find((p: Project) =>
+                    p.id === preferences?.currentProject) ?? projects?.[0]}
               />
             ))}
         </Grid>

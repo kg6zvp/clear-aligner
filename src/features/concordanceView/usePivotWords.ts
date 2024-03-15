@@ -21,7 +21,9 @@ export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort
     if (!languages) return;
     const load = async () => {
       console.time(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
-      const pivotWordList = (await databaseApi.corporaGetPivotWords(preferences?.currentProject ?? DefaultProjectName, side, filter, sort));
+      const pivotWordList = (await databaseApi.corporaGetPivotWords(
+        preferences?.currentProject ?? DefaultProjectName,
+        side, filter, sort));
       console.timeEnd(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
 
       setPivotWords(pivotWordList

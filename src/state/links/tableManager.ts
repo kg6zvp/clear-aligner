@@ -10,8 +10,8 @@ import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
 
-const UIInsertChunkSize = 20_000;
 const DatabaseInsertChunkSize = 10_000;
+const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
@@ -24,7 +24,6 @@ const PreloadVerseRange = 3;
 
 // @ts-ignore
 const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
-
 
 
 export class LinksTable extends VirtualTable<Link> {
@@ -42,10 +41,10 @@ export class LinksTable extends VirtualTable<Link> {
   }
 
   setSourceName = (sourceName?: string) => {
-    this.sourceName = sourceName ?? this.sourceName;
+    this.sourceName = sourceName ?? this.sourceName ?? DefaultProjectName;
   };
 
-  getSourceName = () => this.sourceName;
+  getSourceName = () => this.sourceName ?? DefaultProjectName;
 
   save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
     if (!isForced && this.isDatabaseBusy()) {
@@ -63,9 +62,9 @@ export class LinksTable extends VirtualTable<Link> {
 
       await this.checkDatabase();
       // @ts-ignore
-      const result = await window.databaseApi.save(this.sourceName ?? DefaultProjectName, LinkTableName, newLink);
+      const result = await window.databaseApi.save(this.getSourceName(), LinkTableName, newLink);
       // @ts-ignore
-      await window.databaseApi.updateLinkText(this.sourceName ?? DefaultProjectName, newLink.id);
+      await window.databaseApi.updateLinkText(this.getSourceName(), newLink.id);
       return result;
     } catch (e) {
       return false;
@@ -77,7 +76,7 @@ export class LinksTable extends VirtualTable<Link> {
   exists = async (linkId?: string): Promise<boolean> => {
     if (!linkId) return false;
     // @ts-ignore
-    return !!(await window.databaseApi.existsById(this.sourceName ?? DefaultProjectName, LinkTableName, linkId));
+    return !!(await window.databaseApi.existsById(this.getSourceName(), LinkTableName, linkId));
   };
 
   removeAll = async (suppressOnUpdate = false, isForced = false) => {
@@ -91,7 +90,7 @@ export class LinksTable extends VirtualTable<Link> {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      const result = await window.databaseApi.deleteAll(this.sourceName ?? DefaultProjectName, LinkTableName);
+      const result = await window.databaseApi.deleteAll(this.getSourceName(), LinkTableName);
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
@@ -150,7 +149,7 @@ export class LinksTable extends VirtualTable<Link> {
       busyInfo.progressCtr = 0;
       busyInfo.progressMax = outputLinks.length;
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
-        await dbApi.insert(this.sourceName ?? DefaultProjectName, LinkTableName, chunk, DatabaseInsertChunkSize);
+        await dbApi.insert(this.getSourceName(), LinkTableName, chunk, DatabaseInsertChunkSize);
         busyInfo.progressCtr += chunk.length;
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -165,7 +164,7 @@ export class LinksTable extends VirtualTable<Link> {
 
       this.logDatabaseTime('saveAll(): text');
       busyInfo.userText = 'Updating link text...';
-      await dbApi.updateAllLinkText(this.sourceName ?? DefaultProjectName);
+      await dbApi.updateAllLinkText(this.getSourceName());
       this.logDatabaseTimeEnd('saveAll(): text');
 
       return true;
@@ -197,7 +196,7 @@ export class LinksTable extends VirtualTable<Link> {
     return this.linksByWordIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
-        .findLinksByWordId(this.sourceName ?? DefaultProjectName, side, referenceString);
+        .findLinksByWordId(this.getSourceName(), side, referenceString);
     });
   };
 
@@ -206,7 +205,7 @@ export class LinksTable extends VirtualTable<Link> {
     return this.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
-        .findLinksByBCV(this.sourceName ?? DefaultProjectName, bookNum, chapterNum, verseNum);
+        .findLinksByBCV(this.getSourceName(), bookNum, chapterNum, verseNum);
     });
   };
 
@@ -228,7 +227,7 @@ export class LinksTable extends VirtualTable<Link> {
       const results: Link[] = [];
       let offset = 0;
       while (true) {
-        const links = ((await dbApi.getAll<Link>(this.sourceName ?? DefaultProjectName, LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
+        const links = ((await dbApi.getAll<Link>(this.getSourceName(), LinkTableName, DatabaseSelectChunkSize, offset)) ?? []);
         this.logDatabaseTimeLog('getAll()', DatabaseSelectChunkSize, offset, links?.length ?? 0);
         if (!links
           || links.length < 1) {
@@ -258,7 +257,7 @@ export class LinksTable extends VirtualTable<Link> {
     return this.linksByLinkIdCache.wrap(id, async () => {
       // @ts-ignore
       return window.databaseApi
-        .findOneById(this.sourceName ?? DefaultProjectName, LinkTableName, id);
+        .findOneById(this.getSourceName(), LinkTableName, id);
     });
   };
 
@@ -271,7 +270,7 @@ export class LinksTable extends VirtualTable<Link> {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      const result = await window.databaseApi.deleteByIds(this.sourceName ?? DefaultProjectName, LinkTableName, id ?? '');
+      const result = await window.databaseApi.deleteByIds(this.getSourceName(), LinkTableName, id ?? '');
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {

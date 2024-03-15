@@ -68,9 +68,9 @@ class BaseRepository {
         await new Promise(resolve => setTimeout(resolve, BaseRepository.DB_WAIT_IN_MS));
       }
       if (sourceStatus.isLoaded) {
+        this.logDatabaseTimeLog('getDataSourceWithEntities()', sourceName, sourceStatus.isLoaded);
         return sourceStatus.dataSource;
       }
-
       sourceStatus.isLoading = true;
       this.dataSources.set(sourceName, sourceStatus);
 
@@ -78,30 +78,41 @@ class BaseRepository {
       const workDatabaseDirectory = databaseDirectory ? databaseDirectory : this.getDataDirectory();
       const databaseFile = path.join(workDatabaseDirectory, fileName);
 
-      fs.mkdirSync(path.dirname(databaseFile), { recursive: true });
-      if (!fs.existsSync(databaseFile) && generationFile) {
-        fs.copyFileSync(generationFile, databaseFile);
+      this.logDatabaseTime('getDataSourceWithEntities(): copied template');
+      try {
+        fs.mkdirSync(path.dirname(databaseFile), { recursive: true });
+        if (!fs.existsSync(databaseFile) && generationFile) {
+          fs.copyFileSync(generationFile, databaseFile);
+          this.logDatabaseTimeLog('getDataSourceWithEntities(): copied template', sourceName, databaseFile, generationFile);
+        }
+      } finally {
+        this.logDatabaseTimeEnd('getDataSourceWithEntities(): copied template');
       }
 
-      this.logDatabaseTimeLog('getDataSourceWithEntities()', sourceName, databaseFile);
-      const newDataSource = new DataSource({
-        type: 'better-sqlite3',
-        database: databaseFile,
-        synchronize: false,
-        statementCacheSize: 1000,
-        prepareDatabase: (db) => {
-          db.pragma('journal_mode = WAL');
-          db.pragma('synchronous = normal');
-          db.pragma('cache_size = -8000000');
-        },
-        entities
-      });
-      await newDataSource.initialize();
+      this.logDatabaseTime('getDataSourceWithEntities(): created data source');
+      try {
+        const newDataSource = new DataSource({
+          type: 'better-sqlite3',
+          database: databaseFile,
+          synchronize: false,
+          statementCacheSize: 1000,
+          prepareDatabase: (db) => {
+            db.pragma('journal_mode = WAL');
+            db.pragma('synchronous = normal');
+            db.pragma('cache_size = -8000000');
+          },
+          entities
+        });
+        await newDataSource.initialize();
 
-      sourceStatus.dataSource = newDataSource;
-      sourceStatus.isLoaded = true;
+        sourceStatus.dataSource = newDataSource;
+        sourceStatus.isLoaded = true;
 
-      return sourceStatus.dataSource;
+        this.logDatabaseTimeLog('getDataSourceWithEntities(): created data source', sourceName, databaseFile);
+        return sourceStatus.dataSource;
+      } finally {
+        this.logDatabaseTimeEnd('getDataSourceWithEntities(): created data source');
+      }
     } catch (ex) {
       console.error('getDataSourceWithEntities()', ex);
     } finally {

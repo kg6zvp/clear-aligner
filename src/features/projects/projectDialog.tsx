@@ -153,7 +153,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       if (preferences?.currentProject === projectId) {
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
-          currentProject: '',
+          currentProject: DefaultProjectName,
           initialized: false
         }));
       }

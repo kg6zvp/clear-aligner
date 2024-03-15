@@ -32,6 +32,7 @@ import { getCorporaInitializationState, InitializationStates } from './workbench
 import { useInterval } from 'usehooks-ts';
 import _ from 'lodash';
 import { DatabaseStatus } from './state/databaseManagement';
+import { DefaultProjectName } from './state/links/tableManager';
 
 type THEME = 'night' | 'day';
 type THEME_PREFERENCE = THEME | 'auto';
@@ -83,7 +84,10 @@ export const AppLayout = () => {
   const navigate = useNavigate();
   const { preferences, projects, projectState } = useContext(AppContext);
   const projectName = useMemo(() => (
-    (projects || []).find(p => p.id === preferences?.currentProject)?.name ?? projects?.[0]?.name ?? ''
+    (projects || []).find(p =>
+      p.id === preferences?.currentProject)?.name
+    ?? projects?.[0]?.name
+    ?? DefaultProjectName
   ), [projects, preferences?.currentProject]);
 
   // code needed for the Dialog/BusyBox to work properly down below
@@ -97,7 +101,7 @@ export const AppLayout = () => {
   useInterval(() => {
     const linkStatus = projectState?.linksTable.getDatabaseStatus();
     const projectStatus = projectState?.projectTable.getDatabaseStatus();
-    if (!_.isEqual({projects: projectStatus, links: linkStatus}, databaseStatus)) {
+    if (!_.isEqual({ projects: projectStatus, links: linkStatus }, databaseStatus)) {
       setDatabaseStatus({
         projects: projectStatus,
         links: linkStatus
@@ -127,8 +131,8 @@ export const AppLayout = () => {
     value?: number
   }>(() => {
     const busyKey = Object.keys(databaseStatus ?? {}).find(key =>
-      databaseStatus?.[key as keyof typeof databaseStatus]?.busyInfo?.isBusy)
-    const busyInfo = databaseStatus?.[(busyKey ?? "") as keyof typeof databaseStatus]?.busyInfo;
+      databaseStatus?.[key as keyof typeof databaseStatus]?.busyInfo?.isBusy);
+    const busyInfo = databaseStatus?.[(busyKey ?? '') as keyof typeof databaseStatus]?.busyInfo;
     if (busyInfo?.isBusy) {
       const progressCtr = busyInfo?.progressCtr ?? 0;
       const progressMax = busyInfo?.progressMax ?? 0;

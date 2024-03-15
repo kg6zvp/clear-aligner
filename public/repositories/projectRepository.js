@@ -179,7 +179,13 @@ class ProjectRepository extends BaseRepository {
     super();
     this.isLoggingTime = true;
     this.dataSources = new Map();
-    this.getDataSource = async (sourceName) => await this.getDataSourceWithEntities(sourceName, [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema], path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName ? 'projects/clear-aligner-default.sqlite' : 'clear-aligner-template.sqlite'), path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
+    this.getDataSource = async (sourceName) =>
+      await this.getDataSourceWithEntities(sourceName || DefaultProjectName,
+        [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema],
+        path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName
+          ? 'projects/clear-aligner-default.sqlite'
+          : 'clear-aligner-template.sqlite'),
+        path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
 
   convertCorpusToDataSource = (corpus) => ({
@@ -742,6 +748,7 @@ class ProjectRepository extends BaseRepository {
                                                          l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
+      this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
         .map(result => ({

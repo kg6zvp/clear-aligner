@@ -21,8 +21,8 @@ export interface Project {
   targetCorpora?: CorpusContainer;
 }
 
-const UIInsertChunkSize = 8_000;
 const DatabaseInsertChunkSize = 2_000;
+const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
 
 export class ProjectTable extends VirtualTable<Project> {
   private projects: Map<string, Project>;

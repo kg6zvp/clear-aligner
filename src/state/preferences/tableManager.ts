@@ -32,7 +32,7 @@ const initialPreferences = {
   alignmentDirection: ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
   page: "",
   showGloss: false,
-  currentProject: "default"
+  currentProject: DefaultProjectName
 }
 
 export class UserPreferenceTable extends VirtualTable<UserPreference> {
@@ -65,7 +65,7 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
           page: preferences?.page,
           showGloss: preferences?.show_gloss,
           alignmentDirection: preferences?.alignment_view,
-          currentProject: preferences?.current_project,
+          currentProject: preferences?.current_project ?? DefaultProjectName,
           bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
         }
       }
@@ -92,7 +92,7 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
       id: userPreference.id ?? uuid(),
       bcv: (userPreference.bcv?.toReferenceString() ?? "").trim(),
       alignment_view: userPreference.alignmentDirection ?? ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
-      current_project: userPreference.currentProject ?? "",
+      current_project: userPreference.currentProject ?? DefaultProjectName,
       page: userPreference.page,
       show_gloss: !!userPreference.showGloss
     }

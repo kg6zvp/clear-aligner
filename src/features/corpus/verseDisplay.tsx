@@ -1,5 +1,5 @@
 import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
-import { ReactElement, useMemo } from 'react';
+import { ReactElement, useEffect, useMemo, useState } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
@@ -35,22 +35,29 @@ export const VerseDisplay = ({
                                onlyLinkIds,
                                allowGloss = false
                              }: VerseDisplayProps) => {
+  const lastUpdated = useDataLastUpdated();
+  const [getKey, setGetKey] = useState<string>();
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
   const alignmentSide = useMemo(() => corpus?.side as AlignmentSide, [corpus?.side]);
-  const lastUpdated = useDataLastUpdated();
+  useEffect(() => {
+    const newGetKey = `${verse?.bcvId?.toReferenceString()}-${String(lastUpdated)}`;
+    if (newGetKey !== newGetKey) {
+      setGetKey(newGetKey);
+    }
+  }, [verse?.bcvId, lastUpdated]);
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
-    String(lastUpdated)
+    getKey
   );
   const { result: allLinks } = useFindLinksByBCV(
     (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.book : undefined,
     verse.bcvId.chapter,
     verse.bcvId.verse,
     readonly,
-    String(lastUpdated)
+    getKey
   );
 
   const linkMap = useMemo(() => {
@@ -66,7 +73,7 @@ export const VerseDisplay = ({
         : link!.targets) ?? [])
         .forEach(wordId => result.set(wordId, link!)));
     return result;
-  }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
+  }, [allLinks, onlyLink, alignmentSide]);
 
   return (
     <>

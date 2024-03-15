@@ -1,15 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { LinksTable } from '../state/links/tableManager';
+import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
-import { useInterval } from 'usehooks-ts';
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
   const [projects, setProjects] = React.useState<Project[]>([]);
-  const [preferences, setPreferences] = React.useState<UserPreference | undefined>()
+  const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
@@ -18,10 +17,10 @@ const useInitialization = () => {
 
   useEffect(() => {
     setUpdatedPreferences(preferences);
-  }, [setUpdatedPreferences]);
+  }, [preferences, setUpdatedPreferences]);
 
   useEffect(() => {
-    if(!isLoaded.current) {
+    if (!isLoaded.current) {
       const currLinksTable = state.linksTable ?? new LinksTable();
       const currProjectTable = state.projectTable ?? new ProjectTable();
       const currUserPreferenceTable = state.userPreferenceTable ?? new UserPreferenceTable();
@@ -43,9 +42,13 @@ const useInitialization = () => {
         currUserPreferenceTable.getPreferences(true).then((res: UserPreference | undefined) => {
           setPreferences({
             ...(res ?? {}) as UserPreference,
-            currentProject: res?.currentProject ?? projects?.[0]?.id ?? ""
+            currentProject: res?.currentProject
+              ?? projects?.[0]?.id
+              ?? DefaultProjectName
           });
-          currLinksTable.setSourceName(res?.currentProject ?? projects?.[0]?.id);
+          currLinksTable.setSourceName(res?.currentProject
+            ?? projects?.[0]?.id
+            ?? DefaultProjectName);
         });
       });
       initializeProject().catch(console.error);
@@ -62,6 +65,6 @@ const useInitialization = () => {
     projects,
     setProjects
   } as AppContextProps;
-}
+};
 
 export default useInitialization;

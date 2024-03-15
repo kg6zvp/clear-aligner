@@ -7,7 +7,7 @@ import { useLanguages } from '../../hooks/useLanguages';
 import { AppContext } from '../../App';
 
 export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridSortItem | null): AlignedWord[] | undefined => {
-  const {preferences} = useContext(AppContext);
+  const { preferences } = useContext(AppContext);
   const lastUpdate = useDataLastUpdated();
   const languages = useLanguages();
   const db = useDatabase();
@@ -22,7 +22,11 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
     if (!pivotWord || !languages) return;
     const load = async () => {
       console.time(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
-      const alignedWords = (await db.corporaGetAlignedWordsByPivotWord(preferences?.currentProject ?? DefaultProjectName, pivotWord.side, pivotWord.normalizedText, sort))
+      const alignedWords = (await db.corporaGetAlignedWordsByPivotWord(
+        preferences?.currentProject ?? DefaultProjectName,
+        pivotWord.side,
+        pivotWord.normalizedText,
+        sort))
         .map((aw): AlignedWord => {
           return {
             id: `${aw.t}:${aw.st}-${aw.tt}`,

@@ -54,23 +54,16 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   const { sourceContainer, targetContainer } = useCorpusContainers();
 
   useEffect(() => {
-    if (!sourceContainer || !targetContainer) return;
-    const loadSourceWords = async () => {
-      setSelectedCorporaContainers([sourceContainer, targetContainer]);
-      setAvailableWords(
-        targetContainer?.corpora.flatMap(({ words }) => words) ?? []
-      );
-    };
-    if (appCtx.projectState.linksTable?.getSourceName?.()) {
-      loadSourceWords().catch(console.error);
+    if (!sourceContainer || !targetContainer) {
+      return;
     }
+    setSelectedCorporaContainers([sourceContainer, targetContainer]);
+    setAvailableWords(targetContainer?.corpora.flatMap(({ words }) => words) ?? []);
   }, [
-    appCtx.projectState?.linksTable,
     sourceContainer,
     targetContainer,
     setAvailableWords,
-    setSelectedCorporaContainers,
-    appCtx.projects
+    setSelectedCorporaContainers
   ]);
 
   useEffect(() => {

@@ -25,7 +25,10 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
     const load = async () => {
       console.time(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
       try {
-        const links = await db.corporaGetLinksByAlignedWord(preferences?.currentProject ?? DefaultProjectName, currentAlignedWord.sourceWordTexts.text, currentAlignedWord.targetWordTexts.text, sort);
+        const links = await db.corporaGetLinksByAlignedWord(
+          preferences?.currentProject ?? DefaultProjectName,
+          currentAlignedWord.sourceWordTexts.text,
+          currentAlignedWord.targetWordTexts.text, sort);
         setLinks(links);
       } finally {
         console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
