@@ -212,17 +212,21 @@ export const getCorpusFromDatabase = async (
   return inputCorpus;
 };
 
+let corporaProject: string = '';
 let corpora: CorpusContainer[] = [];
 
 export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Promise<
   CorpusContainer[]
 > => {
-  if (initializationState !== InitializationStates.INITIALIZING && !appCtx.preferences?.initialized) {
+  if (!appCtx.preferences?.currentProject) {
+    return [];
+  }
+  if (initializationState !== InitializationStates.INITIALIZING && !appCtx.preferences?.initialized || corporaProject !== (appCtx.preferences?.currentProject)) {
     corpora = [];
     initializationState = InitializationStates.INITIALIZING;
 
     // @ts-ignore
-    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject ?? DefaultProjectName)) as Corpus[]) ?? []);
+    const inputCorpora: Corpus[] = (((await window.databaseApi.getAllCorpora(appCtx.preferences?.currentProject)) as Corpus[]) ?? []);
     const corpusPromises: Promise<Corpus>[] = inputCorpora
       .map(inputCorpus =>
         getCorpusFromDatabase({
@@ -246,6 +250,7 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
     corpora.push(sourceContainer);
     corpora.push(targetContainer);
     initializationState = InitializationStates.INITIALIZED;
+    corporaProject = appCtx.preferences?.currentProject;
     appCtx.setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: true }));
   } else if (initializationState === InitializationStates.INITIALIZING) {
     await waitForInitialization();

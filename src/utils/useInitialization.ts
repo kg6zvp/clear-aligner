@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { LinksTable } from '../state/links/tableManager';
+import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { useInterval } from 'usehooks-ts';
 
@@ -18,7 +18,7 @@ const useInitialization = () => {
 
   useEffect(() => {
     setUpdatedPreferences(preferences);
-  }, [setUpdatedPreferences]);
+  }, [preferences, setUpdatedPreferences]);
 
   useEffect(() => {
     if(!isLoaded.current) {
