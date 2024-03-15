@@ -307,10 +307,7 @@ export class LinksTable extends VirtualTable {
   };
 
   override _onStatusUpdateImpl = () => {
-    if ((this.databaseStatus.lastStatusUpdateTime ?? 0) >
-      (LinksTable.latestDatabaseStatus.lastStatusUpdateTime ?? 0)) {
-      LinksTable.latestDatabaseStatus = _.cloneDeep(this.databaseStatus);
-    }
+    LinksTable.latestDatabaseStatus = _.cloneDeep(this.databaseStatus);
   };
 
   override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
