@@ -45,15 +45,17 @@ export class UserPreferenceTable extends VirtualTable {
     this.preferences = initialPreferences;
   }
 
-  saveOrUpdate = async (userPreference: UserPreference, suppressOnUpdate = true): Promise<UserPreference | undefined> => {
+  saveOrUpdate = async (nextPreference: UserPreference, suppressOnUpdate = true): Promise<UserPreference | undefined> => {
     try {
+      const prevPreferences = await this.getPreferences(true);
       // @ts-ignore
-      await window.databaseApi.createOrUpdatePreferences(UserPreferenceTable.convertToDto(userPreference));
+      await window.databaseApi.createOrUpdatePreferences(
+        UserPreferenceTable.convertToDto({ ...prevPreferences, ...nextPreference }));
       await this.getPreferences(true);
     } catch (e) {
       return undefined;
     } finally {
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -83,7 +85,7 @@ export class UserPreferenceTable extends VirtualTable {
     } catch (e) {
       return {};
     } finally {
-      this._onUpdate(suppressOnUpdate);
+      await this._onUpdate(suppressOnUpdate);
     }
   };
 
