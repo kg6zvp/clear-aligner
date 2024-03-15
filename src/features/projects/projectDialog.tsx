@@ -22,7 +22,7 @@ import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
-import { parseTsv, putVersesInCorpus } from '../../workbench/query';
+import { InitializationStates, parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
@@ -54,7 +54,8 @@ const getInitialProjectState = (): Project => ({
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
   const dispatch = useAppDispatch();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
-  const [project, setProject] = React.useState<Project>(getInitialProjectState());
+  const initialProjectState = useMemo<Project>(() => getInitialProjectState(), [getInitialProjectState]);
+  const [project, setProject] = React.useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
   const [fileContent, setFileContent] = React.useState('');
@@ -130,15 +131,19 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             }]);
           }
 
-          setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: false }));
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             setProjects((p: Project[]) => [...p, projectToUpdate]);
-            resolve(projectState.projectTable?.save?.(projectToUpdate, !!fileContent));
+            await projectState.projectTable?.save?.(projectToUpdate, !!fileContent);
           } else {
             setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
-            resolve(projectState.projectTable?.update?.(projectToUpdate, !!fileContent));
+            await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           }
+          setPreferences(p => ({
+            ...(p ?? {}) as UserPreference,
+            initialized: InitializationStates.UNINITIALIZED
+          }));
+          resolve(undefined);
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
@@ -152,7 +157,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
           currentProject: DefaultProjectName,
-          initialized: false
+          initialized: InitializationStates.UNINITIALIZED
         }));
       }
       setOpenConfirmDelete(false);

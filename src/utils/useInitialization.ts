@@ -5,8 +5,8 @@ import { ProjectState } from '../state/databaseManagement';
 import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
-import { AlignmentSide } from '../structs';
-import { getAvailableCorporaContainers } from '../workbench/query';
+import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
+import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { useInterval } from 'usehooks-ts';
 
 const useInitialization = () => {
@@ -14,7 +14,7 @@ const useInitialization = () => {
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
-  const [ containers, setContainers ] = useState<Containers>({});
+  const [containers, setContainers] = useState<Containers>({});
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -33,31 +33,52 @@ const useInitialization = () => {
     setUpdatedPreferences(preferences);
   }, [preferences, setUpdatedPreferences]);
 
-  useEffect(() => {
-    const loadContainers = async () => {
-      const newContainers = (await getAvailableCorporaContainers({
-          projectState: state,
-          setProjectState: setState,
-          preferences,
-          setPreferences,
-          projects,
-          setProjects
-        } as AppContextProps))
-        .reduce((container, currentValue): Containers => {
-          if (currentValue.id === AlignmentSide.SOURCE) {
-            container.sourceContainer = currentValue;
-          } else if (currentValue.id === AlignmentSide.TARGET) {
-            container.targetContainer = currentValue;
-          }
-          return container;
-        }, { sourceContainer: undefined, targetContainer: undefined } as Containers);
-      setContainers(newContainers);
+  /*
+   * if there's no bcv saved or the corpus for the current project doesn't contain the currently saved bcv, update it to be within the available words
+   */
+  const checkIfBCVIsOkay = useCallback(() => {
+    if (!containers?.targetContainer) return;
+    if (!preferences?.bcv
+      || !containers.targetContainer?.corpusAtReferenceString(preferences.bcv.toReferenceString())
+      || !containers.targetContainer?.corpusAtReferenceString(preferences.bcv.toReferenceString())?.wordsByVerse[preferences.bcv.toTruncatedReferenceString(BCVWPField.Verse)]) {
+      const targetWord = containers.targetContainer?.corpora.find(_ => true)?.words.find(_ => true);
+      if (targetWord) {
+        const newPosition = BCVWP.parseFromString(targetWord.id);
+        setPreferences((oldPreferences): UserPreference => ({
+          ...oldPreferences as UserPreference,
+          bcv: newPosition
+        }));
+      }
     }
-    void loadContainers();
-  }, [preferences?.currentProject, setContainers]);
+  }, [preferences?.bcv, containers.targetContainer, setPreferences]);
+
+  useEffect(() => checkIfBCVIsOkay(), [containers.targetContainer]);
 
   useEffect(() => {
-    if(!isLoaded.current) {
+    const loadContainers = async () => {
+      console.time('loading corpora');
+      const newContainers = (await getAvailableCorporaContainers({
+        projectState: state,
+        setProjectState: setState,
+        preferences,
+        setPreferences,
+        projects,
+        setProjects
+      } as AppContextProps));
+      console.timeEnd('loading corpora');
+      setContainers(newContainers);
+      setPreferences((oldPreferences) => ({
+        ...(oldPreferences ?? {}) as UserPreference,
+        initialized: InitializationStates.INITIALIZED
+      }));
+    };
+    if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
+      void loadContainers();
+    }
+  }, [preferences, preferences?.currentProject, projects, containers, setContainers, state]);
+
+  useEffect(() => {
+    if (!isLoaded.current) {
       const currLinksTable = state.linksTable ?? new LinksTable();
       const currProjectTable = state.projectTable ?? new ProjectTable();
       const currUserPreferenceTable = state.userPreferenceTable ?? new UserPreferenceTable();

@@ -1,23 +1,24 @@
 import { useContext, useMemo, useState } from 'react';
 import { Box, CircularProgress, Dialog, DialogContent, DialogContentText, Typography } from '@mui/material';
 import { useInterval } from 'usehooks-ts';
-import { getCorporaInitializationState, InitializationStates } from '../workbench/query';
 import { DatabaseStatus } from '../state/databaseManagement';
 import _ from 'lodash';
 import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
+import { InitializationStates } from '../workbench/query';
+import { UserPreference } from '../state/preferences/tableManager';
 
 const BusyRefreshTimeInMs = 500;
 const DefaultBusyMessage = 'Please wait...';
 
 const useBusyDialog = () => {
-  const { projectState } = useContext(AppContext);
-  const [initializationState, setInitializationState] = useState<InitializationStates>();
+  const { projectState, preferences } = useContext(AppContext);
   const [databaseStatus, setDatabaseStatus] = useState<{
     projects: DatabaseStatus,
     links: DatabaseStatus
   }>();
   const [numProjects, setNumProjects] = useState<number>();
+  const initializationState = useMemo<InitializationStates|undefined>(() => preferences?.initialized, [preferences?.initialized])
   useInterval(() => {
     const linkStatus = LinksTable.getLatestDatabaseStatus();
     const projectStatus = projectState?.projectTable.getDatabaseStatus();
@@ -27,13 +28,9 @@ const useBusyDialog = () => {
         links: linkStatus
       });
     }
-    const newInitializationState = getCorporaInitializationState();
-    if (newInitializationState !== initializationState) {
-      setInitializationState(newInitializationState);
-    }
     projectState?.projectTable?.getProjects(false)
       .then(newProjects => {
-        if (newProjects?.size !== numProjects && newProjects?.size) {
+        if (newProjects?.size !== numProjects) {
           setNumProjects(newProjects?.size);
         }
       });

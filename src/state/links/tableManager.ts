@@ -26,7 +26,7 @@ const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
 
 export class LinksTable extends VirtualTable {
-  private static latestLastUpdate?: number;
+  private static latestLastUpdateTime?: number;
   private static latestDatabaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   private static readonly linksByWordIdCache: MemoryCache = createCache(memoryStore(), {
     ttl: DatabaseCacheTTLMs,
@@ -203,7 +203,7 @@ export class LinksTable extends VirtualTable {
 
   findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
     const referenceString = wordId.toReferenceString();
-    const cacheKey = [side, referenceString, this.getSourceName(), LinksTable.getLatestLastUpdate()].join('|');
+    const cacheKey = [side, referenceString, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByWordIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
@@ -212,7 +212,7 @@ export class LinksTable extends VirtualTable {
   };
 
   findByBCV = async (bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    const cacheKey = [bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdate()].join('|');
+    const cacheKey = [bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
@@ -265,7 +265,7 @@ export class LinksTable extends VirtualTable {
 
   get = async (id?: string): Promise<Link | undefined> => {
     if (!id) return undefined;
-    const cacheKey = [id, this.getSourceName(), LinksTable.getLatestLastUpdate()].join('|');
+    const cacheKey = [id, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByLinkIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
@@ -310,15 +310,15 @@ export class LinksTable extends VirtualTable {
   };
 
   override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
-    this.databaseStatus.lastUpdateTime = this.lastUpdate;
-    LinksTable.latestLastUpdate = Math.max(
-      (LinksTable.latestLastUpdate ?? 0),
-      (this.lastUpdate ?? 0));
+    this.databaseStatus.lastUpdateTime = this.lastUpdateTime;
+    LinksTable.latestLastUpdateTime = Math.max(
+      (LinksTable.latestLastUpdateTime ?? 0),
+      (this.lastUpdateTime ?? 0));
   };
 
   static getLatestDatabaseStatus = () => ({ ..._.cloneDeep(LinksTable.latestDatabaseStatus) });
 
-  static getLatestLastUpdate = () => LinksTable.latestLastUpdate;
+  static getLatestLastUpdateTime = () => LinksTable.latestLastUpdateTime;
 
 
   /**
@@ -859,7 +859,7 @@ export const useDatabaseStatus = (checkKey?: string) => {
 export const useDataLastUpdated = () => {
   const [lastUpdate, setLastUpdate] = useState(0);
   useInterval(() => {
-    const latestLastUpdate = LinksTable.getLatestLastUpdate();
+    const latestLastUpdate = LinksTable.getLatestLastUpdateTime();
     if (latestLastUpdate && latestLastUpdate !== lastUpdate) {
       setLastUpdate(latestLastUpdate);
     }

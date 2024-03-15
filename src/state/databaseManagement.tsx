@@ -48,19 +48,27 @@ export const InitialDatabaseStatus = {
  * or produces without performing any pre- or post-processing
  */
 export abstract class VirtualTable {
-  lastUpdate: number;
-  databaseStatus: DatabaseStatus;
-  databaseBusyCtr = 0;
-  readonly isLoggingTime = true;
+  protected static readonly isLoggingTime = true;
+  // Note: If you need last update time:
+  // - For the links table, use the static: LinksTable.getLatestLastUpdateTime()
+  // - For other tables, use table.getLastUpdateTime()
+  protected lastUpdateTime: number;
+  // Note: If you need database status
+  // - For the links table, use the static: LinksTable.getLatestDatabaseStatus()
+  // - For other tables, use table.getDatabaseStatus()
+  protected databaseStatus: DatabaseStatus;
+  protected databaseBusyCtr = 0;
 
   protected constructor() {
-    this.lastUpdate = Date.now();
+    this.lastUpdateTime = Date.now();
     this.databaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   }
 
   getDatabaseStatus = (): DatabaseStatus => ({
     ..._.cloneDeep(this.databaseStatus)
   });
+
+  getLastUpdateTime = (): number | undefined => this.lastUpdateTime;
 
   setDatabaseStatus = (databaseStatus: DatabaseStatus, isReplace = false) => {
     this.databaseStatus = isReplace
@@ -158,19 +166,19 @@ export abstract class VirtualTable {
   };
 
   logDatabaseTime = (label: string) => {
-    if (this.isLoggingTime) {
+    if (VirtualTable.isLoggingTime) {
       console.time(label);
     }
   };
 
   logDatabaseTimeLog = (label: string, ...args: any[]) => {
-    if (this.isLoggingTime) {
+    if (VirtualTable.isLoggingTime) {
       console.timeLog(label, ...args);
     }
   };
 
   logDatabaseTimeEnd = (label: string) => {
-    if (this.isLoggingTime) {
+    if (VirtualTable.isLoggingTime) {
       console.timeEnd(label);
     }
   };
@@ -181,7 +189,7 @@ export abstract class VirtualTable {
    */
   protected _onUpdate = async (suppressOnUpdate = false) => {
     if (!suppressOnUpdate) {
-      this.lastUpdate = Date.now();
+      this.lastUpdateTime = Date.now();
     }
     await this._onUpdateImpl(suppressOnUpdate);
   };

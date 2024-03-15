@@ -17,7 +17,7 @@ export interface Project {
 }
 
 const DatabaseInsertChunkSize = 2_000;
-const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
+const UIInsertChunkSize = DatabaseInsertChunkSize * 8;
 
 export class ProjectTable extends VirtualTable {
   private projects: Map<string, Project>;
