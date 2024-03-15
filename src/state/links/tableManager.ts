@@ -10,7 +10,7 @@ import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
 
-const UIInsertChunkSize = 100_000;
+const UIInsertChunkSize = 20_000;
 const DatabaseInsertChunkSize = 10_000;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
@@ -146,7 +146,7 @@ export class LinksTable extends VirtualTable<Link> {
 
       this.logDatabaseTime('saveAll(): saved');
       const busyInfo = this.databaseStatus.busyInfo;
-      busyInfo.userText = `Saving ${outputLinks.length.toLocaleString()} links...`;
+      busyInfo.userText = `Loading ${outputLinks.length.toLocaleString()} links...`;
       busyInfo.progressCtr = 0;
       busyInfo.progressMax = outputLinks.length;
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {

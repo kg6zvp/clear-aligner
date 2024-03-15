@@ -21,7 +21,7 @@ export interface Project {
   targetCorpora?: CorpusContainer;
 }
 
-const UIInsertChunkSize = 100_000;
+const UIInsertChunkSize = 8_000;
 const DatabaseInsertChunkSize = 2_000;
 
 export class ProjectTable extends VirtualTable<Project> {
@@ -34,7 +34,7 @@ export class ProjectTable extends VirtualTable<Project> {
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
     try {
-      if(this.isDatabaseBusy()) return;
+      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
@@ -52,7 +52,7 @@ export class ProjectTable extends VirtualTable<Project> {
 
   remove = async (projectId: string, suppressOnUpdate = false) => {
     try {
-      if(this.isDatabaseBusy()) return;
+      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
       // @ts-ignore
       await window.databaseApi.removeSource(projectId);
@@ -67,7 +67,7 @@ export class ProjectTable extends VirtualTable<Project> {
 
   update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
     try {
-      if(this.isDatabaseBusy()) return;
+      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
@@ -93,29 +93,29 @@ export class ProjectTable extends VirtualTable<Project> {
     await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
     const busyInfo = this.databaseStatus.busyInfo;
-    busyInfo.userText = `Saving ${wordsOrParts.length.toLocaleString()} words or parts...`;
+    busyInfo.userText = `Loading ${wordsOrParts.length.toLocaleString()} words and parts...`;
     busyInfo.progressCtr = 0;
     busyInfo.progressMax = wordsOrParts.length;
-    for (const chunk of _.chunk(wordsOrParts, 2_000)) {
+    for (const chunk of _.chunk(wordsOrParts, UIInsertChunkSize)) {
       // @ts-ignore
-      await window.databaseApi.insert(project.id, 'words_or_parts', chunk).catch(console.error);
+      await window.databaseApi.insert(project.id, 'words_or_parts', chunk, DatabaseInsertChunkSize).catch(console.error);
       busyInfo.progressCtr += chunk.length;
 
       const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
       const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
       busyInfo.userText = chunk.length === busyInfo.progressMax
-        ? `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} words or parts)...`
-        : `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} words or parts)...`;
+        ? `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} words and parts)...`
+        : `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} words and parts)...`;
 
     }
     busyInfo.userText = 'Finishing project creation...';
     this.decrDatabaseBusyCtr();
-  }
+  };
 
-  static createWordsOrPartsTitle = (word: {id: string}) => {
-    const bcvwp = BCVWP.parseFromString((word.id ?? "").split(":")[1] ?? EmptyWordId);
+  static createWordsOrPartsTitle = (word: { id: string }) => {
+    const bcvwp = BCVWP.parseFromString((word.id ?? '').split(':')[1] ?? EmptyWordId);
     return `${bcvwp?.getBookInfo()?.ParaText ?? '???'} ${bcvwp.chapter ?? 1}:${bcvwp.verse ?? 1}`;
-  }
+  };
 
   getDataSourcesAsProjects = async (): Promise<Project[] | undefined> => {
     try {
