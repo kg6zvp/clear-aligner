@@ -12,7 +12,7 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
-import { useAppDispatch } from '../../app';
+import { useAppDispatch } from '../../app/index';
 
 export type PivotWordFilter = 'aligned' | 'all';
 
