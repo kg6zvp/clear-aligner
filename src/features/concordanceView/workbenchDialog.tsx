@@ -17,12 +17,12 @@ interface WorkbenchDialogProps {
 const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignment, updateAlignments }) => {
   const { projectState, setPreferences } = React.useContext(AppContext);
   const initialUpdateTime = React.useMemo(() => (
-    LinksTable.getLatestLastUpdate()
+    LinksTable.getLatestLastUpdateTime()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [alignment]);
 
   const handleClose = React.useCallback(() => {
-    updateAlignments(initialUpdateTime !== LinksTable.getLatestLastUpdate());
+    updateAlignments(initialUpdateTime !== LinksTable.getLatestLastUpdateTime());
     setAlignment(null);
   }, [initialUpdateTime, updateAlignments, setAlignment]);
 
