@@ -10,32 +10,6 @@ export interface Containers {
 
 export const useCorpusContainers = (): Containers => {
   const appContextProps = useContext(AppContext);
-  const [sourceContainer, setSourceContainer] = useState(
-    undefined as CorpusContainer | undefined
-  );
-  const [targetContainer, setTargetContainer] = useState(
-    undefined as CorpusContainer | undefined
-  );
 
-  useEffect(() => {
-    const loadCorpora = async () => {
-      const containers: CorpusContainer[] =
-        await getAvailableCorporaContainers(appContextProps);
-
-      containers.forEach((container) => {
-        if (container.id === AlignmentSide.SOURCE) {
-          setSourceContainer(container);
-        } else if (container.id === AlignmentSide.TARGET) {
-          setTargetContainer(container);
-        }
-      });
-    };
-
-    void loadCorpora();
-  }, [appContextProps, setSourceContainer, setTargetContainer]);
-
-  return {
-    sourceContainer,
-    targetContainer
-  };
+  return appContextProps.containers;
 };

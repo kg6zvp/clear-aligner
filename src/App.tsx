@@ -12,6 +12,7 @@ import { UserPreference } from './state/preferences/tableManager';
 import ProjectsView from 'features/projects';
 import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
+import { Containers } from './hooks/useCorpusContainers';
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -20,6 +21,7 @@ export interface AppContextProps {
   setPreferences: React.Dispatch<React.SetStateAction<UserPreference | undefined>>;
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+  containers: Containers;
 }
 
 export const AppContext = createContext({} as AppContextProps);
