@@ -22,22 +22,21 @@ export const LinkTableName = 'links';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
 
-// @ts-ignore
-const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
+const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
 
 export class LinksTable extends VirtualTable {
   private static latestLastUpdate?: number;
   private static latestDatabaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
-  private static linksByWordIdCache: MemoryCache = createCache(memoryStore(), {
+  private static readonly linksByWordIdCache: MemoryCache = createCache(memoryStore(), {
     ttl: DatabaseCacheTTLMs,
     max: DatabaseCacheMaxSize
   });
-  private static linksByBCVCache: MemoryCache = createCache(memoryStore(), {
+  private static readonly linksByBCVCache: MemoryCache = createCache(memoryStore(), {
     ttl: DatabaseCacheTTLMs,
     max: DatabaseCacheMaxSize
   });
-  private static linksByLinkIdCache: MemoryCache = createCache(memoryStore(), {
+  private static readonly linksByLinkIdCache: MemoryCache = createCache(memoryStore(), {
     ttl: DatabaseCacheTTLMs,
     max: DatabaseCacheMaxSize
   });
@@ -45,6 +44,7 @@ export class LinksTable extends VirtualTable {
 
   constructor(sourceName?: string) {
     super();
+    console.log('creating links', sourceName);
     this.sourceName = sourceName;
   }
 

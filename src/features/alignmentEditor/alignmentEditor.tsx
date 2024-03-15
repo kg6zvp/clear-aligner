@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
@@ -24,26 +24,12 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     [] as CorpusContainer[]
   );
   const appCtx = useContext(AppContext);
-  const [currentPosition, setCurrentPosition] =
-    useState<BCVWP | undefined>(appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1));
-  const savedPosition = useRef<BCVWP | undefined>();
+  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1,1,1), [appCtx.preferences?.bcv]);
 
   useEffect(() => {
     if (sourceContainer && targetContainer)
       setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
   }, [sourceContainer, targetContainer]);
-
-  useEffect(() => {
-    if (!currentPosition
-      || _.isEqual(currentPosition, savedPosition.current)) {
-      return;
-    }
-    savedPosition.current = currentPosition;
-    appCtx.setPreferences((p: UserPreference | undefined) => ({
-      ...(p ?? {}) as UserPreference,
-      bcv: currentPosition
-    }));
-  }, [appCtx, currentPosition, savedPosition]);
 
   useEffect(() => {
     if (currentPosition) {
@@ -88,7 +74,12 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
               currentPosition={currentPosition}
               onNavigate={bcv => {
                 if (!_.isEqual(bcv, currentPosition)) {
-                  setCurrentPosition(bcv);
+                  appCtx.setPreferences((previousState): UserPreference => {
+                    return {
+                      ...previousState as UserPreference,
+                      bcv
+                    };
+                  });
                 }
               }}
             />
