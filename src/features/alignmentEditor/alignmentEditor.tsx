@@ -67,10 +67,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
       );
     };
     void loadSourceWords().catch(console.error);
-  }, [
-    targetContainer?.corpora,
-    setAvailableWords,
-  ]);
+  }, [targetContainer?.corpora, setAvailableWords, targetContainer]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(

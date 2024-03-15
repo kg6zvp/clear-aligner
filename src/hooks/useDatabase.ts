@@ -30,6 +30,6 @@ export interface DatabaseApi {
 
 export const useDatabase = (): DatabaseApi => {
   // @ts-ignore
-  const dbDelegate = useMemo(() => window.databaseApi, [window.databaseApi]);
+  const dbDelegate = useMemo(() => window.databaseApi, []);
   return dbDelegate as DatabaseApi;
 }
