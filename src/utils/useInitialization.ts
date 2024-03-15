@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
@@ -11,6 +11,14 @@ const useInitialization = () => {
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>()
   const [state, setState] = useState({} as ProjectState);
+
+  const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
+    updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
+  }, [state.userPreferenceTable]);
+
+  useEffect(() => {
+    setUpdatedPreferences(preferences);
+  }, [setUpdatedPreferences]);
 
   useEffect(() => {
     if(!isLoaded.current) {

@@ -35,7 +35,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     savedPosition.current = currentPosition;
     appCtx.setPreferences((p: UserPreference | undefined) => ({
       ...(p ?? {}) as UserPreference,
-      currentBCV: currentPosition
+      bcv: currentPosition
     }));
   }, [appCtx, currentPosition, savedPosition]);
 
