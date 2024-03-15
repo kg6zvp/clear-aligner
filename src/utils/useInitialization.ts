@@ -47,7 +47,7 @@ const useInitialization = () => {
   }, [preferences?.currentProject, setContainers]);
 
   useEffect(() => {
-    if(!isLoaded.current) {
+    if(!isLoaded.current && !projects.length) {
       const currLinksTable = state.linksTable ?? new LinksTable();
       const currProjectTable = state.projectTable ?? new ProjectTable();
       const currUserPreferenceTable = state.userPreferenceTable ?? new UserPreferenceTable();
@@ -59,9 +59,10 @@ const useInitialization = () => {
         userPreferenceTable: currUserPreferenceTable
       });
       const initializeProject = () => new Promise((resolve) => {
-        let projects: Project[] = [];
         currProjectTable.getProjects(true).then(res => {
+          let projects: Project[] = [];
           projects = [...res!.values()];
+          isLoaded.current = !!projects.length;
           setProjects(projects);
           resolve(projects);
         });
@@ -79,10 +80,9 @@ const useInitialization = () => {
         });
       });
       initializeProject().catch(console.error);
-      isLoaded.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [projects]);
 
   return {
     projectState: state,

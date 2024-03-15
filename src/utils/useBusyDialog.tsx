@@ -18,6 +18,7 @@ const useBusyDialog = () => {
     links: DatabaseStatus
   }>();
   const [numProjects, setNumProjects] = useState<number>();
+  console.log("numProjects: ", numProjects)
   useInterval(() => {
     const linkStatus = LinksTable.getLatestDatabaseStatus();
     const projectStatus = projectState?.projectTable.getDatabaseStatus();
@@ -30,16 +31,11 @@ const useBusyDialog = () => {
     const newInitializationState = getCorporaInitializationState();
     if (newInitializationState !== initializationState) {
       setInitializationState(newInitializationState);
-      projectState?.projectTable?.getProjects(true)
-        .then(newProjects => {
-          if (newProjects?.size !== numProjects) {
-            setNumProjects(newProjects?.size);
-          }
-        });
     }
     projectState?.projectTable?.getProjects(false)
       .then(newProjects => {
-        if (newProjects?.size !== numProjects) {
+        if (newProjects?.size !== numProjects && newProjects?.size) {
+          console.log("setting project size to: ", newProjects?.size, numProjects)
           setNumProjects(newProjects?.size);
         }
       });

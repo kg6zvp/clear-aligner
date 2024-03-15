@@ -12,7 +12,7 @@ interface ProjectsViewProps {
 }
 
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
-  const { projects, preferences } = React.useContext(AppContext);
+  const { projects, preferences  } = React.useContext(AppContext);
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
   const selectProject = React.useCallback((projectId: string) => {

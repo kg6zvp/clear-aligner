@@ -28,8 +28,6 @@ import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import useBusyDialog from '../../utils/useBusyDialog';
-import { useInterval } from 'usehooks-ts';
 
 
 enum TextDirection {
@@ -54,7 +52,6 @@ const getInitialProjectState = (): Project => ({
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
-  const busyDialog = useBusyDialog();
   const dispatch = useAppDispatch();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const [project, setProject] = React.useState<Project>(getInitialProjectState());
@@ -79,11 +76,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     setProject(getInitialProjectState());
     closeCallback();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
-
-  // TODO: remove this since it's really hacky
-  useInterval(() => {
-    projectState.projectTable.getProjects(true).catch(console.error);
-  }, projects.length < 1 ? 500 : null);
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
@@ -182,7 +174,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
 
   return (
     <>
-      {busyDialog}
       <Dialog
         open={open}
       >
