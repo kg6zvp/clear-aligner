@@ -3,9 +3,10 @@ import React from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
-import { DefaultProjectName } from '../../state/links/tableManager';
+import { DefaultProjectName, useGetAllLinks } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 
 interface ProjectsViewProps {
 }
@@ -61,6 +62,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
+  useCorpusContainers();
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
