@@ -139,15 +139,19 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             }]);
           }
 
-          setPreferences(p => ({ ...(p ?? {}) as UserPreference, initialized: InitializationStates.UNINITIALIZED }));
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             setProjects((p: Project[]) => [...p, projectToUpdate]);
-            resolve(projectState.projectTable?.save?.(projectToUpdate, !!fileContent));
+            await projectState.projectTable?.save?.(projectToUpdate, !!fileContent);
           } else {
             setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
-            resolve(projectState.projectTable?.update?.(projectToUpdate, !!fileContent));
+            await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           }
+          setPreferences(p => ({
+            ...(p ?? {}) as UserPreference,
+            initialized: InitializationStates.UNINITIALIZED
+          }));
+          resolve(undefined);
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
