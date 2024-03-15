@@ -6,6 +6,7 @@ import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { Close } from '@mui/icons-material';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { UserPreference } from 'state/preferences/tableManager';
+import { LinksTable } from '../../state/links/tableManager';
 
 interface WorkbenchDialogProps {
   alignment: BCVWP | null;
@@ -16,14 +17,14 @@ interface WorkbenchDialogProps {
 const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignment, updateAlignments }) => {
   const { projectState, setPreferences } = React.useContext(AppContext);
   const initialUpdateTime = React.useMemo(() => (
-    projectState.linksTable?.lastUpdate
+    LinksTable.getLatestLastUpdate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [alignment]);
 
   const handleClose = React.useCallback(() => {
-    updateAlignments(initialUpdateTime !== projectState.linksTable?.lastUpdate);
+    updateAlignments(initialUpdateTime !== LinksTable.getLatestLastUpdate());
     setAlignment(null);
-  }, [initialUpdateTime, projectState.linksTable?.lastUpdate, updateAlignments, setAlignment]);
+  }, [initialUpdateTime, updateAlignments, setAlignment]);
 
   React.useEffect(() => {
     if (alignment) {

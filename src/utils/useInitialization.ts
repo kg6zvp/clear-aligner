@@ -13,7 +13,7 @@ const useInitialization = () => {
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
-  const [ containers, setContainers ] = useState<Containers>({});
+  const [containers, setContainers] = useState<Containers>({});
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -26,13 +26,13 @@ const useInitialization = () => {
   useEffect(() => {
     const loadContainers = async () => {
       const newContainers = (await getAvailableCorporaContainers({
-          projectState: state,
-          setProjectState: setState,
-          preferences,
-          setPreferences,
-          projects,
-          setProjects
-        } as AppContextProps))
+        projectState: state,
+        setProjectState: setState,
+        preferences,
+        setPreferences,
+        projects,
+        setProjects
+      } as AppContextProps))
         .reduce((container, currentValue): Containers => {
           if (currentValue.id === AlignmentSide.SOURCE) {
             container.sourceContainer = currentValue;
@@ -42,12 +42,12 @@ const useInitialization = () => {
           return container;
         }, { sourceContainer: undefined, targetContainer: undefined } as Containers);
       setContainers(newContainers);
-    }
+    };
     void loadContainers();
-  }, [preferences?.currentProject, setContainers]);
+  }, [preferences, preferences?.currentProject, projects, setContainers, state]);
 
   useEffect(() => {
-    if(!isLoaded.current) {
+    if (!isLoaded.current) {
       const currLinksTable = state.linksTable ?? new LinksTable();
       const currProjectTable = state.projectTable ?? new ProjectTable();
       const currUserPreferenceTable = state.userPreferenceTable ?? new UserPreferenceTable();

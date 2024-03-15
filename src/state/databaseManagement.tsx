@@ -48,10 +48,10 @@ export const InitialDatabaseStatus = {
  * or produces without performing any pre- or post-processing
  */
 export abstract class VirtualTable {
-  lastUpdate: number;
-  databaseStatus: DatabaseStatus;
-  databaseBusyCtr = 0;
-  readonly isLoggingTime = true;
+  protected static readonly isLoggingTime = true;
+  protected lastUpdate: number;
+  protected databaseStatus: DatabaseStatus;
+  protected databaseBusyCtr = 0;
 
   protected constructor() {
     this.lastUpdate = Date.now();
@@ -158,19 +158,19 @@ export abstract class VirtualTable {
   };
 
   logDatabaseTime = (label: string) => {
-    if (this.isLoggingTime) {
+    if (VirtualTable.isLoggingTime) {
       console.time(label);
     }
   };
 
   logDatabaseTimeLog = (label: string, ...args: any[]) => {
-    if (this.isLoggingTime) {
+    if (VirtualTable.isLoggingTime) {
       console.timeLog(label, ...args);
     }
   };
 
   logDatabaseTimeEnd = (label: string) => {
-    if (this.isLoggingTime) {
+    if (VirtualTable.isLoggingTime) {
       console.timeEnd(label);
     }
   };
