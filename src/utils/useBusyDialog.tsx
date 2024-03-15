@@ -45,7 +45,7 @@ const useBusyDialog = () => {
     value?: number
   }>(() => {
     const busyInfo =
-      [databaseStatus?.projects, databaseStatus?.links]
+      [databaseStatus?.links, databaseStatus?.projects]
         .filter(Boolean)
         .map(itemStatus => itemStatus?.busyInfo)
         .filter(Boolean)
