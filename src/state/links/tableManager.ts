@@ -27,6 +27,7 @@ const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
 
 
 export class LinksTable extends VirtualTable<Link> {
+  private static latestLastUpdate?: number;
   private sourceName?: string;
   private linksByWordIdCache: MemoryCache;
   private linksByBCVCache: MemoryCache;
@@ -65,11 +66,10 @@ export class LinksTable extends VirtualTable<Link> {
       const result = await window.databaseApi.save(this.getSourceName(), LinkTableName, newLink);
       // @ts-ignore
       await window.databaseApi.updateLinkText(this.getSourceName(), newLink.id);
+      await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (e) {
       return false;
-    } finally {
-      await this._onUpdate(suppressOnUpdate);
     }
   };
 
@@ -167,12 +167,12 @@ export class LinksTable extends VirtualTable<Link> {
       await dbApi.updateAllLinkText(this.getSourceName());
       this.logDatabaseTimeEnd('saveAll(): text');
 
+      await this._onUpdate(suppressOnUpdate);
       return true;
     } catch (ex) {
       console.error('error saving all links', ex);
       return false;
     } finally {
-      await this._onUpdate(suppressOnUpdate);
       this.decrDatabaseBusyCtr();
       this.logDatabaseTimeEnd('saveAll(): complete');
     }
@@ -192,7 +192,7 @@ export class LinksTable extends VirtualTable<Link> {
 
   findByWordId = async (side: AlignmentSide, wordId: BCVWP): Promise<Link[]> => {
     const referenceString = wordId.toReferenceString();
-    const cacheKey = [side, referenceString].join('|');
+    const cacheKey = [side, referenceString, LinksTable.latestLastUpdate].join('|');
     return this.linksByWordIdCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
@@ -201,7 +201,7 @@ export class LinksTable extends VirtualTable<Link> {
   };
 
   findByBCV = async (bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    const cacheKey = [bookNum, chapterNum, verseNum].join('|');
+    const cacheKey = [bookNum, chapterNum, verseNum, LinksTable.latestLastUpdate].join('|');
     return this.linksByBCVCache.wrap(cacheKey, async () => {
       // @ts-ignore
       return window.databaseApi
@@ -295,11 +295,18 @@ export class LinksTable extends VirtualTable<Link> {
 
   override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
-    await this.reset();
+    LinksTable.latestLastUpdate = Math.max(
+      (LinksTable.latestLastUpdate ?? 0),
+      (this.lastUpdate ?? 0));
   };
 
   catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
   };
+
+  static getLatestLastUpdate = () => {
+    return LinksTable.latestLastUpdate;
+  };
+
 
   /**
    * Checks to see if the database and all tables are loaded and
@@ -841,7 +848,8 @@ export const useDataLastUpdated = () => {
   const [lastUpdate, setLastUpdate] = useState(0);
 
   useInterval(() => {
-    if (projectState?.linksTable.lastUpdate && projectState?.linksTable.lastUpdate !== lastUpdate) {
+    const latestLastUpdate = LinksTable.getLatestLastUpdate();
+    if (latestLastUpdate && latestLastUpdate !== lastUpdate) {
       setLastUpdate(projectState?.linksTable.lastUpdate);
     }
   }, DatabaseRefreshIntervalInMs);

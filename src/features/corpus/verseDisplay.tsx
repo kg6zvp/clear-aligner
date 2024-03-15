@@ -36,28 +36,21 @@ export const VerseDisplay = ({
                                allowGloss = false
                              }: VerseDisplayProps) => {
   const lastUpdated = useDataLastUpdated();
-  const [getKey, setGetKey] = useState<string>();
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
     [verse?.words]
   );
   const alignmentSide = useMemo(() => corpus?.side as AlignmentSide, [corpus?.side]);
-  useEffect(() => {
-    const newGetKey = `${verse?.bcvId?.toReferenceString()}-${String(lastUpdated)}`;
-    if (newGetKey !== newGetKey) {
-      setGetKey(newGetKey);
-    }
-  }, [verse?.bcvId, lastUpdated]);
   const { result: onlyLink } = useGetLink(
     (onlyLinkIds?.length ?? 0) > 0 ? onlyLinkIds?.[0] : undefined,
-    getKey
+    String(lastUpdated)
   );
   const { result: allLinks } = useFindLinksByBCV(
     (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.book : undefined,
     verse.bcvId.chapter,
     verse.bcvId.verse,
     readonly,
-    getKey
+    String(lastUpdated)
   );
 
   const linkMap = useMemo(() => {
@@ -73,7 +66,7 @@ export const VerseDisplay = ({
         : link!.targets) ?? [])
         .forEach(wordId => result.set(wordId, link!)));
     return result;
-  }, [allLinks, onlyLink, alignmentSide]);
+  }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
   return (
     <>
