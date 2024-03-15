@@ -1,6 +1,6 @@
 import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
-import { DatabaseStatus, InitialDatabaseStatus, SecondaryIndex, VirtualTable } from '../databaseManagement';
+import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
 import _ from 'lodash';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -26,8 +26,9 @@ const PreloadVerseRange = 3;
 const dbApi: DatabaseApi = window.databaseApi as DatabaseApi;
 
 
-export class LinksTable extends VirtualTable<Link> {
+export class LinksTable extends VirtualTable {
   private static latestLastUpdate?: number;
+  private static latestDatabaseStatus = { ..._.cloneDeep(InitialDatabaseStatus) };
   private static linksByWordIdCache: MemoryCache = createCache(memoryStore(), {
     ttl: DatabaseCacheTTLMs,
     max: DatabaseCacheMaxSize
@@ -92,7 +93,7 @@ export class LinksTable extends VirtualTable<Link> {
 
     this.logDatabaseTime('removeAll()');
     this.incrDatabaseBusyCtr();
-    this.databaseStatus.busyInfo.userText = 'Removing old links...';
+    this.setDatabaseBusyText('Removing old links...');
     try {
       await this.checkDatabase();
       // @ts-ignore
@@ -131,12 +132,12 @@ export class LinksTable extends VirtualTable<Link> {
 
     this.logDatabaseTime('saveAll(): complete');
     this.incrDatabaseBusyCtr();
-    this.databaseStatus.busyInfo.userText = `Loading ${inputLinks.length.toLocaleString()} links...`;
+    this.setDatabaseBusyText(`Loading ${inputLinks.length.toLocaleString()} links...`);
     try {
       await this.removeAll(true, true);
       await this.checkDatabase();
 
-      this.databaseStatus.busyInfo.userText = `Sorting ${inputLinks.length.toLocaleString()} links...`;
+      this.setDatabaseBusyText(`Sorting ${inputLinks.length.toLocaleString()} links...`);
       this.logDatabaseTime('saveAll(): sorted');
       const outputLinks = inputLinks.map(link =>
         ({
@@ -150,26 +151,31 @@ export class LinksTable extends VirtualTable<Link> {
       this.logDatabaseTimeEnd('saveAll(): sorted');
 
       this.logDatabaseTime('saveAll(): saved');
-      const busyInfo = this.databaseStatus.busyInfo;
-      busyInfo.userText = `Loading ${outputLinks.length.toLocaleString()} links...`;
-      busyInfo.progressCtr = 0;
-      busyInfo.progressMax = outputLinks.length;
+      let progressCtr = 0;
+      let progressMax = outputLinks.length;
+      this.setDatabaseBusyInfo({
+        userText: `Loading ${outputLinks.length.toLocaleString()} links...`,
+        progressCtr,
+        progressMax
+      });
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
         await dbApi.insert(this.getSourceName(), LinkTableName, chunk, DatabaseInsertChunkSize);
-        busyInfo.progressCtr += chunk.length;
+        progressCtr += chunk.length;
+        this.setDatabaseBusyProgress(progressCtr, progressMax);
+
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
         const toLinkTitle = LinksTable.createLinkTitle(chunk[chunk.length - 1]);
-        busyInfo.userText = chunk.length === busyInfo.progressMax
-          ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} links)...`
-          : `Loading ${fromLinkTitle} to ${toLinkTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} links)...`;
+        this.setDatabaseBusyText(chunk.length === progressMax
+          ? `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} links)...`
+          : `Loading ${fromLinkTitle} to ${toLinkTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} links)...`);
 
-        this.logDatabaseTimeLog('saveAll(): saved', busyInfo.progressCtr, busyInfo.progressMax);
+        this.logDatabaseTimeLog('saveAll(): saved', progressCtr, progressMax);
       }
       this.logDatabaseTimeEnd('saveAll(): saved');
 
       this.logDatabaseTime('saveAll(): text');
-      busyInfo.userText = 'Updating link text...';
+      this.setDatabaseBusyText('Updating link text...');
       await dbApi.updateAllLinkText(this.getSourceName());
       this.logDatabaseTimeEnd('saveAll(): text');
 
@@ -228,7 +234,7 @@ export class LinksTable extends VirtualTable<Link> {
 
     this.logDatabaseTime('getAll()');
     this.incrDatabaseBusyCtr();
-    this.databaseStatus.busyInfo.userText = 'Saving links...';
+    this.setDatabaseBusyText('Saving links...');
     try {
       const results: Link[] = [];
       let offset = 0;
@@ -242,7 +248,7 @@ export class LinksTable extends VirtualTable<Link> {
         for (const link of links) {
           results.push(link);
         }
-        this.databaseStatus.busyInfo.userText = `Saving ${results.length.toLocaleString()} links...`;
+        this.setDatabaseBusyText(`Saving ${results.length.toLocaleString()} links...`);
         offset += links.length;
         if (links.length < DatabaseSelectChunkSize) {
           break;
@@ -300,6 +306,13 @@ export class LinksTable extends VirtualTable<Link> {
     }
   };
 
+  override _onStatusUpdateImpl = () => {
+    if ((this.databaseStatus.lastStatusUpdateTime ?? 0) >
+      (LinksTable.latestDatabaseStatus.lastStatusUpdateTime ?? 0)) {
+      LinksTable.latestDatabaseStatus = _.cloneDeep(this.databaseStatus);
+    }
+  };
+
   override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
     this.databaseStatus.lastUpdateTime = this.lastUpdate;
     LinksTable.latestLastUpdate = Math.max(
@@ -307,12 +320,9 @@ export class LinksTable extends VirtualTable<Link> {
       (this.lastUpdate ?? 0));
   };
 
-  catchUpIndex = async (index: SecondaryIndex<Link>): Promise<void> => {
-  };
+  static getLatestDatabaseStatus = () => ({ ..._.cloneDeep(LinksTable.latestDatabaseStatus) });
 
-  static getLatestLastUpdate = () => {
-    return LinksTable.latestLastUpdate;
-  };
+  static getLatestLastUpdate = () => LinksTable.latestLastUpdate;
 
 
   /**
@@ -834,7 +844,7 @@ export const useDatabaseStatus = (checkKey?: string) => {
     }
     prevCheckKey.current = workCheckKey;
     const prevStatus = status.result;
-    const currStatus = projectState?.linksTable.getDatabaseStatus();
+    const currStatus = LinksTable.getLatestDatabaseStatus();
     if (currStatus?.busyInfo
       && (currStatus.busyInfo.isBusy
         || !_.isEqual(prevStatus, currStatus))) {

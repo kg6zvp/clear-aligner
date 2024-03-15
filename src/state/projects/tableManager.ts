@@ -1,5 +1,4 @@
-import { SecondaryIndex, VirtualTable } from '../databaseManagement';
-import { WordsIndex } from '../links/wordsIndex';
+import { VirtualTable } from '../databaseManagement';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
@@ -13,10 +12,6 @@ export interface Project {
   textDirection: string;
   fileName: string;
   linksTable?: LinksTable;
-  linksIndexes?: {
-    sourcesIndex: WordsIndex;
-    targetsIndex: WordsIndex;
-  };
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
 }
@@ -24,7 +19,7 @@ export interface Project {
 const DatabaseInsertChunkSize = 2_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
 
-export class ProjectTable extends VirtualTable<Project> {
+export class ProjectTable extends VirtualTable {
   private projects: Map<string, Project>;
 
   constructor() {
@@ -92,23 +87,27 @@ export class ProjectTable extends VirtualTable<Project> {
     // @ts-ignore
     await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
-    const busyInfo = this.databaseStatus.busyInfo;
-    busyInfo.userText = `Loading ${wordsOrParts.length.toLocaleString()} words and parts...`;
-    busyInfo.progressCtr = 0;
-    busyInfo.progressMax = wordsOrParts.length;
+    let progressCtr = 0;
+    let progressMax = wordsOrParts.length;
+    this.setDatabaseBusyInfo({
+      userText: `Loading ${wordsOrParts.length.toLocaleString()} words and parts...`,
+      progressCtr,
+      progressMax
+    });
     for (const chunk of _.chunk(wordsOrParts, UIInsertChunkSize)) {
       // @ts-ignore
       await window.databaseApi.insert(project.id, 'words_or_parts', chunk, DatabaseInsertChunkSize).catch(console.error);
-      busyInfo.progressCtr += chunk.length;
+      progressCtr += chunk.length;
+      this.setDatabaseBusyProgress(progressCtr, progressMax);
 
       const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
       const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
-      busyInfo.userText = chunk.length === busyInfo.progressMax
-        ? `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} words and parts)...`
-        : `Loading ${fromWordTitle} to ${toWordTitle} (${busyInfo.progressCtr.toLocaleString()} of ${busyInfo.progressMax.toLocaleString()} words and parts)...`;
+      this.setDatabaseBusyText(chunk.length === progressMax
+        ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
+        : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
 
     }
-    busyInfo.userText = 'Finishing project creation...';
+    this.setDatabaseBusyText('Finishing project creation...');
     this.decrDatabaseBusyCtr();
   };
 
@@ -190,7 +189,4 @@ export class ProjectTable extends VirtualTable<Project> {
     name: project.name,
     corpora: [...(project.sourceCorpora?.corpora || []), ...(project.targetCorpora?.corpora || [])]
   });
-
-  catchUpIndex = async (_index: SecondaryIndex<Project>) => {
-  };
 }

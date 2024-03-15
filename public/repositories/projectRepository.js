@@ -891,7 +891,7 @@ class ProjectRepository extends BaseRepository {
     if (!itemLimit) {
       return [];
     }
-    this.logDatabaseTime(`getAll('${sourceName}', '${table}')`);
+    this.logDatabaseTime(`getAll()`);
     try {
       const dataSource = await this.getDataSource(sourceName);
       let result;
@@ -912,9 +912,9 @@ class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('getAll()', sourceName, table, itemLimit, itemSkip, result.length);
       return result;
     } catch (ex) {
-      console.error(`getAll('${sourceName}', '${table}')`, ex);
+      console.error(`getAll()`, ex);
     } finally {
-      this.logDatabaseTimeEnd(`getAll('${sourceName}', '${table}')`);
+      this.logDatabaseTimeEnd(`getAll()`);
     }
   };
 

@@ -1,15 +1,14 @@
-import { ReactElement, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ReactElement, useCallback, useContext, useMemo, useState } from 'react';
 import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt, SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { AlignmentSide, CorpusContainer, Link } from '../../structs';
+import { CorpusContainer, Link } from '../../structs';
 import { AppContext } from '../../App';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { ControlPanelFormat, UserPreference } from '../../state/preferences/tableManager';
 
-import { WordsIndex } from '../../state/links/wordsIndex';
 import uuid from 'uuid-random';
 import { resetTextSegments } from '../../state/alignment.slice';
 
@@ -29,7 +28,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     linkId?: string,
     removeKey?: string,
   }>();
-  const { projectState, setProjectState, preferences, setPreferences } = useContext(AppContext);
+  const { projectState, preferences, setPreferences } = useContext(AppContext);
 
   const [formats, setFormats] = useState([] as string[]);
 
@@ -52,43 +51,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [inProgressLink?.sources.length, inProgressLink?.targets.length]
   );
-  useEffect(() => {
-    const currLinkTable = projectState.linksTable;
-    const currSourcesIndex = projectState?.linksIndexes?.sourcesIndex;
-    const currTargetsIndex = projectState?.linksIndexes?.targetsIndex;
-
-    if (!currLinkTable
-      || !!currSourcesIndex
-      || !!currTargetsIndex) {
-      return;
-    }
-
-    const nextSourcesIndex = currSourcesIndex
-      ?? new WordsIndex(props.containers.find((container) => container.id === AlignmentSide.SOURCE)!, AlignmentSide.SOURCE);
-    const nextTargetsIndex = currTargetsIndex
-      ?? new WordsIndex(props.containers.find((container) => container.id === AlignmentSide.TARGET)!, AlignmentSide.TARGET);
-
-    setProjectState({
-      ...projectState,
-      linksIndexes: {
-        sourcesIndex: nextSourcesIndex,
-        targetsIndex: nextTargetsIndex
-      }
-    });
-
-    nextSourcesIndex.indexingTasks.enqueue(nextSourcesIndex.initialize);
-    nextTargetsIndex.indexingTasks.enqueue(nextTargetsIndex.initialize);
-
-    nextSourcesIndex.indexingTasks.enqueue(async () => {
-      await currLinkTable.registerSecondaryIndex(nextSourcesIndex);
-    });
-
-    nextTargetsIndex.indexingTasks.enqueue(async () => {
-      await currLinkTable.registerSecondaryIndex(nextTargetsIndex);
-    });
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectState?.linksTable, projectState?.linksIndexes]);
 
   const saveControlPanelFormat = useCallback(async () => {
     const alignmentDirection = preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]

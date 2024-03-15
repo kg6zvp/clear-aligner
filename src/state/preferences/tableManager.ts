@@ -1,7 +1,8 @@
-import { SecondaryIndex, VirtualTable } from '../databaseManagement';
+import { VirtualTable } from '../databaseManagement';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
 import { DefaultProjectName } from '../links/tableManager';
+
 export enum ControlPanelFormat {
   VERTICAL,
   HORIZONTAL
@@ -30,12 +31,12 @@ const initialPreferences = {
   id: uuid(),
   bcv: null,
   alignmentDirection: ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
-  page: "",
+  page: '',
   showGloss: false,
   currentProject: DefaultProjectName
-}
+};
 
-export class UserPreferenceTable extends VirtualTable<UserPreference> {
+export class UserPreferenceTable extends VirtualTable {
   private preferences: UserPreference;
 
   constructor() {
@@ -56,10 +57,10 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
   };
 
   getPreferences = async (requery = false): Promise<UserPreference> => {
-    if(requery) {
+    if (requery) {
       // @ts-ignore
       const preferences = await window.databaseApi.getPreferences();
-      if(preferences) {
+      if (preferences) {
         this.preferences = {
           id: preferences?.id,
           page: preferences?.page,
@@ -67,14 +68,14 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
           alignmentDirection: preferences?.alignment_view,
           currentProject: preferences?.current_project ?? DefaultProjectName,
           bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
-        }
+        };
       }
     }
 
     return this.preferences;
-  }
+  };
 
-  getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{id?: string}> => {
+  getFirstBcvFromSource = async (sourceName: string, suppressOnUpdate?: boolean): Promise<{ id?: string }> => {
     try {
       // @ts-ignore
       return await window.databaseApi.getFirstBcvFromSource(sourceName);
@@ -83,19 +84,18 @@ export class UserPreferenceTable extends VirtualTable<UserPreference> {
     } finally {
       this._onUpdate(suppressOnUpdate);
     }
-  }
+  };
 
   getPreferencesSync = () => this.preferences;
 
   private static convertToDto = (userPreference: UserPreference): UserPreferenceDto => {
     return {
       id: userPreference.id ?? uuid(),
-      bcv: (userPreference.bcv?.toReferenceString() ?? "").trim(),
+      bcv: (userPreference.bcv?.toReferenceString() ?? '').trim(),
       alignment_view: userPreference.alignmentDirection ?? ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
       current_project: userPreference.currentProject ?? DefaultProjectName,
       page: userPreference.page,
       show_gloss: !!userPreference.showGloss
-    }
-  }
-  catchUpIndex = async (_index: SecondaryIndex<UserPreference>) => {};
+    };
+  };
 }
