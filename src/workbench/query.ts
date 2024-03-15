@@ -3,7 +3,6 @@ import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
-import { UserPreference } from '../state/preferences/tableManager';
 
 export enum InitializationStates {
   UNINITIALIZED,
