@@ -844,13 +844,11 @@ export const useDatabaseStatus = (checkKey?: string) => {
 };
 
 export const useDataLastUpdated = () => {
-  const { projectState } = React.useContext(AppContext);
   const [lastUpdate, setLastUpdate] = useState(0);
-
   useInterval(() => {
     const latestLastUpdate = LinksTable.getLatestLastUpdate();
     if (latestLastUpdate && latestLastUpdate !== lastUpdate) {
-      setLastUpdate(projectState?.linksTable.lastUpdate);
+      setLastUpdate(latestLastUpdate);
     }
   }, DatabaseRefreshIntervalInMs);
 
