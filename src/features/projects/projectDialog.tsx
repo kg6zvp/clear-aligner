@@ -29,6 +29,7 @@ import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import useDatabaseStatusMessage from '../../utils/useDatabaseStatusMessage';
+import { useInterval } from 'usehooks-ts';
 
 
 enum TextDirection {
@@ -78,6 +79,11 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     setProject(getInitialProjectState());
     closeCallback();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
+
+  // TODO: remove this since it's really hacky
+  useInterval(() => {
+    projectState.projectTable.getProjects(true).catch(console.error);
+  }, projects.length < 1 ? 500 : null);
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length

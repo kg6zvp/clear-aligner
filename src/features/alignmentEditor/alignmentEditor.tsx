@@ -18,6 +18,7 @@ interface AlignmentEditorProps {
 
 export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true }) => {
   const layoutCtx = useContext(LayoutContext);
+  const { sourceContainer, targetContainer } = useCorpusContainers();
   const [availableWords, setAvailableWords] = useState([] as Word[]);
   const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
     [] as CorpusContainer[]
@@ -26,6 +27,11 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   const [currentPosition, setCurrentPosition] =
     useState<BCVWP | undefined>(appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1));
   const savedPosition = useRef<BCVWP | undefined>();
+
+  useEffect(() => {
+    if (sourceContainer && targetContainer)
+      setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
+  }, [sourceContainer, targetContainer]);
 
   useEffect(() => {
     if (!currentPosition
@@ -51,19 +57,19 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     }
   }, [currentPosition, layoutCtx]);
 
-  const { sourceContainer, targetContainer } = useCorpusContainers();
-
   useEffect(() => {
-    if (!sourceContainer || !targetContainer) {
+    if (!targetContainer) {
       return;
     }
-    setSelectedCorporaContainers([sourceContainer, targetContainer]);
-    setAvailableWords(targetContainer?.corpora.flatMap(({ words }) => words) ?? []);
+    const loadSourceWords = async () => {
+      setAvailableWords(
+        targetContainer?.corpora.flatMap(({ words }) => words) ?? []
+      );
+    };
+    void loadSourceWords().catch(console.error);
   }, [
-    sourceContainer,
-    targetContainer,
+    targetContainer?.corpora,
     setAvailableWords,
-    setSelectedCorporaContainers
   ]);
 
   useEffect(() => {

@@ -58,6 +58,9 @@ class BaseRepository {
 
 
   getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
+    if (!sourceName || sourceName.length < 1) {
+      throw new Error('sourceName cannot be empty or undefined!');
+    }
     const sourceStatus = this.dataSources.get(sourceName) ?? new DataSourceStatus();
     if (sourceStatus.isLoaded) {
       return sourceStatus.dataSource;
