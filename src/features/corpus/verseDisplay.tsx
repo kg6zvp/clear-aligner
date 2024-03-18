@@ -46,9 +46,10 @@ export const VerseDisplay = ({
     `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
   );
   const { result: allLinks } = useFindLinksByBCV(
+    alignmentSide,
     (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.book : undefined,
-    verse.bcvId.chapter,
-    verse.bcvId.verse,
+    (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.chapter : undefined,
+    (onlyLinkIds?.length ?? 0) < 1 ? verse.bcvId.verse : undefined,
     readonly,
     `${verse.bcvId?.toReferenceString()}-${dataLastUpdated}`
   );

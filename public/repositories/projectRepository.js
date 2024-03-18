@@ -641,40 +641,44 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
-  findLinksByBCV = async (sourceName, bookNum, chapterNum, verseNum) => {
+  findLinksByBCV = async (sourceName, side, bookNum, chapterNum, verseNum) => {
     if (!bookNum || !chapterNum || !verseNum) {
       return [];
     }
+    const primarySide = side ?? 'targets'; // default to targets
+    const primarySidePrefix = `${primarySide}:`;
+    const primarySideJoinTable = primarySide === 'sources' ? 'links__source_words' : 'links__target_words';
+    const secondarySide = primarySide === 'sources' ? 'targets' : 'sources';
+    const secondarySidePrefix = `${secondarySide}:`;
+    const secondarySideJoinTable = secondarySide === 'sources' ? 'links__source_words' : 'links__target_words';
     this.logDatabaseTime('findLinksByBCV()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
+
       const results = this.createLinksFromRows((await entityManager.query(`select q.link_id, q.type, q.words
-                                                                           from (select lsw.link_id,
-                                                                                        'sources'                                      type,
-                                                                                        json_group_array(
-                                                                                                replace(lsw.word_id, 'sources:', ''))
-                                                                                                filter (where lsw.word_id is not null) words
-                                                                                 from links__source_words lsw
-                                                                                          inner join words_or_parts w on lsw.word_id = w.id
-                                                                                 where w.side = 'sources'
-                                                                                   and w.position_book = ?
-                                                                                   and w.position_chapter = ?
-                                                                                   and w.position_verse = ?
-                                                                                 group by lsw.link_id
-                                                                                 union
-                                                                                 select ltw.link_id,
-                                                                                        'targets'                                      type,
-                                                                                        json_group_array(
-                                                                                                replace(ltw.word_id, 'targets:', ''))
-                                                                                                filter (where ltw.word_id is not null) words
-                                                                                 from links__target_words ltw
-                                                                                          inner join words_or_parts w on ltw.word_id = w.id
-                                                                                 where w.side = 'targets'
-                                                                                   and w.position_book = ?
-                                                                                   and w.position_chapter = ?
-                                                                                   and w.position_verse = ?
-                                                                                 group by ltw.link_id) q
-                                                                           order by q.link_id;`, [bookNum, chapterNum, verseNum, bookNum, chapterNum, verseNum])));
+          from (select lsw.link_id,
+                       :primarySide                                          type,
+                       json_group_array(
+                               replace(lsw.word_id, :primarySidePrefix, ''))
+                                                                      filter (where lsw.word_id is not null) words
+                from ${primarySideJoinTable} lsw
+                         inner join words_or_parts w on lsw.word_id = w.id
+                where w.side = :primarySide
+                  and w.position_book = :bookNum
+                  and w.position_chapter = :chapterNum
+                  and w.position_verse = :verseNum
+                group by lsw.link_id
+                union
+                select ltw.link_id,
+                       :secondarySide                                    type,
+                       json_group_array(
+                               replace(ltw.word_id, :secondarySidePrefix, ''))
+                                                                      filter (where ltw.word_id is not null) words
+                from ${secondarySideJoinTable} ltw
+                         inner join words_or_parts w on ltw.word_id = w.id
+                where w.side = :secondarySide
+                group by ltw.link_id) q
+          order by q.link_id;`, [{ primarySide, primarySidePrefix, secondarySide, secondarySidePrefix, bookNum, chapterNum, verseNum }])));
       this.logDatabaseTimeLog('findLinksByBCV()', sourceName, bookNum, chapterNum, verseNum, results?.length ?? results);
       return results;
     } catch (ex) {
