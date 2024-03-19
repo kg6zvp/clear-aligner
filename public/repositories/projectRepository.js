@@ -802,7 +802,7 @@ class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('updateLinkText()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      for (const linkId in linkIds) {
+      for (const linkId of linkIds) {
         await entityManager.query(`update links
                                    set sources_text = coalesce((select group_concat(words, ' ')
                                                                 from (select group_concat(w.normalized_text, '') words
