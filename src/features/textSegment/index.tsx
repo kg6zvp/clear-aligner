@@ -158,53 +158,58 @@ export const TextSegment = ({
   return (
     <React.Fragment>
         <LocalizedTextDisplay languageInfo={languageInfo}>
-          <Typography
-            paragraph={false}
-            component="span"
-            sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
-            style={{
-              ...(languageInfo?.fontFamily
-                ? { fontFamily: languageInfo.fontFamily }
-                : {})
-            }} >
-          <Typography
-            paragraph={false}
-            component="span"
-            variant={computeVariant(isSelectedInEditedLink, isLinked)}
-            sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
-            className={`text-segment${
-              readonly ? '.readonly' : ''
-            } ${computeDecoration(
-              !!readonly,
-              isHoveredWord,
-              isRelatedToCurrentlyHovered,
-              mode,
-              isLinked,
-              isInvolved,
-              isMemberOfMultipleAlignments
-            )}`}
-            onMouseEnter={
-              readonly
-                ? undefined
-                : () => {
-                  dispatch(hover(word));
-                }
-            }
-            onMouseLeave={
-              readonly
-                ? undefined
-                : () => {
-                  dispatch(hover(null));
-                }
-            }
-            onClick={
-              readonly
-                ? undefined
-                : () => dispatch(toggleTextSegment({ foundRelatedLinks: (wordLinks ?? []), word }))
-            }
-          >
-          {word.text}
-          </Typography>
+            <Typography
+              paragraph={false}
+              component="span"
+              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              style={{
+                ...(languageInfo?.fontFamily
+                  ? { fontFamily: languageInfo.fontFamily }
+                  : {})
+              }} >
+              <Typography
+              paragraph={false}
+              component="span"
+              variant={computeVariant(isSelectedInEditedLink, isLinked)}
+              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              className={`text-segment${
+                readonly ? '.readonly' : ''
+              } ${computeDecoration(
+                !!readonly,
+                isHoveredWord,
+                isRelatedToCurrentlyHovered,
+                mode,
+                isLinked,
+                isInvolved,
+                isMemberOfMultipleAlignments
+              )}`}
+              style={{
+                ...(languageInfo?.fontFamily
+                  ? { fontFamily: languageInfo.fontFamily }
+                  : {})
+              }}
+              onMouseEnter={
+                readonly
+                  ? undefined
+                  : () => {
+                    dispatch(hover(word));
+                  }
+              }
+              onMouseLeave={
+                readonly
+                  ? undefined
+                  : () => {
+                    dispatch(hover(null));
+                  }
+              }
+              onClick={
+                readonly
+                  ? undefined
+                  : () => dispatch(toggleTextSegment({ foundRelatedLinks: (wordLinks ?? []), word }))
+              }
+            >
+              {word.text}
+            </Typography>
             {showAfter ? (word.after || '').trim() : ''}
           </Typography>
         </LocalizedTextDisplay>
