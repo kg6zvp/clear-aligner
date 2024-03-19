@@ -52,7 +52,7 @@ export default class BCVWP {
   toHumanReadableString(): string {
     return `${this.getBookInfo()?.EnglishBookName ?? ''} ${
       this.chapter ?? 'NA'
-    }:${this.verse ?? 'NA'} ${this.word ?? ''}${
+    }:${this.verse ?? 'NA'} ${this.word ? `w${this.word}` : ''}${
       this.word && this.part ? `/${this.part}` : ''
     }`.trim();
   }

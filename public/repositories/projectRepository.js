@@ -550,32 +550,27 @@ class ProjectRepository extends BaseRepository {
       return [];
     }
     const entityManager = dataSource.manager;
-    let rows;
-    if (linkIds.length > 1) {
-      rows = await entityManager.query(`select l.id                                                    link_id,
-                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
-                                                                filter (where lsw.word_id is not null) sources,
-                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
-                                                                filter (where ltw.word_id is not null) targets
-                                        from links l
-                                                 left join links__source_words lsw on l.id = lsw.link_id
-                                                 left join links__target_words ltw on l.id = ltw.link_id
-                                        where l.id in (?)
-                                        group by l.id
-                                        order by l.id;`, [linkIds]);
-    } else {
-      const workLinkId = linkIds[0];
-      rows = await entityManager.query(`select l.id                                                    link_id,
-                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
-                                                                filter (where lsw.word_id is not null) sources,
-                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
-                                                                filter (where ltw.word_id is not null) targets
-                                        from links l
-                                                 left join links__source_words lsw on l.id = lsw.link_id
-                                                 left join links__target_words ltw on l.id = ltw.link_id
-                                        where l.id = ?
-                                        group by l.id
-                                        order by l.id;`, [workLinkId]);
+    const rows = [];
+    for (const linkId of linkIds) {
+      for (const row of ((await entityManager.query(`select q.link_id, q.type, q.words
+                                                     from (select lsw.link_id                                             as link_id,
+                                                                  'sources'                                               as type,
+                                                                  json_group_array(replace(lsw.word_id, 'sources:', ''))
+                                                                                   filter (where lsw.word_id is not null) as words
+                                                           from links__source_words lsw
+                                                           where lsw.link_id = :linkId
+                                                           group by lsw.link_id
+                                                           union
+                                                           select ltw.link_id                                             as link_id,
+                                                                  'targets'                                               as type,
+                                                                  json_group_array(replace(ltw.word_id, 'targets:', ''))
+                                                                                   filter (where ltw.word_id is not null) as words
+                                                           from links__target_words ltw
+                                                           where ltw.link_id = :linkId
+                                                           group by ltw.link_id) q
+                                                     order by q.link_id;`, [{ linkId }])) ?? [])) {
+        rows.push(row);
+      }
     }
     return this.createLinksFromRows(rows);
   };
@@ -641,41 +636,45 @@ class ProjectRepository extends BaseRepository {
     }
   };
 
-  findLinksByBCV = async (sourceName, bookNum, chapterNum, verseNum) => {
+  findLinksByBCV = async (sourceName, side, bookNum, chapterNum, verseNum) => {
     if (!bookNum || !chapterNum || !verseNum) {
       return [];
     }
+    const workSide = side ?? 'targets'; // default to targets
+    const workPart1 = (workSide === 'targets') ? 'target' : 'source';
+    const workPart2 = (workPart1 === 'target') ? 'source' : 'target';
     this.logDatabaseTime('findLinksByBCV()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = this.createLinksFromRows((await entityManager.query(`select q.link_id, q.type, q.words
-                                                                           from (select lsw.link_id,
-                                                                                        'sources'                                      type,
+      const results = this.createLinksFromRows((await entityManager.query(`select q2.link_id, q2.type, q2.words
+                                                                           from (with q1(link_id)
+                                                                                          as (select distinct jtq.link_id
+                                                                                              from words_or_parts w
+                                                                                                       inner join 'links__${workPart1}_words' jtq on jtq.word_id = w.id
+                                                                                              where w.side = :workSide
+                                                                                                and w.position_book = :bookNum
+                                                                                                and w.position_chapter = :chapterNum
+                                                                                                and w.position_verse = :verseNum)
+                                                                                 select q1.link_id                                     as link_id,
+                                                                                        '${workPart1}s'                                as type,
                                                                                         json_group_array(
-                                                                                                replace(lsw.word_id, 'sources:', ''))
-                                                                                                filter (where lsw.word_id is not null) words
-                                                                                 from links__source_words lsw
-                                                                                          inner join words_or_parts w on lsw.word_id = w.id
-                                                                                 where w.side = 'sources'
-                                                                                   and w.position_book = ?
-                                                                                   and w.position_chapter = ?
-                                                                                   and w.position_verse = ?
-                                                                                 group by lsw.link_id
+                                                                                                replace(jt1.word_id, '${workPart1}s:', ''))
+                                                                                                filter (where jt1.word_id is not null) as words
+                                                                                 from 'links__${workPart1}_words' jt1
+                                                                                          inner join q1 on jt1.link_id in (q1.link_id)
+                                                                                 group by q1.link_id
                                                                                  union
-                                                                                 select ltw.link_id,
-                                                                                        'targets'                                      type,
+                                                                                 select q1.link_id                                     as link_id,
+                                                                                        '${workPart2}s'                                as type,
                                                                                         json_group_array(
-                                                                                                replace(ltw.word_id, 'targets:', ''))
-                                                                                                filter (where ltw.word_id is not null) words
-                                                                                 from links__target_words ltw
-                                                                                          inner join words_or_parts w on ltw.word_id = w.id
-                                                                                 where w.side = 'targets'
-                                                                                   and w.position_book = ?
-                                                                                   and w.position_chapter = ?
-                                                                                   and w.position_verse = ?
-                                                                                 group by ltw.link_id) q
-                                                                           order by q.link_id;`, [bookNum, chapterNum, verseNum, bookNum, chapterNum, verseNum])));
-      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, bookNum, chapterNum, verseNum, results?.length ?? results);
+                                                                                                replace(jt2.word_id, '${workPart2}s:', ''))
+                                                                                                filter (where jt2.word_id is not null) as words
+                                                                                 from 'links__${workPart2}_words' jt2
+                                                                                          inner join q1 on jt2.link_id in (q1.link_id)
+                                                                                 group by q1.link_id) q2
+                                                                           order by q2.link_id;`,
+        [{ workSide, bookNum, chapterNum, verseNum }])));
+      this.logDatabaseTimeLog('findLinksByBCV()', sourceName, side, bookNum, chapterNum, verseNum, results?.length ?? results);
       return results;
     } catch (ex) {
       console.error('findLinksByBCV()', ex);
@@ -1092,8 +1091,9 @@ class ProjectRepository extends BaseRepository {
   };
 
   corporaGetLinksByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
-    const em = (await this.getDataSource(sourceName)).manager;
-    const linkIds = (await em.query(`
+    const dataSource = (await this.getDataSource(sourceName));
+    const entityManager = dataSource.manager;
+    const linkIds = (await entityManager.query(`
         SELECT l.id        id,
                ltw.word_id word_id
         FROM links l
@@ -1104,11 +1104,7 @@ class ProjectRepository extends BaseRepository {
         GROUP BY id
             ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [sourcesText, targetsText]))
       .map((link) => link.id);
-    const links = [];
-    for (const linkId of linkIds) {
-      links.push(...(await this.findByIds(sourceName, 'links', linkId)));
-    }
-    return links;
+    return (await this.findLinksById(dataSource, linkIds));
   };
 
   _buildOrderBy = (sort, fieldMap) => {

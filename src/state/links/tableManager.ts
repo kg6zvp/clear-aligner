@@ -205,24 +205,20 @@ export class LinksTable extends VirtualTable {
     const referenceString = wordId.toReferenceString();
     const cacheKey = [side, referenceString, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByWordIdCache.wrap(cacheKey, async () => {
-      // @ts-ignore
-      return window.databaseApi
-        .findLinksByWordId(this.getSourceName(), side, referenceString);
+      return dbApi.findLinksByWordId(this.getSourceName(), side, referenceString);
     });
   };
 
-  findByBCV = async (bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
-    const cacheKey = [bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
+  findByBCV = async (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number): Promise<Link[]> => {
+    const cacheKey = [side, bookNum, chapterNum, verseNum, this.getSourceName(), LinksTable.getLatestLastUpdateTime()].join('|');
     return LinksTable.linksByBCVCache.wrap(cacheKey, async () => {
-      // @ts-ignore
-      return window.databaseApi
-        .findLinksByBCV(this.getSourceName(), bookNum, chapterNum, verseNum);
+      return dbApi.findLinksByBCV(this.getSourceName(), side, bookNum, chapterNum, verseNum);
     });
   };
 
-  preloadByBCV = (bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
+  preloadByBCV = (side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number, skipVerseNum: boolean) => {
     for (const verseCtr of this._createVersePreloadRange(verseNum, skipVerseNum)) {
-      void this.findByBCV(bookNum, chapterNum, verseCtr);
+      void this.findByBCV(side, bookNum, chapterNum, verseCtr);
     }
   };
 
@@ -638,7 +634,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
           && wordId.book
           && wordId.chapter
           && wordId.verse) {
-          projectState?.linksTable.preloadByBCV(wordId.book, wordId.chapter, wordId.verse, true);
+          projectState?.linksTable.preloadByBCV(side, wordId.book, wordId.chapter, wordId.verse, true);
         }
         databaseHookDebug('useFindLinksByWordId(): endStatus', endStatus);
       });
@@ -661,7 +657,7 @@ export const useFindLinksByWordId = (side?: AlignmentSide, wordId?: BCVWP, isNoP
  * @param verseNum Verse number  (optional; undefined = no find).
  * @param findKey Unique key to control find operation (optional; undefined = will find).
  */
-export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
+export const useFindLinksByBCV = (side?: AlignmentSide, bookNum?: number, chapterNum?: number, verseNum?: number, isNoPreload = false, findKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: Link[];
@@ -670,7 +666,8 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
 
   useEffect(() => {
     const workFindKey = findKey ?? uuid();
-    if (!bookNum
+    if (!side
+      || !bookNum
       || !chapterNum
       || !verseNum
       || prevFindKey.current === workFindKey) {
@@ -678,7 +675,7 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
     }
     prevFindKey.current = findKey;
     databaseHookDebug('useFindLinksByBCV(): status', status);
-    projectState?.linksTable.findByBCV(bookNum, chapterNum, verseNum)
+    projectState?.linksTable.findByBCV(side, bookNum, chapterNum, verseNum)
       .then(result => {
         const endStatus = {
           ...status,
@@ -686,11 +683,11 @@ export const useFindLinksByBCV = (bookNum?: number, chapterNum?: number, verseNu
         };
         setStatus(endStatus);
         if (!isNoPreload) {
-          projectState?.linksTable.preloadByBCV(bookNum, chapterNum, verseNum, true);
+          projectState?.linksTable.preloadByBCV(side, bookNum, chapterNum, verseNum, true);
         }
         databaseHookDebug('useFindLinksByBCV(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, bookNum, chapterNum, verseNum, status]);
+  }, [projectState?.linksTable, isNoPreload, prevFindKey, findKey, side, bookNum, chapterNum, verseNum, status]);
 
   return { ...status };
 };

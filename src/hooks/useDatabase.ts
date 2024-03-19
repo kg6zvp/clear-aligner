@@ -23,7 +23,8 @@ export interface DatabaseApi {
   updateAllLinkText: (sourceName: string) => Promise<boolean>;
   corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
-  findLinksByBCV: (sourceName: string, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
+  findLinksByBCV: (sourceName: string, side: AlignmentSide, bookNum: number, chapterNum: number, verseNum: number) => Promise<Link[]>;
+  findLinksByWordId: (sourceName: string, side: AlignmentSide, referenceString: string) => Promise<Link[]>;
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (sourceName: string, languageIds: string[]) => Promise<LanguageInfo[]>;
 }
