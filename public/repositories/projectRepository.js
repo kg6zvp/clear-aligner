@@ -802,30 +802,32 @@ class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('updateLinkText()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      await entityManager.query(`update links
-                                 set sources_text = coalesce((select group_concat(words, ' ')
-                                                              from (select group_concat(w.normalized_text, '') words
-                                                                    from links l
-                                                                             join links__source_words j on l.id = j.link_id
-                                                                             join words_or_parts w on w.id = j.word_id
-                                                                    where l.id = links.id
-                                                                      and l.id in (?)
-                                                                      and w.normalized_text is not null
-                                                                    group by w.position_word
-                                                                    order by w.id)), '')
-                                 WHERE links.id in (?);`, [linkIds, linkIds]);
-      await entityManager.query(`update links
-                                 set targets_text = coalesce((select group_concat(words, ' ')
-                                                              from (select group_concat(w.normalized_text, '') words
-                                                                    from links l
-                                                                             join links__target_words j on l.id = j.link_id
-                                                                             join words_or_parts w on w.id = j.word_id
-                                                                    where l.id = links.id
-                                                                      and l.id in (?)
-                                                                      and w.normalized_text is not null
-                                                                    group by w.position_word
-                                                                    order by w.id)), '')
-                                 WHERE links.id in (?);`, [linkIds, linkIds]);
+      for (const linkId in linkIds) {
+        await entityManager.query(`update links
+                                   set sources_text = coalesce((select group_concat(words, ' ')
+                                                                from (select group_concat(w.normalized_text, '') words
+                                                                      from links l
+                                                                               join links__source_words j on l.id = j.link_id
+                                                                               join words_or_parts w on w.id = j.word_id
+                                                                      where l.id = links.id
+                                                                        and l.id = :linkId
+                                                                        and w.normalized_text is not null
+                                                                      group by substr(w.id, 1, 19)
+                                                                      order by w.id)), '')
+                                   WHERE links.id = :linkId;`, [{ linkId }]);
+        await entityManager.query(`update links
+                                   set targets_text = coalesce((select group_concat(words, ' ')
+                                                                from (select group_concat(w.normalized_text, '') words
+                                                                      from links l
+                                                                               join links__target_words j on l.id = j.link_id
+                                                                               join words_or_parts w on w.id = j.word_id
+                                                                      where l.id = links.id
+                                                                        and l.id = :linkId
+                                                                        and w.normalized_text is not null
+                                                                      group by substr(w.id, 1, 19)
+                                                                      order by w.id)), '')
+                                   WHERE links.id = :linkId;`, [{ linkId }]);
+      }
       this.logDatabaseTimeLog('updateLinkText()', sourceName, linkIdOrIds);
       return true;
     } catch (ex) {
@@ -849,7 +851,7 @@ class ProjectRepository extends BaseRepository {
                                                                              join words_or_parts w on w.id = j.word_id
                                                                     where l.id = links.id
                                                                       and w.normalized_text is not null
-                                                                    group by w.position_word
+                                                                    group by substr(w.id, 1, 19)
                                                                     order by w.id)), '');`);
       await entityManager.query(`update links
                                  set targets_text = coalesce((select group_concat(words, ' ')
@@ -859,7 +861,7 @@ class ProjectRepository extends BaseRepository {
                                                                              join words_or_parts w on w.id = j.word_id
                                                                     where l.id = links.id
                                                                       and w.normalized_text is not null
-                                                                    group by w.position_word
+                                                                    group by substr(w.id, 1, 19)
                                                                     order by w.id)), '');`);
       this.logDatabaseTimeLog('updateAllLinkText()', sourceName);
       return true;
