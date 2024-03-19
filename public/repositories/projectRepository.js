@@ -839,8 +839,7 @@ class ProjectRepository extends BaseRepository {
   };
 
   updateAllLinkText = async (sourceName) => {
-    const logText = `updateAllLinkText(sourceName: '${sourceName}')`;
-    this.logDatabaseTime(logText);
+    this.logDatabaseTime('updateAllLinkText()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
       await entityManager.query(`update links
@@ -866,10 +865,10 @@ class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeLog('updateAllLinkText()', sourceName);
       return true;
     } catch (ex) {
-      console.error(logText, ex);
+      console.error('updateAllLinkText()', ex);
       return false;
     } finally {
-      this.logDatabaseTimeEnd(logText);
+      this.logDatabaseTimeEnd('updateAllLinkText()');
     }
   };
 
