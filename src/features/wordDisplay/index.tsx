@@ -76,19 +76,8 @@ export const WordDisplay = ({
                     word={part}
                     links={links}
                     languageInfo={languageInfo}
+                    showAfter={!suppressAfter}
                   />
-                  {!suppressAfter && (
-                    <>
-                      {part.after && (
-                        <LocalizedTextDisplay
-                          key={`${part.id}-after`}
-                          languageInfo={languageInfo}
-                        >
-                          {part.after}
-                        </LocalizedTextDisplay>
-                      )}
-                    </>
-                  )}
                 </React.Fragment>
               ))}
               <span> </span>
