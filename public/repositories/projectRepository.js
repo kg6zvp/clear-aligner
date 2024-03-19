@@ -650,42 +650,21 @@ class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('findLinksByBCV()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = this.createLinksFromRows((await entityManager.query(`select q.link_id, q.type, q.words
-                                                                           from (select lsw.link_id,
-                                                                                        'sources'                                    type,
-                                                                                        json_group_array(
-                                                                                                replace(lsw.word_id, 'sources:', ''))
-                                                                                                                                     filter (where lsw.word_id is not null) words
-                                                                                 from links__source_words lsw
-                                                                                          inner join words_or_parts w on lsw.word_id = w.id
-                                                                                 where w.side = 'sources'
-                                                                                   AND lsw.link_id = (select lss.link_id lid
-                                                                                                      from ${searchSideJoinTable} lss
-                                                                                                               inner join words_or_parts w on lss.word_id = w.id
-                                                                                                      where w.side = :side
-                                                                                                        and w.position_book = :bookNum
-                                                                                                        and w.position_chapter = :chapterNum
-                                                                                                        and w.position_verse = :verseNum
-                                                                                                      group by lss.link_id)
-                                                                                 union
-                                                                                 select ltw.link_id,
-                                                                                        'targets'                                    type,
-                                                                                        json_group_array(
-                                                                                                replace(ltw.word_id, 'targets:', ''))
-                                                                                                                                     filter (where ltw.word_id is not null) words
-                                                                                 from links__target_words ltw
-                                                                                          inner join words_or_parts w on ltw.word_id = w.id
-                                                                                 where w.side = 'targets'
-                                                                                   AND ltw.link_id = (select lss.link_id lid
-                                                                                                      from ${searchSideJoinTable} lss
-                                                                                                               inner join words_or_parts w on lss.word_id = w.id
-                                                                                                      where w.side = :side
-                                                                                                        and w.position_book = :bookNum
-                                                                                                        and w.position_chapter = :chapterNum
-                                                                                                        and w.position_verse = :verseNum
-                                                                                                      group by lss.link_id)
-                                                                                 group by ltw.link_id) q
-                                                                           order by q.link_id;`, [{ side: primarySide, bookNum, chapterNum, verseNum }])));
+      const linkIds = (await entityManager.query(`select lss.link_id lid
+                                                    from ${searchSideJoinTable} lss
+                                                      inner join words_or_parts w on lss.word_id = w.id
+                                                    where w.side = :side
+                                                      and w.position_book = :bookNum
+                                                      and w.position_chapter = :chapterNum
+                                                      and w.position_verse = :verseNum
+                                                    group by lss.link_id;`, [{ side: primarySide, bookNum, chapterNum, verseNum }]))
+        .map((l) => l.lid);
+
+      const results = [];
+
+      for (const linkId of linkIds) {
+        results.push(await this.findOneById(sourceName, 'links', linkId));
+      }
       this.logDatabaseTimeLog('findLinksByBCV()', sourceName, bookNum, chapterNum, verseNum, results?.length ?? results);
       return results;
     } catch (ex) {
