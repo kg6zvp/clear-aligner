@@ -550,32 +550,27 @@ class ProjectRepository extends BaseRepository {
       return [];
     }
     const entityManager = dataSource.manager;
-    let rows;
-    if (linkIds.length > 1) {
-      rows = await entityManager.query(`select l.id                                                    link_id,
-                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
-                                                                filter (where lsw.word_id is not null) sources,
-                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
-                                                                filter (where ltw.word_id is not null) targets
-                                        from links l
-                                                 left join links__source_words lsw on l.id = lsw.link_id
-                                                 left join links__target_words ltw on l.id = ltw.link_id
-                                        where l.id in (?)
-                                        group by l.id
-                                        order by l.id;`, [linkIds]);
-    } else {
-      const workLinkId = linkIds[0];
-      rows = await entityManager.query(`select l.id                                                    link_id,
-                                               json_group_array(replace(lsw.word_id, 'sources:', ''))
-                                                                filter (where lsw.word_id is not null) sources,
-                                               json_group_array(replace(ltw.word_id, 'targets:', ''))
-                                                                filter (where ltw.word_id is not null) targets
-                                        from links l
-                                                 left join links__source_words lsw on l.id = lsw.link_id
-                                                 left join links__target_words ltw on l.id = ltw.link_id
-                                        where l.id = ?
-                                        group by l.id
-                                        order by l.id;`, [workLinkId]);
+    const rows = [];
+    for (const linkId of linkIds) {
+      for (const row of ((await entityManager.query(`select q.link_id, q.type, q.words
+                                                     from (select lsw.link_id                                             as link_id,
+                                                                  'sources'                                               as type,
+                                                                  json_group_array(replace(lsw.word_id, 'sources:', ''))
+                                                                                   filter (where lsw.word_id is not null) as words
+                                                           from links__source_words lsw
+                                                           where lsw.link_id = :linkId
+                                                           group by lsw.link_id
+                                                           union
+                                                           select ltw.link_id                                             as link_id,
+                                                                  'targets'                                               as type,
+                                                                  json_group_array(replace(ltw.word_id, 'targets:', ''))
+                                                                                   filter (where ltw.word_id is not null) as words
+                                                           from links__target_words ltw
+                                                           where ltw.link_id = :linkId
+                                                           group by ltw.link_id) q
+                                                     order by q.link_id;`, [{ linkId }])) ?? [])) {
+        rows.push(row);
+      }
     }
     return this.createLinksFromRows(rows);
   };
@@ -1096,8 +1091,9 @@ class ProjectRepository extends BaseRepository {
   };
 
   corporaGetLinksByAlignedWord = async (sourceName, sourcesText, targetsText, sort) => {
-    const em = (await this.getDataSource(sourceName)).manager;
-    const linkIds = (await em.query(`
+    const dataSource = (await this.getDataSource(sourceName));
+    const entityManager = dataSource.manager;
+    const linkIds = (await entityManager.query(`
         SELECT l.id        id,
                ltw.word_id word_id
         FROM links l
@@ -1108,11 +1104,7 @@ class ProjectRepository extends BaseRepository {
         GROUP BY id
             ${this._buildOrderBy(sort, { ref: 'word_id' })};`, [sourcesText, targetsText]))
       .map((link) => link.id);
-    const links = [];
-    for (const linkId of linkIds) {
-      links.push(...(await this.findByIds(sourceName, 'links', linkId)));
-    }
-    return links;
+    return (await this.findLinksById(dataSource, linkIds));
   };
 
   _buildOrderBy = (sort, fieldMap) => {
