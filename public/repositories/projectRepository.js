@@ -647,7 +647,7 @@ class ProjectRepository extends BaseRepository {
     }
     const workSide = side ?? 'targets'; // default to targets
     const workPart1 = (workSide === 'targets') ? 'target' : 'source';
-    const workPart2 = (workPart1 === 'targets') ? 'source' : 'target';
+    const workPart2 = (workPart1 === 'target') ? 'source' : 'target';
     this.logDatabaseTime('findLinksByBCV()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
