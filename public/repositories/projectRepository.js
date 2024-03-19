@@ -645,26 +645,39 @@ class ProjectRepository extends BaseRepository {
     if (!bookNum || !chapterNum || !verseNum) {
       return [];
     }
-    const primarySide = side ?? 'targets'; // default to targets
-    const searchSideJoinTable = primarySide === 'sources' ? 'links__source_words' : 'links__target_words';
+    const workSide = side ?? 'targets'; // default to targets
+    const workPart1 = (workSide === 'targets') ? 'target' : 'source';
+    const workPart2 = (workPart1 === 'targets') ? 'source' : 'target';
     this.logDatabaseTime('findLinksByBCV()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const linkIds = (await entityManager.query(`select lss.link_id lid
-                                                    from ${searchSideJoinTable} lss
-                                                      inner join words_or_parts w on lss.word_id = w.id
-                                                    where w.side = :side
-                                                      and w.position_book = :bookNum
-                                                      and w.position_chapter = :chapterNum
-                                                      and w.position_verse = :verseNum
-                                                    group by lss.link_id;`, [{ side: primarySide, bookNum, chapterNum, verseNum }]))
-        .map((l) => l.lid);
-
-      const results = [];
-
-      for (const linkId of linkIds) {
-        results.push(await this.findOneById(sourceName, 'links', linkId));
-      }
+      const results = this.createLinksFromRows((await entityManager.query(`select q2.link_id, q2.type, q2.words
+                                                                           from (with q1(link_id) as (select jtq.link_id
+                                                                                                      from words_or_parts w
+                                                                                                               inner join 'links__${workPart1}_words' jtq on jtq.word_id = w.id
+                                                                                                      where w.side = :workSide
+                                                                                                        and w.position_book = :bookNum
+                                                                                                        and w.position_chapter = :chapterNum
+                                                                                                        and w.position_verse = :verseNum)
+                                                                                 select jt1.link_id                                    as link_id,
+                                                                                        '${workPart1}s'                                as type,
+                                                                                        json_group_array(
+                                                                                                replace(jt1.word_id, '${workPart1}s:', ''))
+                                                                                                filter (where jt1.word_id is not null) as words
+                                                                                 from 'links__${workPart1}_words' jt1
+                                                                                          inner join q1 on jt1.link_id in (q1.link_id)
+                                                                                 group by jt1.link_id
+                                                                                 union
+                                                                                 select jt2.link_id                                    as link_id,
+                                                                                        '${workPart2}s'                                as type,
+                                                                                        json_group_array(
+                                                                                                replace(jt2.word_id, '${workPart2}s:', ''))
+                                                                                                filter (where jt2.word_id is not null) as words
+                                                                                 from 'links__${workPart2}_words' jt2
+                                                                                          inner join q1 on jt2.link_id in (q1.link_id)
+                                                                                 group by jt2.link_id) q2
+                                                                           order by q2.link_id;`,
+        [{ workSide, bookNum, chapterNum, verseNum }])));
       this.logDatabaseTimeLog('findLinksByBCV()', sourceName, bookNum, chapterNum, verseNum, results?.length ?? results);
       return results;
     } catch (ex) {
