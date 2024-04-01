@@ -67,7 +67,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   // reset selected tokens when the book, chapter or verse changes
   useEffect(() => {
     dispatch(resetTextSegments())
-  }, [appCtx.preferences?.bcv])
+  }, [appCtx.preferences?.bcv, dispatch])
 
   return (
     <>
