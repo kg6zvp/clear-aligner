@@ -9,6 +9,8 @@ import { AppContext } from '../../App';
 import { UserPreference } from 'state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import _ from 'lodash';
+import { useAppDispatch } from '../../app';
+import { resetTextSegments } from '../../state/alignment.slice';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -24,6 +26,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     [] as CorpusContainer[]
   );
   const appCtx = useContext(AppContext);
+  const dispatch = useAppDispatch();
   const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1,1,1), [appCtx.preferences?.bcv]);
 
   useEffect(() => {
@@ -60,6 +63,11 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
       <BCVDisplay currentPosition={appCtx.preferences?.bcv} />
     );
   }, [layoutCtx, appCtx.preferences?.bcv]);
+
+  // reset selected tokens when the book, chapter or verse changes
+  useEffect(() => {
+    dispatch(resetTextSegments())
+  }, [appCtx.preferences?.bcv])
 
   return (
     <>
