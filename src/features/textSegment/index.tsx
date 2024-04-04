@@ -122,6 +122,10 @@ export const TextSegment = ({
     [wordLinks]
   );
 
+  const wasMemberOfCurrentlyEditedLink = useAppSelector((state) =>
+    state.alignment.present.inProgressLink?.id && wordLinks.map((link) => link.id).includes(state.alignment.present.inProgressLink?.id)
+  );
+
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (word.side) {
       case AlignmentSide.SOURCE:
@@ -147,7 +151,7 @@ export const TextSegment = ({
     [wordLinks]
   );
 
-  const isInvolved = useAppSelector(
+  const hasInProgressLink = useAppSelector(
     (state) => !!state.alignment.present.inProgressLink
   );
 
@@ -180,7 +184,7 @@ export const TextSegment = ({
                 isRelatedToCurrentlyHovered,
                 mode,
                 isLinked,
-                isInvolved,
+                hasInProgressLink,
                 isMemberOfMultipleAlignments
               )}`}
               style={{
@@ -203,7 +207,7 @@ export const TextSegment = ({
                   }
               }
               onClick={
-                readonly
+                readonly || (isLinked && hasInProgressLink && !wasMemberOfCurrentlyEditedLink)
                   ? undefined
                   : () => dispatch(toggleTextSegment({ foundRelatedLinks: (wordLinks ?? []), word }))
               }
