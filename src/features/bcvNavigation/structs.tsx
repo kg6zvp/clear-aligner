@@ -169,14 +169,9 @@ export const findPreviousNavigableVerse = (
   }
 
   if (availableVerses) {
-    const selectedVerse = availableVerses.toReversed().find((verse) => {
+    const selectedVerse = availableVerses.toReversed().find((verse) =>
         // catch the cases where previous verse number in sequence is missing
-        if(verse.reference < currentPosition.verse! - 1 ){
-          return true;
-        }
-          return  verse.reference === currentPosition.verse! - 1
-    }
-
+        verse.reference < currentPosition.verse!
     );
     if (selectedVerse) {
       return new BCVWP(
@@ -242,14 +237,9 @@ export const findNextNavigableVerse = (
   }
 
   if (availableVerses) {
-    const selectedVerse = availableVerses.find((verse) => {
+    const selectedVerse = availableVerses.find((verse) =>
       // catch the cases where next verse number in sequence is missing
-      if(verse.reference > currentPosition.verse! + 1 ){
-          return true;
-        }
-          return verse.reference === currentPosition.verse! + 1
-      }
-
+      verse.reference > currentPosition.verse!
     );
     if (selectedVerse) {
       // if not the last verse in the chapter
