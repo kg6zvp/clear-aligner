@@ -33,8 +33,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
 
   return (
     <>
-      <Grid container flexDirection="column" flexWrap={'nowrap'} sx={{ height: '100%', width: '100%', paddingX: '1.1rem', paddingTop: '.1rem' }}>
-        <Grid container sx={{ marginBottom: '.25rem', marginLeft: '1.1rem' }}>
+      <Grid container flexDirection="column" flexWrap={'nowrap'} sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+        <Grid container sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
           <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           <Button
             variant="contained"
@@ -42,7 +42,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
             sx={{ textTransform: 'none', fontWeight: 'bold' }}
           >Create New</Button>
         </Grid>
-        <Grid container>
+        <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects.sort((p1: Project) => p1.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
               <ProjectCard
