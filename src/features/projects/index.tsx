@@ -33,9 +33,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
 
   return (
     <>
-      <Grid container flexDirection="column" sx={{ height: '100%', width: '100%', px: 5, pt: 2 }}>
-        <Grid container sx={{ mb: 5, ml: 2.5 }}>
-          <Typography variant="h4" sx={{ mr: 5, fontWeight: 'bold' }}>Projects</Typography>
+      <Grid container flexDirection="column" flexWrap={'nowrap'} sx={{ height: '100%', width: '100%', paddingX: '1.1rem', paddingTop: '.1rem' }}>
+        <Grid container sx={{ marginBottom: '.25rem', marginLeft: '1.1rem' }}>
+          <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           <Button
             variant="contained"
             onClick={() => setOpenProjectDialog(true)}
