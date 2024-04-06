@@ -118,13 +118,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
 
           const selectedPartsForText = selectedWords[textId];
           const sortedSelectedPartsForText = selectedPartsForText.sort(
-            (a: Word, b: Word) => {
-              if (a.position === b.position) {
-                return a.id > b.id ? 1 : -1;
-              }
-              return a.position > b.position ? 1 : -1;
-            }
-          );
+            (a: Word, b: Word) =>
+              BCVWP.compare(BCVWP.parseFromString(a.id), BCVWP.parseFromString(b.id)));
           const partsAsWords: Word[][] = [];
           sortedSelectedPartsForText.forEach((part) => {
             const lastIndex = partsAsWords.length - 1;
@@ -145,12 +140,12 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             }
           });
 
-        const wordInDisplayGroup = partsAsWords
-          .find(({ length }) => length > 0)
-          ?.find((word) => word.id);
-        const corpusAtRef = wordInDisplayGroup
-          ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
-          : undefined;
+          const wordInDisplayGroup = partsAsWords
+            .find(({ length }) => length > 0)
+            ?.find((word) => word.id);
+          const corpusAtRef = wordInDisplayGroup
+            ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
+            : undefined;
 
           const corpus = (container.corpora || [])[0];
 
