@@ -188,6 +188,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                     return (
                       <span key={`selected_${wordId}`}>
                         <WordDisplay
+                          suppressAfter={true}
                           readonly={true}
                           key={wordId}
                           parts={selectedWord}
