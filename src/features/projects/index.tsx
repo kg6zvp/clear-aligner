@@ -86,6 +86,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
       currentProject: project.id,
       initialized: InitializationStates.UNINITIALIZED
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   return (
