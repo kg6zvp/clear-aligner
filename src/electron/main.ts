@@ -1,7 +1,10 @@
-const path = require('path');
-const { app, screen, BrowserWindow, nativeTheme } = require('electron');
-const isDev = require('electron-is-dev');
-const { setUpIpcMain } = require(path.join(__dirname, '/database-main.js'));
+import path from 'path';
+import { app, screen, BrowserWindow, nativeTheme } from 'electron';
+import isDev from 'electron-is-dev';
+import { setUpIpcMain } from './database-main'
+
+// from docs
+//let win: Electron.BrowserWindow = null;
 
 function createWindow() {
   const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
