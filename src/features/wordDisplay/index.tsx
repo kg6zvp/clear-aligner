@@ -1,7 +1,6 @@
 import { Corpus, Link, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';
-import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React, { useMemo } from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
