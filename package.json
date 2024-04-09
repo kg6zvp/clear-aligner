@@ -49,7 +49,7 @@
     "eject": "craco eject",
     "prettier": "prettier --write .",
     "prepublishOnly": "rm -rf dist/ && rollup -c",
-    "dev-electron": "sql/scripts/create-db.sh --no-remove && concurrently -k \"tsc -W\" \"BROWSER=none npm start\" \"npm:electron\"",
+    "dev-electron": "sql/scripts/create-db.sh --no-remove && tsc && concurrently -k \"tsc -W\" \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron .",
     "storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook dev -p 6006",
     "build-storybook": "STORYBOOK_DISABLE_TELEMETRY=true storybook build"
