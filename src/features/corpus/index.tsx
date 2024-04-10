@@ -300,14 +300,14 @@ const CorpusAction: React.FC<CorpusActionProps> = ({
                                                    }) =>
   (
     <Grid container>
-      <Tooltip title="Show the next verses">
+      <Tooltip title="Show the next verses" placement="left">
         <span>
           <IconButton onClick={add} disabled={disabled === 'add'}>
             <Add sx={{ fontSize: 18 }} />
           </IconButton>
         </span>
       </Tooltip>
-      <Tooltip title="Remove the outer verses">
+      <Tooltip title="Remove the outer verses" placement="right">
         <span>
           <IconButton onClick={remove} disabled={disabled === 'remove'}>
             <Remove sx={{ fontSize: 18 }} />
