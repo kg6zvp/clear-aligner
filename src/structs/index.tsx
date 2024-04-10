@@ -108,7 +108,32 @@ export class CorpusContainer {
 
   corpusAtReferenceString(refString: string): Corpus | undefined {
     const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse);
-    return this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
+    const foundCorpus =  this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
+    if (foundCorpus) return foundCorpus;
+    const ref = BCVWP.parseFromString(verseString);
+    return this.corpora.find((corpus) => {
+      if (ref.book) {
+        if (!corpus.books[ref.book]) return false;
+        if (ref.chapter) {
+          if (!corpus.books[ref.book][ref.chapter]) return false;
+          if (ref.verse) {
+            const verse: Verse = corpus.books[ref.book][ref.chapter][ref.verse];
+            if (!verse) return false;
+            if (ref.word && ref.part) {
+              if (!verse.words.some((word) => {
+                const wordRef = BCVWP.parseFromString(word.id);
+                return wordRef.word === ref.word && wordRef.part === ref.part;
+              })) return false;
+            } else if (ref.word) {
+              if (!verse.words.some((word) =>
+                BCVWP.parseFromString(word.id).word === ref.word)
+              ) return false;
+            }
+          }
+        }
+      }
+      return true;
+    });
   }
 
   languageAtReferenceString(refString: string): LanguageInfo | undefined {
@@ -139,29 +164,7 @@ export class CorpusContainer {
   }
 
   refExists(ref: BCVWP): boolean {
-    const corpus = this.corpusAtReferenceString(ref.toReferenceString());
-    if (!corpus) return false;
-    if (ref.book) {
-      if (!corpus.books[ref.book]) return false;
-      if (ref.chapter) {
-        if (!corpus.books[ref.book][ref.chapter]) return false;
-        if (ref.verse) {
-          const verse: Verse = corpus.books[ref.book][ref.chapter][ref.verse];
-          if (!verse) return false;
-          if (ref.word && ref.part) {
-            if (!verse.words.some((word) => {
-              const wordRef = BCVWP.parseFromString(word.id);
-              return wordRef.word === ref.word && wordRef.part === ref.part;
-            })) return false;
-          } else if (ref.word) {
-            if (!verse.words.some((word) =>
-              BCVWP.parseFromString(word.id).word === ref.word)
-            ) return false;
-          }
-        }
-      }
-    }
-    return true;
+    return !!this.corpusAtReferenceString(ref.toReferenceString());
   }
 
   private mapCorpusBookToRef(book: { [key: number]: { [key: number]: Verse } }): BCVWP {
@@ -221,7 +224,8 @@ export class CorpusContainer {
         // otherwise, grab first available verse in next chapter
         const nextChapterRef = this.findNext(ref, BCVWPField.Chapter);
         if (!nextChapterRef) return undefined;
-        const nextChapter = this.corpusAtReferenceString(nextChapterRef.toReferenceString())!
+        const nextChapterCorpus = this.corpusAtReferenceString(nextChapterRef.toReferenceString());
+        const nextChapter = nextChapterCorpus!
           .books[nextChapterRef.book!][nextChapterRef.chapter!];
         return Object.values(nextChapter)
           .sort((a, b) => a.bcvId.chapter! - b.bcvId.chapter!)
@@ -261,7 +265,6 @@ export class CorpusContainer {
       default:
         return undefined;
     }
-    return undefined;
   }
 
   static fromIdAndCorpora = (
