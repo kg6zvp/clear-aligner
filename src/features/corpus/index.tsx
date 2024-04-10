@@ -28,16 +28,13 @@ const determineCorpusView = async (
   verses: Verse[],
   bcvId: BCVWP | null
 ) => {
-  const corpus = bcvId ? viewCorpora.corpusAtReferenceString(bcvId.toReferenceString()) : undefined;
-  if (!corpus) {
-    return <></>;
-  }
+
   return verses.map((verse) => {
     const languageInfo = viewCorpora.languageAtReferenceString(verse.bcvId.toReferenceString());
     return (
       <Grid
         container
-        key={`${corpus.id}/${verse.bcvId.toReferenceString()}`}
+        key={`${viewCorpora.id}/${verse.bcvId.toReferenceString()}`}
         sx={{ marginRight: '.7em' }}
       >
         <Grid item xs={1} sx={{ p: '1px' }}>
@@ -86,7 +83,7 @@ const determineCorpusView = async (
 export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const { viewCorpora, containers } = props;
-  const [verseElement, setVerseElement] = useState<JSX.Element | JSX.Element[]>();
+  const [verseElement, setVerseElement] = useState<JSX.Element[]>();
   const appCtx = useContext(AppContext);
 
   useDebug('TextComponent');
@@ -208,18 +205,13 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   }, [viewCorpora, visibleVerses, verseKeys]);
 
   useEffect(() => {
-    const linksTable = appCtx?.projectState?.linksTable;
-    if (!linksTable
-      || !verseAtPosition
-      || visibleVerses.length < 1) {
-      return;
-    }
+
     determineCorpusView(
       viewCorpora,
       visibleVerses,
       computedPosition)
       .then(verseElement => setVerseElement(verseElement));
-  }, [appCtx?.projectState?.linksTable, computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
+  }, [computedPosition, viewCorpora, visibleVerses, verseAtPosition]);
 
   if (!viewCorpora) {
     return <Typography>Empty State</Typography>;
@@ -288,7 +280,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
         sx={{ pl: 4, flex: 8, overflow: 'auto' }}
       >
         {
-          verseElement && computedPosition && viewCorpora.corpusAtReferenceString(computedPosition.toReferenceString())
+          (verseElement?.length ?? 0) > 0
             ? verseElement
             : <Typography>No verse data for this reference.</Typography>
         }
