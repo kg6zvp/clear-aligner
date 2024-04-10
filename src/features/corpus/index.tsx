@@ -84,7 +84,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   const textContainerRef = useRef<HTMLDivElement | null>(null);
   const { viewCorpora, containers } = props;
   const [verseElement, setVerseElement] = useState<JSX.Element[]>();
-  const appCtx = useContext(AppContext);
 
   useDebug('TextComponent');
 
