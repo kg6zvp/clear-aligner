@@ -11,6 +11,14 @@ export enum BCVWPField {
   Part = 12,
 }
 
+export interface BCVWPOverrides {
+  book?: number;
+  chapter?: number;
+  verse?: number;
+  word?: number;
+  part?: number;
+}
+
 export default class BCVWP {
   /**
    * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
@@ -91,6 +99,14 @@ export default class BCVWP {
       this.toTruncatedReferenceString(truncation) ===
       other.toTruncatedReferenceString(truncation)
     );
+  }
+
+  clone({ book, chapter, verse, word, part }: BCVWPOverrides): BCVWP {
+    return new BCVWP(book ?? this.book,
+      chapter ?? this.chapter,
+      verse ?? this.verse,
+      word ?? this.word,
+      part ?? this.part);
   }
 
   hasFields(...fields: BCVWPField[]) {

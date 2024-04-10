@@ -3,7 +3,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { AlignmentSide, CorpusContainer, Link, Word } from 'structs';
+import { AlignmentSide, CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
@@ -120,43 +120,24 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           const sortedSelectedPartsForText = selectedPartsForText.sort(
             (a: Word, b: Word) =>
               BCVWP.compare(BCVWP.parseFromString(a.id), BCVWP.parseFromString(b.id)));
-          const partsAsWordsTmp: Word[][] = [];
+          const partsAsWords: Word[][] = [];
           sortedSelectedPartsForText.forEach((part) => {
-            const lastIndex = partsAsWordsTmp.length - 1;
+            const lastIndex = partsAsWords.length - 1;
             const currentValueRef: BCVWP = BCVWP.parseFromString(part.id);
 
             if (
-              partsAsWordsTmp[lastIndex]?.length === 0 ||
+              partsAsWords[lastIndex]?.length === 0 ||
               (lastIndex >= 0 &&
                 BCVWP.parseFromString(
-                  partsAsWordsTmp[lastIndex].at(-1)!.id
+                  partsAsWords[lastIndex].at(-1)!.id
                 ).matchesTruncated(currentValueRef, BCVWPField.Word))
             ) {
               // if text should be grouped in the last word
-              partsAsWordsTmp[lastIndex].push(part);
+              partsAsWords[lastIndex].push(part);
             } else {
               // new word
-              partsAsWordsTmp.push([part]);
+              partsAsWords.push([part]);
             }
-          });
-          const partsAsWords: Word[][] = [];
-          partsAsWordsTmp.forEach((word) => {
-            if (partsAsWords.length < 1) {
-              partsAsWords.push(word);
-              return;
-            }
-            const lastIndex = partsAsWords.length - 1;
-            const lastWordPart = partsAsWords[lastIndex][0];
-            const lastWordPartBCV = BCVWP.parseFromString(lastWordPart.id);
-            const currentWordPartBCV = BCVWP.parseFromString(word[0].id);
-            const offsetByOneWordBCV = BCVWP.parseFromString(lastWordPartBCV.toReferenceString());
-            offsetByOneWordBCV.word! += 1;
-            offsetByOneWordBCV.referenceString = undefined;
-
-            if (!currentWordPartBCV.matchesTruncated(offsetByOneWordBCV, BCVWPField.Word)) {
-              partsAsWords.push([]);
-            }
-            partsAsWords.push(word);
           });
 
           const wordInDisplayGroup = partsAsWords
@@ -191,14 +172,16 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                 <span>&nbsp;</span>
                 {partsAsWords
                   .map((selectedWord, index: number): ReactElement => {
-                    if (selectedWord.length < 1) {
-                      return <span key={`selected_${index}_ellipsis`}>... </span>;
-                    }
+                    const lastWord = index > 0 ? partsAsWords.at(index-1) : undefined;
+                    const lastWordId = lastWord ? BCVWP.parseFromString(lastWord.at(0)!.id!) : undefined;
                     const wordId = BCVWP.parseFromString(
                       selectedWord.at(0)!.id
                     ).toTruncatedReferenceString(BCVWPField.Word);
                     return (
-                      <span key={`selected_${wordId}`}>
+                      <span id={`selected_${wordId}`} key={`selected_${wordId}`}>
+                        {lastWordId && container.findNext(lastWordId, BCVWPField.Word)?.toTruncatedReferenceString(BCVWPField.Word) !== wordId
+                          ? <span id={`selected_${lastWordId}_ellipsis`}
+                                  key={`selected_${lastWordId}_ellipsis`}>... </span> : ''}
                         <WordDisplay
                           suppressAfter={true}
                           readonly={true}
