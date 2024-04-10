@@ -112,6 +112,25 @@ export default class BCVWP {
     });
   }
 
+  hasUpToField(field: BCVWPField): boolean {
+    const fields = [];
+    switch(field) {
+      case BCVWPField.Part:
+        fields.push(BCVWPField.Part);
+      case BCVWPField.Word:
+        fields.push(BCVWPField.Word);
+      case BCVWPField.Verse:
+        fields.push(BCVWPField.Verse);
+      case BCVWPField.Chapter:
+        fields.push(BCVWPField.Chapter);
+      case BCVWPField.Book:
+        fields.push(BCVWPField.Book);
+        return this.hasFields(...fields);
+      default:
+        return false;
+    }
+  }
+
   static isValidString(reference: string): boolean {
     return (
       !!reference && !!reference.match(/^[onON]?\d/) && reference.length > 1

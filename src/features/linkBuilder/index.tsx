@@ -3,7 +3,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { AlignmentSide, CorpusContainer, Word } from 'structs';
+import { AlignmentSide, CorpusContainer, Link, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
@@ -120,24 +120,43 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           const sortedSelectedPartsForText = selectedPartsForText.sort(
             (a: Word, b: Word) =>
               BCVWP.compare(BCVWP.parseFromString(a.id), BCVWP.parseFromString(b.id)));
-          const partsAsWords: Word[][] = [];
+          const partsAsWordsTmp: Word[][] = [];
           sortedSelectedPartsForText.forEach((part) => {
-            const lastIndex = partsAsWords.length - 1;
+            const lastIndex = partsAsWordsTmp.length - 1;
             const currentValueRef: BCVWP = BCVWP.parseFromString(part.id);
 
             if (
-              partsAsWords[lastIndex]?.length === 0 ||
+              partsAsWordsTmp[lastIndex]?.length === 0 ||
               (lastIndex >= 0 &&
                 BCVWP.parseFromString(
-                  partsAsWords[lastIndex].at(-1)!.id
+                  partsAsWordsTmp[lastIndex].at(-1)!.id
                 ).matchesTruncated(currentValueRef, BCVWPField.Word))
             ) {
               // if text should be grouped in the last word
-              partsAsWords[lastIndex].push(part);
+              partsAsWordsTmp[lastIndex].push(part);
             } else {
               // new word
-              partsAsWords.push([part]);
+              partsAsWordsTmp.push([part]);
             }
+          });
+          const partsAsWords: Word[][] = [];
+          partsAsWordsTmp.forEach((word) => {
+            if (partsAsWords.length < 1) {
+              partsAsWords.push(word);
+              return;
+            }
+            const lastIndex = partsAsWords.length - 1;
+            const lastWordPart = partsAsWords[lastIndex][0];
+            const lastWordPartBCV = BCVWP.parseFromString(lastWordPart.id);
+            const currentWordPartBCV = BCVWP.parseFromString(word[0].id);
+            const offsetByOneWordBCV = BCVWP.parseFromString(lastWordPartBCV.toReferenceString());
+            offsetByOneWordBCV.word! += 1;
+            offsetByOneWordBCV.referenceString = undefined;
+
+            if (!currentWordPartBCV.matchesTruncated(offsetByOneWordBCV, BCVWPField.Word)) {
+              partsAsWords.push([]);
+            }
+            partsAsWords.push(word);
           });
 
           const wordInDisplayGroup = partsAsWords
@@ -171,20 +190,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               <div>
                 <span>&nbsp;</span>
                 {partsAsWords
-                  .filter((word) => word.length > 0)
                   .map((selectedWord, index: number): ReactElement => {
+                    if (selectedWord.length < 1) {
+                      return <span key={`selected_${index}_ellipsis`}>... </span>;
+                    }
                     const wordId = BCVWP.parseFromString(
                       selectedWord.at(0)!.id
                     ).toTruncatedReferenceString(BCVWPField.Word);
-                    let nextIsSequential: boolean = true;
-                    const next = partsAsWords[index + 1];
-                    if (next) {
-                      const sequenceDiff =
-                        next.at(0)!.position - selectedWord.at(0)!.position;
-                      if (sequenceDiff > 1) {
-                        nextIsSequential = false;
-                      }
-                    }
                     return (
                       <span key={`selected_${wordId}`}>
                         <WordDisplay
@@ -193,11 +205,8 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                           key={wordId}
                           parts={selectedWord}
                           corpus={corpusAtRef}
+                          disableHighlighting
                         />
-
-                        {!nextIsSequential ? (
-                          <span key={`selected_${wordId}_ellipsis`}>... </span>
-                        ) : null}
                       </span>
                     );
                   })}
