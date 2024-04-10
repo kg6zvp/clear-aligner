@@ -1,4 +1,4 @@
-import React, { ReactElement, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
@@ -11,7 +11,6 @@ import {
   findPreviousNavigableVerse,
   getReferenceListFromWords
 } from '../bcvNavigation/structs';
-import { AppContext } from '../../App';
 
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
