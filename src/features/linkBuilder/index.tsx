@@ -3,7 +3,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
 
-import { CorpusContainer, Word } from 'structs';
+import { AlignmentSide, CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 
 import cssVar from 'styles/cssVar';
@@ -20,13 +20,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
   useDebug('LinkBuilderComponent');
 
   const sourceContainer = useMemo(
-    () => containers.find(({ id }) => id === 'source')!,
+    () => containers.find(({ id }) => id === AlignmentSide.SOURCE)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
   );
   const targetContainer = useMemo(
-    () => containers.find(({ id }) => id === 'target')!,
+    () => containers.find(({ id }) => id === AlignmentSide.TARGET)!,
     // reference to `containers` doesn't change, but the length does
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [containers, containers.length]
@@ -46,7 +46,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(sourceId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       const targetWords: Word[] = inProgressLink.targets
         .map((targetId) => {
@@ -58,11 +58,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
             BCVWP.parseFromString(targetId)
           );
         })
-        .filter((x): x is Word => x !== null);
+        .filter((x): x is Word => !!x);
 
       return {
-        source: sourceWords ?? [],
-        target: targetWords ?? [],
+        sources: sourceWords ?? [],
+        targets: targetWords ?? [],
       } as Record<string, Word[]>;
     }
     return {};
@@ -72,7 +72,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
     return state.app.theme;
   });
 
-  if (!Object.keys(selectedWords).length) {
+  if (!selectedWords?.sources?.length && !selectedWords?.targets?.length) {
     return (
       <>
         <div
@@ -152,11 +152,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
           ? container?.corpusAtReferenceString(wordInDisplayGroup.id)
           : undefined;
 
-          if (!corpusAtRef?.name) return <div key={index} />;
+          const corpus = (container.corpora || [])[0];
 
           return (
             <div
-              key={`linkBuilder_${corpusAtRef?.name}`}
+              key={`linkBuilder_${corpus?.name}`}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -168,7 +168,7 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               }}
             >
               <Typography variant="h6" style={{ textAlign: 'right' }}>
-                {corpusAtRef?.name}
+                {corpus?.name}
               </Typography>
               <div style={{ marginBottom: '8px' }}>
                 <Divider />

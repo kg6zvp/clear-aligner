@@ -1,15 +1,17 @@
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { IconButton, TableContainer } from '@mui/material';
+import { CircularProgress, IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
-import { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
+import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
+import { Box } from '@mui/system';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -48,12 +50,9 @@ export const LinkCell = ({row, onClick}: {
 
 
 export interface AlignmentTableProps {
-  sort: GridSortItem | null;
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
-  alignedWord?: AlignedWord | null;
-  alignments: Link[];
-  onChangeSort: (sortData: GridSortItem | null) => void;
+  alignedWord?: AlignedWord;
   chosenAlignmentLink: Link | null;
   onChooseAlignmentLink: (alignmentLink: Link) => void;
   updateAlignments: (resetState: boolean) => void;
@@ -62,30 +61,42 @@ export interface AlignmentTableProps {
 /**
  * The AlignmentTable displays a list of alignment Links and allows the user to navigate to that alignment link in the
  * alignment editor
- * @param sort current sort model for Material UI DataGrid
  * @param wordSource current word source
  * @param pivotWord the pivot word that's currently selected, corresponds to the alignment rows being displayed and the
  * currently selected aligned word
  * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
- * @param alignments alignment links to be displayed in the table
- * @param onChangeSort callback for when the user changes the sort model
  * @param chosenAlignmentLink currently selected alignment link
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
  */
 export const AlignmentTable = ({
-  sort,
   wordSource,
   pivotWord,
   alignedWord,
-  alignments,
-  onChangeSort,
   chosenAlignmentLink,
   onChooseAlignmentLink,
   updateAlignments
 }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
+  const [ sort, onChangeSort ] = useState<GridSortItem|null>({
+    field: 'id',
+    sort: 'desc',
+  } as GridSortItem);
+
+  const alignments = useLinksFromAlignedWord(alignedWord, sort);
+
+  const chosenLink: Link|undefined = useMemo(() => {
+    if (!chosenAlignmentLink) return undefined;
+    if (!alignments?.includes(chosenAlignmentLink)) return undefined;
+    return chosenAlignmentLink;
+  }, [alignments, chosenAlignmentLink]);
+
+  const loading: boolean = useMemo(
+    () => !!alignedWord &&  !alignments,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [ alignedWord, alignments, alignments?.length ]);
+
   const initialPage = useMemo(() => {
-    if (chosenAlignmentLink) {
+    if (chosenAlignmentLink && alignments) {
       return (
         alignments.findIndex(
           (link) => link.id === chosenAlignmentLink.id
@@ -101,7 +112,7 @@ export const AlignmentTable = ({
       headerName: 'State',
     },
     {
-      field: 'sources',
+      field: 'ref',
       headerName: 'Ref',
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <RefCell {...row} />
@@ -128,6 +139,19 @@ export const AlignmentTable = ({
     },
   ];
 
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', margin: 'auto' }}>
+        <CircularProgress sx={{
+          display: 'flex',
+          '.MuiLinearProgress-bar': {
+            transition: 'none'
+          },
+        }} />
+      </Box>
+    );
+  }
+
   return (
     <AlignmentTableContext.Provider
       value={{
@@ -145,6 +169,11 @@ export const AlignmentTable = ({
           },
         }}
       >
+        {loading ? (
+          <Box sx={{ display: 'flex', margin: 'auto' }}>
+            <CircularProgress sx={{ margin: 'auto' }} />
+          </Box>
+        ) : (
         <DataGrid
           sx={{
             width: '100%',
@@ -152,11 +181,11 @@ export const AlignmentTable = ({
             ...DataGridResizeAnimationFixes,
           }}
           rowSelection={true}
-          rowCount={alignments.length}
+          rowCount={alignments?.length ?? 0}
           rowSelectionModel={
-            chosenAlignmentLink?.id ? [chosenAlignmentLink.id] : undefined
+            chosenLink?.id ? [chosenLink.id] : undefined
           }
-          rows={alignments}
+          rows={alignments ?? []}
           columns={columns}
           getRowId={(row) => row.id}
           getRowHeight={(_) => 'auto'}
@@ -179,6 +208,7 @@ export const AlignmentTable = ({
             }
           }}
         />
+      )}
       </TableContainer>
       <WorkbenchDialog
         alignment={selectedAligment}

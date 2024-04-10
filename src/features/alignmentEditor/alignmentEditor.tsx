@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
@@ -6,6 +6,12 @@ import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
+import { UserPreference } from 'state/preferences/tableManager';
+import { useCorpusContainers } from '../../hooks/useCorpusContainers';
+import _ from 'lodash';
+import { useAppDispatch } from '../../app/index';
+import { resetTextSegments } from '../../state/alignment.slice';
+import { Stack } from '@mui/material';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -13,48 +19,59 @@ interface AlignmentEditorProps {
   showNavigation?: boolean;
 }
 
-export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation = true}) => {
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true }) => {
   const layoutCtx = useContext(LayoutContext);
+  const { sourceContainer, targetContainer } = useCorpusContainers();
   const [availableWords, setAvailableWords] = useState([] as Word[]);
   const [selectedCorporaContainers, setSelectedCorporaContainers] = useState(
     [] as CorpusContainer[]
   );
-
   const appCtx = useContext(AppContext);
+  const dispatch = useAppDispatch();
+  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1,1,1), [appCtx.preferences?.bcv]);
 
-  // set current reference to default if none set
   useEffect(() => {
-    if (!appCtx.currentReference) {
-      appCtx.setCurrentReference(new BCVWP(45, 5, 3)); // set current reference to default
-    }
-  }, [appCtx, appCtx.currentReference, appCtx.setCurrentReference]);
+    if (sourceContainer && targetContainer)
+      setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
+  }, [sourceContainer, targetContainer]);
 
-  React.useEffect(() => {
-    if (appCtx.currentReference) {
+  useEffect(() => {
+    if (currentPosition) {
       layoutCtx.setWindowTitle(
         `${defaultDocumentTitle}: ${
-          appCtx.currentReference?.getBookInfo()?.EnglishBookName
-        } ${appCtx.currentReference?.chapter}:${appCtx.currentReference?.verse}`
+          currentPosition.getBookInfo()?.EnglishBookName
+        } ${currentPosition?.chapter}:${currentPosition?.verse}`
       );
     } else {
       layoutCtx.setWindowTitle(defaultDocumentTitle);
     }
-  }, [appCtx.currentReference, layoutCtx]);
+  }, [currentPosition, layoutCtx]);
 
-  React.useEffect(() => {
-    const targetCorpora = appCtx.appState.currentProject?.targetCorpora;
-    setSelectedCorporaContainers([targetCorpora, appCtx.appState.sourceCorpora].filter(v => v) as CorpusContainer[]);
-    setAvailableWords(targetCorpora?.corpora.flatMap(({ words }) => words) ?? []);
-  }, [appCtx.appState]);
+  useEffect(() => {
+    if (!targetContainer) {
+      return;
+    }
+    const loadSourceWords = async () => {
+      setAvailableWords(
+        targetContainer?.corpora.flatMap(({ words }) => words) ?? []
+      );
+    };
+    void loadSourceWords().catch(console.error);
+  }, [targetContainer?.corpora, setAvailableWords, targetContainer]);
 
   useEffect(() => {
     layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={appCtx.currentReference} />
+      <BCVDisplay currentPosition={appCtx.preferences?.bcv} />
     );
-  }, [layoutCtx, appCtx.currentReference]);
+  }, [layoutCtx, appCtx.preferences?.bcv]);
+
+  // reset selected tokens when the book, chapter or verse changes
+  useEffect(() => {
+    dispatch(resetTextSegments())
+  }, [appCtx.preferences?.bcv, dispatch])
 
   return (
-    <>
+    <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
       {
         showNavigation && (
           <div style={{ display: 'grid', justifyContent: 'center' }}>
@@ -63,16 +80,25 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({showNavigation 
               horizontal
               disabled={!availableWords || availableWords.length < 1}
               words={availableWords}
-              currentPosition={appCtx.currentReference ?? undefined}
-              onNavigate={appCtx.setCurrentReference}
+              currentPosition={currentPosition}
+              onNavigate={bcv => {
+                if (!_.isEqual(bcv, currentPosition)) {
+                  appCtx.setPreferences((previousState): UserPreference => {
+                    return {
+                      ...previousState as UserPreference,
+                      bcv
+                    };
+                  });
+                }
+              }}
             />
           </div>
         )
       }
       <Workbench
         corpora={selectedCorporaContainers}
-        currentPosition={appCtx.currentReference}
+        currentPosition={currentPosition}
       />
-    </>
+    </Stack>
   );
 };
