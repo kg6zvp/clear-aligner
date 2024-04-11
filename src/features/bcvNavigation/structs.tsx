@@ -227,11 +227,7 @@ export const findNextNavigableVerse = (
   if (
     !availableBooks ||
     !currentPosition ||
-    !currentPosition?.hasFields(
-      BCVWPField.Book,
-      BCVWPField.Chapter,
-      BCVWPField.Verse
-    )
+    !currentPosition?.hasUpToField(BCVWPField.Verse)
   ) {
     return null;
   }

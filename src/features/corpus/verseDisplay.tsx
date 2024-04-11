@@ -9,6 +9,7 @@ import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/l
  */
 export interface LimitedToLinks {
   onlyLinkIds?: string[]; // alignment link ids
+  disableHighlighting?: boolean; // whether highlighting should be disabled
 }
 
 export interface VerseDisplayProps extends LimitedToLinks {

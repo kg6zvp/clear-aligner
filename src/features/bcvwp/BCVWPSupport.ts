@@ -11,6 +11,14 @@ export enum BCVWPField {
   Part = 12,
 }
 
+export interface BCVWPOverrides {
+  book?: number;
+  chapter?: number;
+  verse?: number;
+  word?: number;
+  part?: number;
+}
+
 export default class BCVWP {
   /**
    * 0-based index, from book list here: https://ubsicap.github.io/usfm/identification/books.html
@@ -93,6 +101,14 @@ export default class BCVWP {
     );
   }
 
+  clone({ book, chapter, verse, word, part }: BCVWPOverrides): BCVWP {
+    return new BCVWP(book ?? this.book,
+      chapter ?? this.chapter,
+      verse ?? this.verse,
+      word ?? this.word,
+      part ?? this.part);
+  }
+
   hasFields(...fields: BCVWPField[]) {
     return fields.every((field): boolean => {
       switch (field) {
@@ -110,6 +126,25 @@ export default class BCVWP {
           return false;
       }
     });
+  }
+
+  hasUpToField(field: BCVWPField): boolean {
+    const fields = [];
+    switch(field) {
+      case BCVWPField.Part:
+        fields.push(BCVWPField.Part);
+      case BCVWPField.Word:
+        fields.push(BCVWPField.Word);
+      case BCVWPField.Verse:
+        fields.push(BCVWPField.Verse);
+      case BCVWPField.Chapter:
+        fields.push(BCVWPField.Chapter);
+      case BCVWPField.Book:
+        fields.push(BCVWPField.Book);
+        return this.hasFields(...fields);
+      default:
+        return false;
+    }
   }
 
   static isValidString(reference: string): boolean {
