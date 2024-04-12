@@ -3,14 +3,9 @@ import { app, screen, BrowserWindow, nativeTheme } from 'electron';
 import isDev from 'electron-is-dev';
 import { setUpIpcMain } from './database-main'
 
-// from docs
-//let win: Electron.BrowserWindow = null;
-
 function createWindow() {
   const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
-  console.log('scaleFactor', systemScaleFactor);
   const customScale = systemScaleFactor > 1 ? .75/systemScaleFactor : systemScaleFactor;
-  console.log('computedZoom', customScale);
   // Create the browser window.
   const win = new BrowserWindow({
     ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
