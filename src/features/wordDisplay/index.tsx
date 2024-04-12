@@ -29,6 +29,7 @@ export const WordDisplay = ({
                               readonly,
                               suppressAfter,
                               onlyLinkIds,
+                              disableHighlighting,
                               parts,
                               corpus,
                               links,
@@ -56,8 +57,10 @@ export const WordDisplay = ({
         {
           (hasGloss && preferences?.showGloss && allowGloss) ? (
             <GlossSegment
+              disableHighlighting={disableHighlighting}
               readonly={readonly}
               suppressAfter={suppressAfter}
+              onlyLinkIds={onlyLinkIds}
               links={links}
               parts={parts}
               corpus={corpus}
@@ -71,6 +74,7 @@ export const WordDisplay = ({
                   <TextSegment
                     key={part.id}
                     readonly={readonly}
+                    disableHighlighting={disableHighlighting}
                     onlyLinkIds={onlyLinkIds}
                     word={part}
                     links={links}

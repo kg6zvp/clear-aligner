@@ -83,6 +83,7 @@ export const TextSegment = ({
                               readonly,
                               word,
                               languageInfo,
+                              disableHighlighting,
                               alignment,
                               links,
                               showAfter = false
@@ -174,11 +175,11 @@ export const TextSegment = ({
               <Typography
               paragraph={false}
               component="span"
-              variant={computeVariant(isSelectedInEditedLink, isLinked)}
+              variant={disableHighlighting ? undefined : computeVariant(isSelectedInEditedLink, isLinked)}
               sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
               className={`text-segment${
                 readonly ? '.readonly' : ''
-              } ${computeDecoration(
+              } ${disableHighlighting ? ' locked ' : computeDecoration(
                 !!readonly,
                 isHoveredWord,
                 isRelatedToCurrentlyHovered,
