@@ -1,3 +1,6 @@
+/**
+ * This file contains classes to set up the database with TypeORM
+ */
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
 const path = require('path');
@@ -7,7 +10,9 @@ const fs = require('fs');
 const { platform } = require('os');
 const isMac = platform() === 'darwin';
 
-
+/**
+ * This class contains properties for DataSourceStatus
+ */
 class DataSourceStatus {
   constructor() {
     this.isLoading = false;
@@ -16,6 +21,9 @@ class DataSourceStatus {
   }
 }
 
+/**
+ * This class initializes the database
+ */
 class BaseRepository {
   static DB_WAIT_IN_MS = 1000;
 
@@ -79,6 +87,7 @@ class BaseRepository {
       const fileName = `${sanitize(app.getName()).slice(0, 40)}-${sanitize(sourceName).slice(0, 200)}.sqlite`;
       const workDatabaseDirectory = databaseDirectory ? databaseDirectory : this.getDataDirectory();
       const databaseFile = path.join(workDatabaseDirectory, fileName);
+
 
       this.logDatabaseTime('getDataSourceWithEntities(): copied template');
       try {

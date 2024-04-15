@@ -1,3 +1,6 @@
+/**
+ * This file supports the Project Repository
+ */
 const { EntitySchema, In } = require('typeorm');
 const { BaseRepository } = require('./baseRepository');
 const fs = require('fs');

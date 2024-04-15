@@ -1,8 +1,13 @@
+/**
+ * This file supports the User Repository
+ */
 const { BaseRepository } = require('./baseRepository');
 const { EntitySchema } = require('typeorm');
 const path = require('path');
 
-
+/**
+ * This class encapsulates the user preferences
+ */
 class Preference {
   constructor() {
     this.id = undefined;
@@ -32,7 +37,9 @@ const preferenceEntity = new EntitySchema({
   }
 });
 
-
+/**
+ * This class sets up the User Repository
+ */
 class UserRepository extends BaseRepository {
   static USER_DB_NAME = 'user';
 
