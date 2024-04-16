@@ -19,7 +19,7 @@ export interface UserPreference {
   initialized?: InitializationStates;
 }
 
-export interface UserPreferenceDto {
+interface UserPreferenceDto {
   id: string;
   bcv: string;
   alignment_view: string;
