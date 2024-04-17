@@ -1,3 +1,8 @@
+/**
+ * This file contains the BCVDisplay component
+ * which is a utility component that gets used throughout the UI
+ */
+
 import BCVWP from './BCVWPSupport';
 
 export interface BCVDisplayProps {

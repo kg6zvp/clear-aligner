@@ -17,6 +17,9 @@ const LinksToTargetWordsName = 'links__target_words';
 const DefaultProjectName = 'default';
 const ProjectDatabaseDirectory = 'projects';
 
+/**
+ * Link class
+ */
 class Link {
   constructor() {
     this.id = undefined;
@@ -25,6 +28,9 @@ class Link {
   }
 }
 
+/**
+ * LinkToSourceWord class
+ */
 class LinkToSourceWord {
   constructor() {
     this.link_id = undefined;
@@ -32,6 +38,9 @@ class LinkToSourceWord {
   }
 }
 
+/**
+ * LinkToTargetWord class
+ */
 class LinkToTargetWord {
   constructor() {
     this.link_id = undefined;
@@ -39,6 +48,9 @@ class LinkToTargetWord {
   }
 }
 
+/**
+ * WordsOrParts class
+ */
 class WordsOrParts {
   constructor() {
     this.id = undefined;
@@ -58,6 +70,9 @@ class WordsOrParts {
   }
 }
 
+/**
+ * CorporaEntity class
+ */
 class CorporaEntity {
   constructor() {
     this.id = undefined;
@@ -70,6 +85,9 @@ class CorporaEntity {
   }
 }
 
+/**
+ * LanguageEntity class
+ */
 class LanguageEntity {
   constructor() {
     this.code = undefined;

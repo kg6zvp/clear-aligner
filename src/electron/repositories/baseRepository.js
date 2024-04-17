@@ -22,7 +22,7 @@ class DataSourceStatus {
 }
 
 /**
- * This class initializes the database
+ * This class facilitates the database initialization
  */
 class BaseRepository {
   static DB_WAIT_IN_MS = 1000;

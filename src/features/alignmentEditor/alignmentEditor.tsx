@@ -1,3 +1,9 @@
+/**
+ * This file contains the AlignmentEditor component
+ * The AlignmentEditor wraps the BCVNavigation and
+ * Workbench components
+ */
+
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';

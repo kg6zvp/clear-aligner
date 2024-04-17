@@ -1,3 +1,7 @@
+/**
+ * This file contains the BCVWP class that gets instantiated throughout the
+ * application
+ */
 import { BookInfo, findBookByNumber } from '../../workbench/books';
 
 /**
