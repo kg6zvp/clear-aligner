@@ -38,7 +38,8 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "craco build && tsc && electron-builder",
+    "clean": "rm -rf build app dist ui",
+    "build": "BUILD_PATH=ui craco build && tsc && electron-builder",
     "build:mac": "sql/scripts/create-db.sh && yarn build -m",
     "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
     "build:win": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
@@ -118,13 +119,17 @@
     "@types/react-dom": "^18"
   },
   "files": [
-    "dist/"
+    "ui",
+    "app"
   ],
   "main": "app/electron/main.js",
   "build": {
     "appId": "com.biblica.clearaligner",
     "productName": "ClearAligner",
     "extends": null,
+    "extraMetadata": {
+      "main": "app/electron/main.js"
+    },
     "directories": {
       "buildResources": "build/",
       "app": "."
