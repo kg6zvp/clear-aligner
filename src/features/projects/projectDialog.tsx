@@ -139,7 +139,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
             await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           }
-          if (type == 'update') {
+          if (type === 'update') {
             setPreferences(p => ({
               ...(p ?? {}) as UserPreference,
               initialized: InitializationStates.UNINITIALIZED

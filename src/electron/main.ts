@@ -1,13 +1,11 @@
-const path = require('path');
-const { app, screen, BrowserWindow, nativeTheme } = require('electron');
-const isDev = require('electron-is-dev');
-const { setUpIpcMain } = require(path.join(__dirname, '/database-main.js'));
+import path from 'path';
+import { app, screen, BrowserWindow, nativeTheme } from 'electron';
+import isDev from 'electron-is-dev';
+import { setUpIpcMain } from './database-main'
 
 function createWindow() {
   const systemScaleFactor = screen.getPrimaryDisplay().scaleFactor;
-  console.log('scaleFactor', systemScaleFactor);
   const customScale = systemScaleFactor > 1 ? .75/systemScaleFactor : systemScaleFactor;
-  console.log('computedZoom', customScale);
   // Create the browser window.
   const win = new BrowserWindow({
     ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
@@ -26,7 +24,7 @@ function createWindow() {
   if (isDev) {
     win.loadURL('http://localhost:3000');
   } else {
-    win.loadFile(path.join(__dirname, 'index.html'));
+    win.loadFile(path.join(__dirname, '../../ui/index.html'));
   }
   // Open the DevTools.
   if (isDev) {
