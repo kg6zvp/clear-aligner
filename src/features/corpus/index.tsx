@@ -1,3 +1,7 @@
+/**
+ * This file contains the CorpusComponent which is used in the Alignment editor
+ * to display the current verse and related functionality/context
+ */
 import React, { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
@@ -214,7 +218,6 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   if (!viewCorpora) {
     return <Typography>Empty State</Typography>;
   }
-
   return (
     <Grid
       container

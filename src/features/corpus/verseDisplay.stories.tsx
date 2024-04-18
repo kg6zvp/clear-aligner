@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic to use the VerseDisplay component
+ * in Storybook
+ */
 import { Meta } from '@storybook/react';
 import { VerseDisplay, VerseDisplayProps } from './verseDisplay';
 import { AlignmentSide, Corpus, TextDirection, Verse } from '../../structs';
