@@ -1,3 +1,6 @@
+/**
+ * This file contains the tests for the TextSegment component.
+ */
 import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
 import TextSegment from 'features/textSegment';

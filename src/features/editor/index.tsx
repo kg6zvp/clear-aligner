@@ -1,3 +1,7 @@
+/**
+ * This file contains the Editor component which is used in Alignment Editor
+ * mode and wraps Polyglot, ControlPanel and ContextPanel.
+ */
 import { ReactElement } from 'react';
 import { Container } from '@mui/material';
 

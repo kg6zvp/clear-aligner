@@ -1,3 +1,7 @@
+/**
+ * This file sets up the MUI Theme via the Themed wrapper component.
+ */
+
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 

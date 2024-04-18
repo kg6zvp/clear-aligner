@@ -1,3 +1,7 @@
+/**
+ * This file contains the Polyglot component which is used in Alignment Editor
+ * mode to wrap the CorpusComponent component(s).
+ */
 import React, { useMemo, useRef } from 'react';
 import { Box, Card, Grid, Stack } from '@mui/material';
 

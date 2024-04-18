@@ -1,3 +1,7 @@
+/**
+ * This file contains the ProjectDialog component which handles project creation
+ * and project editing in the Project Mode of the CA application.
+ */
 import React, { useContext, useMemo } from 'react';
 import {
   Autocomplete,

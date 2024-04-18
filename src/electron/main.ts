@@ -1,3 +1,7 @@
+/**
+ * This is the starting point for the entire app and is executed in the node.js
+ * process.
+ */
 import path from 'path';
 import { app, screen, BrowserWindow, nativeTheme } from 'electron';
 import isDev from 'electron-is-dev';

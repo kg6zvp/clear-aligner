@@ -1,5 +1,5 @@
 /**
- * This file supports the Project Repository
+ * This file supports the Project Repository, things like links, corpora, etc
  */
 const { EntitySchema, In } = require('typeorm');
 const { BaseRepository } = require('./baseRepository');

@@ -1,3 +1,7 @@
+/**
+ * This file contains the ProjectsView Component which is responsible for the
+ * Project Mode of the CA application.
+ */
 import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
 import React, { useContext, useEffect } from 'react';
 import ProjectDialog from './projectDialog';

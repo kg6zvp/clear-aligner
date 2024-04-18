@@ -1,3 +1,7 @@
+/**
+ * This file contains the TextSegment Component which is used in Alignment Mode
+ * and the Concordance View.
+ */
 import React, { ReactElement, useMemo } from 'react';
 import { Typography } from '@mui/material';
 import useDebug from 'hooks/useDebug';
@@ -159,7 +163,6 @@ export const TextSegment = ({
   if (!word) {
     return <span>{'ERROR'}</span>;
   }
-
   return (
     <React.Fragment>
         <LocalizedTextDisplay languageInfo={languageInfo}>

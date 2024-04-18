@@ -1,3 +1,7 @@
+/**
+ *This sets up the renderer side of the Electron IPC calls used for DB access.
+ */
+
 //@ts-nocheck
 // All of the Node.js APIs are available in the preload process.
 // It has the same sandbox as a Chrome extension.

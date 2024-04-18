@@ -1,3 +1,7 @@
+/**
+ * This file contains the WordDisplay component which is used in the VerseDisplay
+ * component.
+ */
 import { Corpus, Link, Word } from '../../structs';
 import { Typography } from '@mui/material';
 import TextSegment from '../textSegment';

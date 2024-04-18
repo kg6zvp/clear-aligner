@@ -1,5 +1,5 @@
 /**
- * This file supports the User Repository
+ * This file supports the User Repository, mainly used for user preferences.
  */
 const { BaseRepository } = require('./baseRepository');
 const { EntitySchema } = require('typeorm');

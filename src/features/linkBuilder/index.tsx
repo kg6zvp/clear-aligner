@@ -1,3 +1,7 @@
+/**
+ * This file contains the LinkBuilder Component which is used in the
+ * Alignment Editor mode.
+ */
 import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';

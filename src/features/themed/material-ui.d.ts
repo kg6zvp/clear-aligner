@@ -1,3 +1,6 @@
+/**
+ * This file contains interfaces for MUI styles.
+ */
 import '@mui/material/styles';
 
 declare module '@mui/material/styles' {
