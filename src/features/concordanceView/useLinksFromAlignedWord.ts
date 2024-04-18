@@ -1,3 +1,7 @@
+/**
+ * This file contains the useLinksFromAlignedWord hook
+ * which returns an array of links used in the AlignmentEditor
+ */
 import { AlignedWord } from './structs';
 import { GridSortItem } from '@mui/x-data-grid';
 import { Link } from '../../structs';

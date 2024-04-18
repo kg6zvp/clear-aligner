@@ -1,3 +1,7 @@
+/**
+ * This file contains the AlignedWordTable component which is the second table
+ * in the concordanceView component
+ */
 import {
   DataGrid,
   GridColDef,
@@ -136,6 +140,7 @@ export const AlignedWordTable = ({
       </Box>
     );
   }
+
   return (
     <TableContainer
       sx={{

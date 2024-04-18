@@ -1,3 +1,7 @@
+/**
+ * This file contains the ConcordanceView component which is one of the top level
+ * modes of the CA application
+ */
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AlignmentSide, Link } from '../../structs';
 import { Paper, Typography } from '@mui/material';

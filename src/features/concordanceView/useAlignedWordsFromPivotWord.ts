@@ -1,3 +1,7 @@
+/**
+ * This file contains the useAlignedWordsFromPivotWord hook
+ * which returns an array of aligned words
+ */
 import { AlignedWord, PivotWord } from './structs';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';

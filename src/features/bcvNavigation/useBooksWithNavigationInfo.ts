@@ -1,7 +1,6 @@
 /**
  * This file contains the useBooksWithNavigationInfo hook
  * which returns the list of all currently available books
- *
  */
 import { Word } from '../../structs';
 import { getReferenceListFromWords, NavigableBook } from './structs';

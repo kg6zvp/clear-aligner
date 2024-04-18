@@ -1,3 +1,7 @@
+/**
+ * This file contains the VerseCell component which renders verse text for use
+ * in the AlignmentTable
+ */
 import { GridRenderCellParams } from '@mui/x-data-grid';
 import { AlignmentSide, Link, Verse } from '../../../structs';
 import { useContext } from 'react';

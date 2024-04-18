@@ -1,3 +1,6 @@
+/**
+ * This file contains helpers for the ConcordanceView component
+ */
 import { AlignmentSide, Word } from '../../structs';
 import { FullyResolvedLink } from './structs';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';

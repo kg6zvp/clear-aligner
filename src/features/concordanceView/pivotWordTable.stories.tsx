@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic to use the PivotWordTable component
+ * in Storybook
+ */
 import { Meta } from '@storybook/react';
 import { PivotWordTable, PivotWordTableProps } from './pivotWordTable';
 import { useState } from 'react';
