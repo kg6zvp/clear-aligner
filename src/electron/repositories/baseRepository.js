@@ -1,5 +1,5 @@
 /**
- * This file contains classes to set up the database with TypeORM
+ * This file contains classes to set up the database with TypeORM.
  */
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
