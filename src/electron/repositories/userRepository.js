@@ -5,6 +5,7 @@ const { BaseRepository } = require('./baseRepository');
 const { EntitySchema } = require('typeorm');
 const path = require('path');
 
+
 /**
  * This class encapsulates the user preferences
  */
@@ -36,6 +37,7 @@ const preferenceEntity = new EntitySchema({
     }
   }
 });
+
 
 /**
  * This class sets up the User Repository
