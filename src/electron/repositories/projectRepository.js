@@ -1141,5 +1141,4 @@ class ProjectRepository extends BaseRepository {
 
 module.exports = {
   ProjectRepository
-
 };
