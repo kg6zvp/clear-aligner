@@ -1,3 +1,7 @@
+/**
+ * This file contains the useLanguages hook, which returns a map of all
+ * languages in the database.
+ */
 import { useContext, useEffect, useState } from 'react';
 import { LanguageInfo } from '../structs';
 import { useDatabase } from './useDatabase';

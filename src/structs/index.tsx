@@ -1,3 +1,7 @@
+/**
+ * This file exports the CorpusContainer class which supports multiple corpora
+ * and has methods for interacting with said corpora.
+ */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 
 export enum SyntaxType {

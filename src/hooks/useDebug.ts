@@ -1,3 +1,6 @@
+/**
+ * This file contains the useDebug hook
+ */
 import { useAppSelector } from 'app/hooks';
 
 const useDebug = (componentName: string, ...args: string[]): void => {

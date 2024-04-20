@@ -1,3 +1,7 @@
+/**
+ * This file contains the VirtualTable class which contains methods for
+ * interacting with the database.
+ */
 import { LinksTable } from './links/tableManager';
 import { UserPreferenceTable } from './preferences/tableManager';
 import { ProjectTable } from './projects/tableManager';

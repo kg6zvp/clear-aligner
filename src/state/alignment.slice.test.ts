@@ -1,3 +1,6 @@
+/**
+ * This file contains the tests for alignments.
+ */
 import { Alignment, AlignmentSide, PrimaryAlignmentPolarity, Word } from 'structs';
 
 import alignmentSliceReducer, { initialState, toggleTextSegment } from 'state/alignment.slice';

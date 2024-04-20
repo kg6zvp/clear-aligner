@@ -1,4 +1,8 @@
 /**
+ * This file contains custom styling for the DataGrid.
+ */
+
+/**
  * add to sx on DataGrid in order to fix choppy resize animations with many rows in DataGrid
  */
 export const DataGridResizeAnimationFixes = {

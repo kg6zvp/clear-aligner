@@ -1,3 +1,6 @@
+/**
+ * This file contains the LinksTable Class and supporting functions.
+ */
 import { AlignmentSide, Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';

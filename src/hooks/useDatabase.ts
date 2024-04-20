@@ -1,3 +1,7 @@
+/**
+ * This file contains the useDatabase hook, which returns the collection of
+ * APIs to the database.
+ */
 import { AlignmentSide, Corpus, LanguageInfo, Link } from '../structs';
 import { PivotWordFilter } from '../features/concordanceView/concordanceView';
 import { GridSortItem } from '@mui/x-data-grid';
