@@ -9,6 +9,8 @@ const sanitize = require('sanitize-filename');
 const fs = require('fs');
 const { platform } = require('os');
 const isMac = platform() === 'darwin';
+
+
 /**
  * This class contains properties for DataSourceStatus
  */
