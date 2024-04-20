@@ -1,7 +1,6 @@
 /**
  * This sets up the node.js side of the Electron IPC calls used for DB access.
  */
-
 import { ipcMain } from 'electron';
 import { ChannelPrefix } from './database-shared.js';
 import { ProjectRepository } from './repositories/projectRepository';

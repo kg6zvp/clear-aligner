@@ -163,6 +163,7 @@ export const TextSegment = ({
   if (!word) {
     return <span>{'ERROR'}</span>;
   }
+
   return (
     <React.Fragment>
         <LocalizedTextDisplay languageInfo={languageInfo}>

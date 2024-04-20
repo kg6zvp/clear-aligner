@@ -218,6 +218,7 @@ export const CorpusComponent = (props: CorpusProps): ReactElement => {
   if (!viewCorpora) {
     return <Typography>Empty State</Typography>;
   }
+
   return (
     <Grid
       container

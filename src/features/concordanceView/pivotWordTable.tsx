@@ -103,7 +103,6 @@ export const PivotWordTable = ({
       </Box>
     );
   }
-
   return (
     <TableContainer
       sx={{

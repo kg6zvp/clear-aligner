@@ -27,7 +27,6 @@ export const SingleSelectButtonGroup = ({
   onSelect,
   sx,
 }: SingleSelectButtonGroupProps) => {
-
   return (
     <ButtonGroup fullWidth={true} sx={sx}>
       {items.map((item) => (

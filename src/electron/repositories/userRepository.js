@@ -72,4 +72,5 @@ class UserRepository extends BaseRepository {
 
 module.exports = {
   UserRepository
+
 };

@@ -140,7 +140,6 @@ export const AlignedWordTable = ({
       </Box>
     );
   }
-
   return (
     <TableContainer
       sx={{
