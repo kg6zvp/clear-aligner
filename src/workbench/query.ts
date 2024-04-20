@@ -1,3 +1,6 @@
+/**
+ * This file contains helper functions for interacting with the Corpus
+ */
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
 import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';

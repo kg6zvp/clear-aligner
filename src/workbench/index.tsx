@@ -1,3 +1,7 @@
+/**
+ * This file contains the WorkBench component which is used in the Alignment
+ * Editor and wraps the Editor component.
+ */
 import React, { ReactElement } from 'react';
 import { CorpusContainer } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
