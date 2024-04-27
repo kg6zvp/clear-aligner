@@ -1,5 +1,6 @@
+//@ts-nocheck
 import { ipcMain } from 'electron';
-import { ChannelPrefix } from './database-shared.js';
+import { ChannelPrefix } from './database-shared';
 import { ProjectRepository } from './repositories/projectRepository';
 import { UserRepository } from './repositories/userRepository';
 

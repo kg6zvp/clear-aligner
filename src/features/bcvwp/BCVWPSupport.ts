@@ -133,12 +133,16 @@ export default class BCVWP {
     switch(field) {
       case BCVWPField.Part:
         fields.push(BCVWPField.Part);
+        // falls through
       case BCVWPField.Word:
         fields.push(BCVWPField.Word);
+        // falls through
       case BCVWPField.Verse:
         fields.push(BCVWPField.Verse);
+        // falls through
       case BCVWPField.Chapter:
         fields.push(BCVWPField.Chapter);
+        // falls through
       case BCVWPField.Book:
         fields.push(BCVWPField.Book);
         return this.hasFields(...fields);

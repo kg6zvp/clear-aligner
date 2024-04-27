@@ -1,3 +1,4 @@
+//@ts-nocheck
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
 const path = require('path');
@@ -18,6 +19,8 @@ class DataSourceStatus {
 
 class BaseRepository {
   static DB_WAIT_IN_MS = 1000;
+
+  getDataSource: (sourceName: string) => Promise<DataSource|undefined>;
 
   constructor() {
     this.isLoggingTime = true;

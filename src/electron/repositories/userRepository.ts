@@ -1,7 +1,7 @@
-const { BaseRepository } = require('./baseRepository');
-const { EntitySchema } = require('typeorm');
-const path = require('path');
-
+//@ts-nocheck
+import { BaseRepository } from './baseRepository';
+import { EntitySchema } from 'typeorm';
+import path from 'path';
 
 class Preference {
   constructor() {
@@ -63,6 +63,6 @@ class UserRepository extends BaseRepository {
   };
 }
 
-module.exports = {
+export {
   UserRepository
 };
