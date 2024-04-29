@@ -1,6 +1,8 @@
 export default {
   runner: '@kayahr/jest-electron-runner/main',
-  testRegex: '((\\.|/)(main.test))\\.(js|ts|tsx)?$',
+  testMatch: [
+    '<rootDir>/src/**/*.main.{spec,test}.{js,jsx,ts,tsx}'
+  ],
   testEnvironment: 'node',
   rootDir: './',
   testEnvironmentOptions: {
