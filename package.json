@@ -47,7 +47,7 @@
     "build:mac:fast": "sql/scripts/create-db.sh --no-remove && yarn build -m",
     "build:linux:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
     "build:win:fast": "sql/scripts/create-db.sh --no-remove && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
-    "test": "craco test",
+    "test-ui": "craco test",
     "test-electron": "tsc && export NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" && jest --config jest.config.ts",
     "eject": "craco eject",
     "prettier": "prettier --write .",
