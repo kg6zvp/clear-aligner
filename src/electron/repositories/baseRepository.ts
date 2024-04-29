@@ -17,10 +17,12 @@ class DataSourceStatus {
   }
 }
 
-class BaseRepository {
-  static DB_WAIT_IN_MS = 1000;
+export interface DataSourceFactory {
+  getDataSource(sourceName: string): Promise<DataSource|undefined>;
+}
 
-  getDataSource: (sourceName: string) => Promise<DataSource|undefined>;
+export class BaseRepository implements DataSourceFactory {
+  static DB_WAIT_IN_MS = 1000;
 
   constructor() {
     this.isLoggingTime = true;
@@ -129,7 +131,3 @@ class BaseRepository {
     }
   };
 }
-
-module.exports = {
-  BaseRepository
-};
