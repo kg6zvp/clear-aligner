@@ -5,7 +5,7 @@ import { AlignmentSide } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
 
 import { DataSource, EntitySchema, In } from 'typeorm';
-import { BaseRepository, DataSourceFactory } from './baseRepository';
+import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
 import sanitize from 'sanitize-filename';
@@ -213,7 +213,7 @@ const languageSchema = new EntitySchema({
   }
 });
 
-export class ProjectRepository extends BaseRepository implements DataSourceFactory {
+export class ProjectRepository extends BaseRepository {
 
   getDataSource: (sourceName: string) => Promise<DataSource|undefined>;
 

@@ -17,11 +17,7 @@ class DataSourceStatus {
   }
 }
 
-export interface DataSourceFactory {
-  getDataSource(sourceName: string): Promise<DataSource|undefined>;
-}
-
-export class BaseRepository implements DataSourceFactory {
+export class BaseRepository {
   static DB_WAIT_IN_MS = 1000;
 
   constructor() {
