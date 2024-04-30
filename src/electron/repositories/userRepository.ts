@@ -1,15 +1,21 @@
 /**
  * This file supports the User Repository, mainly used for user preferences.
  */
-const { BaseRepository } = require('./baseRepository');
-const { EntitySchema } = require('typeorm');
-const path = require('path');
-
+import { BaseRepository } from './baseRepository';
+import { DataSource, EntitySchema } from 'typeorm';
+import path from 'path';
+import { ControlPanelFormat, UserPreferenceDto } from '../../state/preferences/tableManager';
 
 /**
  * This class encapsulates the user preferences
  */
 class Preference {
+  id?: string;
+  alignment_view: ''|ControlPanelFormat;
+  bcv: string;
+  page: string;
+  current_project: string;
+
   constructor() {
     this.id = undefined;
     this.alignment_view = '';
@@ -23,6 +29,7 @@ class Preference {
 const preferenceEntity = new EntitySchema({
   name: 'preference', tableName: 'preference', target: Preference, columns: {
     id: {
+      //@ts-ignore
       primary: true, type: 'varchar', generated: false
     }, alignment_view: {
       type: 'varchar'
@@ -42,8 +49,10 @@ const preferenceEntity = new EntitySchema({
 /**
  * This class sets up the User Repository
  */
-class UserRepository extends BaseRepository {
+export class UserRepository extends BaseRepository {
   static USER_DB_NAME = 'user';
+
+  getDataSource: () => Promise<DataSource>;
 
   constructor() {
     super();
@@ -63,7 +72,7 @@ class UserRepository extends BaseRepository {
     return (preferences || [])[0];
   };
 
-  createOrUpdatePreferences = async (preferenceData) => {
+  createOrUpdatePreferences = async (preferenceData: UserPreferenceDto) => {
     const preferenceRepository = (await this.getDataSource()).getRepository('preference');
     // Clear all rows to ensure no duplicates exist
     preferenceRepository.clear();

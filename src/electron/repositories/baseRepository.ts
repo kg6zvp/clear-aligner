@@ -1,6 +1,7 @@
 /**
  * This file contains classes to set up the database with TypeORM.
  */
+//@ts-nocheck
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
 const path = require('path');
@@ -25,7 +26,7 @@ class DataSourceStatus {
 /**
  * This class facilitates the database initialization
  */
-class BaseRepository {
+export class BaseRepository {
   static DB_WAIT_IN_MS = 1000;
 
   constructor() {

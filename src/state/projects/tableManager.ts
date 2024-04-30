@@ -22,6 +22,12 @@ export interface Project {
   targetCorpora?: CorpusContainer;
 }
 
+export interface ProjectDto {
+  id?: string;
+  name?: string;
+  corpora: Corpus[]
+}
+
 const DatabaseInsertChunkSize = 2_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize * 8;
 
@@ -189,7 +195,7 @@ export class ProjectTable extends VirtualTable {
     });
   };
 
-  static convertToDto = (project: Project) => ({
+  static convertToDto = (project: Project): ProjectDto => ({
     id: project.id,
     name: project.name,
     corpora: [...(project.sourceCorpora?.corpora || []), ...(project.targetCorpora?.corpora || [])]
