@@ -1,3 +1,4 @@
+//@ts-nocheck
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
 const path = require('path');
@@ -16,7 +17,7 @@ class DataSourceStatus {
   }
 }
 
-class BaseRepository {
+export class BaseRepository {
   static DB_WAIT_IN_MS = 1000;
 
   constructor() {
@@ -126,7 +127,3 @@ class BaseRepository {
     }
   };
 }
-
-module.exports = {
-  BaseRepository
-};

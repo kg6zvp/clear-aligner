@@ -2,7 +2,7 @@ import { AlignmentSide, Corpus, LanguageInfo, Link } from '../structs';
 import { PivotWordFilter } from '../features/concordanceView/concordanceView';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useMemo } from 'react';
-import { UserPreference, UserPreferenceDto } from '../state/preferences/tableManager';
+import { UserPreferenceDto } from '../state/preferences/tableManager';
 
 export interface ListedProjectDto {
   id: string;
