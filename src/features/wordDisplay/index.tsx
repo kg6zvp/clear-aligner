@@ -1,6 +1,7 @@
 /**
  * This file contains the WordDisplay component which is used in the VerseDisplay
- * component.
+ * component. It accepts props from VerseDisplay that customize how the text
+ * is displayed to the user.
  */
 import { Corpus, Link, Word } from '../../structs';
 import { Typography } from '@mui/material';

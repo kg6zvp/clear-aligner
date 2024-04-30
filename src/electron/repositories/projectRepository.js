@@ -18,7 +18,8 @@ const DefaultProjectName = 'default';
 const ProjectDatabaseDirectory = 'projects';
 
 /**
- * Link class
+ * Link class that links the sources_text to the targets_text used to define the
+ * links table.
  */
 class Link {
   constructor() {
@@ -29,7 +30,8 @@ class Link {
 }
 
 /**
- * LinkToSourceWord class
+ * LinkToSourceWord class used to link source and target words using the link and
+ * word ids.
  */
 class LinkToSourceWord {
   constructor() {
@@ -39,7 +41,8 @@ class LinkToSourceWord {
 }
 
 /**
- * LinkToTargetWord class
+ * LinkToTargetWord class used to link source and target words using the link and
+ * word ids.
  */
 class LinkToTargetWord {
   constructor() {
@@ -49,7 +52,7 @@ class LinkToTargetWord {
 }
 
 /**
- * WordsOrParts class
+ * WordsOrParts class represents the individual rows that are in the .tsv files.
  */
 class WordsOrParts {
   constructor() {
@@ -71,7 +74,9 @@ class WordsOrParts {
 }
 
 /**
- * CorporaEntity class
+ * CorporaEntity class is used to define projects.
+ * Both source and target corpora are used to define alignment data
+ * If this.side === 'target', then it's used to define a project.
  */
 class CorporaEntity {
   constructor() {
@@ -86,7 +91,8 @@ class CorporaEntity {
 }
 
 /**
- * LanguageEntity class
+ * LanguageEntity class is used to define the text direction, language and the
+ * font family for the corpora.
  */
 class LanguageEntity {
   constructor() {

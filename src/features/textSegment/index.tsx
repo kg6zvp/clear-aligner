@@ -1,6 +1,7 @@
 /**
  * This file contains the TextSegment Component which is used in Alignment Mode
- * and the Concordance View.
+ * to show the source and target text. TextSegment is also used in the
+ * Concordance Mode to show the verse text.
  */
 import React, { ReactElement, useMemo } from 'react';
 import { Typography } from '@mui/material';
