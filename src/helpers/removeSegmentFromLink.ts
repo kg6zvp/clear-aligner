@@ -1,3 +1,7 @@
+/**
+ * This file contains the removeSegmentFromLink helper function, which is not
+ * currently used.
+ */
 import { AlignmentSide, Link, Word } from 'structs';
 
 const removeFromArray = (originArray: string[], id: string): string[] => {

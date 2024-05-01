@@ -1,3 +1,6 @@
+/**
+ * This file contains the ProjectTable Class and supporting functions.
+ */
 import { VirtualTable } from '../databaseManagement';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
 import { EmptyWordId, LinksTable } from '../links/tableManager';

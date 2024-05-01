@@ -1,3 +1,7 @@
+/**
+ * This file contains the findFirstRefFromLink helper function which is used in
+ * the AlignmentTable component in the Concordance View.
+ */
 import { AlignmentSide, Link } from '../structs';
 import _ from 'lodash';
 

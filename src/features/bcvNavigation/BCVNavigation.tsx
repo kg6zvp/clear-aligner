@@ -1,3 +1,9 @@
+/**
+ * This file contains the BCVNavigation component
+ * The BCVNavigation component allows the user to navigate through a corpora
+ * using forward and backward buttons and dropdowns to reach a specific book,
+ * chapter and verse
+ */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
 import { Word } from '../../structs';

@@ -1,3 +1,7 @@
+/**
+ * This file contains the LocalizedTextDisplay component, used throughout the UI
+ * to render localized text.
+ */
 import { LanguageInfo } from '../../structs';
 import { Typography } from '@mui/material';
 import { PropsWithChildren } from 'react';

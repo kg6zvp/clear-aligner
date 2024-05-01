@@ -1,3 +1,7 @@
+/**
+ * This file contains the VerseDisplay component which is used inside the
+ * CorpusComponent
+ */
 import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';

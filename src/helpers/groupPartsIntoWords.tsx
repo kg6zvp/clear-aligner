@@ -1,3 +1,7 @@
+/**
+ * This file contains the groupPartsIntoWords helper function that returns a
+ * two-dimensional array of word parts grouped by word.
+ */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { Word } from '../structs';
 import { LocalizedWordEntry } from '../features/concordanceView/structs';

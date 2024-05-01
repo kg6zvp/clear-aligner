@@ -1,3 +1,7 @@
+/**
+ * This file contains the UploadAlignment component which contains buttons used
+ * in the Projects Mode for uploading and saving alignment data
+ */
 import React, { useEffect, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';

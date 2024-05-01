@@ -1,3 +1,6 @@
+/**
+ * This file contains the useInitialization hook which returns the App Context
+ */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';

@@ -1,3 +1,6 @@
+/**
+ * This file creates the alignmentSlice for use with Redux state management.
+ */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Link, Word } from 'structs';
 import { AlignmentMode } from './alignmentState';

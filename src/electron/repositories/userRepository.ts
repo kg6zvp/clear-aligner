@@ -1,8 +1,14 @@
+/**
+ * This file supports the User Repository, mainly used for user preferences.
+ */
 import { BaseRepository } from './baseRepository';
 import { DataSource, EntitySchema } from 'typeorm';
 import path from 'path';
 import { ControlPanelFormat, UserPreferenceDto } from '../../state/preferences/tableManager';
 
+/**
+ * This class encapsulates the user preferences
+ */
 class Preference {
   id?: string;
   alignment_view: ''|ControlPanelFormat;
@@ -40,6 +46,9 @@ const preferenceEntity = new EntitySchema({
 });
 
 
+/**
+ * This class sets up the User Repository
+ */
 export class UserRepository extends BaseRepository {
   static USER_DB_NAME = 'user';
 
@@ -71,3 +80,7 @@ export class UserRepository extends BaseRepository {
     return await preferenceRepository.save(newPreference);
   };
 }
+
+module.exports = {
+  UserRepository
+};

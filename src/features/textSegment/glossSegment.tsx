@@ -1,3 +1,7 @@
+/**
+ * This file contains the GlossSegment Component which shows the Segment Gloss
+ * in Alignment Mode
+ */
 import React from 'react';
 import { ThemeMode } from '../themed';
 import { Box, Divider, Grid, Paper } from '@mui/material';

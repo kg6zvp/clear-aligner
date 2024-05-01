@@ -1,3 +1,7 @@
+/**
+ * This file contains a collection of interfaces to support the
+ * ConcordanceView component
+ */
 import { AlignmentSide, LanguageInfo, Link, Word } from '../../structs';
 
 /**

@@ -1,3 +1,7 @@
+/**
+ * This file contains the SingleSelectButtonGroup component used in
+ * ConcordanceView
+ */
 import { Button, ButtonGroup, SxProps, Theme } from '@mui/material';
 
 export interface SingleSelectButtonGroupProps {

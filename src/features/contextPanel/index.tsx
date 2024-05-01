@@ -1,3 +1,7 @@
+/**
+ * This file contains the ContextPanel component which renders the LinkBuilder
+ * component that is used in the AlignmentEditor
+ */
 import React, { ReactElement } from 'react';
 import { Card, Stack } from '@mui/material';
 

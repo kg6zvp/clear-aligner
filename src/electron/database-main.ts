@@ -1,3 +1,6 @@
+/**
+ * This sets up the node.js side of the Electron IPC calls used for DB access.
+ */
 //@ts-nocheck
 import { ipcMain } from 'electron';
 import { ChannelPrefix } from './database-shared';

@@ -1,3 +1,7 @@
+/**
+ * This file contains the usePivotWords hook which returns an array of pivot
+ * words
+ */
 import { PivotWord } from './structs';
 import { AlignmentSide } from '../../structs';
 import { useContext, useEffect, useState } from 'react';

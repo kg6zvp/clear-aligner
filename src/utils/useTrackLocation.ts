@@ -1,3 +1,7 @@
+/**
+ * This file contains the useTrackLocation hook which gets called to set up
+ * navigation in the CA app.
+ */
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';

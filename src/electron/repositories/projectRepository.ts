@@ -1,9 +1,19 @@
+/**
+ * This file supports the Project Repository, things like links, corpora, etc
+ */
 //@ts-nocheck
+const { EntitySchema, In } = require('typeorm');
+const { BaseRepository } = require('./baseRepository');
+const fs = require('fs');
+const path = require('path');
+const sanitize = require('sanitize-filename');
+const { app } = require('electron');
+const { chunk } = require('lodash');
+const uuid = require('uuid-random');
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import { AlignmentSide } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
-
 import { DataSource, EntitySchema, In } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
@@ -20,6 +30,10 @@ const LinksToTargetWordsName = 'links__target_words';
 const DefaultProjectName = 'default';
 const ProjectDatabaseDirectory = 'projects';
 
+/**
+ * Link class that links the sources_text to the targets_text used to define the
+ * links table.
+ */
 class Link {
   id?: string;
   sources_text?: string;
@@ -31,6 +45,10 @@ class Link {
   }
 }
 
+/**
+ * LinkToSourceWord class used to link source and target words using the link and
+ * word ids.
+ */
 class LinkToSourceWord {
   link_id?: string;
   word_id?: string;
@@ -40,6 +58,10 @@ class LinkToSourceWord {
   }
 }
 
+/**
+ * LinkToTargetWord class used to link source and target words using the link and
+ * word ids.
+ */
 class LinkToTargetWord {
   link_id?: string;
   word_id?: string;
@@ -49,6 +71,9 @@ class LinkToTargetWord {
   }
 }
 
+/**
+ * WordsOrParts class represents the individual rows that are in the .tsv files.
+ */
 class WordsOrParts {
   id?: string;
   corpus_id?: string;
@@ -83,6 +108,11 @@ class WordsOrParts {
   }
 }
 
+/**
+ * CorporaEntity class is used to define projects.
+ * Both source and target corpora are used to define alignment data
+ * If this.side === 'target', then it's used to define a project.
+ */
 class CorporaEntity {
   id?: string;
   language_id?: string;
@@ -103,6 +133,10 @@ class CorporaEntity {
   }
 }
 
+/**
+ * LanguageEntity class is used to define the text direction, language and the
+ * font family for the corpora.
+ */
 class LanguageEntity {
   code?: string;
   text_direction?: string;
@@ -1159,3 +1193,7 @@ export class ProjectRepository extends BaseRepository {
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
 }
+
+module.exports = {
+  ProjectRepository
+};

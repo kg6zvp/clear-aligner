@@ -1,3 +1,7 @@
+/**
+ * This file contains the generateLinkId helper function, which is not currently
+ * used.
+ */
 import { Link } from 'structs';
 
 // Generate a new link ID for a given Link[].

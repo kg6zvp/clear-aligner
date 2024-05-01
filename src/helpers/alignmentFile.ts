@@ -1,3 +1,7 @@
+/**
+ * This file contains the saveAlignmentFile function that's called in the
+ * Projects Mode to save alignment data.
+ */
 import { AlignmentFile, AlignmentRecord } from '../structs/alignmentFile';
 import { Link } from '../structs';
 

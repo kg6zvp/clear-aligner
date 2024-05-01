@@ -1,3 +1,7 @@
+/**
+ * This file contains the AlignmentTable component which is the third table
+ * in the ConcordanceView component
+ */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, TableContainer } from '@mui/material';

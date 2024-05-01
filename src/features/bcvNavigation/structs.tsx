@@ -1,3 +1,7 @@
+/**
+ * This file contains a collection of interfaces and helper functions to support navigation
+ */
+
 import { Word } from '../../structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { BookInfo } from '../../workbench/books';

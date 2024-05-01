@@ -1,3 +1,7 @@
+/**
+ * This file contains the useBusyDialog component that can be shown to users
+ * while wait for an action in the background to complete.
+ */
 import { useContext, useMemo, useState } from 'react';
 import { Box, CircularProgress, Dialog, DialogContent, DialogContentText, Typography } from '@mui/material';
 import { useInterval } from 'usehooks-ts';

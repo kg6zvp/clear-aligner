@@ -1,3 +1,7 @@
+/**
+ * This file contains the UserPreferenceTable class which contains user
+ * preferences like alignmentDirection, currentProject, etc.
+ */
 import { VirtualTable } from '../databaseManagement';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';

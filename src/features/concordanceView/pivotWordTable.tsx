@@ -1,3 +1,7 @@
+/**
+ * This file contains the PivotWordTable component which is the first table
+ * in the ConcordanceView component
+ */
 import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import { PivotWord } from './structs';

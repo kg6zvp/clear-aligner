@@ -1,3 +1,7 @@
+/**
+ * This file contains the logic to use the AlignmentTable component
+ * in Storybook
+ */
 import { Meta } from '@storybook/react';
 import { AlignmentTable, AlignmentTableProps } from './alignmentTable';
 

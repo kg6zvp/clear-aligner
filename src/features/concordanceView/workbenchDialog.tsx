@@ -1,3 +1,7 @@
+/**
+ * This file contains the WorkBenchDialog which is a Modal/Dialog that wraps the
+ * AlignmentEditor component for usage inside ConcordanceView
+ */
 import React from 'react';
 import { AppContext } from '../../App';
 import { Dialog, DialogContent, DialogTitle, Grid, IconButton, Typography } from '@mui/material';

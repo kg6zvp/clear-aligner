@@ -1,3 +1,7 @@
+/**
+ * This file exports the AlignmentMode enum.
+ * The AlignmentState interface is not currently used.
+ */
 import { Link } from '../structs';
 
 export enum AlignmentMode {
