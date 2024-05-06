@@ -314,11 +314,14 @@ export class Link extends DatabaseRecord {
     super();
     this.sources = [];
     this.targets = [];
+    // origin and state get added here for CA-102
   }
-
+  // origin and state get added here for CA-102
   sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
+
+//probably add an exported type in here for the state for CA-102
 
 export enum AlignmentSide {
   SOURCE = 'sources',
