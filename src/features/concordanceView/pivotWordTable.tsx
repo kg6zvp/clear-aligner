@@ -16,7 +16,7 @@ import {
 } from '@mui/x-data-grid';
 import {
   DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix,
+  DataGridScrollbarDisplayFix, DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { TextDirection } from '../../structs';
@@ -118,6 +118,7 @@ export const PivotWordTable = ({
           width: '100%',
           ...DataGridScrollbarDisplayFix,
           ...DataGridResizeAnimationFixes,
+          ...DataGridTripleIconMarginFix,
         }}
         rowSelection={true}
         rowSelectionModel={

@@ -26,3 +26,11 @@ export const DataGridSetMinRowHeightToDefault = {
     minHeight: '52px !important',
   },
 };
+
+/**
+ * CA-102 add sx on DataGrid to fix the triple icon button that gets slightly
+ * overlapped on the right side by the column divider.
+ */
+export const DataGridTripleIconMarginFix = {
+  '.MuiDataGrid-menuIcon' : { mr: 0}
+}

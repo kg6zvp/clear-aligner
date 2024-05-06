@@ -11,7 +11,11 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
-import { DataGridResizeAnimationFixes, DataGridScrollbarDisplayFix } from '../../styles/dataGridFixes';
+import {
+  DataGridResizeAnimationFixes,
+  DataGridScrollbarDisplayFix,
+  DataGridTripleIconMarginFix
+} from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
@@ -183,6 +187,7 @@ export const AlignmentTable = ({
             width: '100%',
             ...DataGridScrollbarDisplayFix,
             ...DataGridResizeAnimationFixes,
+            ...DataGridTripleIconMarginFix,
           }}
           rowSelection={true}
           rowCount={alignments?.length ?? 0}
