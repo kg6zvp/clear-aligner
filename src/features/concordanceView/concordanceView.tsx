@@ -139,7 +139,7 @@ export const ConcordanceView = () => {
             flexGrow: '0',
             flexShrink: '1',
             gridColumn: '1',
-            width: '100%',
+            width: '75%',
             gap: '1em',
             marginLeft: '2em',
             marginTop: '1em'
@@ -204,7 +204,7 @@ export const ConcordanceView = () => {
             flexFlow: 'column',
             flexShrink: '1',
             gridColumn: '1',
-            width: '100%',
+            width: '75%',
             gap: '1em',
             marginLeft: '2em',
             marginTop: '1em'

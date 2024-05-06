@@ -4,7 +4,7 @@
  */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, TableContainer } from '@mui/material';
+import { Button, ButtonGroup, CircularProgress, IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -20,6 +20,7 @@ import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
+import { Link as LinkIcon, CheckCircle, Cancel, Flag } from '@mui/icons-material';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -55,6 +56,27 @@ export const LinkCell = ({row, onClick}: {
     </IconButton>
   );
 };
+
+export const StateCell = () => {
+  return (
+    <>
+      <ButtonGroup size="small">
+        <Button variant="outlined" >
+          <LinkIcon />
+        </Button>
+        <Button variant="outlined">
+          <Cancel />
+        </Button>
+        <Button variant="outlined">
+          <CheckCircle />
+        </Button>
+        <Button variant="outlined">
+          <Flag />
+        </Button>
+      </ButtonGroup>
+    </>
+  )
+}
 
 
 export interface AlignmentTableProps {
@@ -118,6 +140,9 @@ export const AlignmentTable = ({
     {
       field: 'state',
       headerName: 'State',
+      sortable: false,
+      width: 200,
+      renderCell: row => <StateCell/>
     },
     {
       field: 'ref',
