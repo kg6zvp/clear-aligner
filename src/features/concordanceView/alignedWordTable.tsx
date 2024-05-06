@@ -186,6 +186,8 @@ export const AlignedWordTable = ({
           onRowClick={(clickEvent: GridRowParams<AlignedWord>) => onChooseAlignedWord?.(clickEvent.row)}
           isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}
+          hideFooterSelectedRowCount={true}
+
         />
       )}
     </TableContainer>

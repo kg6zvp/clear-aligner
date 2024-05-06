@@ -147,6 +147,7 @@ export const PivotWordTable = ({
           }
         }}
         isRowSelectable={(_: GridRowParams<PivotWord>) => true}
+        hideFooterSelectedRowCount={true}
       />
     </TableContainer>
   );
