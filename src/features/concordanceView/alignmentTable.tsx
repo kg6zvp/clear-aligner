@@ -4,7 +4,7 @@
  */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { Button, ButtonGroup, CircularProgress, IconButton, TableContainer } from '@mui/material';
+import { Button, ButtonGroup, CircularProgress, IconButton, Stack, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -38,14 +38,14 @@ export const RefCell = (
   return (
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
   );
-}
+};
 
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
  * @param row rendering params for this Link entry
  * @param onClick Callback on button click
  */
-export const LinkCell = ({row, onClick}: {
+export const LinkCell = ({ row, onClick }: {
   row: GridRenderCellParams<Link, any, any>,
   onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
 }) => {
@@ -57,11 +57,14 @@ export const LinkCell = ({row, onClick}: {
   );
 };
 
+/**
+ * Render the cell with the Button Group of states
+ */
 export const StateCell = () => {
   return (
     <>
       <ButtonGroup size="small">
-        <Button variant="outlined" >
+        <Button variant="outlined">
           <LinkIcon />
         </Button>
         <Button variant="outlined">
@@ -75,8 +78,26 @@ export const StateCell = () => {
         </Button>
       </ButtonGroup>
     </>
-  )
-}
+  );
+};
+
+export const EditToolBar = () => {
+
+  return (
+    <>
+      <Stack direction="row" spacing={2}>
+        <StateCell />
+
+        <Button variant="contained">
+          SAVE
+        </Button>
+
+      </Stack>
+
+
+    </>
+  );
+};
 
 
 export interface AlignmentTableProps {
@@ -99,31 +120,31 @@ export interface AlignmentTableProps {
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
  */
 export const AlignmentTable = ({
-  wordSource,
-  pivotWord,
-  alignedWord,
-  chosenAlignmentLink,
-  onChooseAlignmentLink,
-  updateAlignments
-}: AlignmentTableProps) => {
+                                 wordSource,
+                                 pivotWord,
+                                 alignedWord,
+                                 chosenAlignmentLink,
+                                 onChooseAlignmentLink,
+                                 updateAlignments
+                               }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
-  const [ sort, onChangeSort ] = useState<GridSortItem|null>({
+  const [sort, onChangeSort] = useState<GridSortItem | null>({
     field: 'id',
-    sort: 'desc',
+    sort: 'desc'
   } as GridSortItem);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
-  const chosenLink: Link|undefined = useMemo(() => {
+  const chosenLink: Link | undefined = useMemo(() => {
     if (!chosenAlignmentLink) return undefined;
     if (!alignments?.includes(chosenAlignmentLink)) return undefined;
     return chosenAlignmentLink;
   }, [alignments, chosenAlignmentLink]);
 
   const loading: boolean = useMemo(
-    () => !!alignedWord &&  !alignments,
+    () => !!alignedWord && !alignments,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ alignedWord, alignments, alignments?.length ]);
+    [alignedWord, alignments, alignments?.length]);
 
   const initialPage = useMemo(() => {
     if (chosenAlignmentLink && alignments) {
@@ -139,17 +160,23 @@ export const AlignmentTable = ({
   const columns: GridColDef[] = [
     {
       field: 'state',
-      headerName: 'State',
+      renderHeader: () => (
+        <>
+          <EditToolBar />
+        </>
+
+      ),
       sortable: false,
-      width: 200,
-      renderCell: row => <StateCell/>
+      width: 290,
+      disableColumnMenu: true,
+      renderCell: row => <StateCell />
     },
     {
       field: 'ref',
       headerName: 'Ref',
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <RefCell {...row} />
-      ),
+      )
     },
     {
       field: 'verse',
@@ -158,7 +185,7 @@ export const AlignmentTable = ({
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <VerseCell {...row} />
-      ),
+      )
     },
     {
       field: 'id',
@@ -166,10 +193,10 @@ export const AlignmentTable = ({
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <LinkCell row={row} onClick={() => {
-          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ""))
+          setSelectedAlignment(BCVWP.parseFromString(findFirstRefFromLink(row.row, AlignmentSide.TARGET) ?? ''));
         }} />
-      ),
-    },
+      )
+    }
   ];
 
   if (loading) {
@@ -179,7 +206,7 @@ export const AlignmentTable = ({
           display: 'flex',
           '.MuiLinearProgress-bar': {
             transition: 'none'
-          },
+          }
         }} />
       </Box>
     );
@@ -190,7 +217,7 @@ export const AlignmentTable = ({
       value={{
         pivotWord,
         alignedWord,
-        wordSource,
+        wordSource
       }}
     >
       <TableContainer
@@ -198,8 +225,8 @@ export const AlignmentTable = ({
           width: '100%',
           height: '100%',
           '.MuiTableContainer-root::-webkit-scrollbar': {
-            width: 0,
-          },
+            width: 0
+          }
         }}
       >
         {loading ? (
@@ -207,42 +234,43 @@ export const AlignmentTable = ({
             <CircularProgress sx={{ margin: 'auto' }} />
           </Box>
         ) : (
-        <DataGrid
-          sx={{
-            width: '100%',
-            ...DataGridScrollbarDisplayFix,
-            ...DataGridResizeAnimationFixes,
-            ...DataGridTripleIconMarginFix,
-          }}
-          rowSelection={true}
-          rowCount={alignments?.length ?? 0}
-          rowSelectionModel={
-            chosenLink?.id ? [chosenLink.id] : undefined
-          }
-          rows={alignments ?? []}
-          columns={columns}
-          getRowId={(row) => row.id}
-          getRowHeight={(_) => 'auto'}
-          sortModel={sort ? [sort] : []}
-          onSortModelChange={(newSort) => {
-            if (!newSort || newSort.length < 1) {
-              onChangeSort(sort);
+          <DataGrid
+            sx={{
+              width: '100%',
+              ...DataGridScrollbarDisplayFix,
+              ...DataGridResizeAnimationFixes,
+              ...DataGridTripleIconMarginFix
+            }}
+            rowSelection={true}
+            rowCount={alignments?.length ?? 0}
+            rowSelectionModel={
+              chosenLink?.id ? [chosenLink.id] : undefined
             }
-            onChangeSort(newSort[0] /*only single sort is supported*/);
-          }}
-          initialState={{
-            pagination: {
-              paginationModel: { page: initialPage, pageSize: 20 },
-            },
-          }}
-          pageSizeOptions={[20, 50]}
-          onRowClick={(clickEvent: GridRowParams<Link>) => {
-            if (onChooseAlignmentLink) {
-              onChooseAlignmentLink(clickEvent.row);
-            }
-          }}
-        />
-      )}
+            rows={alignments ?? []}
+            columns={columns}
+            getRowId={(row) => row.id}
+            getRowHeight={(_) => 'auto'}
+            sortModel={sort ? [sort] : []}
+            onSortModelChange={(newSort) => {
+              if (!newSort || newSort.length < 1) {
+                onChangeSort(sort);
+              }
+              onChangeSort(newSort[0] /*only single sort is supported*/);
+            }}
+            initialState={{
+              pagination: {
+                paginationModel: { page: initialPage, pageSize: 20 }
+              }
+            }}
+            pageSizeOptions={[20, 50]}
+            onRowClick={(clickEvent: GridRowParams<Link>) => {
+              if (onChooseAlignmentLink) {
+                onChooseAlignmentLink(clickEvent.row);
+              }
+            }}
+            checkboxSelection={true}
+          />
+        )}
       </TableContainer>
       <WorkbenchDialog
         alignment={selectedAligment}
