@@ -15,7 +15,7 @@ import React, { useMemo } from 'react';
 import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridSetMinRowHeightToDefault
+  DataGridSetMinRowHeightToDefault, DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { TextDirection } from '../../structs';
@@ -161,6 +161,7 @@ export const AlignedWordTable = ({
             ...DataGridSetMinRowHeightToDefault,
             ...DataGridScrollbarDisplayFix,
             ...DataGridResizeAnimationFixes,
+            ...DataGridTripleIconMarginFix,
           }}
           rowSelection={true}
           rowSelectionModel={
