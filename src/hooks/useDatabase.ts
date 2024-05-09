@@ -32,7 +32,9 @@ export interface DatabaseApi {
   }[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
   insert: <T,>(sourceName: string, table: string, itemOrItems: T[], chunkSize?: number) => Promise<boolean>;
+  save: <T,>(sourceName: string, table: string, itemOrItems: T|T[]) => Promise<boolean>;
   getAll: <T,>(sourceName: string, table: string, itemLimit: number, itemSkip?: number) => Promise<T[]>;
+  updateLinkText: (sourceName: string, linkIdOrIds: string|string[]) => Promise<boolean|any[]>;
   updateAllLinkText: (sourceName: string) => Promise<boolean>;
   corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;

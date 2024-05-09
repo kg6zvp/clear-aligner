@@ -12,16 +12,15 @@ const { chunk } = require('lodash');
 const uuid = require('uuid-random');
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
-import { AlignmentSide } from '../../structs';
+import { AlignmentSide, Link, LinkOrigin, LinkStatus } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
 import { DataSource, EntitySchema, In } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
-import sanitize from 'sanitize-filename';
 import { app } from 'electron';
 import { chunk } from 'lodash';
-import uuid from 'uuid-random';
+
 const LinkTableName = 'links';
 const CorporaTableName = 'corpora';
 const LanguageTableName = 'language';
@@ -34,12 +33,16 @@ const ProjectDatabaseDirectory = 'projects';
  * Link class that links the sources_text to the targets_text used to define the
  * links table.
  */
-class Link {
+class LinkEntity {
   id?: string;
+  origin: LinkOrigin;
+  status: LinkStatus;
   sources_text?: string;
   targets_text?: string;
   constructor() {
     this.id = undefined;
+    this.origin = 'manual';
+    this.status = LinkStatus.CREATED;
     this.sources_text = undefined;
     this.targets_text = undefined;
   }
@@ -169,12 +172,20 @@ const corporaSchema = new EntitySchema({
 });
 
 const linkSchema = new EntitySchema({
-  name: LinkTableName, tableName: LinkTableName, target: Link, columns: {
+  name: LinkTableName, tableName: LinkTableName, target: LinkEntity, columns: {
     id: {
       primary: true, type: 'text', generated: false
-    }, sources_text: {
+    },
+    origin: {
       type: 'text'
-    }, targets_text: {
+    },
+    status: {
+      type: 'text'
+    },
+    sources_text: {
+      type: 'text'
+    },
+    targets_text: {
       type: 'text'
     }
   }
@@ -533,16 +544,18 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  save = async (sourceName: string, table: string, itemOrItems: any|any[]) => {
+  save = async <T,> (sourceName: string, table: string, itemOrItems: T|T[]) => {
     this.logDatabaseTime('save()');
     try {
       const dataSource = await this.getDataSource(sourceName);
       switch (table) {
         case LinkTableName:
-          const links = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+          const links = (Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems]) as Link[];
           await dataSource.getRepository(LinkTableName)
-            .save(links.map(link => ({
-              id: link.id
+            .save(links.map((link): Partial<LinkEntity> => ({
+              id: link.id,
+              origin: link.metadata.origin,
+              status: link.metadata.status
             })));
           await dataSource.getRepository(LinksToSourceWordsName)
             .save(this.createLinksToSource(links));
