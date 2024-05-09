@@ -3,13 +3,14 @@
  * ConcordanceView
  */
 import { Button, ButtonGroup, SxProps, Theme } from '@mui/material';
+import { ReactElement } from 'react';
 
 export interface SingleSelectButtonGroupProps {
   sx?: SxProps<Theme>;
   value?: string;
   items: {
     value: string;
-    label: string;
+    label: string | ReactElement;
   }[];
   onSelect: (value: string) => void;
 }
@@ -17,7 +18,7 @@ export interface SingleSelectButtonGroupProps {
 /**
  * Display a group of buttons, each with its own corresponding value
  * @param value currently chosen value, highlights the button with this value to indicate it is selected
- * @param items list of buttons and their corresponding values
+ * @param items list of buttons and their corresponding values (string or ReactElement)
  * @param onSelect callback when a button is clicked by the user
  * @param sx style parameters
  */

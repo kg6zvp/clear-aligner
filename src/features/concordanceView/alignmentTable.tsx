@@ -4,7 +4,7 @@
  */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { Button, ButtonGroup, CircularProgress, IconButton, Stack, TableContainer } from '@mui/material';
+import { Button, ButtonGroup, CircularProgress, IconButton, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -21,6 +21,7 @@ import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
 import { Link as LinkIcon, CheckCircle, Cancel, Flag } from '@mui/icons-material';
+import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
@@ -61,42 +62,33 @@ export const LinkCell = ({ row, onClick }: {
  * Render the cell with the Button Group of states
  */
 export const StateCell = () => {
-  return (
-    <>
-      <ButtonGroup size="small">
-        <Button variant="outlined">
-          <LinkIcon />
-        </Button>
-        <Button variant="outlined">
-          <Cancel />
-        </Button>
-        <Button variant="outlined">
-          <CheckCircle />
-        </Button>
-        <Button variant="outlined">
-          <Flag />
-        </Button>
-      </ButtonGroup>
-    </>
-  );
-};
+  const [linkState, setLinkState] = React.useState("")
 
-export const EditToolBar = () => {
-
-  return (
-    <>
-      <Stack direction="row" spacing={2}>
-        <StateCell />
-
-        <Button variant="contained">
-          SAVE
-        </Button>
-
-      </Stack>
-
-
-    </>
-  );
+  return(
+    <SingleSelectButtonGroup
+      value={linkState}
+      sx={{size: "small"}}
+      items={[
+        {
+          value: 'created',
+          label: <LinkIcon/>
+        },
+        {
+          value: 'approved',
+          label: <Cancel/>
+        },
+        {
+          value: 'rejected',
+          label: <CheckCircle/>
+        },
+        {
+          value: 'needsReview',
+          label: <Flag/>
+        }
+      ]}
+      onSelect={(value) => setLinkState(value)}
+    />
+  )
 };
 
 
@@ -160,14 +152,9 @@ export const AlignmentTable = ({
   const columns: GridColDef[] = [
     {
       field: 'state',
-      renderHeader: () => (
-        <>
-          <EditToolBar />
-        </>
-
-      ),
+      headerName: "State",
       sortable: false,
-      width: 290,
+      width: 175,
       disableColumnMenu: true,
       renderCell: row => <StateCell />
     },
