@@ -4,7 +4,7 @@
  */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { Button, ButtonGroup, CircularProgress, IconButton, TableContainer } from '@mui/material';
+import { Button, CircularProgress, IconButton, Stack, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -30,6 +30,7 @@ export interface AlignmentTableContextProps {
 }
 
 export const AlignmentTableContext = createContext({} as AlignmentTableContextProps);
+
 
 export const RefCell = (
   row: GridRenderCellParams<Link, any, any>
@@ -58,10 +59,15 @@ export const LinkCell = ({ row, onClick }: {
   );
 };
 
+export interface StateCellProps {
+  setSaveButtonDisabled: Function;
+}
+
+
 /**
  * Render the cell with the Button Group of states
  */
-export const StateCell = () => {
+export const StateCell = ({ setSaveButtonDisabled } : StateCellProps) => {
   const [linkState, setLinkState] = React.useState("")
 
   return(
@@ -86,10 +92,40 @@ export const StateCell = () => {
           label: <Flag/>
         }
       ]}
-      onSelect={(value) => setLinkState(value)}
+      onSelect={(value) => {
+        setLinkState(value)
+        setSaveButtonDisabled(false)
+      }}
+
     />
   )
 };
+
+export interface AlignmentTableControlPanelProps {
+  saveButtonDisabled: boolean;
+}
+export const AlignmentTableControlPanel = ({saveButtonDisabled} : AlignmentTableControlPanelProps) => {
+
+  return(
+    <Stack
+      direction="row"
+      spacing={2}
+      justifyContent="right"
+      alignItems="baseline"
+      style={{ marginTop: '16px', marginBottom: '16px' }}
+    >
+      <Button
+        variant="contained"
+        sx={{ textTransform: 'none' }}
+        disabled={saveButtonDisabled}
+        onClick={e => {
+        }}
+      >
+        SAVE
+      </Button>
+    </Stack>
+  )
+}
 
 
 export interface AlignmentTableProps {
@@ -124,6 +160,7 @@ export const AlignmentTable = ({
     field: 'id',
     sort: 'desc'
   } as GridSortItem);
+  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true)
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
@@ -156,7 +193,7 @@ export const AlignmentTable = ({
       sortable: false,
       width: 175,
       disableColumnMenu: true,
-      renderCell: row => <StateCell />
+      renderCell: row => <StateCell setSaveButtonDisabled={setSaveButtonDisabled}/>
     },
     {
       field: 'ref',
@@ -221,7 +258,9 @@ export const AlignmentTable = ({
             <CircularProgress sx={{ margin: 'auto' }} />
           </Box>
         ) : (
-          <DataGrid
+          <>
+            <AlignmentTableControlPanel saveButtonDisabled={saveButtonDisabled} />
+            <DataGrid
             sx={{
               width: '100%',
               ...DataGridScrollbarDisplayFix,
@@ -256,7 +295,8 @@ export const AlignmentTable = ({
               }
             }}
             checkboxSelection={true}
-          />
+            />
+          </>
         )}
       </TableContainer>
       <WorkbenchDialog
