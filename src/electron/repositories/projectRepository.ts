@@ -21,13 +21,13 @@ import path from 'path';
 import { app } from 'electron';
 import { chunk } from 'lodash';
 
-const LinkTableName = 'links';
-const CorporaTableName = 'corpora';
-const LanguageTableName = 'language';
-const LinksToSourceWordsName = 'links__source_words';
-const LinksToTargetWordsName = 'links__target_words';
-const DefaultProjectName = 'default';
-const ProjectDatabaseDirectory = 'projects';
+export const LinkTableName = 'links';
+export const CorporaTableName = 'corpora';
+export const LanguageTableName = 'language';
+export const LinksToSourceWordsName = 'links__source_words';
+export const LinksToTargetWordsName = 'links__target_words';
+export const DefaultProjectName = 'default';
+export const ProjectDatabaseDirectory = 'projects';
 
 /**
  * Link class that links the sources_text to the targets_text used to define the
@@ -294,6 +294,11 @@ export class ProjectRepository extends BaseRepository {
       code: corpus.language_id
     }
   });
+
+  getMigrationsDir = (): string => {
+    return path.join(this.getBaseMigrationsDir(), 'project');
+  }
+
   getDataSources = async () => new Promise((res, err) => {
     const sources: { id: string, corpora: any[] }[] = [];
     try {
@@ -426,12 +431,10 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-
   sanitizeWordId(wordId: string) {
     const wordId1 = wordId.trim();
     return !!wordId1.match(/^[onON]\d/) ? wordId1.substring(1) : wordId1;
   }
-
 
   createLinksToSource = (links: any[]) => {
     const result = [];
@@ -1206,7 +1209,3 @@ export class ProjectRepository extends BaseRepository {
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
 }
-
-module.exports = {
-  ProjectRepository
-};

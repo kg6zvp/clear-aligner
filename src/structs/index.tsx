@@ -330,6 +330,7 @@ export class Link extends DatabaseRecord {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
+export const DefaultLinkOrigin: string = 'manual';
 export type LinkOrigin = 'manual'|string;
 
 export enum LinkStatus {

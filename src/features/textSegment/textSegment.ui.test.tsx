@@ -4,7 +4,7 @@
 import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
 import TextSegment from 'features/textSegment';
-import { AlignmentSide } from '../../structs';
+import { AlignmentSide, DefaultLinkOrigin, LinkStatus } from '../../structs';
 
 const testState: RootState = {
   ...preloadedState,
@@ -12,6 +12,10 @@ const testState: RootState = {
     ...preloadedState.alignment,
     present: {
       inProgressLink: {
+        metadata: {
+          origin: DefaultLinkOrigin,
+          status: LinkStatus.CREATED
+        },
         sources: ['sbl_0'],
         targets: [],
       },
