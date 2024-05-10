@@ -66,15 +66,14 @@ export class LinksTable extends VirtualTable {
       await this.remove(link.id, true, true);
       const newLink: Link = {
         id: link.id ?? uuid(),
+        metadata: link.metadata,
         sources: (link.sources ?? []).map(BCVWP.sanitize),
         targets: (link.targets ?? []).map(BCVWP.sanitize)
       };
 
       await this.checkDatabase();
-      // @ts-ignore
-      const result = await window.databaseApi.save(this.getSourceName(), LinkTableName, newLink);
-      // @ts-ignore
-      await window.databaseApi.updateLinkText(this.getSourceName(), newLink.id);
+      const result = await dbApi.save(this.getSourceName(), LinkTableName, newLink);
+      await dbApi.updateLinkText(this.getSourceName(), newLink.id!);
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (e) {
