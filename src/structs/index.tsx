@@ -308,16 +308,35 @@ export class Project extends DatabaseRecord {
 export class User extends DatabaseRecord {
 }
 
+export interface LinkMetadata {
+  origin: LinkOrigin;
+  status: LinkStatus;
+}
+
 // An instance of alignment
 export class Link extends DatabaseRecord {
   constructor() {
     super();
+    this.metadata = {
+      origin: 'manual',
+      status: LinkStatus.CREATED
+    };
     this.sources = [];
     this.targets = [];
   }
 
+  metadata: LinkMetadata;
   sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
+}
+
+export type LinkOrigin = 'manual'|string;
+
+export enum LinkStatus {
+  CREATED = 'created',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  NEEDS_REVIEW = 'needsReview'
 }
 
 export enum AlignmentSide {
