@@ -4,7 +4,7 @@
  */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { Button, CircularProgress, IconButton, Stack, TableContainer } from '@mui/material';
+import { Button, ButtonGroup, CircularProgress, IconButton, Stack, TableContainer } from '@mui/material';
 import { Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -106,23 +106,53 @@ export interface AlignmentTableControlPanelProps {
 }
 export const AlignmentTableControlPanel = ({saveButtonDisabled} : AlignmentTableControlPanelProps) => {
 
+  const [linkState, setLinkState] = React.useState("")
+
   return(
     <Stack
       direction="row"
       spacing={2}
       justifyContent="right"
       alignItems="baseline"
-      style={{ marginTop: '16px', marginBottom: '16px' }}
+      //style={{ marginTop: '16px', marginBottom: '16px' }}
     >
-      <Button
-        variant="contained"
-        sx={{ textTransform: 'none' }}
-        disabled={saveButtonDisabled}
-        onClick={e => {
-        }}
-      >
-        SAVE
-      </Button>
+      <ButtonGroup>
+        <SingleSelectButtonGroup
+          value={linkState}
+          sx={{size: "small", width: "200px"}}
+          items={[
+            {
+              value: 'created',
+              label: <LinkIcon/>
+            },
+            {
+              value: 'approved',
+              label: <Cancel/>
+            },
+            {
+              value: 'rejected',
+              label: <CheckCircle/>
+            },
+            {
+              value: 'needsReview',
+              label: <Flag/>
+            }
+          ]}
+          onSelect={(value) => {
+            setLinkState(value)
+          }}
+
+        />
+        <Button
+          variant="contained"
+          sx={{ textTransform: 'none' }}
+          disabled={saveButtonDisabled}
+          onClick={e => {
+          }}
+        >
+          SAVE
+        </Button>
+      </ButtonGroup>
     </Stack>
   )
 }
