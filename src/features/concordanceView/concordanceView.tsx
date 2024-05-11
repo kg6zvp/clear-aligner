@@ -2,9 +2,9 @@
  * This file contains the ConcordanceView component which is one of the top level
  * modes of the CA application
  */
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AlignmentSide, Link } from '../../structs';
-import { Paper, Typography } from '@mui/material';
+import { Button, ButtonGroup, Divider, Paper, Stack, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
@@ -17,12 +17,78 @@ import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
+import { Cancel, CheckCircle, Flag, Link as LinkIcon } from '@mui/icons-material';
 
 export type PivotWordFilter = 'aligned' | 'all';
+
+
+export interface AlignmentTableControlPanelProps {
+  saveButtonDisabled?: boolean;
+  selectedRowsCount: number;
+}
+
+export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCount }: AlignmentTableControlPanelProps) => {
+
+  const [linkState, setLinkState] = React.useState('');
+
+
+  return (
+    <Stack
+      direction="row"
+      spacing={2}
+      justifyContent="right"
+      style={{ marginBottom: '10px' }}
+    >
+      <div>{selectedRowsCount == 0 ? null : selectedRowsCount == 1 ? `${selectedRowsCount} item selected` : `${selectedRowsCount} items selected`} </div>
+      <Divider orientation="vertical" />
+      <ButtonGroup>
+        <SingleSelectButtonGroup
+          value={linkState}
+          sx={{ size: 'small', width: '200px' }}
+          items={[
+            {
+              value: 'created',
+              label: <LinkIcon />
+            },
+            {
+              value: 'approved',
+              label: <Cancel />
+            },
+            {
+              value: 'rejected',
+              label: <CheckCircle />
+            },
+            {
+              value: 'needsReview',
+              label: <Flag />
+            }
+          ]}
+          onSelect={(value) => {
+            setLinkState(value);
+          }}
+        />
+      </ButtonGroup>
+      <ButtonGroup>
+        <Button
+          variant="contained"
+          sx={{ textTransform: 'none' }}
+          disabled={saveButtonDisabled}
+          onClick={e => {
+          }}
+        >
+          SAVE
+        </Button>
+      </ButtonGroup>
+
+    </Stack>
+  );
+};
+
 
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const dispatch = useAppDispatch();
+  const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
 
   /**
    * pivot words
@@ -246,11 +312,12 @@ export const ConcordanceView = () => {
             marginTop: '1em'
           }}
         >
+          <AlignmentTableControlPanel saveButtonDisabled={false} selectedRowsCount={selectedRowsCount} />
           <Paper
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 4em)',
+              height: 'calc(100vh - 125px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }
@@ -270,6 +337,7 @@ export const ConcordanceView = () => {
                   setSelectedPivotWord(undefined);
                 }
               }}
+              setSelectedRowsCount={setSelectedRowsCount}
             />
           </Paper>
         </Box>

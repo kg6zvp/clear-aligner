@@ -67,96 +67,39 @@ export interface StateCellProps {
 /**
  * Render the cell with the Button Group of states
  */
-export const StateCell = ({ setSaveButtonDisabled } : StateCellProps) => {
-  const [linkState, setLinkState] = React.useState("")
+export const StateCell = ({ setSaveButtonDisabled }: StateCellProps) => {
+  const [linkState, setLinkState] = React.useState('');
 
-  return(
+  return (
     <SingleSelectButtonGroup
       value={linkState}
-      sx={{size: "small"}}
+      sx={{ size: 'small' }}
       items={[
         {
           value: 'created',
-          label: <LinkIcon/>
+          label: <LinkIcon />
         },
         {
           value: 'approved',
-          label: <Cancel/>
+          label: <Cancel />
         },
         {
           value: 'rejected',
-          label: <CheckCircle/>
+          label: <CheckCircle />
         },
         {
           value: 'needsReview',
-          label: <Flag/>
+          label: <Flag />
         }
       ]}
       onSelect={(value) => {
-        setLinkState(value)
-        setSaveButtonDisabled(false)
+        setLinkState(value);
+        setSaveButtonDisabled(false);
       }}
 
     />
-  )
+  );
 };
-
-export interface AlignmentTableControlPanelProps {
-  saveButtonDisabled: boolean;
-}
-export const AlignmentTableControlPanel = ({saveButtonDisabled} : AlignmentTableControlPanelProps) => {
-
-  const [linkState, setLinkState] = React.useState("")
-
-  return(
-    <Stack
-      direction="row"
-      spacing={2}
-      justifyContent="right"
-      alignItems="baseline"
-      //style={{ marginTop: '16px', marginBottom: '16px' }}
-    >
-      <ButtonGroup>
-        <SingleSelectButtonGroup
-          value={linkState}
-          sx={{size: "small", width: "200px"}}
-          items={[
-            {
-              value: 'created',
-              label: <LinkIcon/>
-            },
-            {
-              value: 'approved',
-              label: <Cancel/>
-            },
-            {
-              value: 'rejected',
-              label: <CheckCircle/>
-            },
-            {
-              value: 'needsReview',
-              label: <Flag/>
-            }
-          ]}
-          onSelect={(value) => {
-            setLinkState(value)
-          }}
-
-        />
-        <Button
-          variant="contained"
-          sx={{ textTransform: 'none' }}
-          disabled={saveButtonDisabled}
-          onClick={e => {
-          }}
-        >
-          SAVE
-        </Button>
-      </ButtonGroup>
-    </Stack>
-  )
-}
-
 
 export interface AlignmentTableProps {
   wordSource: AlignmentSide;
@@ -165,6 +108,7 @@ export interface AlignmentTableProps {
   chosenAlignmentLink: Link | null;
   onChooseAlignmentLink: (alignmentLink: Link) => void;
   updateAlignments: (resetState: boolean) => void;
+  setSelectedRowsCount: Function,
 }
 
 /**
@@ -176,6 +120,7 @@ export interface AlignmentTableProps {
  * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
  * @param chosenAlignmentLink currently selected alignment link
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
+ * @param setSelectedRowsCount callback to update the count of currently selected rows in the table
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -183,14 +128,15 @@ export const AlignmentTable = ({
                                  alignedWord,
                                  chosenAlignmentLink,
                                  onChooseAlignmentLink,
-                                 updateAlignments
+                                 updateAlignments,
+                                 setSelectedRowsCount
                                }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
     field: 'id',
     sort: 'desc'
   } as GridSortItem);
-  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true)
+  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
@@ -219,11 +165,11 @@ export const AlignmentTable = ({
   const columns: GridColDef[] = [
     {
       field: 'state',
-      headerName: "State",
+      headerName: 'State',
       sortable: false,
       width: 175,
       disableColumnMenu: true,
-      renderCell: row => <StateCell setSaveButtonDisabled={setSaveButtonDisabled}/>
+      renderCell: row => <StateCell setSaveButtonDisabled={setSaveButtonDisabled} />
     },
     {
       field: 'ref',
@@ -289,42 +235,44 @@ export const AlignmentTable = ({
           </Box>
         ) : (
           <>
-            <AlignmentTableControlPanel saveButtonDisabled={saveButtonDisabled} />
             <DataGrid
-            sx={{
-              width: '100%',
-              ...DataGridScrollbarDisplayFix,
-              ...DataGridResizeAnimationFixes,
-              ...DataGridTripleIconMarginFix
-            }}
-            rowSelection={true}
-            rowCount={alignments?.length ?? 0}
-            rowSelectionModel={
-              chosenLink?.id ? [chosenLink.id] : undefined
-            }
-            rows={alignments ?? []}
-            columns={columns}
-            getRowId={(row) => row.id}
-            getRowHeight={(_) => 'auto'}
-            sortModel={sort ? [sort] : []}
-            onSortModelChange={(newSort) => {
-              if (!newSort || newSort.length < 1) {
-                onChangeSort(sort);
+              sx={{
+                width: '100%',
+                ...DataGridScrollbarDisplayFix,
+                ...DataGridResizeAnimationFixes,
+                ...DataGridTripleIconMarginFix
+              }}
+              rowSelection={true}
+              rowCount={alignments?.length ?? 0}
+              rowSelectionModel={
+                chosenLink?.id ? [chosenLink.id] : undefined
               }
-              onChangeSort(newSort[0] /*only single sort is supported*/);
-            }}
-            initialState={{
-              pagination: {
-                paginationModel: { page: initialPage, pageSize: 20 }
-              }
-            }}
-            pageSizeOptions={[20, 50]}
-            onRowClick={(clickEvent: GridRowParams<Link>) => {
-              if (onChooseAlignmentLink) {
-                onChooseAlignmentLink(clickEvent.row);
-              }
-            }}
-            checkboxSelection={true}
+              rows={alignments ?? []}
+              columns={columns}
+              getRowId={(row) => row.id}
+              getRowHeight={(_) => 'auto'}
+              sortModel={sort ? [sort] : []}
+              onSortModelChange={(newSort) => {
+                if (!newSort || newSort.length < 1) {
+                  onChangeSort(sort);
+                }
+                onChangeSort(newSort[0] /*only single sort is supported*/);
+              }}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: initialPage, pageSize: 20 }
+                }
+              }}
+              pageSizeOptions={[20, 50]}
+              onRowClick={(clickEvent: GridRowParams<Link>) => {
+                if (onChooseAlignmentLink) {
+                  onChooseAlignmentLink(clickEvent.row);
+                }
+              }}
+              checkboxSelection={true}
+              onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
+              onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
+              hideFooterSelectedRowCount={false}
             />
           </>
         )}
