@@ -265,9 +265,11 @@ export const AlignmentTable = ({
               }}
               pageSizeOptions={[20, 50]}
               onRowClick={(clickEvent: GridRowParams<Link>) => {
-                if (onChooseAlignmentLink) {
-                  onChooseAlignmentLink(clickEvent.row);
-                }
+                // disable this temporarily to allow proper selection of each row and
+                // selection of state.
+                // if (onChooseAlignmentLink) {
+                //   onChooseAlignmentLink(clickEvent.row);
+                // }
               }}
               checkboxSelection={true}
               onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
