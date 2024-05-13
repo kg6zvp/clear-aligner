@@ -17,6 +17,7 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
   const [links, setLinks] = useState<Link[] | undefined>(undefined);
   const [currentAlignedWord, setCurrentAlignedWord] = useState<AlignedWord | undefined>();
 
+
   useEffect(() => {
     if (currentAlignedWord !== alignedWord) {
       setCurrentAlignedWord(alignedWord);
@@ -33,7 +34,9 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
           preferences?.currentProject ?? DefaultProjectName,
           currentAlignedWord.sourceWordTexts.text,
           currentAlignedWord.targetWordTexts.text, sort);
-        setLinks(links);
+        //remove links that are marked as 'rejected
+        const nonRejectedLinks = links.filter(item => item.metadata.status !== 'rejected')
+        setLinks(nonRejectedLinks);
       } finally {
         console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
       }

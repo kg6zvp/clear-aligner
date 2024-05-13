@@ -263,7 +263,7 @@ export const AlignmentTable = ({
                   paginationModel: { page: initialPage, pageSize: 20 }
                 }
               }}
-              pageSizeOptions={[20, 50]}
+              pageSizeOptions={[]}
               onRowClick={(clickEvent: GridRowParams<Link>) => {
                 // disable this temporarily to allow proper selection of each row and
                 // selection of state.
