@@ -17,7 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
-import { Cancel, CheckCircle, Flag, Link as LinkIcon } from '@mui/icons-material';
+import { Cancel, CheckCircle, Close, Flag, Link as LinkIcon } from '@mui/icons-material';
 
 export type PivotWordFilter = 'aligned' | 'all';
 
@@ -96,6 +96,9 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
           }}
         >
           SAVE
+        </Button>
+        <Button variant="text">
+          <Close/>
         </Button>
       </ButtonGroup>
 
