@@ -5,9 +5,10 @@
 import { Meta } from '@storybook/react';
 import { AlignmentTable, AlignmentTableProps } from './alignmentTable';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { AlignmentSide, Link, TextDirection } from '../../structs';
-import { LocalizedWordEntry } from './structs';
+import { AlignmentSide, Link, LinkStatus, TextDirection } from '../../structs';
 import { AppContext, AppContextProps } from '../../App';
+import { useEffect } from 'react';
+import { ProjectState } from '../../state/databaseManagement';
 
 const meta: Meta<typeof AlignmentTable> = {
   title: 'Concordance View/AlignmentTable',
@@ -30,21 +31,35 @@ interface MockedAlignmentTableProps extends AlignmentTableProps {
   links: Link[],
 }
 
-export const CA102 = (props: MockedAlignmentTableProps) => {
+let linksForDbApi: Link[] = [];
+// @ts-ignore
+window.databaseApi = {};
+// @ts-ignore
+window.databaseApi.corporaGetLinksByAlignedWord = async (...args: any[]): Link[] | undefined => {
   // @ts-ignore
-  window.databaseApi = {
-    corporaGetLinksByAlignedWord: async (...args: any[]) => {
-      // @ts-ignore
-      console.log('args: ', args);
-      return (props.links);
+  console.log('args: ', args);
+  return (linksForDbApi);
+};
+
+export const CA102FourLinksOneRejected = (props: MockedAlignmentTableProps) => {
+  useEffect(() => {
+    while (linksForDbApi.length > 0) {
+      linksForDbApi.pop();
     }
-  };
+    for (const l of props.links) {
+      linksForDbApi.push(l);
+    }
+  },[props.links, props.links.length]);
+
   return (
     <AppContext.Provider value={{
       containers: {
         sourceContainer: undefined,
         targetContainer: undefined,
-      }
+      },
+      projectState: {
+        userPreferenceTable: undefined
+      } as unknown as ProjectState
     } as AppContextProps} >
       <AlignmentTable
         {...props}
@@ -52,7 +67,37 @@ export const CA102 = (props: MockedAlignmentTableProps) => {
     </AppContext.Provider>
   );
 };
-CA102.args = {
+
+const firstLink = new Link();
+firstLink.id = 'firstlinkid';
+firstLink.sources = [new BCVWP(1, 1, 1, 1, 1).toReferenceString()];
+firstLink.targets = [new BCVWP(1, 1, 1, 3, 1).toReferenceString()];
+firstLink.metadata.origin = "manual";
+firstLink.metadata.status = LinkStatus.NEEDS_REVIEW;
+
+const secondLink = new Link();
+secondLink.id = 'secondlinkid';
+secondLink.sources = [new BCVWP(2, 1, 1, 1, 2).toReferenceString()];
+secondLink.targets = [new BCVWP(2, 1, 1, 1, 5).toReferenceString()];
+secondLink.metadata.origin = "manual";
+secondLink.metadata.status = LinkStatus.APPROVED;
+
+const thirdLink = new Link();
+thirdLink.id = 'secondlinkid';
+thirdLink.sources = [new BCVWP(2, 1, 1, 1, 2).toReferenceString()];
+thirdLink.targets = [new BCVWP(2, 1, 1, 1, 5).toReferenceString()];
+thirdLink.metadata.origin = "manual";
+thirdLink.metadata.status = LinkStatus.CREATED;
+
+const rejectedLink = new Link();
+rejectedLink.id = 'secondlinkid';
+rejectedLink.sources = [new BCVWP(1, 1, 1, 1, 2).toReferenceString()];
+rejectedLink.targets = [new BCVWP(1, 1, 1, 1, 5).toReferenceString()];
+rejectedLink.metadata.origin = "manual";
+rejectedLink.metadata.status = LinkStatus.REJECTED;
+
+
+CA102FourLinksOneRejected.args = {
   wordSource: AlignmentSide.TARGET,
   pivotWord: {
     normalizedText: 'god',
@@ -81,20 +126,7 @@ CA102.args = {
       }
     }
   },
-  links: [{
-    id: 'asdfasdf',
-    sources: [new BCVWP(1, 1, 1, 1, 1).toReferenceString()],
-    targets: [new BCVWP(1, 1, 1, 3, 1).toReferenceString()]
-  }, {
-    'id': 'ceeb33a7-31fe-41a0-993c-d92a1415232e',
-    'sources': [
-      '010010010021'
-    ],
-    'targets': [
-      '01001001003'
-    ]
-  }
-  ] as Link[]
+  links: [ firstLink, rejectedLink, secondLink, thirdLink] as Link[]
 } as MockedAlignmentTableProps;
 
 
