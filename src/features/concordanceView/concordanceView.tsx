@@ -31,6 +31,25 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
 
   const [linkState, setLinkState] = React.useState('');
 
+  const DisplayItemsSelectedCount = () => {
+    if(selectedRowsCount == 0){
+      return null
+    }
+    else if (selectedRowsCount == 1){
+      return(
+      <Typography component="span" alignSelf={'center'}>
+        <Box sx={{ fontWeight: 'bold' }} display='inline'> {selectedRowsCount} item</Box> selected
+      </Typography>
+      )
+    }
+    else {
+      return (
+        <Typography component="span" alignSelf={'center'}>
+          <Box sx={{ fontWeight: 'bold' }} display='inline'> {selectedRowsCount} items</Box> selected
+        </Typography>
+      )
+    }
+  }
 
   return (
     <Stack
@@ -39,7 +58,7 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
       justifyContent="right"
       style={{ marginBottom: '10px' }}
     >
-      <div>{selectedRowsCount == 0 ? null : selectedRowsCount == 1 ? `${selectedRowsCount} item selected` : `${selectedRowsCount} items selected`} </div>
+     <DisplayItemsSelectedCount/>
       <Divider orientation="vertical" />
       <ButtonGroup>
         <SingleSelectButtonGroup
@@ -190,7 +209,7 @@ export const ConcordanceView = () => {
         sx={{
           flex: 1,
           display: 'flex',
-          gridGap: '.5em',
+          gridGap: '.2em',
           gridTemplateColumns: 'repeat(18, 1fr)',
           width: '100vw !important'
         }}
@@ -205,7 +224,7 @@ export const ConcordanceView = () => {
             flexGrow: '0',
             flexShrink: '1',
             gridColumn: '1',
-            width: '50%',
+            width: '60%',
             gap: '1em',
             marginLeft: '2em',
             marginTop: '1em'
@@ -270,7 +289,7 @@ export const ConcordanceView = () => {
             flexFlow: 'column',
             flexShrink: '1',
             gridColumn: '1',
-            width: '50%',
+            width: '60%',
             gap: '1em',
             marginLeft: '2em',
             marginTop: '1em'
