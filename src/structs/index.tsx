@@ -3,6 +3,7 @@
  * and has methods for interacting with said corpora.
  */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
+import { z } from 'zod';
 
 export enum SyntaxType {
   // Has syntax data.
@@ -332,6 +333,7 @@ export class Link extends DatabaseRecord {
 
 export const DefaultLinkOrigin: string = 'manual';
 export type LinkOrigin = 'manual'|string;
+export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
 
 export enum LinkStatus {
   CREATED = 'created',
@@ -339,11 +341,21 @@ export enum LinkStatus {
   REJECTED = 'rejected',
   NEEDS_REVIEW = 'needsReview'
 }
+export const LinkStatusSchema = z.enum([
+  LinkStatus.CREATED,
+  LinkStatus.NEEDS_REVIEW,
+  LinkStatus.REJECTED,
+  LinkStatus.APPROVED
+]);
 
 export enum AlignmentSide {
   SOURCE = 'sources',
   TARGET = 'targets'
 }
+export const AlignmentSideSchema = z.enum([
+  AlignmentSide.SOURCE,
+  AlignmentSide.TARGET
+]);
 
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';

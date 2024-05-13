@@ -8,7 +8,6 @@ const fs = require('fs');
 const path = require('path');
 const sanitize = require('sanitize-filename');
 const { app } = require('electron');
-const { chunk } = require('lodash');
 const uuid = require('uuid-random');
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
@@ -19,7 +18,7 @@ import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
-import { chunk } from 'lodash';
+import _ from 'lodash';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -473,7 +472,7 @@ export class ProjectRepository extends BaseRepository {
       await (await this.getDataSource(sourceName))
         .transaction(async (entityManager) => {
           const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-          const chunks = chunkSize ? chunk(items, chunkSize) : [items];
+          const chunks = chunkSize ? _.chunk(items, chunkSize) : [items];
           const promises = [];
           for (const chunk of chunks) {
             switch (table) {
@@ -595,14 +594,26 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  createLinksFromRows = (linkRows) => {
+  createLinksFromRows = async (dataSource: DataSource|undefined, linkRows: any[]) => {
     if (!linkRows || linkRows.length === 0) {
       return [];
     }
     const results = [];
-    let currLink = {
-      id: undefined, sources: [], targets: []
+    let currLink: Link = {
+      id: undefined,
+      sources: [],
+      targets: []
     };
+    const linkIds: string[] = linkRows.map(({ link_id }) => link_id);
+    const linkMetaDataRows: LinkEntity[] = [];
+    for (const linkIdChunk of _.chunk(linkIds, 100)) {
+      (await dataSource?.manager.findByIds(LinkEntity, linkIdChunk))
+        .forEach((row) => {
+          linkMetaDataRows.push(row);
+        });
+    }
+    const metadata = new Map(linkMetaDataRows
+      .map((row) => ([row.id, row]) ));
     linkRows.forEach(linkRow => {
       if (currLink.id && currLink.id !== linkRow.link_id) {
         results.push(currLink);
@@ -611,6 +622,11 @@ export class ProjectRepository extends BaseRepository {
         };
       }
       currLink.id = linkRow.link_id;
+      const linkRowMetadata = metadata.get(currLink.id);
+      currLink.metadata = {
+        origin: linkRowMetadata.origin,
+        status: linkRowMetadata.status
+      };
       // normal find* methods
       if (linkRow.type) {
         switch (linkRow.type) {
@@ -664,14 +680,14 @@ export class ProjectRepository extends BaseRepository {
         rows.push(row);
       }
     }
-    return this.createLinksFromRows(rows);
+    return await this.createLinksFromRows(dataSource, rows);
   };
 
   findLinksBetweenIds = async (dataSource, fromLinkId: string, toLinkId: string) => {
     if (!fromLinkId || !toLinkId) {
       return [];
     }
-    return this.createLinksFromRows((await dataSource.manager.query(`select l.id                                           link_id,
+    return await this.createLinksFromRows(dataSource, (await dataSource.manager.query(`select l.id                                           link_id,
                                                                             json_group_array(
                                                                                     replace(lsw.word_id, 'sources:', ''))
                                                                                     filter (where lsw.word_id is not null) sources,
@@ -708,8 +724,9 @@ export class ProjectRepository extends BaseRepository {
           return [];
       }
       const queryWordId = `${linkSide}:${wordId}`;
-      const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = this.createLinksFromRows((await entityManager.query(`select t1.link_id,
+      const dataSource = await this.getDataSource(sourceName);
+      const entityManager = dataSource.manager;
+      const results = await this.createLinksFromRows(dataSource, (await entityManager.query(`select t1.link_id,
                                                                                   json_group_array(
                                                                                           replace(t1.word_id, '${firstTableName}s:', ''))
                                                                                           filter (where t1.word_id is not null) '${firstTableName}s',
@@ -737,8 +754,9 @@ export class ProjectRepository extends BaseRepository {
     const workPart2 = (workPart1 === 'target') ? 'source' : 'target';
     this.logDatabaseTime('findLinksByBCV()');
     try {
-      const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = this.createLinksFromRows((await entityManager.query(`select q2.link_id, q2.type, q2.words
+      const dataSource = await this.getDataSource(sourceName);
+      const entityManager = dataSource.manager;
+      const results = await this.createLinksFromRows(dataSource, (await entityManager.query(`select q2.link_id, q2.type, q2.words
                                                                            from (with q1(link_id)
                                                                                           as (select distinct jtq.link_id
                                                                                               from words_or_parts w
@@ -869,7 +887,7 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAllLinks = async (dataSource: DataSource|undefined, itemLimit: number, itemSkip: number) => this.createLinksFromRows((await dataSource.manager.query(`select q.link_id, MAX(q.sources) as sources, MAX(q.targets) as targets
+  getAllLinks = async (dataSource: DataSource|undefined, itemLimit: number, itemSkip: number) => await this.createLinksFromRows(dataSource, (await dataSource.manager.query(`select q.link_id, MAX(q.sources) as sources, MAX(q.targets) as targets
                                                                                                                                   from (select lsw.link_id                                             as link_id,
                                                                                                                                                json_group_array(replace(lsw.word_id, 'sources:', ''))
                                                                                                                                                                 filter (where lsw.word_id is not null) as sources,

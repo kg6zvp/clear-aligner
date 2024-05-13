@@ -114,9 +114,13 @@ export class LinksTable extends VirtualTable {
                              suppressOnUpdate = false,
                              isForced = false) =>
     await this.saveAll(alignmentFile.records.map(
-      record =>
+      (record) =>
         ({
           id: LinksTable.createAlignmentRecordId(record),
+          metadata: {
+            origin: record.meta.origin,
+            status: record.meta.status
+          },
           sources: record.source,
           targets: record.target
         } as Link)

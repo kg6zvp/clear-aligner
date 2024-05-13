@@ -1,4 +1,25 @@
-import { LinkMetadata, LinkOrigin, LinkStatus } from './index';
+import { LinkMetadata, LinkStatusSchema } from './index';
+import { z } from 'zod';
+
+export interface RecordMetadata extends LinkMetadata {
+  id: string;
+}
+export const RecordMetadataSchema = z.object({
+  id: z.string(),
+  origin: z.string(),
+  status: LinkStatusSchema
+});
+
+export interface AlignmentRecord {
+  meta: RecordMetadata;
+  source: string[];
+  target: string[];
+}
+export const AlignmentRecordSchema = z.object({
+  meta: RecordMetadataSchema,
+  source: z.array(z.string()),
+  target: z.array(z.string())
+});
 
 /**
  * The model representation of the Alignment data file.
@@ -10,14 +31,12 @@ export interface AlignmentFile {
   };
   records: AlignmentRecord[];
 }
-
-export interface RecordMetadata extends LinkMetadata {
-  id: string;
-}
-
-export interface AlignmentRecord {
-  id: string;
-  meta: RecordMetadata;
-  source: string[];
-  target: string[];
-}
+export const AlignmentFileSchema = z.object({
+  type: z.string().optional(),
+  meta: z.object({
+    creator: z.string().optional()
+  }),
+  records: z.array(AlignmentRecordSchema, {
+    message: 'alignment must contain records'
+  })
+});

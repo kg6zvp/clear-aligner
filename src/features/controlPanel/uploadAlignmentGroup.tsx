@@ -2,14 +2,17 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
-import { AlignmentFile } from '../../structs/alignmentFile';
+import { AlignmentFile, AlignmentFileSchema } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
-import { Button, ButtonGroup, Tooltip } from '@mui/material';
+import { Box, Button, ButtonGroup, Dialog, Tooltip, Typography } from '@mui/material';
 import { FileDownload, FileUpload } from '@mui/icons-material';
 import uuid from 'uuid-random';
 import saveAlignmentFile from '../../helpers/alignmentFile';
+import { SafeParseError, SafeParseReturnType, ZodError, ZodParsedType } from 'zod';
+import { ZodErrorDisplay } from '../../components/zodErrorDisplay';
+import { ZodErrorDialog } from '../../components/zodErrorDialog';
 
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
@@ -25,6 +28,14 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     alignmentFile?: AlignmentFile,
     saveKey?: string
   }>();
+
+  const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
+    errors?: ZodError<AlignmentFile>,
+    showDialog?: boolean
+  }>();
+
+  const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
+
   useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
   const [ getAllLinksKey, setGetAllLinksKey ] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
@@ -36,6 +47,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     <ButtonGroup>
       <Tooltip title="Load Alignment Data" arrow describeChild>
           <span>
+            <ZodErrorDialog
+              showDialog={alignmentFileErrors?.showDialog}
+              errors={alignmentFileErrors?.errors}
+              onDismissDialog={dismissDialog}
+            />
             <input
               type="file"
               hidden
@@ -53,8 +69,15 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
                 const file = event!.target!.files![0];
                 const content = await file.text();
 
+                const fileData = AlignmentFileSchema.safeParse(JSON.parse(content)) as SafeParseReturnType<AlignmentFile, AlignmentFile>;
+
+                setAlignmentFileErrors(fileData.success ? {} : {
+                  errors: fileData.error,
+                  showDialog: true
+                });
+
                 setAlignmentFileSaveState({
-                  alignmentFile: JSON.parse(content) as AlignmentFile,
+                  alignmentFile: fileData.success ? fileData.data : undefined,
                   saveKey: uuid()
                 });
               }}
