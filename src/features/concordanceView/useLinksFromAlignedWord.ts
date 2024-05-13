@@ -35,7 +35,7 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
           currentAlignedWord.sourceWordTexts.text,
           currentAlignedWord.targetWordTexts.text, sort);
         //remove links that are marked as 'rejected
-        const nonRejectedLinks = links.filter(item => item.metadata.status !== 'rejected')
+        const nonRejectedLinks = links.filter(item => item.metadata?.status !== 'rejected')
         setLinks(nonRejectedLinks);
       } finally {
         console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);

@@ -69,7 +69,7 @@ export interface StateCellProps {
  * Render the cell with the Button Group of states
  */
 export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
-  const [linkState, setLinkState] = React.useState(state.metadata.status);
+  const [linkState, setLinkState] = React.useState(state.metadata?.status || "");
 
   return (
     <SingleSelectButtonGroup
