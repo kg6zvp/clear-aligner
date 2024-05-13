@@ -50,8 +50,9 @@ const renderWords = (words: LocalizedWordEntry) => {
 const columns: GridColDef[] = [
   {
     field: 'frequency',
-    headerName: 'Frequency',
+    headerName: 'Freq.',
     flex: 1,
+    maxWidth: 90,
   },
   {
     field: 'sourceWordTexts',
@@ -182,7 +183,7 @@ export const AlignedWordTable = ({
               paginationModel: { page: initialPage, pageSize: 20 },
             },
           }}
-          pageSizeOptions={[20, 50]}
+          pageSizeOptions={[]}
           onRowClick={(clickEvent: GridRowParams<AlignedWord>) => onChooseAlignedWord?.(clickEvent.row)}
           isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}

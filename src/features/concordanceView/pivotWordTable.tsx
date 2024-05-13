@@ -43,8 +43,9 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
 const columns: GridColDef[] = [
   {
     field: 'frequency',
-    headerName: 'Frequency',
+    headerName: 'Freq.',
     flex: 1,
+    maxWidth: 90,
     valueGetter: (row: GridValueGetterParams<PivotWord>) =>
       row.row.frequency,
   },
@@ -140,7 +141,7 @@ export const PivotWordTable = ({
           },
         }}
         pagination={true}
-        pageSizeOptions={[20, 50]}
+        pageSizeOptions={[]}
         onRowClick={(clickEvent: GridRowParams<PivotWord>) => {
           if (onChooseWord) {
             onChooseWord(clickEvent.row);
