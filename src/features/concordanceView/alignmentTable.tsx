@@ -272,7 +272,7 @@ export const AlignmentTable = ({
               checkboxSelection={true}
               onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
               onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
-              hideFooterSelectedRowCount={false}
+              hideFooterSelectedRowCount
             />
           </>
         )}
