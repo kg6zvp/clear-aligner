@@ -77,22 +77,22 @@ firstLink.metadata.status = LinkStatus.NEEDS_REVIEW;
 
 const secondLink = new Link();
 secondLink.id = 'secondlinkid';
-secondLink.sources = [new BCVWP(2, 1, 1, 1, 2).toReferenceString()];
-secondLink.targets = [new BCVWP(2, 1, 1, 1, 5).toReferenceString()];
+secondLink.sources = [new BCVWP(1, 2, 1, 1, 2).toReferenceString()];
+secondLink.targets = [new BCVWP(1, 2, 1, 1, 5).toReferenceString()];
 secondLink.metadata.origin = "manual";
 secondLink.metadata.status = LinkStatus.APPROVED;
 
 const thirdLink = new Link();
-thirdLink.id = 'secondlinkid';
-thirdLink.sources = [new BCVWP(2, 1, 1, 1, 2).toReferenceString()];
-thirdLink.targets = [new BCVWP(2, 1, 1, 1, 5).toReferenceString()];
+thirdLink.id = 'thirdLinkid';
+thirdLink.sources = [new BCVWP(1, 3, 1, 1, 2).toReferenceString()];
+thirdLink.targets = [new BCVWP(1, 3, 1, 1, 5).toReferenceString()];
 thirdLink.metadata.origin = "manual";
 thirdLink.metadata.status = LinkStatus.CREATED;
 
 const rejectedLink = new Link();
-rejectedLink.id = 'secondlinkid';
-rejectedLink.sources = [new BCVWP(1, 1, 1, 1, 2).toReferenceString()];
-rejectedLink.targets = [new BCVWP(1, 1, 1, 1, 5).toReferenceString()];
+rejectedLink.id = 'rejectedLink';
+rejectedLink.sources = [new BCVWP(1, 4, 1, 1, 2).toReferenceString()];
+rejectedLink.targets = [new BCVWP(1, 4, 1, 1, 5).toReferenceString()];
 rejectedLink.metadata.origin = "manual";
 rejectedLink.metadata.status = LinkStatus.REJECTED;
 
@@ -126,7 +126,7 @@ CA102FourLinksOneRejected.args = {
       }
     }
   },
-  links: [ firstLink, rejectedLink, secondLink, thirdLink] as Link[]
+  links: [ firstLink, secondLink, thirdLink, rejectedLink] as Link[]
 } as MockedAlignmentTableProps;
 
 
