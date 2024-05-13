@@ -61,14 +61,15 @@ export const LinkCell = ({ row, onClick }: {
 
 export interface StateCellProps {
   setSaveButtonDisabled: Function;
+  state: Link;
 }
 
 
 /**
  * Render the cell with the Button Group of states
  */
-export const StateCell = ({ setSaveButtonDisabled }: StateCellProps) => {
-  const [linkState, setLinkState] = React.useState('');
+export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
+  const [linkState, setLinkState] = React.useState(state.metadata.status);
 
   return (
     <SingleSelectButtonGroup
@@ -81,11 +82,11 @@ export const StateCell = ({ setSaveButtonDisabled }: StateCellProps) => {
         },
         {
           value: 'approved',
-          label: <Cancel />
+          label: <CheckCircle />
         },
         {
           value: 'rejected',
-          label: <CheckCircle />
+          label: <Cancel />
         },
         {
           value: 'needsReview',
@@ -93,7 +94,7 @@ export const StateCell = ({ setSaveButtonDisabled }: StateCellProps) => {
         }
       ]}
       onSelect={(value) => {
-        setLinkState(value);
+        setLinkState(linkState);
         setSaveButtonDisabled(false);
       }}
 
@@ -169,7 +170,9 @@ export const AlignmentTable = ({
       sortable: false,
       width: 175,
       disableColumnMenu: true,
-      renderCell: row => <StateCell setSaveButtonDisabled={setSaveButtonDisabled} />
+      renderCell: row => {
+        return (<StateCell setSaveButtonDisabled={setSaveButtonDisabled} state={row.row}/>)
+      }
     },
     {
       field: 'ref',
@@ -273,7 +276,7 @@ export const AlignmentTable = ({
               }}
               checkboxSelection={true}
               onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
-              onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
+              //onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
               hideFooterSelectedRowCount
             />
           </>
