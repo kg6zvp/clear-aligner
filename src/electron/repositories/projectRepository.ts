@@ -19,6 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
 import _ from 'lodash';
+import { AddLinkStatus1715305810421 } from '../typeorm-migrations/project/1715305810421-add-link-status';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -294,8 +295,10 @@ export class ProjectRepository extends BaseRepository {
     }
   });
 
-  getMigrationsDir = (): string => {
-    return path.join(this.getBaseMigrationsDir(), 'project');
+  getMigrations = async (): any[] => {
+    return [
+      AddLinkStatus1715305810421
+    ];
   }
 
   getDataSources = async () => new Promise((res, err) => {

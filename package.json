@@ -149,6 +149,10 @@
       {
         "from": "sql/clear-aligner-user.sqlite",
         "to": "sql/clear-aligner-user.sqlite"
+      },
+      {
+        "from": "app/electron/typeorm-migrations",
+        "to": "sql/typeorm-migrations"
       }
     ]
   },

@@ -309,6 +309,23 @@ export class Project extends DatabaseRecord {
 export class User extends DatabaseRecord {
 }
 
+export const LinkOriginManual: string = 'manual';
+export type LinkOrigin = 'manual'|string;
+export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
+
+export enum LinkStatus {
+  CREATED = 'created',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  NEEDS_REVIEW = 'needsReview'
+}
+export const LinkStatusSchema = z.enum([
+  LinkStatus.CREATED,
+  LinkStatus.NEEDS_REVIEW,
+  LinkStatus.REJECTED,
+  LinkStatus.APPROVED
+]);
+
 export interface LinkMetadata {
   origin: LinkOrigin;
   status: LinkStatus;
@@ -330,23 +347,6 @@ export class Link extends DatabaseRecord {
   sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
-
-export const LinkOriginManual: string = 'manual';
-export type LinkOrigin = 'manual'|string;
-export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
-
-export enum LinkStatus {
-  CREATED = 'created',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  NEEDS_REVIEW = 'needsReview'
-}
-export const LinkStatusSchema = z.enum([
-  LinkStatus.CREATED,
-  LinkStatus.NEEDS_REVIEW,
-  LinkStatus.REJECTED,
-  LinkStatus.APPROVED
-]);
 
 export enum AlignmentSide {
   SOURCE = 'sources',

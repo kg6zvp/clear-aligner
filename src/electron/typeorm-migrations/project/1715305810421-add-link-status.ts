@@ -14,7 +14,7 @@ export class AddLinkStatus1715305810421 implements MigrationInterface {
       type: 'TEXT',
       default: `'${LinkStatus.CREATED}'`
     }));
-    await queryRunner.query(`UPDATE ${LinkTableName}SET origin = '${LinkOriginManual}' WHERE ${LinkTableName}.origin IS NULL`);
+    await queryRunner.query(`UPDATE ${LinkTableName} SET origin = '${LinkOriginManual}' WHERE ${LinkTableName}.origin IS NULL`);
     await queryRunner.query(`UPDATE ${LinkTableName} SET status = '${LinkStatus.CREATED}' WHERE ${LinkTableName}.status IS NULL`);
   }
   public async down(queryRunner: QueryRunner): Promise<void> {

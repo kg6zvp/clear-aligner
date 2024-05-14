@@ -60,7 +60,6 @@ const alignmentSlice = createSlice({
       action: PayloadAction<{ foundRelatedLinks: Link[]; word: Word }>
     ) => {
       const relatedLink = action.payload.foundRelatedLinks.find((_) => true);
-      console.log('relatedLink', relatedLink);
       if (!state.inProgressLink) {
         if (relatedLink) { // edit
           state.inProgressLink = {
