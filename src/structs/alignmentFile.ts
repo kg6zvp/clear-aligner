@@ -1,4 +1,4 @@
-import { LinkMetadata, LinkStatusSchema } from './index';
+import { LinkMetadata, LinkOriginSchema, LinkStatusSchema } from './index';
 import { z } from 'zod';
 
 export interface RecordMetadata extends LinkMetadata {
@@ -6,7 +6,7 @@ export interface RecordMetadata extends LinkMetadata {
 }
 export const RecordMetadataSchema = z.object({
   id: z.string(),
-  origin: z.string(),
+  origin: LinkOriginSchema,
   status: LinkStatusSchema
 });
 

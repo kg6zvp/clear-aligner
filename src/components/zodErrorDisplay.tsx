@@ -19,6 +19,7 @@ export const ZodErrorDisplay = ({ errors }: ZodErrorDisplayProps) => (
               <li key={issue.path.join('.')}>{`'.${issue.path.join('.')}': ${issue.message.toLowerCase()}`}</li>
             ))}
         </ul>
+        {errors.issues.length > 10 && `+ ${errors.issues.length-10} more validation error(s)`}
       </Typography>}
   </>
 );

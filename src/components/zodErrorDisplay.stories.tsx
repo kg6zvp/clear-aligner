@@ -1,7 +1,7 @@
 import React from 'react';
 import { Meta } from '@storybook/react';
 import { ZodErrorDisplay, ZodErrorDisplayProps } from './zodErrorDisplay';
-import { AlignmentRecord, AlignmentRecordSchema } from '../structs/alignmentFile';
+import { AlignmentFile, AlignmentFileSchema, AlignmentRecord, AlignmentRecordSchema } from '../structs/alignmentFile';
 
 const meta: Meta<typeof ZodErrorDisplay> = {
   title: 'ZodErrorDisplay',
@@ -14,4 +14,18 @@ export const Default = (props: ZodErrorDisplayProps) => (<ZodErrorDisplay {...pr
 Default.args = {
   errors: AlignmentRecordSchema.safeParse({
   } as AlignmentRecord).error
+} as ZodErrorDisplayProps;
+
+export const MoreThan10Errors = (props: ZodErrorDisplayProps) => (<ZodErrorDisplay {...props} />);
+MoreThan10Errors.args = {
+  errors: AlignmentFileSchema.safeParse({
+    records: [
+      {},
+      {},
+      {},
+      {},
+      {},
+      {}
+    ]  as AlignmentRecord[]
+  } as AlignmentFile).error
 } as ZodErrorDisplayProps;
