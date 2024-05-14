@@ -38,10 +38,10 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
   const [linkState, setLinkState] = React.useState('');
 
   const DisplayItemsSelectedCount = () => {
-    if(selectedRowsCount == 0){
+    if(selectedRowsCount === 0){
       return null
     }
-    else if (selectedRowsCount == 1){
+    else if (selectedRowsCount === 1){
       return(
       <Typography component="span" alignSelf={'center'}>
         <Box sx={{ fontWeight: 'bold' }} display='inline'> {selectedRowsCount} item</Box> selected
@@ -117,6 +117,7 @@ export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const dispatch = useAppDispatch();
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
+  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
 
   /**
    * pivot words
@@ -340,7 +341,7 @@ export const ConcordanceView = () => {
             marginTop: '1em'
           }}
         >
-          <AlignmentTableControlPanel saveButtonDisabled={false} selectedRowsCount={selectedRowsCount} />
+          <AlignmentTableControlPanel saveButtonDisabled={saveButtonDisabled} selectedRowsCount={selectedRowsCount} />
           <Paper
             sx={{
               display: 'flex',
@@ -366,6 +367,7 @@ export const ConcordanceView = () => {
                 }
               }}
               setSelectedRowsCount={setSelectedRowsCount}
+              setSaveButtonDisabled={setSaveButtonDisabled}
             />
           </Paper>
         </Box>

@@ -20,7 +20,7 @@ import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
-import { Link as LinkIcon, CheckCircle, Cancel, Flag } from '@mui/icons-material';
+import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 
 export interface AlignmentTableContextProps {
@@ -69,8 +69,8 @@ export interface StateCellProps {
  * Render the cell with the Button Group of states
  */
 export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
-  const [linkState, setLinkState] = React.useState(state.metadata?.status || "");
-
+  //const [linkState, setLinkState] = React.useState(state.metadata?.status || "");
+  const [linkState, setLinkState] = React.useState("");
   return (
     <SingleSelectButtonGroup
       value={linkState}
@@ -94,7 +94,7 @@ export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
         }
       ]}
       onSelect={(value) => {
-        setLinkState(linkState);
+        setLinkState(value);
         setSaveButtonDisabled(false);
       }}
 
@@ -110,6 +110,7 @@ export interface AlignmentTableProps {
   onChooseAlignmentLink: (alignmentLink: Link) => void;
   updateAlignments: (resetState: boolean) => void;
   setSelectedRowsCount: Function,
+  setSaveButtonDisabled: Function,
 }
 
 /**
@@ -122,6 +123,7 @@ export interface AlignmentTableProps {
  * @param chosenAlignmentLink currently selected alignment link
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
  * @param setSelectedRowsCount callback to update the count of currently selected rows in the table
+ * @param setSaveButtonDisabled callback to control the status of the Save button
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -130,14 +132,14 @@ export const AlignmentTable = ({
                                  chosenAlignmentLink,
                                  onChooseAlignmentLink,
                                  updateAlignments,
-                                 setSelectedRowsCount
+                                 setSelectedRowsCount,
+                                 setSaveButtonDisabled
                                }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
     field: 'id',
     sort: 'desc'
   } as GridSortItem);
-  const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
@@ -268,15 +270,13 @@ export const AlignmentTable = ({
               }}
               pageSizeOptions={[]}
               onRowClick={(clickEvent: GridRowParams<Link>) => {
-                // disable this temporarily to allow proper selection of each row and
-                // selection of state.
-                // if (onChooseAlignmentLink) {
-                //   onChooseAlignmentLink(clickEvent.row);
-                // }
+                if (onChooseAlignmentLink) {
+                  onChooseAlignmentLink(clickEvent.row);
+                }
               }}
               checkboxSelection={true}
               onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
-              //onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
+              onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
               hideFooterSelectedRowCount
             />
           </>
