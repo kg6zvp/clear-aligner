@@ -2,7 +2,7 @@
  * This file contains the AlignmentTable component which is the third table
  * in the ConcordanceView component
  */
-import { AlignmentSide, Link } from '../../structs';
+import { AlignmentSide, Link, LinkStatus } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
@@ -69,8 +69,7 @@ export interface StateCellProps {
  * Render the cell with the Button Group of states
  */
 export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
-  //const [linkState, setLinkState] = React.useState(state.metadata?.status || "");
-  const [linkState, setLinkState] = React.useState("");
+  const [linkState, setLinkState] = React.useState(state.metadata?.status);
   return (
     <SingleSelectButtonGroup
       value={linkState}
@@ -94,7 +93,7 @@ export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
         }
       ]}
       onSelect={(value) => {
-        setLinkState(value);
+        setLinkState(value as LinkStatus);
         setSaveButtonDisabled(false);
       }}
 
