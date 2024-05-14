@@ -24,7 +24,7 @@ class DataSourceStatus {
 }
 
 export interface RepositoryWithMigrations {
-  getMigrationsDir?: () => Promise<string>;
+  getMigrations?: () => Promise<any[]>;
 }
 
 /**
@@ -59,15 +59,6 @@ export class BaseRepository implements RepositoryWithMigrations {
   getDataDirectory = () => {
     return isDev ? 'sql' : app.getPath('userData');
   };
-
-  getBaseMigrationsDir = (): string => {
-    if (isDev) {
-      return './app/electron/typeorm-migrations'
-    }
-    return path.join((isMac
-      ? path.join(path.dirname(app.getPath('exe')), '../electron/typeorm-migrations')
-      : path.dirname(app.getPath('exe'))), 'electron/typeorm-migrations');
-  }
 
   getTemplatesDirectory = (): string => {
     if (isDev) {
@@ -114,8 +105,7 @@ export class BaseRepository implements RepositoryWithMigrations {
         this.logDatabaseTimeEnd('getDataSourceWithEntities(): copied template');
       }
 
-      const migrationsPath = this.getMigrationsDir?.();
-      const absoluteMigrationsPath = migrationsPath ? `${path.resolve(migrationsPath)}/**/*.js` : undefined;
+      const migrations = this.getMigrations ? (await this.getMigrations()) : undefined;
 
       this.logDatabaseTime('getDataSourceWithEntities(): created data source');
       try {
@@ -124,10 +114,10 @@ export class BaseRepository implements RepositoryWithMigrations {
           database: databaseFile,
           synchronize: false,
           statementCacheSize: 1000,
-          ...absoluteMigrationsPath ? {
+          ...(!!migrations ? {
             migrationsRun: true,
-            migrations: [ absoluteMigrationsPath ],
-          } : {},
+            migrations: [ ...migrations ],
+          } : {}),
           prepareDatabase: (db) => {
             db.pragma('journal_mode = MEMORY');
             db.pragma('synchronous = normal');

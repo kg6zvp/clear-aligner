@@ -54,6 +54,8 @@ export class UserRepository extends BaseRepository {
 
   getDataSource: () => Promise<DataSource>;
 
+  getMigrations = async () => ([]);
+
   constructor() {
     super();
     this.getDataSource = async () =>
