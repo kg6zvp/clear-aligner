@@ -28,27 +28,16 @@ export const SingleSelectButtonGroup = ({
   onSelect,
   sx,
 }: SingleSelectButtonGroupProps) => {
-  // console.log('inside SingleSelectButtonGroup')
-  // console.log('value is: ', value)
-  // console.log('items is: ', items)
-  // console.log('onSelect is: ', onSelect)
-  // console.log('sx is: ', sx)
   return (
     <ButtonGroup fullWidth={true} sx={sx}>
-      {items.map((item) => {
-        console.log('value === item.value: ', value === item.value)
-        console.log('value is: ', value)
-        console.log('item.value is: ', item.value)
-
-        return <Button
+      {items.map((item) =>
+        <Button
           key={item.value}
           onClick={() => onSelect(item.value)}
           variant={value && value === item.value ? 'contained' : undefined}
         >
           {item.label}
         </Button>
-      }
-
       )}
     </ButtonGroup>
   );
