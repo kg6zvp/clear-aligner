@@ -150,6 +150,7 @@ export const ConcordanceView = () => {
   const handleUpdateSelectedAlignedWord = useCallback((alignedWord: AlignedWord | null) => {
       setSelectedAlignedWord(alignedWord);
       setSelectedAlignmentLink(null);
+      setSaveButtonDisabled(true);
     },
     [setSelectedAlignedWord, setSelectedAlignmentLink]
   );
@@ -157,6 +158,7 @@ export const ConcordanceView = () => {
     () => (pivotWord: PivotWord | null) => {
       setSelectedPivotWord(pivotWord ?? undefined);
       handleUpdateSelectedAlignedWord(null);
+      setSaveButtonDisabled(true);
     },
     [setSelectedPivotWord, handleUpdateSelectedAlignedWord]
   );
