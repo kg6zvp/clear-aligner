@@ -17,7 +17,13 @@ import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
-import { Cancel, CheckCircle, Close, Flag, Link as LinkIcon } from '@mui/icons-material';
+import {
+  CancelOutlined,
+  CheckCircleOutlined,
+  Close,
+  FlagOutlined,
+  Link as LinkIcon
+} from '@mui/icons-material';
 
 export type PivotWordFilter = 'aligned' | 'all';
 
@@ -71,15 +77,15 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
             },
             {
               value: 'approved',
-              label: <Cancel />
+              label: <CheckCircleOutlined />
             },
             {
               value: 'rejected',
-              label: <CheckCircle />
+              label: <CancelOutlined />
             },
             {
               value: 'needsReview',
-              label: <Flag />
+              label: <FlagOutlined />
             }
           ]}
           onSelect={(value) => {

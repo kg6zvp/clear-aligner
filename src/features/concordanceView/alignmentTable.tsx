@@ -4,8 +4,8 @@
  */
 import { AlignmentSide, Link } from '../../structs';
 import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { Button, ButtonGroup, CircularProgress, IconButton, Stack, TableContainer } from '@mui/material';
-import { Launch } from '@mui/icons-material';
+import { CircularProgress, IconButton, TableContainer } from '@mui/material';
+import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
@@ -82,15 +82,15 @@ export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
         },
         {
           value: 'approved',
-          label: <CheckCircle />
+          label: <CheckCircleOutlined />
         },
         {
           value: 'rejected',
-          label: <Cancel />
+          label: <CancelOutlined />
         },
         {
           value: 'needsReview',
-          label: <Flag />
+          label: <FlagOutlined />
         }
       ]}
       onSelect={(value) => {
