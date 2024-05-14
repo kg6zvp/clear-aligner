@@ -147,6 +147,7 @@ export class LinksTable extends VirtualTable {
       const outputLinks = inputLinks.map(link =>
         ({
           id: link.id ?? LinksTable.createLinkId(link),
+          metadata: link.metadata,
           sources: (link.sources ?? []).map(BCVWP.sanitize),
           targets: (link.targets ?? []).map(BCVWP.sanitize)
         } as Link));

@@ -331,7 +331,7 @@ export class Link extends DatabaseRecord {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
-export const DefaultLinkOrigin: string = 'manual';
+export const LinkOriginManual: string = 'manual';
 export type LinkOrigin = 'manual'|string;
 export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
 

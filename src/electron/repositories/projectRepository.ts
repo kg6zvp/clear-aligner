@@ -479,8 +479,10 @@ export class ProjectRepository extends BaseRepository {
               case LinkTableName:
                 promises.push(
                   entityManager.getRepository(LinkTableName)
-                    .insert(chunk.map(link => ({
-                      id: link.id
+                    .insert(chunk.map((link): LinkEntity => ({
+                      id: link.id,
+                      origin: link.metadata.origin,
+                      status: link.metadata.status
                     }))),
                   entityManager.getRepository(LinksToSourceWordsName)
                     .insert(this.createLinksToSource(chunk)),
