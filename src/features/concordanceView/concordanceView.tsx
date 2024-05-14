@@ -24,6 +24,8 @@ import {
   FlagOutlined,
   Link as LinkIcon
 } from '@mui/icons-material';
+import { useSaveLink } from '../../state/links/tableManager';
+import uuid from 'uuid-random';
 
 export type PivotWordFilter = 'aligned' | 'all';
 
@@ -31,11 +33,21 @@ export type PivotWordFilter = 'aligned' | 'all';
 export interface AlignmentTableControlPanelProps {
   saveButtonDisabled?: boolean;
   selectedRowsCount: number;
+  linksPendingUpdate: Map<string, Link>;
 }
 
-export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCount }: AlignmentTableControlPanelProps) => {
-
+export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCount, linksPendingUpdate }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
+  const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
+  const [saveKey, setSaveKey] = useState("");
+  useSaveLink(arrayOfLinksToSave, saveKey);
+
+  const handleSaveLinkStatus = () => {
+    // Take the map, transform it to an array, then pass it to the save function
+    const linksToSave = [...linksPendingUpdate.values()];
+    setSaveKey(uuid());
+    setArrayOfLinksToSave(linksToSave);
+  }
 
   const DisplayItemsSelectedCount = () => {
     if(selectedRowsCount === 0){
@@ -98,8 +110,7 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
           variant="contained"
           sx={{ textTransform: 'none' }}
           disabled={saveButtonDisabled}
-          onClick={e => {
-          }}
+          onClick={handleSaveLinkStatus}
         >
           SAVE
         </Button>
@@ -128,6 +139,7 @@ export const ConcordanceView = () => {
     field: 'frequency',
     sort: 'desc'
   } as GridSortItem | null);
+  const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, Link>>(new Map())
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -343,7 +355,11 @@ export const ConcordanceView = () => {
             marginTop: '1em'
           }}
         >
-          <AlignmentTableControlPanel saveButtonDisabled={saveButtonDisabled} selectedRowsCount={selectedRowsCount} />
+          <AlignmentTableControlPanel
+            saveButtonDisabled={saveButtonDisabled}
+            selectedRowsCount={selectedRowsCount}
+            linksPendingUpdate={linksPendingUpdate}
+          />
           <Paper
             sx={{
               display: 'flex',
@@ -370,6 +386,8 @@ export const ConcordanceView = () => {
               }}
               setSelectedRowsCount={setSelectedRowsCount}
               setSaveButtonDisabled={setSaveButtonDisabled}
+              setLinksPendingUpdate={setLinksPendingUpdate}
+              linksPendingUpdate={linksPendingUpdate}
             />
           </Paper>
         </Box>

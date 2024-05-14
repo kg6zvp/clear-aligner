@@ -62,13 +62,15 @@ export const LinkCell = ({ row, onClick }: {
 export interface StateCellProps {
   setSaveButtonDisabled: Function;
   state: Link;
+  setLinksPendingUpdate: Function;
+  linksPendingUpdate: Map<string, Link>;
 }
 
 
 /**
  * Render the cell with the Button Group of states
  */
-export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
+export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate, linksPendingUpdate}: StateCellProps) => {
   const [linkState, setLinkState] = React.useState(state.metadata?.status);
   return (
     <SingleSelectButtonGroup
@@ -93,6 +95,10 @@ export const StateCell = ({ setSaveButtonDisabled, state}: StateCellProps) => {
         }
       ]}
       onSelect={(value) => {
+        const updatedLink = structuredClone(state);
+        updatedLink.metadata.status = value as LinkStatus;
+        // add updatedLink to the linksPendingUpdate Map
+        setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
         setLinkState(value as LinkStatus);
         setSaveButtonDisabled(false);
       }}
@@ -110,6 +116,8 @@ export interface AlignmentTableProps {
   updateAlignments: (resetState: boolean) => void;
   setSelectedRowsCount: Function,
   setSaveButtonDisabled: Function,
+  setLinksPendingUpdate: Function,
+  linksPendingUpdate: Map<string, Link>;
 }
 
 /**
@@ -123,6 +131,8 @@ export interface AlignmentTableProps {
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
  * @param setSelectedRowsCount callback to update the count of currently selected rows in the table
  * @param setSaveButtonDisabled callback to control the status of the Save button
+ * @param setLinksPendingUpdate callback to add an updated Link to the array of Links pending an update
+ * @param linksPendingUpdate Array of Links pending an update
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -132,7 +142,9 @@ export const AlignmentTable = ({
                                  onChooseAlignmentLink,
                                  updateAlignments,
                                  setSelectedRowsCount,
-                                 setSaveButtonDisabled
+                                 setSaveButtonDisabled,
+                                 setLinksPendingUpdate,
+                                 linksPendingUpdate,
                                }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
@@ -172,7 +184,12 @@ export const AlignmentTable = ({
       width: 175,
       disableColumnMenu: true,
       renderCell: row => {
-        return (<StateCell setSaveButtonDisabled={setSaveButtonDisabled} state={row.row}/>)
+        return (<StateCell
+          setSaveButtonDisabled={setSaveButtonDisabled}
+          state={row.row}
+          setLinksPendingUpdate={setLinksPendingUpdate}
+          linksPendingUpdate={linksPendingUpdate}
+        />)
       }
     },
     {
