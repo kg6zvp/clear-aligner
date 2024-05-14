@@ -3,6 +3,7 @@
  * and has methods for interacting with said corpora.
  */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
+import { z } from 'zod';
 
 export enum SyntaxType {
   // Has syntax data.
@@ -308,6 +309,23 @@ export class Project extends DatabaseRecord {
 export class User extends DatabaseRecord {
 }
 
+export const LinkOriginManual: string = 'manual';
+export type LinkOrigin = 'manual'|string;
+export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
+
+export enum LinkStatus {
+  CREATED = 'created',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  NEEDS_REVIEW = 'needsReview'
+}
+export const LinkStatusSchema = z.enum([
+  LinkStatus.CREATED,
+  LinkStatus.NEEDS_REVIEW,
+  LinkStatus.REJECTED,
+  LinkStatus.APPROVED
+]);
+
 export interface LinkMetadata {
   origin: LinkOrigin;
   status: LinkStatus;
@@ -330,20 +348,14 @@ export class Link extends DatabaseRecord {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
-export const DefaultLinkOrigin: string = 'manual';
-export type LinkOrigin = 'manual'|string;
-
-export enum LinkStatus {
-  CREATED = 'created',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  NEEDS_REVIEW = 'needsReview'
-}
-
 export enum AlignmentSide {
   SOURCE = 'sources',
   TARGET = 'targets'
 }
+export const AlignmentSideSchema = z.enum([
+  AlignmentSide.SOURCE,
+  AlignmentSide.TARGET
+]);
 
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';

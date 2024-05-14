@@ -21,9 +21,8 @@ const saveAlignmentFile = (links: Link[] | undefined) => {
         (link): AlignmentRecord =>
           ({
             meta: {
-              ...link.metadata,
               id: link.id,
-
+              ...link.metadata,
             },
             source: (link.sources ?? []),
             target: (link.targets ?? [])
