@@ -227,6 +227,11 @@ export const ConcordanceView = () => {
     selectedAlignmentLink
   ]);
 
+  // reset links pending update if user chooses a new pivot word or aligned word
+  useEffect( ()=> {
+    setLinksPendingUpdate(new Map());
+  }, [selectedPivotWord, selectedAlignedWord])
+
   return (
     <div style={{ position: 'relative' }}>
       <Box
