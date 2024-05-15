@@ -295,6 +295,10 @@ export class ProjectRepository extends BaseRepository {
     }
   });
 
+  /**
+   * list migrations to be applied to the project databases here. This will be
+   * an ever-growing list
+   */
   getMigrations = async (): any[] => {
     return [
       AddLinkStatus1715305810421

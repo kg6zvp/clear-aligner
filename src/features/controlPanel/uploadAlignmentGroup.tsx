@@ -6,12 +6,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentFileSchema } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
-import { Box, Button, ButtonGroup, Dialog, Tooltip, Typography } from '@mui/material';
+import { Button, ButtonGroup, Tooltip } from '@mui/material';
 import { FileDownload, FileUpload } from '@mui/icons-material';
 import uuid from 'uuid-random';
 import saveAlignmentFile from '../../helpers/alignmentFile';
-import { SafeParseError, SafeParseReturnType, ZodError, ZodParsedType } from 'zod';
-import { ZodErrorDisplay } from '../../components/zodErrorDisplay';
+import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 
 

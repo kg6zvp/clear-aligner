@@ -309,16 +309,26 @@ export class Project extends DatabaseRecord {
 export class User extends DatabaseRecord {
 }
 
+/**
+ * The default origin for links created by ClearAligner
+ */
 export const LinkOriginManual: string = 'manual';
 export type LinkOrigin = 'manual'|string;
 export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
 
+/**
+ * Enum representing the status of a link
+ */
 export enum LinkStatus {
   CREATED = 'created',
   APPROVED = 'approved',
   REJECTED = 'rejected',
   NEEDS_REVIEW = 'needsReview'
 }
+
+/**
+ * Zod schema for {@link LinkStatus}
+ */
 export const LinkStatusSchema = z.enum([
   LinkStatus.CREATED,
   LinkStatus.NEEDS_REVIEW,
@@ -326,6 +336,9 @@ export const LinkStatusSchema = z.enum([
   LinkStatus.APPROVED
 ]);
 
+/**
+ * Required metadata fields for links go in this interface
+ */
 export interface LinkMetadata {
   origin: LinkOrigin;
   status: LinkStatus;
@@ -352,6 +365,9 @@ export enum AlignmentSide {
   SOURCE = 'sources',
   TARGET = 'targets'
 }
+/**
+ * Zod schema for {@link AlignmentSide}
+ */
 export const AlignmentSideSchema = z.enum([
   AlignmentSide.SOURCE,
   AlignmentSide.TARGET

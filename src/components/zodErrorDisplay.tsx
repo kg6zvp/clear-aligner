@@ -5,6 +5,10 @@ export interface ZodErrorDisplayProps {
   errors?: ZodError<any>
 }
 
+/**
+ * Displays errors resulting from Zod's safeParse call
+ * @param errors optional errors to be displayed
+ */
 export const ZodErrorDisplay = ({ errors }: ZodErrorDisplayProps) => (
   <>
     {errors &&
