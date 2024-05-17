@@ -13,7 +13,7 @@ import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import {
   DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix,
+  DataGridScrollbarDisplayFix, DataGridSelectAllCheckboxFix,
   DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
@@ -261,7 +261,8 @@ export const AlignmentTable = ({
                 width: '100%',
                 ...DataGridScrollbarDisplayFix,
                 ...DataGridResizeAnimationFixes,
-                ...DataGridTripleIconMarginFix
+                ...DataGridTripleIconMarginFix,
+                ...DataGridSelectAllCheckboxFix,
               }}
               rowSelection={true}
               rowCount={alignments?.length ?? 0}

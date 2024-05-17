@@ -37,10 +37,15 @@ export interface AlignmentTableControlPanelProps {
   linksPendingUpdate: Map<string, Link>;
 }
 
-export const AlignmentTableControlPanel = ({ saveButtonDisabled, setSaveButtonDisabled, selectedRowsCount, linksPendingUpdate }: AlignmentTableControlPanelProps) => {
+export const AlignmentTableControlPanel = ({
+                                             saveButtonDisabled,
+                                             setSaveButtonDisabled,
+                                             selectedRowsCount,
+                                             linksPendingUpdate
+                                           }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
-  const [saveKey, setSaveKey] = useState("");
+  const [saveKey, setSaveKey] = useState('');
   useSaveLink(arrayOfLinksToSave, saveKey);
 
   const handleSaveLinkStatus = () => {
@@ -49,79 +54,92 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, setSaveButtonDi
     setSaveKey(uuid());
     setArrayOfLinksToSave(linksToSave);
     setSaveButtonDisabled(true);
-  }
+  };
 
   const DisplayItemsSelectedCount = () => {
-    if(selectedRowsCount === 0){
-      return null
-    }
-    else if (selectedRowsCount === 1){
-      return(
-      <Typography component="span" alignSelf={'center'}>
-        <Box sx={{ fontWeight: 'bold' }} display='inline'> {selectedRowsCount} item</Box> selected
-      </Typography>
-      )
-    }
-    else {
+    if (selectedRowsCount === 0) {
+      return null;
+    } else if (selectedRowsCount === 1) {
       return (
-        <Typography component="span" alignSelf={'center'}>
-          <Box sx={{ fontWeight: 'bold' }} display='inline'> {selectedRowsCount} items</Box> selected
+        <Typography component="span" alignSelf={'center'} fontSize={13}>
+          <Box sx={{ fontWeight: 'bold' }} display="inline"> {selectedRowsCount} item</Box> selected
         </Typography>
-      )
+      );
+    } else {
+      return (
+        <Typography component="span" alignSelf={'center'} fontSize={13}>
+          <Box sx={{ fontWeight: 'bold' }} display="inline"> {selectedRowsCount} items</Box> selected
+        </Typography>
+      );
     }
-  }
+  };
 
   return (
-    <Stack
-      direction="row"
-      spacing={2}
-      justifyContent="right"
-      style={{ marginBottom: '10px' }}
-    >
-     <DisplayItemsSelectedCount/>
-      <Divider orientation="vertical" />
-      <ButtonGroup>
-        <SingleSelectButtonGroup
-          value={linkState}
-          sx={{ size: 'small', width: '200px' }}
-          items={[
-            {
-              value: 'created',
-              label: <LinkIcon />
-            },
-            {
-              value: 'approved',
-              label: <CheckCircleOutlined />
-            },
-            {
-              value: 'rejected',
-              label: <CancelOutlined />
-            },
-            {
-              value: 'needsReview',
-              label: <FlagOutlined />
-            }
-          ]}
-          onSelect={(value) => {
-            setLinkState(value);
-          }}
-        />
-      </ButtonGroup>
-      <ButtonGroup>
-        <Button
-          variant="contained"
-          sx={{ textTransform: 'none' }}
-          disabled={saveButtonDisabled}
-          onClick={handleSaveLinkStatus}
+    <>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+      >
+        <Stack
+          justifyContent="left"
+          style={{ marginBottom: '10px', marginLeft: '50px' }}
         >
-          SAVE
-        </Button>
-        <Button variant="text">
-          <Close/>
-        </Button>
-      </ButtonGroup>
-
-    </Stack>
+          <Typography component="span" alignSelf={'center'}>
+            <Box sx={{ fontWeight: 'bold' }}> Alignments</Box>
+          </Typography>
+        </Stack>
+        <Stack
+          direction="row"
+          spacing={2}
+          justifyContent="right"
+          style={{ marginBottom: '10px' }}
+        >
+          <DisplayItemsSelectedCount />
+          <Divider orientation="vertical" />
+          <ButtonGroup>
+            <SingleSelectButtonGroup
+              value={linkState}
+              sx={{ size: 'small', width: '200px' }}
+              items={[
+                {
+                  value: 'created',
+                  label: <LinkIcon />
+                },
+                {
+                  value: 'approved',
+                  label: <CheckCircleOutlined />
+                },
+                {
+                  value: 'rejected',
+                  label: <CancelOutlined />
+                },
+                {
+                  value: 'needsReview',
+                  label: <FlagOutlined />
+                }
+              ]}
+              onSelect={(value) => {
+                setLinkState(value);
+              }}
+            />
+          </ButtonGroup>
+          <ButtonGroup>
+            <Button
+              variant="contained"
+              sx={{ textTransform: 'none' }}
+              disabled={saveButtonDisabled}
+              onClick={handleSaveLinkStatus}
+            >
+              SAVE
+            </Button>
+            <Button variant="text">
+              <Close />
+            </Button>
+          </ButtonGroup>
+        </Stack>
+      </Stack>
+    </>
   );
 };
 
@@ -141,7 +159,7 @@ export const ConcordanceView = () => {
     field: 'frequency',
     sort: 'desc'
   } as GridSortItem | null);
-  const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, Link>>(new Map())
+  const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, Link>>(new Map());
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,9 +248,9 @@ export const ConcordanceView = () => {
   ]);
 
   // reset links pending update if user chooses a new pivot word or aligned word
-  useEffect( ()=> {
+  useEffect(() => {
     setLinksPendingUpdate(new Map());
-  }, [selectedPivotWord, selectedAlignedWord])
+  }, [selectedPivotWord, selectedAlignedWord]);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -386,7 +404,7 @@ export const ConcordanceView = () => {
               onChooseAlignmentLink={setSelectedAlignmentLink}
               updateAlignments={(resetState: boolean) => {
                 dispatch(resetTextSegments());
-                if(resetState) {
+                if (resetState) {
                   setSelectedAlignedWord(null);
                   setSelectedAlignmentLink(null);
                   setSelectedPivotWord(undefined);

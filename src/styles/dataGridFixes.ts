@@ -34,3 +34,15 @@ export const DataGridSetMinRowHeightToDefault = {
 export const DataGridTripleIconMarginFix = {
   '.MuiDataGrid-menuIcon' : { mr: 0}
 }
+
+/**
+ * CA-102 add sx on DataGrid to fix the move the Select All Checkbox into the
+ * AlignmentTableControlPanel
+ */
+export const DataGridSelectAllCheckboxFix = {
+  '& .MuiDataGrid-columnHeaderCheckbox .MuiDataGrid-columnHeaderTitleContainer' : {
+    position: 'absolute',
+    top: '-66px',
+    left: '-5px',
+  }
+}
