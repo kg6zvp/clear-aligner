@@ -36,13 +36,18 @@ export const DataGridTripleIconMarginFix = {
 }
 
 /**
- * CA-102 add sx on DataGrid to fix the move the Select All Checkbox into the
+ * CA-102 add sx on DataGrid to move the Select All Checkbox into the
  * AlignmentTableControlPanel
  */
 export const DataGridSelectAllCheckboxFix = {
   '& .MuiDataGrid-columnHeaderCheckbox .MuiDataGrid-columnHeaderTitleContainer' : {
     position: 'absolute',
     top: '-66px',
-    left: '-5px',
+    left: '2px',
+  },
+  'MuiTableContainer-root [class*="MuiDataGrid"]': {
+    overflow: 'visible'
   }
 }
+
+
