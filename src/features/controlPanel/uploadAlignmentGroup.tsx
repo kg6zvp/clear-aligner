@@ -4,7 +4,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
-import { AlignmentFile, AlignmentFileSchema } from '../../structs/alignmentFile';
+import { AlignmentFile, AlignmentFileSchema, alignmentFileSchemaErrorMessageMapper } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button, ButtonGroup, Tooltip } from '@mui/material';
 import { FileDownload, FileUpload } from '@mui/icons-material';
@@ -53,6 +53,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
           <span>
             <ZodErrorDialog
               showDialog={alignmentFileErrors?.showDialog}
+              fieldNameMapper={alignmentFileSchemaErrorMessageMapper}
               errors={alignmentFileErrors?.errors}
               onDismissDialog={dismissDialog}
             />
