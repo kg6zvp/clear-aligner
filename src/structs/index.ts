@@ -334,7 +334,9 @@ export const LinkStatusSchema = z.enum([
   LinkStatus.NEEDS_REVIEW,
   LinkStatus.REJECTED,
   LinkStatus.APPROVED
-]);
+], {
+  required_error: `link status field is required and must be one of [${Object.values(LinkStatus).join(', ')}]`
+});
 
 /**
  * Required metadata fields for links go in this interface

@@ -2,7 +2,7 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentFileSchema } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
@@ -12,6 +12,7 @@ import uuid from 'uuid-random';
 import saveAlignmentFile from '../../helpers/alignmentFile';
 import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
+import { RemovableTooltip } from '../../components/removableTooltip';
 
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
@@ -44,7 +45,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
 
   return (
     <ButtonGroup>
-      <Tooltip title="Load Alignment Data" arrow describeChild>
+      <RemovableTooltip
+        removed={alignmentFileErrors?.showDialog}
+        title="Load Alignment Data"
+        describeChild
+        arrow >
           <span>
             <ZodErrorDialog
               showDialog={alignmentFileErrors?.showDialog}
@@ -93,9 +98,13 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
               <FileUpload />
             </Button>
           </span>
-      </Tooltip>
+        </RemovableTooltip>
 
-      <Tooltip title="Save Alignment Data" arrow describeChild>
+      <RemovableTooltip
+        removed={alignmentFileErrors?.showDialog}
+        title="Save Alignment Data"
+        describeChild
+        arrow>
           <span>
             <Button
               size={size as 'medium' | 'small' | undefined}
@@ -111,7 +120,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
               <FileDownload />
             </Button>
           </span>
-      </Tooltip>
+      </RemovableTooltip>
     </ButtonGroup>
   );
 };
