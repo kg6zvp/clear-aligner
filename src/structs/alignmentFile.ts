@@ -1,5 +1,6 @@
 import { LinkMetadata, LinkOriginSchema, LinkStatus, LinkStatusSchema } from './index';
 import { z, ZodIssue } from 'zod';
+import { ZodErrorDisplay } from '../components/zodErrorDisplay';
 
 /**
  * Metadata saved in alignment json files
@@ -28,6 +29,9 @@ export interface AlignmentRecord {
   target: string[];
 }
 
+/**
+ * Zod validation message for the `sources` and `targets` arrays
+ */
 const wordsArrayRequiredMessage = 'array of BCVWP coordinates is required';
 /**
  * Zod schema for {@link AlignmentRecord}
@@ -65,6 +69,13 @@ export const AlignmentFileSchema = z.object({
     message: 'alignment must contain records'
   })
 });
+
+/**
+ * Human-friendly validation error message generator for {@link ZodErrorDisplay}
+ * component
+ * @param issue {@link ZodIssue} to generate a message for
+ * @return human-readable error message or {@link undefined}
+ */
 export const alignmentFileSchemaErrorMessageMapper = (issue: ZodIssue) => {
   if (issue.path[0] === 'records') {
     if (issue.path[2] === 'meta') {
