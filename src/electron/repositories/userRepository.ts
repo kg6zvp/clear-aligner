@@ -9,7 +9,7 @@ import { ControlPanelFormat, UserPreferenceDto } from '../../state/preferences/t
 /**
  * This class encapsulates the user preferences
  */
-class Preference {
+export class PreferenceEntity {
   id?: string;
   alignment_view: ''|ControlPanelFormat;
   bcv: string;
@@ -27,7 +27,7 @@ class Preference {
 }
 
 const preferenceEntity = new EntitySchema({
-  name: 'preference', tableName: 'preference', target: Preference, columns: {
+  name: 'preference', tableName: 'preference', target: PreferenceEntity, columns: {
     id: {
       //@ts-ignore
       primary: true, type: 'varchar', generated: false
@@ -53,6 +53,8 @@ export class UserRepository extends BaseRepository {
   static USER_DB_NAME = 'user';
 
   getDataSource: () => Promise<DataSource>;
+
+  getMigrations = async () => ([]);
 
   constructor() {
     super();

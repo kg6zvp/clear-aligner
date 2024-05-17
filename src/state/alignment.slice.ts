@@ -2,7 +2,7 @@
  * This file creates the alignmentSlice for use with Redux state management.
  */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Link, Word } from 'structs';
+import { LinkOriginManual, Link, LinkStatus, Word } from 'structs';
 import { AlignmentMode } from './alignmentState';
 import { AppState } from './app.slice';
 import { TextSegmentState } from './textSegmentHover.slice';
@@ -61,15 +61,23 @@ const alignmentSlice = createSlice({
     ) => {
       const relatedLink = action.payload.foundRelatedLinks.find((_) => true);
       if (!state.inProgressLink) {
-        if (relatedLink) {
+        if (relatedLink) { // edit
           state.inProgressLink = {
             id: relatedLink.id,
+            metadata: relatedLink.metadata,
             sources: relatedLink.sources.map(BCVWP.sanitize),
             targets: relatedLink.targets.map(BCVWP.sanitize),
           };
+          if (relatedLink.metadata.origin !== LinkOriginManual) {
+            state.inProgressLink.metadata.status = LinkStatus.APPROVED;
+          }
           return;
-        } else {
+        } else { // create
           state.inProgressLink = {
+            metadata: {
+              origin: LinkOriginManual,
+              status: LinkStatus.CREATED
+            },
             sources: [],
             targets: [],
           };

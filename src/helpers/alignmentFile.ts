@@ -18,9 +18,12 @@ const saveAlignmentFile = (links: Link[] | undefined) => {
       .filter(Boolean)
       .filter(link => link.id)
       .map(
-        (link) =>
+        (link): AlignmentRecord =>
           ({
-            id: link.id,
+            meta: {
+              id: link.id,
+              ...link.metadata,
+            },
             source: (link.sources ?? []),
             target: (link.targets ?? [])
           } as AlignmentRecord) ?? []

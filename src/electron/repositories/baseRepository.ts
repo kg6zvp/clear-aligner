@@ -4,7 +4,7 @@
 //@ts-nocheck
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
-const path = require('path');
+import path from 'path';
 const { app } = require('electron');
 const sanitize = require('sanitize-filename');
 const fs = require('fs');
@@ -24,9 +24,25 @@ class DataSourceStatus {
 }
 
 /**
+ * Repositories implementing this interface can provide migrations which will
+ * automatically be invoked when database connections have been made
+ */
+export interface RepositoryWithMigrations {
+  /**
+   * Implement this method to provide migrations to be run for this database
+   * schema
+   *
+   * @returns a list of migrations for the schema, in the same formats accepted
+   * by typeorm (strings with globs indicating file paths, migration data
+   * classes, etc)
+   */
+  getMigrations?: () => Promise<any[]>;
+}
+
+/**
  * This class facilitates the database initialization
  */
-export class BaseRepository {
+export class BaseRepository implements RepositoryWithMigrations {
   static DB_WAIT_IN_MS = 1000;
 
   constructor() {
@@ -56,7 +72,7 @@ export class BaseRepository {
     return isDev ? 'sql' : app.getPath('userData');
   };
 
-  getTemplatesDirectory = () => {
+  getTemplatesDirectory = (): string => {
     if (isDev) {
       return 'sql';
     }
@@ -64,7 +80,6 @@ export class BaseRepository {
       ? path.join(path.dirname(app.getPath('exe')), '..')
       : path.dirname(app.getPath('exe'))), 'sql');
   };
-
 
   getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
     if (!sourceName || sourceName.length < 1) {
@@ -102,6 +117,8 @@ export class BaseRepository {
         this.logDatabaseTimeEnd('getDataSourceWithEntities(): copied template');
       }
 
+      const migrations = this.getMigrations ? (await this.getMigrations()) : undefined;
+
       this.logDatabaseTime('getDataSourceWithEntities(): created data source');
       try {
         const newDataSource = new DataSource({
@@ -109,6 +126,10 @@ export class BaseRepository {
           database: databaseFile,
           synchronize: false,
           statementCacheSize: 1000,
+          ...(!!migrations ? {
+            migrationsRun: true,
+            migrations: [ ...migrations ],
+          } : {}),
           prepareDatabase: (db) => {
             db.pragma('journal_mode = MEMORY');
             db.pragma('synchronous = normal');
@@ -137,7 +158,3 @@ export class BaseRepository {
     }
   };
 }
-
-module.exports = {
-  BaseRepository
-};

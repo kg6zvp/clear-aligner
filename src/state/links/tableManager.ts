@@ -66,15 +66,14 @@ export class LinksTable extends VirtualTable {
       await this.remove(link.id, true, true);
       const newLink: Link = {
         id: link.id ?? uuid(),
+        metadata: link.metadata,
         sources: (link.sources ?? []).map(BCVWP.sanitize),
         targets: (link.targets ?? []).map(BCVWP.sanitize)
       };
 
       await this.checkDatabase();
-      // @ts-ignore
-      const result = await window.databaseApi.save(this.getSourceName(), LinkTableName, newLink);
-      // @ts-ignore
-      await window.databaseApi.updateLinkText(this.getSourceName(), newLink.id);
+      const result = await dbApi.save(this.getSourceName(), LinkTableName, newLink);
+      await dbApi.updateLinkText(this.getSourceName(), newLink.id!);
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (e) {
@@ -115,9 +114,13 @@ export class LinksTable extends VirtualTable {
                              suppressOnUpdate = false,
                              isForced = false) =>
     await this.saveAll(alignmentFile.records.map(
-      record =>
+      (record) =>
         ({
           id: LinksTable.createAlignmentRecordId(record),
+          metadata: {
+            origin: record.meta.origin,
+            status: record.meta.status
+          },
           sources: record.source,
           targets: record.target
         } as Link)
@@ -144,6 +147,7 @@ export class LinksTable extends VirtualTable {
       const outputLinks = inputLinks.map(link =>
         ({
           id: link.id ?? LinksTable.createLinkId(link),
+          metadata: link.metadata,
           sources: (link.sources ?? []).map(BCVWP.sanitize),
           targets: (link.targets ?? []).map(BCVWP.sanitize)
         } as Link));

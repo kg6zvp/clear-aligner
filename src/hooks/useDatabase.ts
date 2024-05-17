@@ -32,7 +32,21 @@ export interface DatabaseApi {
   }[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
   insert: <T,>(sourceName: string, table: string, itemOrItems: T[], chunkSize?: number) => Promise<boolean>;
+  /**
+   * Persist/update an entity (or entities) in a database
+   * @param sourceName datasource name to be accessed
+   * @param table table to save into
+   * @param itemOrItems entities to persist
+   */
+  save: <T,>(sourceName: string, table: string, itemOrItems: T|T[]) => Promise<boolean>;
   getAll: <T,>(sourceName: string, table: string, itemLimit: number, itemSkip?: number) => Promise<T[]>;
+  /**
+   * Call to trigger an update to the `sources_text` and `targets_text` fields
+   * in the `links` table
+   * @param sourceName datasource to be accessed
+   * @param linkIdOrIds links for which to update the text fields
+   */
+  updateLinkText: (sourceName: string, linkIdOrIds: string|string[]) => Promise<boolean|any[]>;
   updateAllLinkText: (sourceName: string) => Promise<boolean>;
   corporaGetLinksByAlignedWord: (sourceName: string, sourcesText: string, targetsText: string, sort?: GridSortItem | null) => Promise<Link[]>;
   findByIds: <T,K>(sourceName: string, table: string, ids: K[]) => Promise<T[]|undefined>;
