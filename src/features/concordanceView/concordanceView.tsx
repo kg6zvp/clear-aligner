@@ -32,11 +32,12 @@ export type PivotWordFilter = 'aligned' | 'all';
 
 export interface AlignmentTableControlPanelProps {
   saveButtonDisabled?: boolean;
+  setSaveButtonDisabled: Function;
   selectedRowsCount: number;
   linksPendingUpdate: Map<string, Link>;
 }
 
-export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCount, linksPendingUpdate }: AlignmentTableControlPanelProps) => {
+export const AlignmentTableControlPanel = ({ saveButtonDisabled, setSaveButtonDisabled, selectedRowsCount, linksPendingUpdate }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
   const [saveKey, setSaveKey] = useState("");
@@ -47,6 +48,7 @@ export const AlignmentTableControlPanel = ({ saveButtonDisabled, selectedRowsCou
     const linksToSave = [...linksPendingUpdate.values()];
     setSaveKey(uuid());
     setArrayOfLinksToSave(linksToSave);
+    setSaveButtonDisabled(true);
   }
 
   const DisplayItemsSelectedCount = () => {
@@ -364,6 +366,7 @@ export const ConcordanceView = () => {
             saveButtonDisabled={saveButtonDisabled}
             selectedRowsCount={selectedRowsCount}
             linksPendingUpdate={linksPendingUpdate}
+            setSaveButtonDisabled={setSaveButtonDisabled}
           />
           <Paper
             sx={{
