@@ -45,9 +45,18 @@ export const DataGridSelectAllCheckboxFix = {
     top: '-66px',
     left: '2px',
   },
-  'MuiTableContainer-root [class*="MuiDataGrid"]': {
-    overflow: 'visible'
-  }
+  '[class*="MuiData"]': {
+    overflow: 'visible',
+  },
 }
+
+/**
+ * CA-102 add sx on TableContainer to allow the checkbox to overflow outside
+ * the TableContainer
+ */
+export const TableContainerFix= {
+  overflow: 'visible',
+}
+
 
 

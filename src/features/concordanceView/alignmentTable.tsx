@@ -13,8 +13,9 @@ import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import {
   DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix, DataGridSelectAllCheckboxFix,
-  DataGridTripleIconMarginFix
+  DataGridScrollbarDisplayFix,
+  DataGridSelectAllCheckboxFix,
+  DataGridTripleIconMarginFix, TableContainerFix
 } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
@@ -247,7 +248,8 @@ export const AlignmentTable = ({
           height: '100%',
           '.MuiTableContainer-root::-webkit-scrollbar': {
             width: 0
-          }
+          },
+        ...TableContainerFix,
         }}
       >
         {loading ? (
