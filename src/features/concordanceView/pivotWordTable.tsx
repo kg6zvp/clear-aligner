@@ -141,7 +141,7 @@ export const PivotWordTable = ({
           },
         }}
         pagination={true}
-        pageSizeOptions={[]}
+        pageSizeOptions={[20]}
         onRowClick={(clickEvent: GridRowParams<PivotWord>) => {
           if (onChooseWord) {
             onChooseWord(clickEvent.row);

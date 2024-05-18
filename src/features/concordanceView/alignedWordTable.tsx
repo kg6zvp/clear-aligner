@@ -183,7 +183,7 @@ export const AlignedWordTable = ({
               paginationModel: { page: initialPage, pageSize: 20 },
             },
           }}
-          pageSizeOptions={[]}
+          pageSizeOptions={[20]}
           onRowClick={(clickEvent: GridRowParams<AlignedWord>) => onChooseAlignedWord?.(clickEvent.row)}
           isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}
