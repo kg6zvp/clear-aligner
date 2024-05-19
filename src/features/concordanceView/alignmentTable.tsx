@@ -268,9 +268,9 @@ export const AlignmentTable = ({
               }}
               rowSelection={true}
               rowCount={alignments?.length ?? 0}
-              rowSelectionModel={
-                chosenLink?.id ? [chosenLink.id] : undefined
-              }
+              // rowSelectionModel={
+              //   chosenLink?.id ? [chosenLink.id] : undefined
+              // }
               rows={alignments ?? []}
               columns={columns}
               getRowId={(row) => row.id}
@@ -297,6 +297,7 @@ export const AlignmentTable = ({
               onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
               onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
               hideFooterSelectedRowCount
+              disableRowSelectionOnClick
             />
           </>
         )}
