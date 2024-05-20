@@ -2,8 +2,6 @@
  * This file contains custom styling for the DataGrid.
  */
 
-import { gridClasses } from '@mui/x-data-grid';
-
 /**
  * add to sx on DataGrid in order to fix choppy resize animations with many rows in DataGrid
  */
