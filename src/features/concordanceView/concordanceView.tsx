@@ -20,7 +20,6 @@ import { useAppDispatch } from '../../app/index';
 import {
   CancelOutlined,
   CheckCircleOutlined,
-  Close,
   FlagOutlined,
   Link as LinkIcon
 } from '@mui/icons-material';
@@ -132,9 +131,6 @@ export const AlignmentTableControlPanel = ({
               onClick={handleSaveLinkStatus}
             >
               SAVE
-            </Button>
-            <Button variant="text">
-              <Close />
             </Button>
           </ButtonGroup>
         </Stack>
