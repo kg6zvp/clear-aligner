@@ -155,7 +155,7 @@ export const AlignmentTable = ({
                                  setLinksPendingUpdate,
                                  linksPendingUpdate, container
                                }: AlignmentTableProps) => {
-  const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
+  const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
     field: 'id',
     sort: 'desc'
