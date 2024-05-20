@@ -37,31 +37,4 @@ export const DataGridTripleIconMarginFix = {
   '.MuiDataGrid-menuIcon' : { mr: 0}
 }
 
-/**
- * CA-102 add sx on DataGrid to move the Select All Checkbox into the
- * AlignmentTableControlPanel
- */
-export const DataGridSelectAllCheckboxFix = {
-  '& .MuiDataGrid-columnHeaderCheckbox .MuiDataGrid-columnHeaderTitleContainer' : {
-    position: 'absolute',
-    top: '-66px',
-    left: '2px',
-  },
-  '[class*="MuiData"]': {
-    overflow: 'visible',
-  },
-  [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]: {
-    outline: 'none'
-  }
-}
-
-/**
- * CA-102 add sx on TableContainer to allow the checkbox to overflow outside
- * the TableContainer
- */
-export const TableContainerFix= {
-  overflow: 'visible',
-}
-
-
 

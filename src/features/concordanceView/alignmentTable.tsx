@@ -3,8 +3,15 @@
  * in the ConcordanceView component
  */
 import { AlignmentSide, Link, LinkStatus } from '../../structs';
-import { DataGrid, GridColDef, GridRenderCellParams, GridRowParams, GridSortItem } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, TableContainer } from '@mui/material';
+import {
+  DataGrid,
+  GridColDef,
+  GridHeaderCheckbox,
+  GridRenderCellParams,
+  GridRowParams,
+  GridSortItem
+} from '@mui/x-data-grid';
+import { CircularProgress, IconButton, Portal, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
 import React, { createContext, useContext, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -14,8 +21,7 @@ import { AlignedWord, PivotWord } from './structs';
 import {
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridSelectAllCheckboxFix,
-  DataGridTripleIconMarginFix, TableContainerFix
+  DataGridTripleIconMarginFix,
 } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
@@ -119,6 +125,7 @@ export interface AlignmentTableProps {
   setSaveButtonDisabled: Function,
   setLinksPendingUpdate: Function,
   linksPendingUpdate: Map<string, Link>;
+  container:  React.MutableRefObject<null>;
 }
 
 /**
@@ -134,6 +141,7 @@ export interface AlignmentTableProps {
  * @param setSaveButtonDisabled callback to control the status of the Save button
  * @param setLinksPendingUpdate callback to add an updated Link to the array of Links pending an update
  * @param linksPendingUpdate Array of Links pending an update
+ * @param container Reference to the container utilized by Portal component
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -145,7 +153,7 @@ export const AlignmentTable = ({
                                  setSelectedRowsCount,
                                  setSaveButtonDisabled,
                                  setLinksPendingUpdate,
-                                 linksPendingUpdate,
+                                 linksPendingUpdate, container
                                }: AlignmentTableProps) => {
   const [selectedAligment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
@@ -178,6 +186,22 @@ export const AlignmentTable = ({
   }, [chosenAlignmentLink, alignments]);
 
   const columns: GridColDef[] = [
+    {
+      field: "__check__",
+      renderHeader: (params) => (
+          <Portal container={() => container?.current}>
+            <GridHeaderCheckbox {...params} />
+          </Portal>
+      ),
+      type: 'checkboxSelection',
+      disableColumnMenu: true,
+      resizable: false,
+      disableReorder: true,
+      disableExport: true,
+      filterable: false,
+      sortable: false,
+      width: 20,
+    },
     {
       field: 'state',
       headerName: 'State',
@@ -249,7 +273,6 @@ export const AlignmentTable = ({
           '.MuiTableContainer-root::-webkit-scrollbar': {
             width: 0
           },
-        ...TableContainerFix,
         }}
       >
         {loading ? (
@@ -264,7 +287,6 @@ export const AlignmentTable = ({
                 ...DataGridScrollbarDisplayFix,
                 ...DataGridResizeAnimationFixes,
                 ...DataGridTripleIconMarginFix,
-                ...DataGridSelectAllCheckboxFix,
               }}
               rowSelection={true}
               rowCount={alignments?.length ?? 0}

@@ -34,13 +34,14 @@ export interface AlignmentTableControlPanelProps {
   setSaveButtonDisabled: Function;
   selectedRowsCount: number;
   linksPendingUpdate: Map<string, Link>;
+  container:  React.MutableRefObject<null>;
 }
 
 export const AlignmentTableControlPanel = ({
                                              saveButtonDisabled,
                                              setSaveButtonDisabled,
                                              selectedRowsCount,
-                                             linksPendingUpdate
+                                             linksPendingUpdate, container
                                            }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
@@ -82,8 +83,12 @@ export const AlignmentTableControlPanel = ({
       >
         <Stack
           justifyContent="left"
-          style={{ marginBottom: '10px', marginLeft: '50px' }}
+          style={{ marginBottom: '10px' }}
+          direction="row"
         >
+          <div ref={container}>
+            {/*This is where the checkbox gets inserted via Portal*/}
+          </div>
           <Typography component="span" alignSelf={'center'}>
             <Box sx={{ fontWeight: 'bold' }}> Alignments</Box>
           </Typography>
@@ -174,6 +179,10 @@ export const ConcordanceView = () => {
   const [selectedAlignmentLink, setSelectedAlignmentLink] = useState(
     null as Link | null
   );
+
+  // container is used for the Portal component to transport the checkbox from
+  // the DataGrid to the AlignmentTableControlPanel
+  const container = React.useRef(null);
 
   const handleUpdateSelectedAlignedWord = useCallback((alignedWord: AlignedWord | null) => {
       setSelectedAlignedWord(alignedWord);
@@ -381,6 +390,7 @@ export const ConcordanceView = () => {
             selectedRowsCount={selectedRowsCount}
             linksPendingUpdate={linksPendingUpdate}
             setSaveButtonDisabled={setSaveButtonDisabled}
+            container={container}
           />
           <Paper
             sx={{
@@ -410,6 +420,7 @@ export const ConcordanceView = () => {
               setSaveButtonDisabled={setSaveButtonDisabled}
               setLinksPendingUpdate={setLinksPendingUpdate}
               linksPendingUpdate={linksPendingUpdate}
+              container={container}
             />
           </Paper>
         </Box>
