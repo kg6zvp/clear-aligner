@@ -17,12 +17,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
-import {
-  CancelOutlined,
-  CheckCircleOutlined,
-  FlagOutlined,
-  Link as LinkIcon
-} from '@mui/icons-material';
+import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 
@@ -37,13 +32,14 @@ export interface AlignmentTableControlPanelProps {
   container:  React.MutableRefObject<null>;
   selectedRows: Link[];
   setLinksPendingUpdate: Function;
+  setGlobalLinkState: Function;
 }
 
 export const AlignmentTableControlPanel = ({
                                              saveButtonDisabled,
                                              setSaveButtonDisabled,
                                              selectedRowsCount,
-                                             linksPendingUpdate, container, selectedRows, setLinksPendingUpdate,
+                                             linksPendingUpdate, container, selectedRows, setLinksPendingUpdate, setGlobalLinkState
                                            }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
@@ -132,6 +128,7 @@ export const AlignmentTableControlPanel = ({
               ]}
               onSelect={(value) => {
                 setLinkState(value);
+                setGlobalLinkState(value);
                 const updatedSelectedRows: Link[] = selectedRows?.map((row) => (
                   {
                    ...row,
@@ -176,6 +173,7 @@ export const ConcordanceView = () => {
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
   const [selectedRows, setSelectedRows] = React.useState([]);
   const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
+  const [globalLinkState, setGlobalLinkState] = React.useState<LinkStatus>(LinkStatus.CREATED);
 
   /**
    * pivot words
@@ -419,6 +417,7 @@ export const ConcordanceView = () => {
             container={container}
             selectedRows={selectedRows}
             setLinksPendingUpdate={setLinksPendingUpdate}
+            setGlobalLinkState={setGlobalLinkState}
           />
           <Paper
             sx={{
@@ -450,6 +449,8 @@ export const ConcordanceView = () => {
               setLinksPendingUpdate={setLinksPendingUpdate}
               linksPendingUpdate={linksPendingUpdate}
               container={container}
+              globalLinkState={globalLinkState}
+              setGlobalLinkState={setGlobalLinkState}
             />
           </Paper>
         </Box>

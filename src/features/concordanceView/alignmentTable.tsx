@@ -13,7 +13,7 @@ import {
 } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, Portal, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
@@ -71,18 +71,28 @@ export interface StateCellProps {
   state: Link;
   setLinksPendingUpdate: Function;
   linksPendingUpdate: Map<string, Link>;
+  globalLinkState: LinkStatus;
+  isRowSelected: boolean;
 }
 
 
 /**
  * Render the cell with the Button Group of states
  */
-export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate, linksPendingUpdate}: StateCellProps) => {
-  const [linkState, setLinkState] = React.useState(state.metadata?.status);
-  const [localValue, setLocalValue] = React.useState("");
+export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate, linksPendingUpdate, globalLinkState, isRowSelected}: StateCellProps) => {
+  const [localLinkState, setLocalLinkState] = React.useState(state.metadata?.status);
+
+  // if the state is updated via the AlignmentTableControl Panel, then
+  // update localLinkState here
+  useEffect(() => {
+    if(isRowSelected){
+      setLocalLinkState(globalLinkState)
+    }
+  }, [globalLinkState])
+
   return (
     <SingleSelectButtonGroup
-      value={linkState}
+      value={localLinkState}
       sx={{ size: 'small' }}
       items={[
         {
@@ -103,13 +113,11 @@ export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate,
         }
       ]}
       onSelect={(value) => {
-        setLocalValue(value);
-
         const updatedLink = structuredClone(state);
         updatedLink.metadata.status = value as LinkStatus;
         // add updatedLink to the linksPendingUpdate Map
         setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
-        setLinkState(value as LinkStatus);
+        setLocalLinkState(value as LinkStatus);
         setSaveButtonDisabled(false);
       }}
 
@@ -130,6 +138,8 @@ export interface AlignmentTableProps {
   linksPendingUpdate: Map<string, Link>;
   container:  React.MutableRefObject<null>;
   setSelectedRows: Function;
+  globalLinkState: LinkStatus;
+  setGlobalLinkState: Function;
 }
 
 /**
@@ -147,6 +157,8 @@ export interface AlignmentTableProps {
  * @param linksPendingUpdate Array of Links pending an update
  * @param container Reference to the container utilized by Portal component
  * @param setSelectedRows callback to update the state with what rows are currently selected
+ * @param globalLinkState the link state as selected from AlignmentTableControlPanel
+ * @param setGlobalLinkState update the currently selected state of a Link
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -159,7 +171,7 @@ export const AlignmentTable = ({
                                  setSelectedRows,
                                  setSaveButtonDisabled,
                                  setLinksPendingUpdate,
-                                 linksPendingUpdate, container
+                                 linksPendingUpdate, container, globalLinkState, setGlobalLinkState
                                }: AlignmentTableProps) => {
   const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
@@ -220,8 +232,10 @@ export const AlignmentTable = ({
         return (<StateCell
           setSaveButtonDisabled={setSaveButtonDisabled}
           state={row.row}
+          isRowSelected={row.api.isRowSelected(row.id)}
           setLinksPendingUpdate={setLinksPendingUpdate}
           linksPendingUpdate={linksPendingUpdate}
+          globalLinkState={globalLinkState}
         />)
       }
     },
