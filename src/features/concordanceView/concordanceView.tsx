@@ -3,7 +3,7 @@
  * modes of the CA application
  */
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { AlignmentSide, Link } from '../../structs';
+import { AlignmentSide, Link, LinkStatus } from '../../structs';
 import { Button, ButtonGroup, Divider, Paper, Stack, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
@@ -35,22 +35,29 @@ export interface AlignmentTableControlPanelProps {
   selectedRowsCount: number;
   linksPendingUpdate: Map<string, Link>;
   container:  React.MutableRefObject<null>;
+  selectedRows: Link[];
+  setLinksPendingUpdate: Function;
 }
 
 export const AlignmentTableControlPanel = ({
                                              saveButtonDisabled,
                                              setSaveButtonDisabled,
                                              selectedRowsCount,
-                                             linksPendingUpdate, container
+                                             linksPendingUpdate, container, selectedRows, setLinksPendingUpdate,
                                            }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
   const [saveKey, setSaveKey] = useState('');
   useSaveLink(arrayOfLinksToSave, saveKey);
 
+  console.log('linkState is: ', linkState)
+  console.log('linksPendingUpdate is: ', linksPendingUpdate)
+  console.log('selectedRows is: ', selectedRows)
+
   const handleSaveLinkStatus = () => {
     // Take the map, transform it to an array, then pass it to the save function
     const linksToSave = [...linksPendingUpdate.values()];
+    console.log('linksToSave is: ', linksToSave)
     setSaveKey(uuid());
     setArrayOfLinksToSave(linksToSave);
     setSaveButtonDisabled(true);
@@ -125,6 +132,24 @@ export const AlignmentTableControlPanel = ({
               ]}
               onSelect={(value) => {
                 setLinkState(value);
+                const updatedSelectedRows: Link[] = selectedRows?.map((row) => (
+                  {
+                   ...row,
+                   metadata: {
+                     ...row.metadata,
+                     status: value as LinkStatus,
+                   }
+                  }
+                ))
+
+                console.log('updatedSelectedRows is: ', updatedSelectedRows)
+
+                // iterate through all selectedRows and update linksPendingUpdate
+                updatedSelectedRows?.forEach((row, i) => {
+                  console.log('inside forEach, iteration number: ', i)
+                  setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
+                })
+                setSaveButtonDisabled(false)
               }}
             />
           </ButtonGroup>
@@ -149,6 +174,7 @@ export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const dispatch = useAppDispatch();
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
+  const [selectedRows, setSelectedRows] = React.useState([]);
   const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
 
   /**
@@ -391,6 +417,8 @@ export const ConcordanceView = () => {
             linksPendingUpdate={linksPendingUpdate}
             setSaveButtonDisabled={setSaveButtonDisabled}
             container={container}
+            selectedRows={selectedRows}
+            setLinksPendingUpdate={setLinksPendingUpdate}
           />
           <Paper
             sx={{
@@ -417,6 +445,7 @@ export const ConcordanceView = () => {
                 }
               }}
               setSelectedRowsCount={setSelectedRowsCount}
+              setSelectedRows={setSelectedRows}
               setSaveButtonDisabled={setSaveButtonDisabled}
               setLinksPendingUpdate={setLinksPendingUpdate}
               linksPendingUpdate={linksPendingUpdate}

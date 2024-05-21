@@ -79,6 +79,7 @@ export interface StateCellProps {
  */
 export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate, linksPendingUpdate}: StateCellProps) => {
   const [linkState, setLinkState] = React.useState(state.metadata?.status);
+  const [localValue, setLocalValue] = React.useState("");
   return (
     <SingleSelectButtonGroup
       value={linkState}
@@ -102,6 +103,8 @@ export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate,
         }
       ]}
       onSelect={(value) => {
+        setLocalValue(value);
+
         const updatedLink = structuredClone(state);
         updatedLink.metadata.status = value as LinkStatus;
         // add updatedLink to the linksPendingUpdate Map
@@ -126,6 +129,7 @@ export interface AlignmentTableProps {
   setLinksPendingUpdate: Function,
   linksPendingUpdate: Map<string, Link>;
   container:  React.MutableRefObject<null>;
+  setSelectedRows: Function;
 }
 
 /**
@@ -142,6 +146,7 @@ export interface AlignmentTableProps {
  * @param setLinksPendingUpdate callback to add an updated Link to the array of Links pending an update
  * @param linksPendingUpdate Array of Links pending an update
  * @param container Reference to the container utilized by Portal component
+ * @param setSelectedRows callback to update the state with what rows are currently selected
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -151,6 +156,7 @@ export const AlignmentTable = ({
                                  onChooseAlignmentLink,
                                  updateAlignments,
                                  setSelectedRowsCount,
+                                 setSelectedRows,
                                  setSaveButtonDisabled,
                                  setLinksPendingUpdate,
                                  linksPendingUpdate, container
@@ -162,6 +168,8 @@ export const AlignmentTable = ({
   } as GridSortItem);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
+
+  console.log('alignments is: ', alignments)
 
   const chosenLink: Link | undefined = useMemo(() => {
     if (!chosenAlignmentLink) return undefined;
@@ -316,7 +324,11 @@ export const AlignmentTable = ({
                 }
               }}
               checkboxSelection={true}
-              onRowSelectionModelChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.length)}
+              onRowSelectionModelChange={(rowSelectionModel,) => {
+                setSelectedRowsCount(rowSelectionModel.length);
+                const selectedIDs = new Set(rowSelectionModel);
+                setSelectedRows(alignments?.filter((row) => selectedIDs.has(row?.id || "")))
+              }}
               onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
@@ -325,7 +337,7 @@ export const AlignmentTable = ({
         )}
       </TableContainer>
       <WorkbenchDialog
-        alignment={selectedAligment}
+        alignment={selectedAlignment}
         setAlignment={setSelectedAlignment}
         updateAlignments={updateAlignments}
       />
