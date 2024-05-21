@@ -41,7 +41,8 @@
   "scripts": {
     "start": "craco start",
     "clean": "rm -rf build app dist ui",
-    "build": "BUILD_PATH=ui craco build && tsc && electron-builder",
+    "schemas:generate": "ts-node src/structs/generateSchema.ts",
+    "build": "yarn schemas:generate && BUILD_PATH=ui craco build && tsc && electron-builder",
     "build:mac": "sql/scripts/create-db.sh && yarn build -m",
     "build:linux": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -l\"",
     "build:win": "sql/scripts/create-db.sh && docker run --rm -it -v $(pwd):/project electronuserland/builder:wine /bin/bash -c \"./buildInDocker.sh $(id -u $(whoami)) -w\"",
@@ -115,7 +116,8 @@
     "rollup": "^2.70.1",
     "rollup-plugin-postcss": "^4.0.2",
     "storybook": "^7.5.3",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "zod-to-json-schema": "^3.23.0"
   },
   "resolutions": {
     "@types/react": "^18",
@@ -153,6 +155,10 @@
       {
         "from": "app/electron/typeorm-migrations",
         "to": "sql/typeorm-migrations"
+      },
+      {
+        "from": "dist/schemas/AlignmentFileSchema.json",
+        "to": "schemas/AlignmentFileSchema.json"
       }
     ]
   },

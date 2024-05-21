@@ -23,7 +23,19 @@ class DataSourceStatus {
   }
 }
 
+/**
+ * Repositories implementing this interface can provide migrations which will
+ * automatically be invoked when database connections have been made
+ */
 export interface RepositoryWithMigrations {
+  /**
+   * Implement this method to provide migrations to be run for this database
+   * schema
+   *
+   * @returns a list of migrations for the schema, in the same formats accepted
+   * by typeorm (strings with globs indicating file paths, migration data
+   * classes, etc)
+   */
   getMigrations?: () => Promise<any[]>;
 }
 
