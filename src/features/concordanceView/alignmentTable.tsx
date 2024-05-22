@@ -20,9 +20,10 @@ import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
 import { AlignedWord, PivotWord } from './structs';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridTripleIconMarginFix,
+  DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
@@ -318,7 +319,8 @@ export const AlignmentTable = ({
                 width: '100%',
                 ...DataGridScrollbarDisplayFix,
                 ...DataGridResizeAnimationFixes,
-                ...DataGridTripleIconMarginFix
+                ...DataGridTripleIconMarginFix,
+                ...DataGridOutlineFix,
               }}
               rowSelection={true}
               rowCount={alignments?.length ?? 0}

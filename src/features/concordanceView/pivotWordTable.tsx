@@ -15,6 +15,7 @@ import {
   GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix, DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
@@ -120,6 +121,7 @@ export const PivotWordTable = ({
           ...DataGridScrollbarDisplayFix,
           ...DataGridResizeAnimationFixes,
           ...DataGridTripleIconMarginFix,
+          ...DataGridOutlineFix
         }}
         rowSelection={true}
         rowSelectionModel={

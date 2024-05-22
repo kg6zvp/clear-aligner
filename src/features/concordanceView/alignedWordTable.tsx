@@ -13,6 +13,7 @@ import { AlignedWord, LocalizedWordEntry, PivotWord } from './structs';
 import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
   DataGridSetMinRowHeightToDefault, DataGridTripleIconMarginFix
@@ -163,6 +164,7 @@ export const AlignedWordTable = ({
             ...DataGridScrollbarDisplayFix,
             ...DataGridResizeAnimationFixes,
             ...DataGridTripleIconMarginFix,
+            ...DataGridOutlineFix,
           }}
           rowSelection={true}
           rowSelectionModel={

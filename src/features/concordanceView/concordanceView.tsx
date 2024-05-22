@@ -4,7 +4,18 @@
  */
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { AlignmentSide, Link, LinkStatus } from '../../structs';
-import { Button, ButtonGroup, Divider, Paper, Stack, Typography } from '@mui/material';
+import {
+  Button,
+  ButtonGroup, Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  Paper,
+  Stack,
+  Typography
+} from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
@@ -17,7 +28,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
-import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
+import { CancelOutlined, CheckCircleOutlined, Close, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 
@@ -50,7 +61,13 @@ export const AlignmentTableControlPanel = ({
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
   const [saveKey, setSaveKey] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [linkStateForDialog, setLinkStateForDialog] = React.useState("");
   useSaveLink(arrayOfLinksToSave, saveKey);
+
+  const handleClose = () => {
+    setIsDialogOpen(false)
+  }
 
   console.log('linkState is: ', linkState)
   console.log('linksPendingUpdate is: ', linksPendingUpdate)
@@ -134,33 +151,34 @@ export const AlignmentTableControlPanel = ({
                 }
               ]}
               onSelect={(value) => {
+                setLinkStateForDialog(value)
+
 
                 //trigger a modal to open right here.
+                setIsDialogOpen(true);
                 //if modal=> yes, then call the handler
                 //if modal=> do nothing.
 
 
                 //move all this stuff into a handler
-                setLinkState(value);
-                setGlobalLinkState(value);
-                const updatedSelectedRows: Link[] = selectedRows?.map((row) => (
-                  {
-                   ...row,
-                   metadata: {
-                     ...row.metadata,
-                     status: value as LinkStatus,
-                   }
-                  }
-                ))
-
-                console.log('updatedSelectedRows is: ', updatedSelectedRows)
-
-                // iterate through all selectedRows and update linksPendingUpdate
-                updatedSelectedRows?.forEach((row, i) => {
-                  console.log('inside forEach, iteration number: ', i)
-                  setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
-                })
-                setSaveButtonDisabled(false)
+                // setLinkState(value);
+                // setGlobalLinkState(value);
+                // const updatedSelectedRows: Link[] = selectedRows?.map((row) => (
+                //   {
+                //    ...row,
+                //    metadata: {
+                //      ...row.metadata,
+                //      status: value as LinkStatus,
+                //    }
+                //   }
+                // ))
+                //
+                // // iterate through all selectedRows and update linksPendingUpdate
+                // updatedSelectedRows?.forEach((row, i) => {
+                //   console.log('inside forEach, iteration number: ', i)
+                //   setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
+                // })
+                // setSaveButtonDisabled(false)
               }}
             />
           </ButtonGroup>
@@ -175,6 +193,21 @@ export const AlignmentTableControlPanel = ({
             </Button>
           </ButtonGroup>
         </Stack>
+        <Dialog maxWidth="lg"
+                open={isDialogOpen}
+                disableEscapeKeyDown={true}
+        >
+          <DialogTitle>
+            <Grid container justifyContent="flex-end" alignItems="center">
+              <IconButton onClick={handleClose}>
+                <Close />
+              </IconButton>
+            </Grid>
+          </DialogTitle>
+          <DialogContent sx={{ height: '100%', width: '100%' }}>
+            Update {selectedRowsCount} records to <b><i>{linkStateForDialog}</i></b>?
+          </DialogContent>
+        </Dialog>
       </Stack>
     </>
   );
