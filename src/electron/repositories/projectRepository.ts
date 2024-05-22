@@ -1183,6 +1183,7 @@ export class ProjectRepository extends BaseRepository {
             WHERE sw.normalized_text = :normalizedText
               AND sw.side = 'sources'
               AND l.targets_text <> ''
+              AND l.status <> LinkStatus.REJECTED
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, {
                     frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
@@ -1208,6 +1209,7 @@ export class ProjectRepository extends BaseRepository {
             WHERE tw.normalized_text = :normalizedText
               AND tw.side = 'targets'
               AND l.sources_text <> ''
+              AND l.status <> LinkStatus.REJECTED
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
         return await em.query(targetQueryText, [{ normalizedText }]);
