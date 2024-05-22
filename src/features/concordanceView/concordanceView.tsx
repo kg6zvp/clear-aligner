@@ -12,7 +12,7 @@ import { PivotWordTable } from './pivotWordTable';
 import { AlignedWordTable } from './alignedWordTable';
 import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
-import { GridSortItem } from '@mui/x-data-grid';
+import { GridInputRowSelectionModel, GridSortItem } from '@mui/x-data-grid';
 import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
@@ -33,13 +33,19 @@ export interface AlignmentTableControlPanelProps {
   selectedRows: Link[];
   setLinksPendingUpdate: Function;
   setGlobalLinkState: Function;
+  setRowSelectionModel: Function;
 }
 
 export const AlignmentTableControlPanel = ({
                                              saveButtonDisabled,
                                              setSaveButtonDisabled,
                                              selectedRowsCount,
-                                             linksPendingUpdate, container, selectedRows, setLinksPendingUpdate, setGlobalLinkState
+                                             linksPendingUpdate,
+                                             container,
+                                             selectedRows,
+                                             setLinksPendingUpdate,
+                                             setGlobalLinkState,
+                                             setRowSelectionModel,
                                            }: AlignmentTableControlPanelProps) => {
   const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
@@ -56,6 +62,7 @@ export const AlignmentTableControlPanel = ({
     console.log('linksToSave is: ', linksToSave)
     setSaveKey(uuid());
     setArrayOfLinksToSave(linksToSave);
+    setRowSelectionModel([])
     setSaveButtonDisabled(true);
   };
 
@@ -127,6 +134,13 @@ export const AlignmentTableControlPanel = ({
                 }
               ]}
               onSelect={(value) => {
+
+                //trigger a modal to open right here.
+                //if modal=> yes, then call the handler
+                //if modal=> do nothing.
+
+
+                //move all this stuff into a handler
                 setLinkState(value);
                 setGlobalLinkState(value);
                 const updatedSelectedRows: Link[] = selectedRows?.map((row) => (
@@ -174,6 +188,7 @@ export const ConcordanceView = () => {
   const [selectedRows, setSelectedRows] = React.useState([]);
   const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
   const [globalLinkState, setGlobalLinkState] = React.useState<LinkStatus>(LinkStatus.CREATED);
+  const [rowSelectionModel, setRowSelectionModel ] = React.useState<GridInputRowSelectionModel>([]);
 
   /**
    * pivot words
@@ -418,6 +433,7 @@ export const ConcordanceView = () => {
             selectedRows={selectedRows}
             setLinksPendingUpdate={setLinksPendingUpdate}
             setGlobalLinkState={setGlobalLinkState}
+            setRowSelectionModel={setRowSelectionModel}
           />
           <Paper
             sx={{
@@ -451,6 +467,8 @@ export const ConcordanceView = () => {
               container={container}
               globalLinkState={globalLinkState}
               setGlobalLinkState={setGlobalLinkState}
+              rowSelectionModel={rowSelectionModel}
+              setRowSelectionModel={setRowSelectionModel}
             />
           </Paper>
         </Box>

@@ -9,7 +9,8 @@ import {
   GridHeaderCheckbox,
   GridRenderCellParams,
   GridRowParams,
-  GridSortItem
+  GridSortItem,
+  GridInputRowSelectionModel,
 } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, Portal, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
@@ -88,7 +89,7 @@ export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate,
     if(isRowSelected){
       setLocalLinkState(globalLinkState)
     }
-  }, [globalLinkState])
+  }, [globalLinkState, isRowSelected])
 
   return (
     <SingleSelectButtonGroup
@@ -140,6 +141,8 @@ export interface AlignmentTableProps {
   setSelectedRows: Function;
   globalLinkState: LinkStatus;
   setGlobalLinkState: Function;
+  rowSelectionModel: GridInputRowSelectionModel;
+  setRowSelectionModel: Function;
 }
 
 /**
@@ -151,6 +154,7 @@ export interface AlignmentTableProps {
  * @param alignedWord the currently selected aligned word, corresponds to the alignment rows being displayed
  * @param chosenAlignmentLink currently selected alignment link
  * @param onChooseAlignmentLink callback for when a user clicks on an alignment link
+ * @param updateAlignments callback used when closing the WorkBenchDialog Dialog
  * @param setSelectedRowsCount callback to update the count of currently selected rows in the table
  * @param setSaveButtonDisabled callback to control the status of the Save button
  * @param setLinksPendingUpdate callback to add an updated Link to the array of Links pending an update
@@ -158,7 +162,8 @@ export interface AlignmentTableProps {
  * @param container Reference to the container utilized by Portal component
  * @param setSelectedRows callback to update the state with what rows are currently selected
  * @param globalLinkState the link state as selected from AlignmentTableControlPanel
- * @param setGlobalLinkState update the currently selected state of a Link
+ * @param rowSelectionModel prop that reflects what rows in the table are currently selected
+ * @param setRowSelectionModel callback to update what rows are currently selected
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -171,7 +176,11 @@ export const AlignmentTable = ({
                                  setSelectedRows,
                                  setSaveButtonDisabled,
                                  setLinksPendingUpdate,
-                                 linksPendingUpdate, container, globalLinkState, setGlobalLinkState
+                                 linksPendingUpdate,
+                                 container,
+                                 globalLinkState,
+                                 rowSelectionModel,
+                                 setRowSelectionModel,
                                }: AlignmentTableProps) => {
   const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
@@ -182,12 +191,13 @@ export const AlignmentTable = ({
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
   console.log('alignments is: ', alignments)
+  console.log('rowSelectionModel is: ', rowSelectionModel)
 
-  const chosenLink: Link | undefined = useMemo(() => {
-    if (!chosenAlignmentLink) return undefined;
-    if (!alignments?.includes(chosenAlignmentLink)) return undefined;
-    return chosenAlignmentLink;
-  }, [alignments, chosenAlignmentLink]);
+  // const chosenLink: Link | undefined = useMemo(() => {
+  //   if (!chosenAlignmentLink) return undefined;
+  //   if (!alignments?.includes(chosenAlignmentLink)) return undefined;
+  //   return chosenAlignmentLink;
+  // }, [alignments, chosenAlignmentLink]);
 
   const loading: boolean = useMemo(
     () => !!alignedWord && !alignments,
@@ -294,7 +304,7 @@ export const AlignmentTable = ({
           height: '100%',
           '.MuiTableContainer-root::-webkit-scrollbar': {
             width: 0
-          },
+          }
         }}
       >
         {loading ? (
@@ -308,13 +318,10 @@ export const AlignmentTable = ({
                 width: '100%',
                 ...DataGridScrollbarDisplayFix,
                 ...DataGridResizeAnimationFixes,
-                ...DataGridTripleIconMarginFix,
+                ...DataGridTripleIconMarginFix
               }}
               rowSelection={true}
               rowCount={alignments?.length ?? 0}
-              // rowSelectionModel={
-              //   chosenLink?.id ? [chosenLink.id] : undefined
-              // }
               rows={alignments ?? []}
               columns={columns}
               getRowId={(row) => row.id}
@@ -338,10 +345,15 @@ export const AlignmentTable = ({
                 }
               }}
               checkboxSelection={true}
-              onRowSelectionModelChange={(rowSelectionModel,) => {
+              // rowSelectionModel={
+              //   chosenLink?.id ? [chosenLink.id] : undefined
+              // }
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={(rowSelectionModel) => {
+                setRowSelectionModel(rowSelectionModel);
                 setSelectedRowsCount(rowSelectionModel.length);
                 const selectedIDs = new Set(rowSelectionModel);
-                setSelectedRows(alignments?.filter((row) => selectedIDs.has(row?.id || "")))
+                setSelectedRows(alignments?.filter((row) => selectedIDs.has(row?.id || '')));
               }}
               onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
               hideFooterSelectedRowCount
