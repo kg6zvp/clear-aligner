@@ -63,6 +63,8 @@ export const AlignmentTableControlPanel = ({
   const [saveKey, setSaveKey] = useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [linkStateForDialog, setLinkStateForDialog] = React.useState("");
+  const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
+
   useSaveLink(arrayOfLinksToSave, saveKey);
 
   const handleClose = () => {
@@ -72,6 +74,15 @@ export const AlignmentTableControlPanel = ({
   console.log('linkState is: ', linkState)
   console.log('linksPendingUpdate is: ', linksPendingUpdate)
   console.log('selectedRows is: ', selectedRows)
+
+  useEffect( () => {
+    if(selectedRowsCount > 0) {
+      setIsButtonGroupDisabled(false)
+    }
+    else if(selectedRowsCount == 0){
+      setIsButtonGroupDisabled(true)
+    }
+  }, [selectedRowsCount])
 
   const handleSaveLinkStatus = () => {
     // Take the map, transform it to an array, then pass it to the save function
@@ -130,6 +141,7 @@ export const AlignmentTableControlPanel = ({
           <Divider orientation="vertical" />
           <ButtonGroup>
             <SingleSelectButtonGroup
+              disabled={isButtonGroupDisabled}
               value={linkState}
               sx={{ size: 'small', width: '200px' }}
               items={[

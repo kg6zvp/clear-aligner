@@ -13,6 +13,7 @@ export interface SingleSelectButtonGroupProps {
     label: string | ReactElement;
   }[];
   onSelect: (value: string) => void;
+  disabled?: boolean;
 }
 
 /**
@@ -21,15 +22,17 @@ export interface SingleSelectButtonGroupProps {
  * @param items list of buttons and their corresponding values (string or ReactElement)
  * @param onSelect callback when a button is clicked by the user
  * @param sx style parameters
+ * @param disabled (optional) flag to disable the buttons
  */
 export const SingleSelectButtonGroup = ({
   value,
   items,
   onSelect,
   sx,
+  disabled = false,
 }: SingleSelectButtonGroupProps) => {
   return (
-    <ButtonGroup fullWidth={true} sx={sx}>
+    <ButtonGroup fullWidth={true} sx={sx} disabled={disabled}>
       {items.map((item) =>
         <Button
           key={item.value}
