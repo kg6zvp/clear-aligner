@@ -1145,8 +1145,6 @@ export class ProjectRepository extends BaseRepository {
                            on l.id = j.link_id
                            where l.status <> 'rejected'
                            and w.side = '${side}' ` : ''}
-
-
                            group by t ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
   };
 
