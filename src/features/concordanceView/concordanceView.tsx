@@ -6,7 +6,8 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { AlignmentSide, Link, LinkStatus } from '../../structs';
 import {
   Button,
-  ButtonGroup, Dialog,
+  ButtonGroup,
+  Dialog,
   DialogContent,
   DialogTitle,
   Divider,
@@ -43,8 +44,9 @@ export interface AlignmentTableControlPanelProps {
   container:  React.MutableRefObject<null>;
   selectedRows: Link[];
   setLinksPendingUpdate: Function;
-  setGlobalLinkState: Function;
   setRowSelectionModel: Function;
+  alignmentTableControlPanelLinkState: LinkStatus | null;
+  setAlignmentTableControlPanelLinkState: Function;
 }
 
 export const AlignmentTableControlPanel = ({
@@ -55,23 +57,22 @@ export const AlignmentTableControlPanel = ({
                                              container,
                                              selectedRows,
                                              setLinksPendingUpdate,
-                                             setGlobalLinkState,
                                              setRowSelectionModel,
+                                             alignmentTableControlPanelLinkState,
+                                             setAlignmentTableControlPanelLinkState
                                            }: AlignmentTableControlPanelProps) => {
-  const [linkState, setLinkState] = React.useState('');
   const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
   const [saveKey, setSaveKey] = useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-  const [linkStateForDialog, setLinkStateForDialog] = React.useState("");
   const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
-
+  const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   useSaveLink(arrayOfLinksToSave, saveKey);
 
   const handleClose = () => {
     setIsDialogOpen(false)
   }
 
-  console.log('linkState is: ', linkState)
+  console.log('alignmentTableControlPanelLinkState is: ', alignmentTableControlPanelLinkState)
   console.log('linksPendingUpdate is: ', linksPendingUpdate)
   console.log('selectedRows is: ', selectedRows)
 
@@ -79,12 +80,30 @@ export const AlignmentTableControlPanel = ({
     if(selectedRowsCount > 0) {
       setIsButtonGroupDisabled(false)
     }
-    else if(selectedRowsCount == 0){
+    else if(selectedRowsCount === 0){
       setIsButtonGroupDisabled(true)
     }
   }, [selectedRowsCount])
 
+  useEffect( () => {
+    // update the state of all the currently selected rows in bulk
+    setUpdatedSelectedRows(selectedRows?.map((row) => (
+      {
+        ...row,
+        metadata: {
+          ...row.metadata,
+          status: alignmentTableControlPanelLinkState as LinkStatus,
+        }
+      }
+    )))
+  },[alignmentTableControlPanelLinkState, selectedRows])
+
   const handleSaveLinkStatus = () => {
+    setIsDialogOpen(true);
+  };
+
+  const handleSave = () => {
+
     // Take the map, transform it to an array, then pass it to the save function
     const linksToSave = [...linksPendingUpdate.values()];
     console.log('linksToSave is: ', linksToSave)
@@ -92,7 +111,9 @@ export const AlignmentTableControlPanel = ({
     setArrayOfLinksToSave(linksToSave);
     setRowSelectionModel([])
     setSaveButtonDisabled(true);
-  };
+    handleClose();
+
+  }
 
   const DisplayItemsSelectedCount = () => {
     if (selectedRowsCount === 0) {
@@ -142,7 +163,7 @@ export const AlignmentTableControlPanel = ({
           <ButtonGroup>
             <SingleSelectButtonGroup
               disabled={isButtonGroupDisabled}
-              value={linkState}
+              value={alignmentTableControlPanelLinkState || undefined}
               sx={{ size: 'small', width: '200px' }}
               items={[
                 {
@@ -163,34 +184,18 @@ export const AlignmentTableControlPanel = ({
                 }
               ]}
               onSelect={(value) => {
-                setLinkStateForDialog(value)
+                setAlignmentTableControlPanelLinkState(value);
+                setSaveButtonDisabled(false)
 
 
-                //trigger a modal to open right here.
-                setIsDialogOpen(true);
-                //if modal=> yes, then call the handler
-                //if modal=> do nothing.
+                // iterate through all selectedRows and update linksPendingUpdate
+                updatedSelectedRows?.forEach((row) => {
+                  console.log('got into the forEach')
+                  setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
+                })
 
-
-                //move all this stuff into a handler
-                // setLinkState(value);
-                // setGlobalLinkState(value);
-                // const updatedSelectedRows: Link[] = selectedRows?.map((row) => (
-                //   {
-                //    ...row,
-                //    metadata: {
-                //      ...row.metadata,
-                //      status: value as LinkStatus,
-                //    }
-                //   }
-                // ))
-                //
-                // // iterate through all selectedRows and update linksPendingUpdate
-                // updatedSelectedRows?.forEach((row, i) => {
-                //   console.log('inside forEach, iteration number: ', i)
-                //   setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
-                // })
-                // setSaveButtonDisabled(false)
+                console.log('linksPendingUpdate (inside handleSave()) is: ', linksPendingUpdate)
+                console.log('alignmentTableControlPanelLinkState (inside handleSave()) is: ', alignmentTableControlPanelLinkState)
               }}
             />
           </ButtonGroup>
@@ -217,7 +222,10 @@ export const AlignmentTableControlPanel = ({
             </Grid>
           </DialogTitle>
           <DialogContent sx={{ height: '100%', width: '100%' }}>
-            Update {selectedRowsCount} records to <b><i>{linkStateForDialog}</i></b>?
+            Update {linksPendingUpdate.size} records?
+            <Button onClick={handleSave}>
+              Yes
+            </Button>
           </DialogContent>
         </Dialog>
       </Stack>
@@ -232,9 +240,8 @@ export const ConcordanceView = () => {
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
   const [selectedRows, setSelectedRows] = React.useState([]);
   const [saveButtonDisabled, setSaveButtonDisabled] = React.useState(true);
-  const [globalLinkState, setGlobalLinkState] = React.useState<LinkStatus>(LinkStatus.CREATED);
   const [rowSelectionModel, setRowSelectionModel ] = React.useState<GridInputRowSelectionModel>([]);
-
+  const [alignmentTableControlPanelLinkState, setAlignmentTableControlPanelLinkState] = React.useState<LinkStatus>();
   /**
    * pivot words
    */
@@ -477,8 +484,9 @@ export const ConcordanceView = () => {
             container={container}
             selectedRows={selectedRows}
             setLinksPendingUpdate={setLinksPendingUpdate}
-            setGlobalLinkState={setGlobalLinkState}
             setRowSelectionModel={setRowSelectionModel}
+            alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+            setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
           />
           <Paper
             sx={{
@@ -510,10 +518,9 @@ export const ConcordanceView = () => {
               setLinksPendingUpdate={setLinksPendingUpdate}
               linksPendingUpdate={linksPendingUpdate}
               container={container}
-              globalLinkState={globalLinkState}
-              setGlobalLinkState={setGlobalLinkState}
               rowSelectionModel={rowSelectionModel}
               setRowSelectionModel={setRowSelectionModel}
+              alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
             />
           </Paper>
         </Box>

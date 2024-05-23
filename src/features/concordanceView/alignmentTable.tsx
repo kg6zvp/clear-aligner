@@ -73,28 +73,36 @@ export interface StateCellProps {
   state: Link;
   setLinksPendingUpdate: Function;
   linksPendingUpdate: Map<string, Link>;
-  globalLinkState: LinkStatus;
   isRowSelected: boolean;
+  alignmentTableControlPanelLinkState: LinkStatus | null;
 }
 
 
 /**
  * Render the cell with the Button Group of states
  */
-export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate, linksPendingUpdate, globalLinkState, isRowSelected}: StateCellProps) => {
-  const [localLinkState, setLocalLinkState] = React.useState(state.metadata?.status);
+export const StateCell = ({ setSaveButtonDisabled,
+                            state,
+                            setLinksPendingUpdate,
+                            linksPendingUpdate,
+                            isRowSelected,
+                            alignmentTableControlPanelLinkState }:
+                            StateCellProps) => {
+  const [alignmentTableLinkState, setAlignmentTableLinkState]
+    = React.useState<LinkStatus>(state.metadata.status);
 
-  // if the state is updated via the AlignmentTableControl Panel, then
-  // update localLinkState here
+  // if the state is updated via the AlignmentTableControl Panel, then update
+  // the state here
   useEffect(() => {
-    if(isRowSelected){
-      setLocalLinkState(globalLinkState)
+    console.log({ alignmentTableControlPanelLinkState })
+    if(isRowSelected && alignmentTableControlPanelLinkState){
+      setAlignmentTableLinkState(alignmentTableControlPanelLinkState)
     }
-  }, [globalLinkState, isRowSelected])
+  }, [alignmentTableControlPanelLinkState, isRowSelected])
 
   return (
     <SingleSelectButtonGroup
-      value={localLinkState}
+      value={alignmentTableLinkState}
       sx={{ size: 'small' }}
       items={[
         {
@@ -119,7 +127,7 @@ export const StateCell = ({ setSaveButtonDisabled, state, setLinksPendingUpdate,
         updatedLink.metadata.status = value as LinkStatus;
         // add updatedLink to the linksPendingUpdate Map
         setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
-        setLocalLinkState(value as LinkStatus);
+        setAlignmentTableLinkState(value as LinkStatus);
         setSaveButtonDisabled(false);
       }}
 
@@ -140,10 +148,9 @@ export interface AlignmentTableProps {
   linksPendingUpdate: Map<string, Link>;
   container:  React.MutableRefObject<null>;
   setSelectedRows: Function;
-  globalLinkState: LinkStatus;
-  setGlobalLinkState: Function;
   rowSelectionModel: GridInputRowSelectionModel;
   setRowSelectionModel: Function;
+  alignmentTableControlPanelLinkState: LinkStatus | null;
 }
 
 /**
@@ -162,9 +169,9 @@ export interface AlignmentTableProps {
  * @param linksPendingUpdate Array of Links pending an update
  * @param container Reference to the container utilized by Portal component
  * @param setSelectedRows callback to update the state with what rows are currently selected
- * @param globalLinkState the link state as selected from AlignmentTableControlPanel
  * @param rowSelectionModel prop that reflects what rows in the table are currently selected
  * @param setRowSelectionModel callback to update what rows are currently selected
+ * @param alignmentTableControlPanelLinkState prop passed down to update selected links in bulk
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -179,9 +186,9 @@ export const AlignmentTable = ({
                                  setLinksPendingUpdate,
                                  linksPendingUpdate,
                                  container,
-                                 globalLinkState,
                                  rowSelectionModel,
                                  setRowSelectionModel,
+                                 alignmentTableControlPanelLinkState
                                }: AlignmentTableProps) => {
   const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
@@ -246,7 +253,7 @@ export const AlignmentTable = ({
           isRowSelected={row.api.isRowSelected(row.id)}
           setLinksPendingUpdate={setLinksPendingUpdate}
           linksPendingUpdate={linksPendingUpdate}
-          globalLinkState={globalLinkState}
+          alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
         />)
       }
     },

@@ -323,7 +323,7 @@ export enum LinkStatus {
   CREATED = 'created',
   APPROVED = 'approved',
   REJECTED = 'rejected',
-  NEEDS_REVIEW = 'needsReview'
+  NEEDS_REVIEW = 'needsReview',
 }
 
 /**
