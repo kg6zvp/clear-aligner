@@ -62,12 +62,15 @@ export const AlignmentTableControlPanel = ({
                                              alignmentTableControlPanelLinkState,
                                              setAlignmentTableControlPanelLinkState
                                            }: AlignmentTableControlPanelProps) => {
-  const [arrayOfLinksToSave, setArrayOfLinksToSave] = useState<Link[]>();
-  const [saveKey, setSaveKey] = useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
   const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
-  useSaveLink(arrayOfLinksToSave, saveKey);
+  const [linkSaveState, setLinkSaveState] = useState<{
+    link?: Link[],
+    saveKey?: string,
+  }>();
+
+  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
 
   console.log('alignmentTableControlPanelLinkState is: ', alignmentTableControlPanelLinkState)
   console.log('updatedSelectedRows is: ', updatedSelectedRows)
@@ -120,8 +123,10 @@ export const AlignmentTableControlPanel = ({
   const handleSave = () => {
     const linksToSave = [...linksPendingUpdate.values()];
     console.log('linksToSave is: ', linksToSave)
-    setSaveKey(uuid());
-    setArrayOfLinksToSave(linksToSave);
+    setLinkSaveState({
+      link: linksToSave,
+      saveKey: uuid()
+    });
 
     // reset things back to empty and 0
     setRowSelectionModel([])
