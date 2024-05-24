@@ -364,7 +364,6 @@ export const AlignmentTable = ({
                 const selectedIDs = new Set(rowSelectionModel);
                 setSelectedRows(alignments?.filter((row) => selectedIDs.has(row?.id || '')));
               }}
-              onStateChange={(rowSelectionModel) => setSelectedRowsCount(rowSelectionModel.rowSelection.length)}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
             />
