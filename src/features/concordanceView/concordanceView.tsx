@@ -39,9 +39,11 @@ export type PivotWordFilter = 'aligned' | 'all';
 export interface AlignmentTableControlPanelProps {
   saveButtonDisabled?: boolean;
   setSaveButtonDisabled: Function;
+  setSelectedRowsCount: Function;
   selectedRowsCount: number;
   linksPendingUpdate: Map<string, Link>;
   container:  React.MutableRefObject<null>;
+  setSelectedRows: Function;
   selectedRows: Link[];
   setLinksPendingUpdate: Function;
   setRowSelectionModel: Function;
@@ -55,6 +57,8 @@ export const AlignmentTableControlPanel = ({
                                              selectedRowsCount,
                                              linksPendingUpdate,
                                              container,
+                                             setSelectedRows,
+                                             setSelectedRowsCount,
                                              selectedRows,
                                              setLinksPendingUpdate,
                                              setRowSelectionModel,
@@ -68,14 +72,16 @@ export const AlignmentTableControlPanel = ({
   const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   useSaveLink(arrayOfLinksToSave, saveKey);
 
+  console.log('alignmentTableControlPanelLinkState is: ', alignmentTableControlPanelLinkState)
+  console.log('updatedSelectedRows is: ', updatedSelectedRows)
+  console.log('linksPendingUpdate is: ', linksPendingUpdate)
+  console.log('selectedRows is: ', selectedRows)
+
   const handleClose = () => {
     setIsDialogOpen(false)
   }
 
-  console.log('alignmentTableControlPanelLinkState is: ', alignmentTableControlPanelLinkState)
-  console.log('linksPendingUpdate is: ', linksPendingUpdate)
-  console.log('selectedRows is: ', selectedRows)
-
+  // control if the button group is enabled
   useEffect( () => {
     if(selectedRowsCount > 0) {
       setIsButtonGroupDisabled(false)
@@ -85,34 +91,45 @@ export const AlignmentTableControlPanel = ({
     }
   }, [selectedRowsCount])
 
+  // iterate through all selectedRows and update linksPendingUpdate
   useEffect( () => {
+    updatedSelectedRows?.forEach((row) => {
+      setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
+    })
+
+  },[updatedSelectedRows, linksPendingUpdate, setLinksPendingUpdate])
+
+  const handleSaveLinkStatus = () => {
+    setIsDialogOpen(true);
+  };
+
+  // fires when user picks a new state from the control panel
+  const handleOnSelect = (value: string) => {
+    setAlignmentTableControlPanelLinkState(value);
+    setSaveButtonDisabled(false)
+
     // update the state of all the currently selected rows in bulk
     setUpdatedSelectedRows(selectedRows?.map((row) => (
       {
         ...row,
         metadata: {
           ...row.metadata,
-          status: alignmentTableControlPanelLinkState as LinkStatus,
+          status: value as LinkStatus,
         }
-      }
-    )))
-  },[alignmentTableControlPanelLinkState, selectedRows])
+      })))
+  }
 
-  const handleSaveLinkStatus = () => {
-    setIsDialogOpen(true);
-  };
-
+  // Take the map, transform it to an array, then pass it to the save function
   const handleSave = () => {
-
-    // Take the map, transform it to an array, then pass it to the save function
     const linksToSave = [...linksPendingUpdate.values()];
     console.log('linksToSave is: ', linksToSave)
     setSaveKey(uuid());
     setArrayOfLinksToSave(linksToSave);
     setRowSelectionModel([])
+    setSelectedRows([]);
+    setSelectedRowsCount(0);
     setSaveButtonDisabled(true);
     handleClose();
-
   }
 
   const DisplayItemsSelectedCount = () => {
@@ -183,20 +200,7 @@ export const AlignmentTableControlPanel = ({
                   label: <FlagOutlined />
                 }
               ]}
-              onSelect={(value) => {
-                setAlignmentTableControlPanelLinkState(value);
-                setSaveButtonDisabled(false)
-
-
-                // iterate through all selectedRows and update linksPendingUpdate
-                updatedSelectedRows?.forEach((row) => {
-                  console.log('got into the forEach')
-                  setLinksPendingUpdate(linksPendingUpdate.set(row.id || "", row))
-                })
-
-                console.log('linksPendingUpdate (inside handleSave()) is: ', linksPendingUpdate)
-                console.log('alignmentTableControlPanelLinkState (inside handleSave()) is: ', alignmentTableControlPanelLinkState)
-              }}
+              onSelect={(value) => handleOnSelect(value)}
             />
           </ButtonGroup>
           <ButtonGroup>
@@ -478,10 +482,12 @@ export const ConcordanceView = () => {
         >
           <AlignmentTableControlPanel
             saveButtonDisabled={saveButtonDisabled}
+            setSelectedRowsCount={setSelectedRowsCount}
             selectedRowsCount={selectedRowsCount}
             linksPendingUpdate={linksPendingUpdate}
             setSaveButtonDisabled={setSaveButtonDisabled}
             container={container}
+            setSelectedRows={setSelectedRows}
             selectedRows={selectedRows}
             setLinksPendingUpdate={setLinksPendingUpdate}
             setRowSelectionModel={setRowSelectionModel}
