@@ -9,10 +9,7 @@ import {
   ButtonGroup,
   Dialog,
   DialogContent,
-  DialogTitle,
   Divider,
-  Grid,
-  IconButton,
   Paper,
   Stack,
   Typography
@@ -29,7 +26,7 @@ import { useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
-import { CancelOutlined, CheckCircleOutlined, Close, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
+import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 
@@ -125,10 +122,15 @@ export const AlignmentTableControlPanel = ({
     console.log('linksToSave is: ', linksToSave)
     setSaveKey(uuid());
     setArrayOfLinksToSave(linksToSave);
+
+    // reset things back to empty and 0
     setRowSelectionModel([])
     setSelectedRows([]);
+    setUpdatedSelectedRows([]);
     setSelectedRowsCount(0);
     setSaveButtonDisabled(true);
+    setLinksPendingUpdate(() => new Map<string,Link>());
+    setAlignmentTableControlPanelLinkState("");
     handleClose();
   }
 
@@ -218,17 +220,13 @@ export const AlignmentTableControlPanel = ({
                 open={isDialogOpen}
                 disableEscapeKeyDown={true}
         >
-          <DialogTitle>
-            <Grid container justifyContent="flex-end" alignItems="center">
-              <IconButton onClick={handleClose}>
-                <Close />
-              </IconButton>
-            </Grid>
-          </DialogTitle>
           <DialogContent sx={{ height: '100%', width: '100%' }}>
-            Update {linksPendingUpdate.size} records?
+            Save {linksPendingUpdate.size} {linksPendingUpdate.size === 1 ? `change` : `changes`}?
             <Button onClick={handleSave}>
               Yes
+            </Button>
+            <Button onClick={handleClose}>
+              No
             </Button>
           </DialogContent>
         </Dialog>
