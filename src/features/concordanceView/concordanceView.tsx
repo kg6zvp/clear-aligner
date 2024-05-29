@@ -72,10 +72,7 @@ export const AlignmentTableControlPanel = ({
 
   useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
 
-  console.log('alignmentTableControlPanelLinkState is: ', alignmentTableControlPanelLinkState)
-  console.log('updatedSelectedRows is: ', updatedSelectedRows)
   console.log('linksPendingUpdate is: ', linksPendingUpdate)
-  console.log('selectedRows is: ', selectedRows)
 
   const handleClose = () => {
     setIsDialogOpen(false)

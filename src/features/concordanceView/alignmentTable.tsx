@@ -198,9 +198,6 @@ export const AlignmentTable = ({
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
 
-  console.log('alignments is: ', alignments)
-  console.log('rowSelectionModel is: ', rowSelectionModel)
-
   // const chosenLink: Link | undefined = useMemo(() => {
   //   if (!chosenAlignmentLink) return undefined;
   //   if (!alignments?.includes(chosenAlignmentLink)) return undefined;
