@@ -1,0 +1,92 @@
+import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { LinkOrigin, LinkStatus } from '../../structs';
+
+export enum SyncProgress {
+  IDLE,
+  IN_PROGRESS
+}
+
+export interface SyncState {
+  file?: AlignmentFile;
+  progress: SyncProgress;
+}
+
+export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, cancelSyncKey?: string): SyncState => {
+  const [ lastSyncKey, setLastSyncKey ] = useState(syncLinksKey);
+  const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
+
+  const [ progress, setProgress ] = useState<SyncProgress>(SyncProgress.IDLE);
+  const [ file, setFile ] = useState<AlignmentFile|undefined>();
+  const abortController = useRef<AbortController|undefined>();
+
+  const cleanupRequest = useCallback(() => {
+    abortController.current = undefined;
+    setProgress(SyncProgress.IDLE);
+    setLastSyncKey(syncLinksKey);
+    setLastCancelKey(cancelSyncKey);
+  }, [setProgress, abortController, setLastSyncKey, setLastCancelKey]);
+
+  useEffect(() => {
+    if (lastCancelKey === cancelSyncKey) {
+      return;
+    }
+    abortController.current?.abort('cancel');
+    cleanupRequest();
+  }, [abortController, lastCancelKey, setLastCancelKey, cancelSyncKey]);
+
+  useEffect(() => {
+    if (lastSyncKey === syncLinksKey) {
+      return;
+    }
+    const fetchLinks = async ({ signal }: AbortController) => {
+      let response;
+      try {
+        response = await fetch(`http://localhost:8080/api/projects/${projectId}/alignment_links/`, {
+          signal,
+          headers: { accept: 'application/json' }
+        });
+      } catch (x) {
+        setProgress(SyncProgress.IDLE);
+        abortController.current = undefined;
+        return;
+      }
+      const linksBody: {
+        links: {
+          id: string,
+          sources: string[],
+          targets: string[],
+          origin: LinkOrigin,
+          status: LinkStatus
+        }[]
+      } = await response.json();
+      const tmpFile = {
+        type: 'translation',
+        meta: { creator: 'api' },
+        records: linksBody.links
+          .map(l => ({
+            meta: {
+              id: l.id,
+              origin: l.origin,
+              status: l.status
+            },
+            source: l.sources,
+            target: l.targets
+          } as AlignmentRecord))
+      };
+      setFile(tmpFile);
+      cleanupRequest();
+    };
+    if (progress === SyncProgress.IN_PROGRESS) {
+      abortController.current?.abort('retry');
+    }
+    abortController.current = new AbortController();
+    setProgress(SyncProgress.IN_PROGRESS);
+    void fetchLinks(abortController.current);
+  }, [abortController, setProgress, lastSyncKey, setLastSyncKey, syncLinksKey]);
+
+  return {
+    file,
+    progress
+  };
+}
