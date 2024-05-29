@@ -12,6 +12,12 @@ export interface SyncState {
   progress: SyncProgress;
 }
 
+/**
+ * hook to synchronize alignments. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
+ * @param projectId project being synchronized
+ * @param syncLinksKey update this value to perform a sync
+ * @param cancelSyncKey update this value to cancel a sync
+ */
 export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, cancelSyncKey?: string): SyncState => {
   const [ lastSyncKey, setLastSyncKey ] = useState(syncLinksKey);
   const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
