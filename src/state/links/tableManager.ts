@@ -396,9 +396,6 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
 export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
-  console.log('inside useSaveLink: ')
-  console.log('linkOrLinks is: ', linkOrLinks)
-  console.log('saveKey is: ', saveKey)
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
