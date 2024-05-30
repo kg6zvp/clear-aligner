@@ -8,6 +8,7 @@ import {
   Button,
   ButtonGroup,
   Dialog,
+  DialogActions,
   DialogContent,
   Divider,
   Paper,
@@ -22,7 +23,7 @@ import { AlignedWordTable } from './alignedWordTable';
 import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridInputRowSelectionModel, GridSortItem } from '@mui/x-data-grid';
-import { useSearchParams } from 'react-router-dom';
+import { useBlocker, useSearchParams, Location, Blocker } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
@@ -32,6 +33,30 @@ import uuid from 'uuid-random';
 import useConfirm from '../../hooks/useConfirm';
 
 export type PivotWordFilter = 'aligned' | 'all';
+
+interface SaveChangesConfirmationViaRouterProps{
+  blocker: Blocker;
+}
+
+const SaveChangesConfirmationViaRouter = ({blocker}: SaveChangesConfirmationViaRouterProps) => {
+  if (!blocker){
+    return
+  }
+
+  if(blocker.proceed && blocker.reset) {
+    return (
+      <Dialog open={blocker.state === 'blocked'}>
+        <DialogContent>
+          Changes will be lost if you navigate away. Continue?
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={ () => blocker.proceed()}> Continue </Button>
+          <Button onClick={ () => blocker.reset()}>Cancel </Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
+}
 
 
 export interface AlignmentTableControlPanelProps {
@@ -375,6 +400,17 @@ export const ConcordanceView = () => {
     selectedAlignmentLink
   ]);
 
+  // block route changes when there is unsaved changes
+  const blocker = useBlocker(
+    useCallback(({currentLocation, nextLocation}: {currentLocation: Location, nextLocation: Location}) => (
+      (linksPendingUpdate.size > 0) &&
+      (currentLocation.pathname !== nextLocation.pathname)
+      ), [linksPendingUpdate.size]
+  ))
+  console.log('blocker is: ', blocker)
+
+
+
 
   return (
     <div style={{ position: 'relative' }}>
@@ -558,6 +594,7 @@ export const ConcordanceView = () => {
         </Box>
       </Box>
       <SaveChangesConfirmation />
+      <SaveChangesConfirmationViaRouter blocker={blocker}/>
     </div>
   );
 };
