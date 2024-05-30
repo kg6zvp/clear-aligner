@@ -43,6 +43,8 @@ export interface AlignmentTableControlPanelProps {
   container:  React.MutableRefObject<null>;
   setSelectedRows: Function;
   selectedRows: Link[];
+  setUpdatedSelectedRows: Function;
+  updatedSelectedRows: Link[];
   setLinksPendingUpdate: Function;
   setRowSelectionModel: Function;
   alignmentTableControlPanelLinkState: LinkStatus | null;
@@ -58,6 +60,8 @@ export const AlignmentTableControlPanel = ({
                                              setSelectedRows,
                                              setSelectedRowsCount,
                                              selectedRows,
+                                             setUpdatedSelectedRows,
+                                             updatedSelectedRows,
                                              setLinksPendingUpdate,
                                              setRowSelectionModel,
                                              alignmentTableControlPanelLinkState,
@@ -65,15 +69,12 @@ export const AlignmentTableControlPanel = ({
                                            }: AlignmentTableControlPanelProps) => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
-  const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   const [linkSaveState, setLinkSaveState] = useState<{
     link?: Link[],
     saveKey?: string,
   }>();
 
   useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
-
-  console.log('linksPendingUpdate is: ', linksPendingUpdate)
 
   const handleClose = () => {
     setIsDialogOpen(false)
@@ -132,7 +133,7 @@ export const AlignmentTableControlPanel = ({
     setUpdatedSelectedRows([]);
     setSelectedRowsCount(0);
     setSaveButtonDisabled(true);
-    setLinksPendingUpdate(() => new Map<string,Link>());
+    setLinksPendingUpdate(new Map());
     setAlignmentTableControlPanelLinkState("");
     handleClose();
   }
@@ -257,6 +258,7 @@ export const ConcordanceView = () => {
     sort: 'desc'
   } as GridSortItem | null);
   const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, Link>>(new Map());
+  const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -280,36 +282,51 @@ export const ConcordanceView = () => {
   // the DataGrid to the AlignmentTableControlPanel
   const container = React.useRef(null);
 
-  const handleUpdateSelectedAlignedWord = useCallback((alignedWord: AlignedWord | null) => {
-      setSelectedAlignedWord(alignedWord);
-      setSelectedAlignmentLink(null);
-      setSaveButtonDisabled(true);
-    },
-    [setSelectedAlignedWord, setSelectedAlignmentLink]
-  );
-
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
+  console.log('linksPendingUpdate is: ', linksPendingUpdate)
 
-  const handleUpdateSelectedPivotWord = useMemo(
-    () => async (pivotWord: PivotWord | null) => {
-      if (linksPendingUpdate.size > 0) {
+  const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
+    console.log('inside handleUpdateSelectedAlignedWord (middle table)')
+      if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
         // show a modal in here asking if users want to continue or not
         const status = await getSaveChangesConfirmation('Changes will be lost if you navigate away. Continue?');
         // if user clicks cancel: early return, otherwise proceed
-        if (status === false) { return; }
+        if (status === false) {
+          return;
+        }
+      }
+      setSelectedAlignedWord(alignedWord);
+      setSelectedAlignmentLink(null);
+      setSaveButtonDisabled(true);
+      setUpdatedSelectedRows([]);
+      setLinksPendingUpdate(new Map());
+      setAlignmentTableControlPanelLinkState("" as LinkStatus);
+    },
+    [getSaveChangesConfirmation, linksPendingUpdate]
+  );
+
+
+  const handleUpdateSelectedPivotWord = useCallback( async (pivotWord: PivotWord | null) => {
+    console.log('inside handleUpdateSelectedPivotWord (left table)')
+    if (linksPendingUpdate.size > 0) {
+        // show a modal in here asking if users want to continue or not
+        const status = await getSaveChangesConfirmation('Changes will be lost if you navigate away. Continue?');
+        // if user clicks cancel: early return, otherwise proceed
+        if (status === false) {
+          return;
+        }
       }
       setSelectedPivotWord(pivotWord ?? undefined);
-      handleUpdateSelectedAlignedWord(null);
       setSaveButtonDisabled(true);
+      setUpdatedSelectedRows([]);
+      setLinksPendingUpdate(new Map());
+      setAlignmentTableControlPanelLinkState("" as LinkStatus);
+      await handleUpdateSelectedAlignedWord(null);
     },
     [handleUpdateSelectedAlignedWord, linksPendingUpdate, getSaveChangesConfirmation ]
   );
 
-  // when a pivotword is selected, indicate that it's loading or load pivotWords
-  useEffect(() => {
-    handleUpdateSelectedAlignedWord(null);
-  }, [handleUpdateSelectedAlignedWord]);
 
   useEffect(() => {
     if (!loading) {
@@ -358,10 +375,6 @@ export const ConcordanceView = () => {
     selectedAlignmentLink
   ]);
 
-  // reset links pending update if user chooses a new pivot word or aligned word
-  useEffect(() => {
-    setLinksPendingUpdate(new Map());
-  }, [selectedPivotWord, selectedAlignedWord]);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -501,6 +514,8 @@ export const ConcordanceView = () => {
             setSelectedRows={setSelectedRows}
             selectedRows={selectedRows}
             setLinksPendingUpdate={setLinksPendingUpdate}
+            updatedSelectedRows={updatedSelectedRows}
+            setUpdatedSelectedRows={setUpdatedSelectedRows}
             setRowSelectionModel={setRowSelectionModel}
             alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
             setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
