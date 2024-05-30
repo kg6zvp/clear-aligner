@@ -29,6 +29,7 @@ import { useAppDispatch } from '../../app/index';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
+import useConfirm from '../../hooks/useConfirm';
 
 export type PivotWordFilter = 'aligned' | 'all';
 
@@ -286,13 +287,23 @@ export const ConcordanceView = () => {
     },
     [setSelectedAlignedWord, setSelectedAlignmentLink]
   );
+
+  const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
+
+
   const handleUpdateSelectedPivotWord = useMemo(
-    () => (pivotWord: PivotWord | null) => {
+    () => async (pivotWord: PivotWord | null) => {
+      if (linksPendingUpdate.size > 0) {
+        // show a modal in here asking if users want to continue or not
+        const status = await getSaveChangesConfirmation('Changes will be lost if you navigate away. Continue?');
+        // if user clicks cancel: early return, otherwise proceed
+        if (status === false) { return; }
+      }
       setSelectedPivotWord(pivotWord ?? undefined);
       handleUpdateSelectedAlignedWord(null);
       setSaveButtonDisabled(true);
     },
-    [setSelectedPivotWord, handleUpdateSelectedAlignedWord]
+    [handleUpdateSelectedAlignedWord, linksPendingUpdate ]
   );
 
   // when a pivotword is selected, indicate that it's loading or load pivotWords
@@ -531,6 +542,7 @@ export const ConcordanceView = () => {
           </Paper>
         </Box>
       </Box>
+      <SaveChangesConfirmation />
     </div>
   );
 };
