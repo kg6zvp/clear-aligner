@@ -1,7 +1,7 @@
 import './App.css';
 import './styles/theme.css';
 import React, { createContext } from 'react';
-import { HashRouter, Route, Routes } from 'react-router-dom';
+import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
 import { ConcordanceView } from './features/concordanceView/concordanceView';
@@ -29,19 +29,32 @@ export const AppContext = createContext({} as AppContextProps);
 const App = () => {
   const appContext: AppContextProps = useInitialization();
 
+  const router = createHashRouter([
+    {
+      path: '/',
+      element: <AppLayout/>,
+      children: [
+        {
+          path: '/',
+          element: <AlignmentEditor />
+        },
+        {
+          path: '/concordance',
+          element: <ConcordanceView />
+        },
+        {
+          path: '/projects',
+          element: <ProjectsView />
+        },
+      ]
+    },
+  ])
+
   return (
     <>
       <AppContext.Provider value={appContext}>
         <Provider store={store}>
-          <HashRouter>
-            <Routes>
-              <Route path={'/'} element={<AppLayout />}>
-                <Route index element={<AlignmentEditor />} />
-                <Route path={'/concordance'} element={<ConcordanceView />} />
-                <Route path={'/projects'} element={<ProjectsView />} />
-              </Route>
-            </Routes>
-          </HashRouter>
+            <RouterProvider router={router}/>
         </Provider>
       </AppContext.Provider>
     </>
