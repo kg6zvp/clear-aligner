@@ -2,13 +2,6 @@
  * This file supports the Project Repository, things like links, corpora, etc
  */
 //@ts-nocheck
-const { EntitySchema, In } = require('typeorm');
-const { BaseRepository } = require('./baseRepository');
-const fs = require('fs');
-const path = require('path');
-const sanitize = require('sanitize-filename');
-const { app } = require('electron');
-const uuid = require('uuid-random');
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import { AlignmentSide, Link, LinkOrigin, LinkStatus } from '../../structs';
@@ -20,6 +13,13 @@ import path from 'path';
 import { app } from 'electron';
 import _ from 'lodash';
 import { AddLinkStatus1715305810421 } from '../typeorm-migrations/project/1715305810421-add-link-status';
+const { EntitySchema, In } = require('typeorm');
+const { BaseRepository } = require('./baseRepository');
+const fs = require('fs');
+const path = require('path');
+const sanitize = require('sanitize-filename');
+const { app } = require('electron');
+const uuid = require('uuid-random');
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
