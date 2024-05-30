@@ -303,7 +303,7 @@ export const ConcordanceView = () => {
       handleUpdateSelectedAlignedWord(null);
       setSaveButtonDisabled(true);
     },
-    [handleUpdateSelectedAlignedWord, linksPendingUpdate ]
+    [handleUpdateSelectedAlignedWord, linksPendingUpdate, getSaveChangesConfirmation ]
   );
 
   // when a pivotword is selected, indicate that it's loading or load pivotWords
