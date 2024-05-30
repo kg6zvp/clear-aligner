@@ -31,7 +31,7 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     setProgress(SyncProgress.IDLE);
     setLastSyncKey(syncLinksKey);
     setLastCancelKey(cancelSyncKey);
-  }, [setProgress, abortController, setLastSyncKey, setLastCancelKey]);
+  }, [setProgress, abortController, setLastSyncKey, setLastCancelKey, syncLinksKey, cancelSyncKey]);
 
   useEffect(() => {
     if (lastCancelKey === cancelSyncKey) {
@@ -39,7 +39,7 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     }
     abortController.current?.abort('cancel');
     cleanupRequest();
-  }, [abortController, lastCancelKey, setLastCancelKey, cancelSyncKey]);
+  }, [abortController, lastCancelKey, setLastCancelKey, cancelSyncKey, cleanupRequest]);
 
   useEffect(() => {
     if (lastSyncKey === syncLinksKey) {
@@ -87,9 +87,10 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
       abortController.current?.abort('retry');
     }
     abortController.current = new AbortController();
+    setLastSyncKey(syncLinksKey);
     setProgress(SyncProgress.IN_PROGRESS);
     void fetchLinks(abortController.current);
-  }, [abortController, setProgress, lastSyncKey, setLastSyncKey, syncLinksKey]);
+  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId]);
 
   return {
     file,

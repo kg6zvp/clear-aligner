@@ -1,4 +1,4 @@
-import { Box, Button, CircularProgress, Dialog, Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Dialog, Stack } from '@mui/material';
 import React from 'react';
 
 export interface SyncProgressDialogProps {
