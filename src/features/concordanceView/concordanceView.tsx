@@ -146,7 +146,6 @@ export const AlignmentTableControlPanel = ({
   // Take the map, transform it to an array, then pass it to the save function
   const handleSave = () => {
     const linksToSave = [...linksPendingUpdate.values()];
-    console.log('linksToSave is: ', linksToSave)
     setLinkSaveState({
       link: linksToSave,
       saveKey: uuid()
@@ -312,7 +311,6 @@ export const ConcordanceView = () => {
   console.log('linksPendingUpdate is: ', linksPendingUpdate)
 
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
-    console.log('inside handleUpdateSelectedAlignedWord (middle table)')
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
         // show a modal in here asking if users want to continue or not
         const status = await getSaveChangesConfirmation('Changes will be lost if you navigate away. Continue?');
@@ -333,7 +331,6 @@ export const ConcordanceView = () => {
 
 
   const handleUpdateSelectedPivotWord = useCallback( async (pivotWord: PivotWord | null) => {
-    console.log('inside handleUpdateSelectedPivotWord (left table)')
     if (linksPendingUpdate.size > 0) {
         // show a modal in here asking if users want to continue or not
         const status = await getSaveChangesConfirmation('Changes will be lost if you navigate away. Continue?');
@@ -407,10 +404,6 @@ export const ConcordanceView = () => {
       (currentLocation.pathname !== nextLocation.pathname)
       ), [linksPendingUpdate.size]
   ))
-  console.log('blocker is: ', blocker)
-
-
-
 
   return (
     <div style={{ position: 'relative' }}>
