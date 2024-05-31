@@ -11,6 +11,7 @@ import {
   GridRowParams,
   GridSortItem,
   GridInputRowSelectionModel,
+  GridRowSelectionModel
 } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, Portal, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
@@ -151,6 +152,7 @@ export interface AlignmentTableProps {
   rowSelectionModel: GridInputRowSelectionModel;
   setRowSelectionModel: Function;
   alignmentTableControlPanelLinkState: LinkStatus | null;
+  setUpdatedSelectedRows: Function;
 }
 
 /**
@@ -172,6 +174,7 @@ export interface AlignmentTableProps {
  * @param rowSelectionModel prop that reflects what rows in the table are currently selected
  * @param setRowSelectionModel callback to update what rows are currently selected
  * @param alignmentTableControlPanelLinkState prop passed down to update selected links in bulk
+ * @param setUpdatedSelectedRows callback to update the updatedSelectedRows
  */
 export const AlignmentTable = ({
                                  wordSource,
@@ -188,7 +191,8 @@ export const AlignmentTable = ({
                                  container,
                                  rowSelectionModel,
                                  setRowSelectionModel,
-                                 alignmentTableControlPanelLinkState
+                                 alignmentTableControlPanelLinkState,
+                                 setUpdatedSelectedRows
                                }: AlignmentTableProps) => {
   const [selectedAlignment, setSelectedAlignment] = useState<BCVWP | null>(null);
   const [sort, onChangeSort] = useState<GridSortItem | null>({
@@ -197,12 +201,6 @@ export const AlignmentTable = ({
   } as GridSortItem);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
-
-  const chosenLink: Link | undefined = useMemo(() => {
-    if (!chosenAlignmentLink) return undefined;
-    if (!alignments?.includes(chosenAlignmentLink)) return undefined;
-    return chosenAlignmentLink;
-  }, [alignments, chosenAlignmentLink]);
 
   const loading: boolean = useMemo(
     () => !!alignedWord && !alignments,
@@ -219,6 +217,26 @@ export const AlignmentTable = ({
     }
     return 0;
   }, [chosenAlignmentLink, alignments]);
+
+  function handleRowSelectionModelChange(rowSelectionModel: GridRowSelectionModel){
+    setRowSelectionModel(rowSelectionModel);
+    setSelectedRowsCount(rowSelectionModel.length);
+    const selectedIDs = new Set(rowSelectionModel);
+    const selectedRows = alignments?.filter((row) => selectedIDs.has(row?.id || ''));
+    setSelectedRows(selectedRows);
+
+    // update the state of all the currently selected rows in bulk
+    if(alignmentTableControlPanelLinkState) {
+      setUpdatedSelectedRows(selectedRows?.map((row) => (
+        {
+          ...row,
+          metadata: {
+            ...row.metadata,
+            status: alignmentTableControlPanelLinkState,
+          }
+        })))
+    }
+  }
 
   const columns: GridColDef[] = [
     {
@@ -352,24 +370,8 @@ export const AlignmentTable = ({
                 }
               }}
               checkboxSelection={true}
-              rowSelectionModel={
-                chosenLink?.id ? [chosenLink.id] : undefined
-              }
-              //rowSelectionModel={rowSelectionModel}
-              onRowSelectionModelChange={(rowSelectionModel) => {
-                setRowSelectionModel(rowSelectionModel);
-                setSelectedRowsCount(rowSelectionModel.length);
-                const selectedIDs = new Set(rowSelectionModel);
-                setSelectedRows(alignments?.filter((row) => selectedIDs.has(row?.id || '')));
-                console.log('inside onRowSelectionModelChange')
-                console.log('linksPendingUpdate is: ', linksPendingUpdate)
-                console.log('rowSelectionModel is: ', rowSelectionModel)
-                console.log('selectedIDs is: ', selectedIDs)
-                console.log('alignments is: ', alignments)
-                console.log('selectedAlignment is: ', selectedAlignment)
-                console.log('chosenAlignmentLink is: ', chosenAlignmentLink)
-                console.log('chosenLink is: ', chosenLink)
-              }}
+              rowSelectionModel={rowSelectionModel}
+              onRowSelectionModelChange={handleRowSelectionModelChange}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
             />

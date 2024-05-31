@@ -582,6 +582,7 @@ export const ConcordanceView = () => {
               rowSelectionModel={rowSelectionModel}
               setRowSelectionModel={setRowSelectionModel}
               alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+              setUpdatedSelectedRows={setUpdatedSelectedRows}
             />
           </Paper>
         </Box>
