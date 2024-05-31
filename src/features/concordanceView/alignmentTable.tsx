@@ -94,7 +94,7 @@ export const StateCell = ({ setSaveButtonDisabled,
   // if the state is updated via the AlignmentTableControl Panel, then update
   // the state here
   useEffect(() => {
-    console.log({ alignmentTableControlPanelLinkState })
+    console.log('inside useEffect in StateCell Component')
     if(isRowSelected && alignmentTableControlPanelLinkState){
       setAlignmentTableLinkState(alignmentTableControlPanelLinkState)
     }
@@ -197,6 +197,12 @@ export const AlignmentTable = ({
   } as GridSortItem);
 
   const alignments = useLinksFromAlignedWord(alignedWord, sort);
+
+  const chosenLink: Link | undefined = useMemo(() => {
+    if (!chosenAlignmentLink) return undefined;
+    if (!alignments?.includes(chosenAlignmentLink)) return undefined;
+    return chosenAlignmentLink;
+  }, [alignments, chosenAlignmentLink]);
 
   const loading: boolean = useMemo(
     () => !!alignedWord && !alignments,
@@ -340,17 +346,29 @@ export const AlignmentTable = ({
               }}
               pageSizeOptions={[20]}
               onRowClick={(clickEvent: GridRowParams<Link>) => {
+                console.log('inside onRowClick')
                 if (onChooseAlignmentLink) {
                   onChooseAlignmentLink(clickEvent.row);
                 }
               }}
               checkboxSelection={true}
-              rowSelectionModel={rowSelectionModel}
+              rowSelectionModel={
+                chosenLink?.id ? [chosenLink.id] : undefined
+              }
+              //rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={(rowSelectionModel) => {
                 setRowSelectionModel(rowSelectionModel);
                 setSelectedRowsCount(rowSelectionModel.length);
                 const selectedIDs = new Set(rowSelectionModel);
                 setSelectedRows(alignments?.filter((row) => selectedIDs.has(row?.id || '')));
+                console.log('inside onRowSelectionModelChange')
+                console.log('linksPendingUpdate is: ', linksPendingUpdate)
+                console.log('rowSelectionModel is: ', rowSelectionModel)
+                console.log('selectedIDs is: ', selectedIDs)
+                console.log('alignments is: ', alignments)
+                console.log('selectedAlignment is: ', selectedAlignment)
+                console.log('chosenAlignmentLink is: ', chosenAlignmentLink)
+                console.log('chosenLink is: ', chosenLink)
               }}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
