@@ -92,10 +92,18 @@ export const StateCell = ({ setSaveButtonDisabled,
   const [alignmentTableLinkState, setAlignmentTableLinkState]
     = React.useState<LinkStatus>(state.metadata.status);
 
+  function handleSelect (value: string){
+    const updatedLink = structuredClone(state);
+    updatedLink.metadata.status = value as LinkStatus;
+    // add updatedLink to the linksPendingUpdate Map
+    setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
+    setAlignmentTableLinkState(value as LinkStatus);
+    setSaveButtonDisabled(false);
+  }
+
   // if the state is updated via the AlignmentTableControl Panel, then update
   // the state here
   useEffect(() => {
-    console.log('inside useEffect in StateCell Component')
     if(isRowSelected && alignmentTableControlPanelLinkState){
       setAlignmentTableLinkState(alignmentTableControlPanelLinkState)
     }
@@ -123,14 +131,7 @@ export const StateCell = ({ setSaveButtonDisabled,
           label: <FlagOutlined />
         }
       ]}
-      onSelect={(value) => {
-        const updatedLink = structuredClone(state);
-        updatedLink.metadata.status = value as LinkStatus;
-        // add updatedLink to the linksPendingUpdate Map
-        setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
-        setAlignmentTableLinkState(value as LinkStatus);
-        setSaveButtonDisabled(false);
-      }}
+      onSelect={handleSelect}
 
     />
   );
@@ -364,7 +365,6 @@ export const AlignmentTable = ({
               }}
               pageSizeOptions={[20]}
               onRowClick={(clickEvent: GridRowParams<Link>) => {
-                console.log('inside onRowClick')
                 if (onChooseAlignmentLink) {
                   onChooseAlignmentLink(clickEvent.row);
                 }

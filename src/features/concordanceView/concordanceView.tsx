@@ -308,8 +308,6 @@ export const ConcordanceView = () => {
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
-  console.log('linksPendingUpdate is: ', linksPendingUpdate)
-
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
         // show a modal in here asking if users want to continue or not
