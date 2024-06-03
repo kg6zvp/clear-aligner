@@ -50,8 +50,8 @@ const SaveChangesConfirmationViaRouter = ({blocker}: SaveChangesConfirmationViaR
           Changes will be lost if you navigate away. Continue?
         </DialogContent>
         <DialogActions>
-          <Button onClick={ () => blocker.proceed()}> Continue </Button>
-          <Button onClick={ () => blocker.reset()}>Cancel </Button>
+          <Button onClick={ () => blocker.proceed()} variant={"contained"}>Continue </Button>
+          <Button onClick={ () => blocker.reset()} variant={"contained"}>Cancel </Button>
         </DialogActions>
       </Dialog>
     )
@@ -250,13 +250,11 @@ export const AlignmentTableControlPanel = ({
         >
           <DialogContent sx={{ height: '100%', width: '100%' }}>
             Save {linksPendingUpdate.size} {linksPendingUpdate.size === 1 ? `change` : `changes`}?
-            <Button onClick={handleSave}>
-              Yes
-            </Button>
-            <Button onClick={handleClose}>
-              No
-            </Button>
           </DialogContent>
+          <DialogActions>
+            <Button onClick={handleSave} variant={"contained"}>Yes</Button>
+            <Button onClick={handleClose} variant={"contained"}>No</Button>
+          </DialogActions>
         </Dialog>
       </Stack>
     </>
@@ -284,8 +282,6 @@ export const ConcordanceView = () => {
   const [linksPendingUpdate, setLinksPendingUpdate] = useState<Map<string, Link>>(new Map());
   const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
-
-  console.log('linksPendingUpdate is: ', linksPendingUpdate)
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogActions, Button } from '@mui/material'
 
 const createPromise = () => {
   let resolver;
-  return [ new Promise(( resolve, reject ) => {
+  return [ new Promise(( resolve) => {
 
     resolver = resolve
   }), resolver]
@@ -34,8 +34,8 @@ const useConfirm = (): [(text: React.SetStateAction<string>) => Promise<unknown>
         {label}
       </DialogContent>
       <DialogActions>
-        <Button onClick={ () => onClick(true)}> Continue </Button>
-        <Button onClick={ () => onClick(false)}>Cancel </Button>
+        <Button onClick={ () => onClick(true)} variant={"contained"}> Continue </Button>
+        <Button onClick={ () => onClick(false)} variant={"contained"}>Cancel </Button>
 
       </DialogActions>
     </Dialog>

@@ -93,11 +93,11 @@ export const StateCell = ({ setSaveButtonDisabled,
     = React.useState<LinkStatus>(state.metadata.status);
 
   function handleSelect (value: string){
-    console.log('inside handleSelect, value is: ', value)
     const updatedLink = structuredClone(state);
     updatedLink.metadata.status = value as LinkStatus;
     // add updatedLink to the linksPendingUpdate Map
     setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
+
     setAlignmentTableLinkState(value as LinkStatus);
     setSaveButtonDisabled(false);
   }
@@ -133,7 +133,7 @@ export const StateCell = ({ setSaveButtonDisabled,
         }
       ]}
       onSelect={handleSelect}
-
+      disabled={isRowSelected}
     />
   );
 };
