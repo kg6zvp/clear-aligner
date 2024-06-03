@@ -65,6 +65,8 @@ export class LinksTable extends VirtualTable {
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
       let allResult = false;
+      const newLinksArray = [];
+      const newLinksArrayIDs = [];
       for (const link of links){
         await this.remove(link.id, true, true);
         const newLink: Link = {
@@ -73,13 +75,15 @@ export class LinksTable extends VirtualTable {
           sources: (link.sources ?? []).map(BCVWP.sanitize),
           targets: (link.targets ?? []).map(BCVWP.sanitize)
         };
-
-        await this.checkDatabase();
-        const oneResult = await dbApi.save(this.getSourceName(), LinkTableName, newLink);
-        await dbApi.updateLinkText(this.getSourceName(), newLink.id!);
-        await this._onUpdate(suppressOnUpdate);
-        allResult ||= oneResult;
+        newLinksArray.push(newLink)
+        newLinksArrayIDs.push(newLink.id || "");
       }
+      await this.checkDatabase();
+      const oneResult = await dbApi.save(this.getSourceName(), LinkTableName, newLinksArray);
+      await dbApi.updateLinkText(this.getSourceName(), newLinksArrayIDs);
+      await this._onUpdate(suppressOnUpdate);
+      allResult ||= oneResult;
+
       return allResult;
     } catch (e) {
       return false;
