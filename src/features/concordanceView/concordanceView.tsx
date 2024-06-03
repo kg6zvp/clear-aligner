@@ -525,7 +525,7 @@ export const ConcordanceView = () => {
             width: '100%',
             gap: '1em',
             margin: '2em',
-            marginTop: '1em'
+            marginTop: '.5em'
           }}
         >
           <AlignmentTableControlPanel
