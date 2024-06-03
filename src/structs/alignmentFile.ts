@@ -1,6 +1,5 @@
 import { LinkMetadata, LinkOriginSchema, LinkStatus, LinkStatusSchema } from './index';
 import { z, ZodIssue } from 'zod';
-import { ZodErrorDisplay } from '../components/zodErrorDisplay';
 
 /**
  * Metadata saved in alignment json files

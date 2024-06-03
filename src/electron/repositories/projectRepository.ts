@@ -2,13 +2,6 @@
  * This file supports the Project Repository, things like links, corpora, etc
  */
 //@ts-nocheck
-const { EntitySchema, In } = require('typeorm');
-const { BaseRepository } = require('./baseRepository');
-const fs = require('fs');
-const path = require('path');
-const sanitize = require('sanitize-filename');
-const { app } = require('electron');
-const uuid = require('uuid-random');
 import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import { AlignmentSide, Link, LinkOrigin, LinkStatus } from '../../structs';

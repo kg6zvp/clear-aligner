@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Meta } from '@storybook/react';
 import { AlignmentFile, AlignmentFileSchema, AlignmentRecord, AlignmentRecordSchema } from '../structs/alignmentFile';
 import { ZodErrorDialogProps, ZodErrorDialog } from './zodErrorDialog';
-import { useStableQueryArgs } from '@reduxjs/toolkit/dist/query/react/useSerializedStableValue';
 import { Button } from '@mui/material';
 
 const meta: Meta<typeof ZodErrorDialog> = {

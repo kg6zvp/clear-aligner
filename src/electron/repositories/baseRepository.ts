@@ -2,9 +2,9 @@
  * This file contains classes to set up the database with TypeORM.
  */
 //@ts-nocheck
+import path from 'path';
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
-import path from 'path';
 const { app } = require('electron');
 const sanitize = require('sanitize-filename');
 const fs = require('fs');
