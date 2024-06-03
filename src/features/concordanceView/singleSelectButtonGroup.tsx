@@ -14,6 +14,7 @@ export interface SingleSelectButtonGroupProps {
   }[];
   onSelect: (value: string) => void;
   disabled?: boolean;
+  customDisabled?: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export interface SingleSelectButtonGroupProps {
  * @param onSelect callback when a button is clicked by the user
  * @param sx style parameters
  * @param disabled (optional) flag to disable the buttons
+ * @param customDisabled (option) boolean flag to disable the non-selected buttons
  */
 export const SingleSelectButtonGroup = ({
   value,
@@ -30,6 +32,7 @@ export const SingleSelectButtonGroup = ({
   onSelect,
   sx,
   disabled = false,
+  customDisabled = false,
 }: SingleSelectButtonGroupProps) => {
   return (
     <ButtonGroup fullWidth={true} sx={sx} disabled={disabled}>
@@ -38,6 +41,7 @@ export const SingleSelectButtonGroup = ({
           key={item.value}
           onClick={() => onSelect(item.value)}
           variant={value && value === item.value ? 'contained' : undefined}
+          disabled={value && value === item.value ? false : customDisabled}
         >
           {item.label}
         </Button>

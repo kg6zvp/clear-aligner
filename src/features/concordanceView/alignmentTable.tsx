@@ -133,7 +133,7 @@ export const StateCell = ({ setSaveButtonDisabled,
         }
       ]}
       onSelect={handleSelect}
-      disabled={isRowSelected}
+      customDisabled={isRowSelected}
     />
   );
 };
