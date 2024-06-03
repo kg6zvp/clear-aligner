@@ -67,18 +67,20 @@ export class LinksTable extends VirtualTable {
       let allResult = false;
       const newLinksArray = [];
       const newLinksArrayIDs = [];
+      const linkIDsToRemove = [];
       for (const link of links){
-        await this.remove(link.id, true, true);
         const newLink: Link = {
           id: link.id ?? uuid(),
           metadata: link.metadata,
           sources: (link.sources ?? []).map(BCVWP.sanitize),
           targets: (link.targets ?? []).map(BCVWP.sanitize)
         };
+        linkIDsToRemove.push(link.id || "");
         newLinksArray.push(newLink)
         newLinksArrayIDs.push(newLink.id || "");
       }
       await this.checkDatabase();
+      await this.remove(linkIDsToRemove, true, true);
       const oneResult = await dbApi.save(this.getSourceName(), LinkTableName, newLinksArray);
       await dbApi.updateLinkText(this.getSourceName(), newLinksArrayIDs);
       await this._onUpdate(suppressOnUpdate);
@@ -285,7 +287,7 @@ export class LinksTable extends VirtualTable {
     });
   };
 
-  remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
+  remove = async (itemIdOrIds?: string | string [], suppressOnUpdate = false, isForced = false) => {
     if (!isForced && this.isDatabaseBusy()) {
       return;
     }
@@ -294,7 +296,7 @@ export class LinksTable extends VirtualTable {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      const result = await window.databaseApi.deleteByIds(this.getSourceName(), LinkTableName, id ?? '');
+      const result = await window.databaseApi.deleteByIds(this.getSourceName(), LinkTableName, itemIdOrIds ?? '');
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
@@ -321,7 +323,7 @@ export class LinksTable extends VirtualTable {
     LinksTable.latestDatabaseStatus = _.cloneDeep(this.databaseStatus);
   };
 
-  override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
+  override _onUpdateImpl = async () => {
     this.databaseStatus.lastUpdateTime = this.lastUpdateTime;
     LinksTable.latestLastUpdateTime = Math.max(
       (LinksTable.latestLastUpdateTime ?? 0),
