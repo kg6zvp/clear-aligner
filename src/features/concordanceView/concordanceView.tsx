@@ -285,6 +285,8 @@ export const ConcordanceView = () => {
   const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
+  console.log('linksPendingUpdate is: ', linksPendingUpdate)
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);
 

@@ -11,11 +11,11 @@ import {
   GridRowParams,
   GridSortItem,
   GridInputRowSelectionModel,
-  GridRowSelectionModel
+  GridRowSelectionModel, GridRowHeightParams
 } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, Portal, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import { findFirstRefFromLink } from '../../helpers/findFirstRefFromLink';
@@ -93,6 +93,7 @@ export const StateCell = ({ setSaveButtonDisabled,
     = React.useState<LinkStatus>(state.metadata.status);
 
   function handleSelect (value: string){
+    console.log('inside handleSelect, value is: ', value)
     const updatedLink = structuredClone(state);
     updatedLink.metadata.status = value as LinkStatus;
     // add updatedLink to the linksPendingUpdate Map
@@ -219,7 +220,7 @@ export const AlignmentTable = ({
     return 0;
   }, [chosenAlignmentLink, alignments]);
 
-  function handleRowSelectionModelChange(rowSelectionModel: GridRowSelectionModel){
+  const onRowSelectionModelChange = useCallback ((rowSelectionModel: GridRowSelectionModel) => {
     setRowSelectionModel(rowSelectionModel);
     setSelectedRowsCount(rowSelectionModel.length);
     const selectedIDs = new Set(rowSelectionModel);
@@ -237,7 +238,18 @@ export const AlignmentTable = ({
           }
         })))
     }
-  }
+  },[alignmentTableControlPanelLinkState, alignments, setRowSelectionModel, setSelectedRows,
+  setSelectedRowsCount, setUpdatedSelectedRows])
+
+  const rowCount = useMemo( () => alignments?.length ?? 0, [alignments?.length])
+
+  const rows = useMemo( () => alignments ?? [], [alignments])
+
+  const getRowId = useMemo( () => (row: any) => row.id, [] )
+
+  const getRowHeight = useMemo( () => (_: GridRowHeightParams) => 'auto', [])
+
+  const sortModel = useMemo( () => sort ? [sort] : [], [sort])
 
   const columns: GridColDef[] = [
     {
@@ -301,6 +313,35 @@ export const AlignmentTable = ({
     }
   ];
 
+  const onRowClick = useCallback((clickEvent: GridRowParams<Link>) => {
+    if (onChooseAlignmentLink) {
+      onChooseAlignmentLink(clickEvent.row);
+    }
+  },[onChooseAlignmentLink]);
+
+  const onSortModelChange = useCallback((newSort: string | any[]) => {
+    if (!newSort || newSort.length < 1) {
+      onChangeSort(sort);
+    }
+    onChangeSort(newSort[0] /*only single sort is supported*/);
+  }, [sort])
+
+  const initialState = {
+    pagination: {
+      paginationModel: { page: initialPage, pageSize: 20 }
+    }
+  }
+
+  const pageSizeOptions = [20];
+
+  const sx = {
+    width: '100%',
+    ...DataGridScrollbarDisplayFix,
+    ...DataGridResizeAnimationFixes,
+    ...DataGridTripleIconMarginFix,
+    ...DataGridOutlineFix,
+  }
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', margin: 'auto' }}>
@@ -338,40 +379,21 @@ export const AlignmentTable = ({
         ) : (
           <>
             <DataGrid
-              sx={{
-                width: '100%',
-                ...DataGridScrollbarDisplayFix,
-                ...DataGridResizeAnimationFixes,
-                ...DataGridTripleIconMarginFix,
-                ...DataGridOutlineFix,
-              }}
+              sx={sx}
               rowSelection={true}
-              rowCount={alignments?.length ?? 0}
-              rows={alignments ?? []}
+              rowCount={rowCount}
+              rows={rows}
               columns={columns}
-              getRowId={(row) => row.id}
-              getRowHeight={(_) => 'auto'}
-              sortModel={sort ? [sort] : []}
-              onSortModelChange={(newSort) => {
-                if (!newSort || newSort.length < 1) {
-                  onChangeSort(sort);
-                }
-                onChangeSort(newSort[0] /*only single sort is supported*/);
-              }}
-              initialState={{
-                pagination: {
-                  paginationModel: { page: initialPage, pageSize: 20 }
-                }
-              }}
-              pageSizeOptions={[20]}
-              onRowClick={(clickEvent: GridRowParams<Link>) => {
-                if (onChooseAlignmentLink) {
-                  onChooseAlignmentLink(clickEvent.row);
-                }
-              }}
+              getRowId={getRowId}
+              getRowHeight={getRowHeight}
+              sortModel={sortModel}
+              onSortModelChange={onSortModelChange}
+              initialState={initialState}
+              pageSizeOptions={pageSizeOptions}
+              onRowClick={onRowClick}
               checkboxSelection={true}
               rowSelectionModel={rowSelectionModel}
-              onRowSelectionModelChange={handleRowSelectionModelChange}
+              onRowSelectionModelChange={onRowSelectionModelChange}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
             />
