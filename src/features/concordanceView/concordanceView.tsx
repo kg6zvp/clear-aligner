@@ -38,11 +38,11 @@ interface SaveChangesConfirmationViaRouterProps{
   blocker: Blocker;
 }
 
+// Unsaved Changes Confirmation Modal triggered by Navigation Change
 const SaveChangesConfirmationViaRouter = ({blocker}: SaveChangesConfirmationViaRouterProps) => {
   if (!blocker){
     return
   }
-
   if(blocker.proceed && blocker.reset) {
     return (
       <Dialog open={blocker.state === 'blocked'}>
@@ -57,7 +57,6 @@ const SaveChangesConfirmationViaRouter = ({blocker}: SaveChangesConfirmationViaR
     )
   }
 }
-
 
 export interface AlignmentTableControlPanelProps {
   saveButtonDisabled?: boolean;
@@ -308,7 +307,7 @@ export const ConcordanceView = () => {
 
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
-        // show a modal in here asking if users want to continue or not
+        // open modal asking if users want to continue or not
         const status = await getSaveChangesConfirmation('Changes will be lost if you navigate away. Continue?');
         // if user clicks cancel: early return, otherwise proceed
         if (status === false) {
@@ -393,7 +392,7 @@ export const ConcordanceView = () => {
     selectedAlignmentLink
   ]);
 
-  // block route changes when there is unsaved changes
+  // block route changes when there are unsaved changes
   const blocker = useBlocker(
     useCallback(({currentLocation, nextLocation}: {currentLocation: Location, nextLocation: Location}) => (
       (linksPendingUpdate.size > 0) &&

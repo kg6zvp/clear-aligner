@@ -91,7 +91,6 @@ export const StateCell = ({ setSaveButtonDisabled,
                             StateCellProps) => {
   const [alignmentTableLinkState, setAlignmentTableLinkState]
     = React.useState<LinkStatus>(state.metadata.status);
-
   function handleSelect (value: string){
     const updatedLink = structuredClone(state);
     updatedLink.metadata.status = value as LinkStatus;
@@ -241,6 +240,19 @@ export const AlignmentTable = ({
   },[alignmentTableControlPanelLinkState, alignments, setRowSelectionModel, setSelectedRows,
   setSelectedRowsCount, setUpdatedSelectedRows])
 
+  const onRowClick = useCallback((clickEvent: GridRowParams<Link>) => {
+    if (onChooseAlignmentLink) {
+      onChooseAlignmentLink(clickEvent.row);
+    }
+  },[onChooseAlignmentLink]);
+
+  const onSortModelChange = useCallback((newSort: string | any[]) => {
+    if (!newSort || newSort.length < 1) {
+      onChangeSort(sort);
+    }
+    onChangeSort(newSort[0] /*only single sort is supported*/);
+  }, [sort])
+
   const rowCount = useMemo( () => alignments?.length ?? 0, [alignments?.length])
 
   const rows = useMemo( () => alignments ?? [], [alignments])
@@ -312,19 +324,6 @@ export const AlignmentTable = ({
       )
     }
   ];
-
-  const onRowClick = useCallback((clickEvent: GridRowParams<Link>) => {
-    if (onChooseAlignmentLink) {
-      onChooseAlignmentLink(clickEvent.row);
-    }
-  },[onChooseAlignmentLink]);
-
-  const onSortModelChange = useCallback((newSort: string | any[]) => {
-    if (!newSort || newSort.length < 1) {
-      onChangeSort(sort);
-    }
-    onChangeSort(newSort[0] /*only single sort is supported*/);
-  }, [sort])
 
   const initialState = {
     pagination: {
