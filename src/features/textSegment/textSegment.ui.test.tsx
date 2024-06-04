@@ -40,7 +40,7 @@ describe('TextSegment', () => {
   });
 
   it('is selected', () => {
-    const { getByText } = renderWithProvider(
+    renderWithProvider(
       <TextSegment
         word={{
           id: 'sbl_0',
