@@ -60,6 +60,9 @@ const columns: GridColDef[] = [
   },
 ];
 
+/**
+ * props for the PivotWordTable
+ */
 export interface PivotWordTableProps {
   loading?: boolean;
   sort: GridSortItem | null;

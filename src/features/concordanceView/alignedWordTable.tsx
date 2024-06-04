@@ -82,6 +82,9 @@ const columnsWithGloss: GridColDef[] = [
   },
 ];
 
+/**
+ * Props for the AlignedWordTable component
+ */
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
   pivotWord?: PivotWord;

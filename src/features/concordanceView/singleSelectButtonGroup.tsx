@@ -5,6 +5,9 @@
 import { Button, ButtonGroup, SxProps, Theme } from '@mui/material';
 import { ReactElement } from 'react';
 
+/**
+ * props for the SingleSelectButtonGroup
+ */
 export interface SingleSelectButtonGroupProps {
   sx?: SxProps<Theme>;
   value?: string;

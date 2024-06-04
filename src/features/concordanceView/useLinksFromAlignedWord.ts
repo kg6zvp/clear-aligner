@@ -10,6 +10,11 @@ import { useDatabase } from '../../hooks/useDatabase';
 import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 
+/**
+ * Custom hook to retrieve an array of links
+ * @param alignedWord - AlignedWord object that is the currently selected aligned word
+ * @param sort GridSortItem that contains the sort direction
+ */
 export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
   const { preferences } = useContext(AppContext);
   const db = useDatabase();

@@ -33,15 +33,24 @@ import { Box } from '@mui/system';
 import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 
+/**
+ * Interface for the AlignmentTableContext Component
+ */
 export interface AlignmentTableContextProps {
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;
   alignedWord?: AlignedWord | null;
 }
 
+/**
+ * AlignmentTableContext, Context wrapper used in the AlignmentTable component
+ */
 export const AlignmentTableContext = createContext({} as AlignmentTableContextProps);
 
-
+/**
+ * Custom cell component to display book, chapter, and verse in the AlignmentTable
+ * @param row rendering params for this RefCell entry
+ */
 export const RefCell = (
   row: GridRenderCellParams<Link, any, any>
 ) => {
@@ -69,6 +78,9 @@ export const LinkCell = ({ row, onClick }: {
   );
 };
 
+/**
+ * Props for the StateCell Component
+ */
 export interface StateCellProps {
   setSaveButtonDisabled: Function;
   state: Link;
@@ -80,7 +92,13 @@ export interface StateCellProps {
 
 
 /**
- * Render the cell with the Button Group of states
+ * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
+ * @param setSaveButtonDisabled callback to control the state of the Save Button
+ * @param state the current Link object
+ * @param setLinksPendingUpdate callback to update what links need to be updated
+ * @param linksPendingUpdate Map of what links are pending update
+ * @param isRowSelected flag to indicate if the row is currently selected
+ * @param alignmentTableControlPanelLinkState indicates what state the global link state selector is currently set to
  */
 export const StateCell = ({ setSaveButtonDisabled,
                             state,
@@ -137,6 +155,9 @@ export const StateCell = ({ setSaveButtonDisabled,
   );
 };
 
+/**
+ * Props for the AlignmentTable Component
+ */
 export interface AlignmentTableProps {
   wordSource: AlignmentSide;
   pivotWord?: PivotWord | null;

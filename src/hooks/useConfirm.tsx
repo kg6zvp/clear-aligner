@@ -9,6 +9,9 @@ const createPromise = () => {
   }), resolver]
 }
 
+/**
+ * Custom hook used to present and unsaved changes dialog to users
+ */
 const useConfirm = (): [(text: React.SetStateAction<string>) => Promise<unknown>, () => React.JSX.Element] => {
   const [ open, setOpen ] = useState(false);
   const [ resolver, setResolver ] = useState<any>({ resolver: null })

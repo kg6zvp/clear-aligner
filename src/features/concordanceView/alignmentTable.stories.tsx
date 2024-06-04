@@ -17,6 +17,9 @@ const meta: Meta<typeof AlignmentTable> = {
 
 export default meta;
 
+/**
+ * Default Storybook Test for the AlignmentTable
+ */
 export const Default = (props: AlignmentTableProps) => {
   return (
     <AlignmentTable
@@ -41,6 +44,9 @@ window.databaseApi.corporaGetLinksByAlignedWord = async (...args: any[]): Link[]
   return (linksForDbApi);
 };
 
+/**
+ * Storybook Test for CA-102
+ */
 export const CA102FourLinksOneRejected = (props: MockedAlignmentTableProps) => {
   useEffect(() => {
     while (linksForDbApi.length > 0) {

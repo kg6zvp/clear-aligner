@@ -32,6 +32,9 @@ import { useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 import useConfirm from '../../hooks/useConfirm';
 
+/**
+ * PivotWordFilter type
+ */
 export type PivotWordFilter = 'aligned' | 'all';
 
 interface SaveChangesConfirmationViaRouterProps{
@@ -58,6 +61,9 @@ const SaveChangesConfirmationViaRouter = ({blocker}: SaveChangesConfirmationViaR
   }
 }
 
+/**
+ * Props for the AlignmentTableControlPanel
+ */
 export interface AlignmentTableControlPanelProps {
   saveButtonDisabled?: boolean;
   setSaveButtonDisabled: Function;
@@ -74,7 +80,23 @@ export interface AlignmentTableControlPanelProps {
   alignmentTableControlPanelLinkState: LinkStatus | null;
   setAlignmentTableControlPanelLinkState: Function;
 }
-
+/**
+ * The AlignmentControl Panel contains custom controls used to edit the alignments
+ * @param saveButtonDisabled flag to control the state of the Save Button
+ * @param setSaveButtonDisabled callback to control the state of the Save Button
+ * @param selectedRowsCount number of currently selected rows (via their checkbox)
+ * @param linksPendingUpdate Map of alignment links that the user has updated in the UI, but not yet saved
+ * @param container used in conjunction with Portal to relocate the select all checkbox
+ * @param setSelectedRows callback to update which rows are currently selected
+ * @param setSelectedRowsCount callback to update the count of currently selected rows
+ * @param selectedRows array of what rows are currently selected
+ * @param setUpdatedSelectedRows callback to update the updated list of selected rows
+ * @param updatedSelectedRows array the updated list of selected rows
+ * @param setLinksPendingUpdate callback to update the Map of links pending update
+ * @param setRowSelectionModel callback to update the rowSelectionModel property of the DataGrid
+ * @param alignmentTableControlPanelLinkState the global state set in the upper right button group
+ * @param setAlignmentTableControlPanelLinkState callback to update the global state set in the upper right button group
+ */
 export const AlignmentTableControlPanel = ({
                                              saveButtonDisabled,
                                              setSaveButtonDisabled,
@@ -260,7 +282,10 @@ export const AlignmentTableControlPanel = ({
   );
 };
 
-
+/**
+ * The Concordance View contains three main tables: PivotWordTable, AlignedWordTable,
+ * and the AlignmentTable
+ */
 export const ConcordanceView = () => {
   const layoutCtx = useContext(LayoutContext);
   const dispatch = useAppDispatch();
