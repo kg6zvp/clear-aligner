@@ -394,11 +394,11 @@ export const ConcordanceView = () => {
 
   // block route changes when there are unsaved changes
   const blocker = useBlocker(
-    useCallback(({currentLocation, nextLocation}: {currentLocation: Location, nextLocation: Location}) => (
-      (linksPendingUpdate.size > 0) &&
-      (currentLocation.pathname !== nextLocation.pathname)
-      ), [linksPendingUpdate.size]
-  ))
+    ({currentLocation, nextLocation}: {currentLocation: Location,
+      nextLocation: Location}) =>
+        (linksPendingUpdate.size > 0) &&
+        (currentLocation.pathname !== nextLocation.pathname)
+  )
 
   return (
     <div style={{ position: 'relative' }}>
