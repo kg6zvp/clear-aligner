@@ -269,13 +269,15 @@ export const AlignmentTableControlPanel = ({
                 open={isDialogOpen}
                 disableEscapeKeyDown={true}
         >
-          <DialogContent sx={{ height: '100%', width: '100%' }}>
-            Save {linksPendingUpdate.size} {linksPendingUpdate.size === 1 ? `change` : `changes`}?
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleSave} variant={"contained"}>Yes</Button>
-            <Button onClick={handleClose} variant={"contained"}>No</Button>
-          </DialogActions>
+          <Box padding={5}>
+            <DialogContent sx={{ height: '100%', width: '100%' }}>
+              Save {linksPendingUpdate.size} {linksPendingUpdate.size === 1 ? `change` : `changes`}?
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleSave} variant={"contained"}>Yes</Button>
+              <Button onClick={handleClose} variant={"contained"}>No</Button>
+            </DialogActions>
+          </Box>
         </Dialog>
       </Stack>
     </>
