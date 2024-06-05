@@ -45,11 +45,11 @@ window.databaseApi.corporaGetLinksByAlignedWord = async (...args: any[]): Link[]
 };
 
 /**
- * Storybook Test the AlignmentTable Component
+ * Storybook Test for the AlignmentTable Component
  * This test has 4 links, one of which is rejected and should not appear
  * in the UI.
  */
-export const CA102FourLinksOneRejected = (props: MockedAlignmentTableProps) => {
+export const FourLinksOneRejected = (props: MockedAlignmentTableProps) => {
   useEffect(() => {
     while (linksForDbApi.length > 0) {
       linksForDbApi.pop();
@@ -105,7 +105,7 @@ rejectedLink.metadata.origin = "manual";
 rejectedLink.metadata.status = LinkStatus.REJECTED;
 
 
-CA102FourLinksOneRejected.args = {
+FourLinksOneRejected.args = {
   wordSource: AlignmentSide.TARGET,
   pivotWord: {
     normalizedText: 'god',
