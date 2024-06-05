@@ -2,7 +2,7 @@
  * This file contains the SingleSelectButtonGroup component used in
  * ConcordanceView
  */
-import { Button, ButtonGroup, SxProps, Theme } from '@mui/material';
+import { Button, ButtonGroup, SxProps, Theme, Tooltip } from '@mui/material';
 import { ReactElement } from 'react';
 
 /**
@@ -14,6 +14,7 @@ export interface SingleSelectButtonGroupProps {
   items: {
     value: string;
     label: string | ReactElement;
+    tooltip?: string;
   }[];
   onSelect: (value: string) => void;
   disabled?: boolean;
@@ -27,7 +28,7 @@ export interface SingleSelectButtonGroupProps {
  * @param onSelect callback when a button is clicked by the user
  * @param sx style parameters
  * @param disabled (optional) flag to disable the buttons
- * @param customDisabled (option) boolean flag to disable the non-selected buttons
+ * @param customDisabled (optional) boolean flag to disable the non-selected buttons
  */
 export const SingleSelectButtonGroup = ({
   value,
@@ -40,14 +41,16 @@ export const SingleSelectButtonGroup = ({
   return (
     <ButtonGroup fullWidth={true} sx={sx} disabled={disabled}>
       {items.map((item) =>
-        <Button
-          key={item.value}
-          onClick={() => onSelect(item.value)}
-          variant={value && value === item.value ? 'contained' : undefined}
-          disabled={value && value === item.value ? false : customDisabled}
-        >
-          {item.label}
-        </Button>
+          <Tooltip title={item.tooltip === null ? "" : item.tooltip}>
+            <Button
+              key={item.value}
+              onClick={() => onSelect(item.value)}
+              variant={value && value === item.value ? 'contained' : undefined}
+              disabled={value && value === item.value ? false : customDisabled}
+            >
+              {item.label}
+            </Button>
+        </Tooltip>
       )}
     </ButtonGroup>
   );

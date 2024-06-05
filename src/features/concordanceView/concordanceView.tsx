@@ -236,19 +236,23 @@ export const AlignmentTableControlPanel = ({
               items={[
                 {
                   value: 'created',
-                  label: <LinkIcon />
+                  label: <LinkIcon />,
+                  tooltip: 'Created',
                 },
                 {
                   value: 'approved',
-                  label: <CheckCircleOutlined />
+                  label: <CheckCircleOutlined />,
+                  tooltip: 'Approved',
                 },
                 {
                   value: 'rejected',
-                  label: <CancelOutlined />
+                  label: <CancelOutlined />,
+                  tooltip: 'Rejected',
                 },
                 {
                   value: 'needsReview',
-                  label: <FlagOutlined />
+                  label: <FlagOutlined />,
+                  tooltip: 'Needs Review',
                 }
               ]}
               onSelect={(value) => handleOnSelect(value)}
