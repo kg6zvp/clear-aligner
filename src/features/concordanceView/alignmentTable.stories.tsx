@@ -45,7 +45,9 @@ window.databaseApi.corporaGetLinksByAlignedWord = async (...args: any[]): Link[]
 };
 
 /**
- * Storybook Test for CA-102
+ * Storybook Test the AlignmentTable Component
+ * This test has 4 links, one of which is rejected and should not appear
+ * in the UI.
  */
 export const CA102FourLinksOneRejected = (props: MockedAlignmentTableProps) => {
   useEffect(() => {
