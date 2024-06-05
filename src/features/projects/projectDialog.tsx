@@ -58,7 +58,7 @@ const getInitialProjectState = (): Project => ({
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
   const dispatch = useAppDispatch();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
-  const initialProjectState = useMemo<Project>(() => getInitialProjectState(), [getInitialProjectState]);
+  const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = React.useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
@@ -66,7 +66,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const [projectUpdated, setProjectUpdated] = React.useState(false);
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
-      .sort((a, b) => a.localeCompare(b)), [ISO6393]);
+      .sort((a, b) => a.localeCompare(b)), []);
   const allowDelete = React.useMemo(() => projectId !== DefaultProjectName, [projectId]);
   const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
     if (!projectUpdated) {
@@ -90,7 +90,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     && (project.languageCode || '').length
     && Object.keys(TextDirection).includes((project.textDirection || '').toUpperCase())
     && projectUpdated
-  ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated, (project.fileName || '').length, (project.name || '').length, (project.abbreviation || '').length, (project.languageCode || '').length]);
+  ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
   const handleSubmit = React.useCallback(async (type: 'create'|'update', e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
