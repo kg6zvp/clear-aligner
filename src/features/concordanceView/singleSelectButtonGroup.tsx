@@ -41,7 +41,7 @@ export const SingleSelectButtonGroup = ({
   return (
     <ButtonGroup fullWidth={true} sx={sx} disabled={disabled}>
       {items.map((item) =>
-          <Tooltip title={item.tooltip === null ? "" : item.tooltip}>
+          <Tooltip key={item.value} title={item.tooltip === null ? "" : item.tooltip}>
             <Button
               key={item.value}
               onClick={() => onSelect(item.value)}
