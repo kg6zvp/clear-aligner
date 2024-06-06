@@ -42,14 +42,16 @@ export const SingleSelectButtonGroup = ({
     <ButtonGroup fullWidth={true} sx={sx} disabled={disabled}>
       {items.map((item) =>
           <Tooltip key={item.value} title={item.tooltip === null ? "" : item.tooltip}>
-            <Button
-              key={item.value}
-              onClick={() => onSelect(item.value)}
-              variant={value && value === item.value ? 'contained' : undefined}
-              disabled={value && value === item.value ? false : customDisabled}
-            >
-              {item.label}
-            </Button>
+            <>
+              <Button
+                key={item.value}
+                onClick={() => onSelect(item.value)}
+                variant={value && value === item.value ? 'contained' : undefined}
+                disabled={value && value === item.value ? false : customDisabled}
+              >
+                {item.label}
+              </Button>
+            </>
         </Tooltip>
       )}
     </ButtonGroup>
