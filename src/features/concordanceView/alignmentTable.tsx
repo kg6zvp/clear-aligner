@@ -108,24 +108,30 @@ export const StateCell = ({ setSaveButtonDisabled,
                             alignmentTableControlPanelLinkState }:
                             StateCellProps) => {
   const [alignmentTableLinkState, setAlignmentTableLinkState]
-    = React.useState<LinkStatus>(state.metadata.status);
-  function handleSelect (value: string){
-    const updatedLink = structuredClone(state);
-    updatedLink.metadata.status = value as LinkStatus;
-    // add updatedLink to the linksPendingUpdate Map
-    setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || "", updatedLink))
+    = React.useState<LinkStatus>(
+    (isRowSelected && alignmentTableControlPanelLinkState)
+      ? alignmentTableControlPanelLinkState
+      : state.metadata.status);
 
-    setAlignmentTableLinkState(value as LinkStatus);
+  function handleSelect(value: string) {
+    const updatedLink = structuredClone(state);
+    const linkStatus = value as LinkStatus;
+    updatedLink.metadata.status = linkStatus;
+
+    // add updatedLink to the linksPendingUpdate Map
+    setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || '', updatedLink));
+
+    setAlignmentTableLinkState(linkStatus);
     setSaveButtonDisabled(false);
   }
 
   // if the state is updated via the AlignmentTableControl Panel, then update
   // the state here
   useEffect(() => {
-    if(isRowSelected && alignmentTableControlPanelLinkState){
-      setAlignmentTableLinkState(alignmentTableControlPanelLinkState)
+    if (isRowSelected && alignmentTableControlPanelLinkState) {
+      setAlignmentTableLinkState(alignmentTableControlPanelLinkState);
     }
-  }, [alignmentTableControlPanelLinkState, isRowSelected])
+  }, [alignmentTableControlPanelLinkState, isRowSelected]);
 
   return (
     <SingleSelectButtonGroup
