@@ -107,20 +107,36 @@ export const StateCell = ({ setSaveButtonDisabled,
                             isRowSelected,
                             alignmentTableControlPanelLinkState }:
                             StateCellProps) => {
+  /**
+   * calcInitialLink State is needed because MUI DataGrid re-renders the rows
+   * often, and we need to be sure we are setting the correct state in the UI,
+   * especially after things like the user scrolls changes rows out of view
+   * and back into view
+   */
+  const calcInitialCellState = useCallback((): LinkStatus => {
+    // case 1 - user has globally set link status
+    if(isRowSelected && alignmentTableControlPanelLinkState){
+      return alignmentTableControlPanelLinkState
+    }
+    // case 2 - user has manually set link status in the row
+    else if (state.id && linksPendingUpdate.get(state.id)){
+      return linksPendingUpdate.get(state.id)?.metadata.status as LinkStatus
+    }
+    // case 3 - user has not manually changed link status
+    else{
+      return state.metadata.status
+    }
+  },[]);
+
   const [alignmentTableLinkState, setAlignmentTableLinkState]
-    = React.useState<LinkStatus>(
-    (isRowSelected && alignmentTableControlPanelLinkState)
-      ? alignmentTableControlPanelLinkState
-      : state.metadata.status);
+    = React.useState<LinkStatus>(calcInitialCellState());
 
   function handleSelect(value: string) {
     const updatedLink = structuredClone(state);
     const linkStatus = value as LinkStatus;
     updatedLink.metadata.status = linkStatus;
-
     // add updatedLink to the linksPendingUpdate Map
     setLinksPendingUpdate(new Map(linksPendingUpdate).set(updatedLink.id || '', updatedLink));
-
     setAlignmentTableLinkState(linkStatus);
     setSaveButtonDisabled(false);
   }
