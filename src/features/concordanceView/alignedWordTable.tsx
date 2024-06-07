@@ -13,9 +13,10 @@ import { AlignedWord, LocalizedWordEntry, PivotWord } from './structs';
 import { CircularProgress, TableContainer } from '@mui/material';
 import React, { useMemo } from 'react';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
-  DataGridSetMinRowHeightToDefault
+  DataGridSetMinRowHeightToDefault, DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { TextDirection } from '../../structs';
@@ -50,8 +51,9 @@ const renderWords = (words: LocalizedWordEntry) => {
 const columns: GridColDef[] = [
   {
     field: 'frequency',
-    headerName: 'Frequency',
+    headerName: 'Freq.',
     flex: 1,
+    maxWidth: 90,
   },
   {
     field: 'sourceWordTexts',
@@ -80,6 +82,9 @@ const columnsWithGloss: GridColDef[] = [
   },
 ];
 
+/**
+ * Props for the AlignedWordTable component
+ */
 export interface AlignedWordTableProps {
   sort: GridSortItem | null;
   pivotWord?: PivotWord;
@@ -161,6 +166,8 @@ export const AlignedWordTable = ({
             ...DataGridSetMinRowHeightToDefault,
             ...DataGridScrollbarDisplayFix,
             ...DataGridResizeAnimationFixes,
+            ...DataGridTripleIconMarginFix,
+            ...DataGridOutlineFix,
           }}
           rowSelection={true}
           rowSelectionModel={
@@ -181,10 +188,12 @@ export const AlignedWordTable = ({
               paginationModel: { page: initialPage, pageSize: 20 },
             },
           }}
-          pageSizeOptions={[20, 50]}
+          pageSizeOptions={[20]}
           onRowClick={(clickEvent: GridRowParams<AlignedWord>) => onChooseAlignedWord?.(clickEvent.row)}
           isRowSelectable={(_: GridRowParams<AlignedWord>) => true}
           getRowHeight={() => 'auto'}
+          hideFooterSelectedRowCount={true}
+
         />
       )}
     </TableContainer>

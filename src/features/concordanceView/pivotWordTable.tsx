@@ -15,8 +15,9 @@ import {
   GridValueGetterParams,
 } from '@mui/x-data-grid';
 import {
+  DataGridOutlineFix,
   DataGridResizeAnimationFixes,
-  DataGridScrollbarDisplayFix,
+  DataGridScrollbarDisplayFix, DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { TextDirection } from '../../structs';
@@ -43,8 +44,9 @@ const PivotWordTextCell = ({ pivotWord }: PivotWordTextCellProps) => {
 const columns: GridColDef[] = [
   {
     field: 'frequency',
-    headerName: 'Frequency',
+    headerName: 'Freq.',
     flex: 1,
+    maxWidth: 90,
     valueGetter: (row: GridValueGetterParams<PivotWord>) =>
       row.row.frequency,
   },
@@ -58,6 +60,9 @@ const columns: GridColDef[] = [
   },
 ];
 
+/**
+ * props for the PivotWordTable
+ */
 export interface PivotWordTableProps {
   loading?: boolean;
   sort: GridSortItem | null;
@@ -118,6 +123,8 @@ export const PivotWordTable = ({
           width: '100%',
           ...DataGridScrollbarDisplayFix,
           ...DataGridResizeAnimationFixes,
+          ...DataGridTripleIconMarginFix,
+          ...DataGridOutlineFix
         }}
         rowSelection={true}
         rowSelectionModel={
@@ -139,13 +146,14 @@ export const PivotWordTable = ({
           },
         }}
         pagination={true}
-        pageSizeOptions={[20, 50]}
+        pageSizeOptions={[20]}
         onRowClick={(clickEvent: GridRowParams<PivotWord>) => {
           if (onChooseWord) {
             onChooseWord(clickEvent.row);
           }
         }}
         isRowSelectable={(_: GridRowParams<PivotWord>) => true}
+        hideFooterSelectedRowCount={true}
       />
     </TableContainer>
   );

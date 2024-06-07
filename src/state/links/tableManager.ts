@@ -56,26 +56,37 @@ export class LinksTable extends VirtualTable {
 
   getSourceName = () => this.sourceName ?? DefaultProjectName;
 
-  save = async (link: Link, suppressOnUpdate = false, isForced = false): Promise<boolean> => {
+  save = async (linkOrLinks: Link | Link[], suppressOnUpdate = false, isForced = false): Promise<boolean> => {
     if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
 
     this.logDatabaseTime('save()');
     try {
-      await this.remove(link.id, true, true);
-      const newLink: Link = {
-        id: link.id ?? uuid(),
-        metadata: link.metadata,
-        sources: (link.sources ?? []).map(BCVWP.sanitize),
-        targets: (link.targets ?? []).map(BCVWP.sanitize)
-      };
-
+      const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
+      let allResult = false;
+      const newLinksArray = [];
+      const newLinksArrayIDs = [];
+      const linkIDsToRemove = [];
+      for (const link of links){
+        const newLink: Link = {
+          id: link.id ?? uuid(),
+          metadata: link.metadata,
+          sources: (link.sources ?? []).map(BCVWP.sanitize),
+          targets: (link.targets ?? []).map(BCVWP.sanitize)
+        };
+        linkIDsToRemove.push(link.id || "");
+        newLinksArray.push(newLink)
+        newLinksArrayIDs.push(newLink.id || "");
+      }
       await this.checkDatabase();
-      const result = await dbApi.save(this.getSourceName(), LinkTableName, newLink);
-      await dbApi.updateLinkText(this.getSourceName(), newLink.id!);
+      await this.remove(linkIDsToRemove, true, true);
+      const oneResult = await dbApi.save(this.getSourceName(), LinkTableName, newLinksArray);
+      await dbApi.updateLinkText(this.getSourceName(), newLinksArrayIDs);
       await this._onUpdate(suppressOnUpdate);
-      return result;
+      allResult ||= oneResult;
+
+      return allResult;
     } catch (e) {
       return false;
     }
@@ -276,7 +287,7 @@ export class LinksTable extends VirtualTable {
     });
   };
 
-  remove = async (id?: string, suppressOnUpdate = false, isForced = false) => {
+  remove = async (itemIdOrIds?: string | string [], suppressOnUpdate = false, isForced = false) => {
     if (!isForced && this.isDatabaseBusy()) {
       return;
     }
@@ -285,7 +296,7 @@ export class LinksTable extends VirtualTable {
     try {
       await this.checkDatabase();
       // @ts-ignore
-      const result = await window.databaseApi.deleteByIds(this.getSourceName(), LinkTableName, id ?? '');
+      const result = await window.databaseApi.deleteByIds(this.getSourceName(), LinkTableName, itemIdOrIds ?? '');
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
@@ -312,7 +323,7 @@ export class LinksTable extends VirtualTable {
     LinksTable.latestDatabaseStatus = _.cloneDeep(this.databaseStatus);
   };
 
-  override _onUpdateImpl = async (suppressOnUpdate?: boolean) => {
+  override _onUpdateImpl = async () => {
     this.databaseStatus.lastUpdateTime = this.lastUpdateTime;
     LinksTable.latestLastUpdateTime = Math.max(
       (LinksTable.latestLastUpdateTime ?? 0),
@@ -387,10 +398,10 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
  *<p>
- * @param link Link to save (optional; undefined = no save).
+ * @param linkOrLinks Link to save (optional; undefined = no save).
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
-export const useSaveLink = (link?: Link, saveKey?: string) => {
+export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
@@ -398,14 +409,14 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
   const prevSaveKey = useRef<string | undefined>();
 
   useEffect(() => {
-    if (!link
+    if (!linkOrLinks
       || !saveKey
       || prevSaveKey.current === saveKey) {
       return;
     }
     prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveLink(): status', status);
-    projectState?.linksTable.save(link)
+    projectState?.linksTable.save(linkOrLinks)
       .then(result => {
         const endStatus = {
           ...status,
@@ -414,7 +425,7 @@ export const useSaveLink = (link?: Link, saveKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useSaveLink(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, prevSaveKey, link, saveKey, status]);
+  }, [projectState?.linksTable, prevSaveKey, linkOrLinks, saveKey, status]);
 
   return { ...status };
 };

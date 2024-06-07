@@ -1134,8 +1134,10 @@ export class ProjectRepository extends BaseRepository {
                                   count(1)        c
                            from words_or_parts w
                                ${filter === 'aligned' ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j
-                                    on w.id = j.word_id` : ''}
-                           where w.side = '${side}'
+                                    on w.id = j.word_id inner join links l
+                           on l.id = j.link_id
+                           where l.status <> 'rejected'
+                           and w.side = '${side}' ` : ''}
                            group by t ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
   };
 
@@ -1176,6 +1178,7 @@ export class ProjectRepository extends BaseRepository {
             WHERE sw.normalized_text = :normalizedText
               AND sw.side = 'sources'
               AND l.targets_text <> ''
+              AND l.status <> 'rejected'
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, {
                     frequency: 'c', sourceWordTexts: 'sources_text', targetWordTexts: 'targets_text'
@@ -1201,6 +1204,7 @@ export class ProjectRepository extends BaseRepository {
             WHERE tw.normalized_text = :normalizedText
               AND tw.side = 'targets'
               AND l.sources_text <> ''
+              AND l.status <> 'rejected'
             GROUP BY l.sources_text, l.targets_text
                 ${this._buildOrderBy(sort, { frequency: 'c', sourceWordTexts: 'st', targetWordTexts: 'tt' })};`;
         return await em.query(targetQueryText, [{ normalizedText }]);

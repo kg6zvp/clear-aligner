@@ -10,12 +10,18 @@ import { useDatabase } from '../../hooks/useDatabase';
 import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
 import { AppContext } from '../../App';
 
+/**
+ * Custom hook to retrieve an array of links
+ * @param alignedWord - AlignedWord object that is the currently selected aligned word
+ * @param sort GridSortItem that contains the sort direction
+ */
 export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSortItem | null): Link[] | undefined => {
   const { preferences } = useContext(AppContext);
   const db = useDatabase();
   const lastUpdate = useDataLastUpdated();
   const [links, setLinks] = useState<Link[] | undefined>(undefined);
   const [currentAlignedWord, setCurrentAlignedWord] = useState<AlignedWord | undefined>();
+
 
   useEffect(() => {
     if (currentAlignedWord !== alignedWord) {
@@ -33,7 +39,9 @@ export const useLinksFromAlignedWord = (alignedWord?: AlignedWord, sort?: GridSo
           preferences?.currentProject ?? DefaultProjectName,
           currentAlignedWord.sourceWordTexts.text,
           currentAlignedWord.targetWordTexts.text, sort);
-        setLinks(links);
+        //remove links that are marked as 'rejected
+        const nonRejectedLinks = links.filter(item => item.metadata?.status !== 'rejected')
+        setLinks(nonRejectedLinks);
       } finally {
         console.timeEnd(`useLinksFromAlignedWord(alignedWord: '${currentAlignedWord.id}')`);
       }
