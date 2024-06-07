@@ -126,7 +126,7 @@ export const StateCell = ({ setSaveButtonDisabled,
     else{
       return state.metadata.status
     }
-  },[]);
+  },[alignmentTableControlPanelLinkState, isRowSelected, linksPendingUpdate, state.id, state.metadata]);
 
   const [alignmentTableLinkState, setAlignmentTableLinkState]
     = React.useState<LinkStatus>(calcInitialCellState());
