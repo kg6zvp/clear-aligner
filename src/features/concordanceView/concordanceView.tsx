@@ -439,7 +439,7 @@ export const ConcordanceView = () => {
           display: 'flex',
           gridGap: '.2em',
           gridTemplateColumns: 'repeat(18, 1fr)',
-          width: '100vw !important'
+          width: '97.5vw !important'
         }}
       >
         {/**

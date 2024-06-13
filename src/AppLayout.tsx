@@ -59,7 +59,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
                   sx={{
                     minHeight: 48,
                     justifyContent: "center",
-                    px: 2.5,
+                    px: 1.0,
                   }}
                   onClick={() => {
                     navigate({
@@ -83,7 +83,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
                   sx={{
                     minHeight: 48,
                     justifyContent: "center",
-                    px: 2.5,
+                    px: 1.0,
                   }}
                   onClick={() => {
                     navigate({
@@ -108,7 +108,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
                   sx={{
                     minHeight: 48,
                     justifyContent: "center",
-                    px: 2.5,
+                    px: 1.0,
                   }}
                   onClick={() => {
                     navigate({
