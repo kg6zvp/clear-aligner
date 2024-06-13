@@ -1,7 +1,7 @@
 import './App.css';
 import './styles/theme.css';
 import React, { createContext, useMemo, useState } from 'react';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
 import { ConcordanceView } from './features/concordanceView/concordanceView';
@@ -57,6 +57,10 @@ const App = () => {
       path: '/',
       element: <AppLayout theme={theme}/>,
       children: [
+        {
+          index: true,
+          element: <Navigate to="/projects" replace />,
+        },
         {
           path: '/alignment',
           element: <AlignmentEditor />
