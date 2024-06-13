@@ -1,6 +1,6 @@
 import './App.css';
 import './styles/theme.css';
-import React, { createContext } from 'react';
+import React, { createContext, useMemo, useState } from 'react';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
@@ -13,6 +13,7 @@ import ProjectsView from 'features/projects';
 import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
+import { useMediaQuery } from '@mui/material';
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -24,18 +25,40 @@ export interface AppContextProps {
   containers: Containers;
 }
 
+export type THEME = 'night' | 'day';
+export type THEME_PREFERENCE = THEME | 'auto';
+
+
+
 export const AppContext = createContext({} as AppContextProps);
 
 const App = () => {
   const appContext: AppContextProps = useInitialization();
 
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const themeDefault: THEME = useMemo(
+    () => (prefersDarkMode ? 'night' : 'day'),
+    [prefersDarkMode]
+  );
+  const [preferredTheme, setPreferredTheme] = useState(
+    'auto' as THEME_PREFERENCE
+  );
+  const theme = useMemo(() => {
+    switch (preferredTheme) {
+      case 'auto':
+        return themeDefault;
+      default:
+        return preferredTheme;
+    }
+  }, [themeDefault, preferredTheme]);
+
   const router = createHashRouter([
     {
       path: '/',
-      element: <AppLayout/>,
+      element: <AppLayout theme={theme}/>,
       children: [
         {
-          path: '/',
+          path: '/alignment',
           element: <AlignmentEditor />
         },
         {
@@ -44,7 +67,10 @@ const App = () => {
         },
         {
           path: '/projects',
-          element: <ProjectsView />
+          element: <ProjectsView
+            preferredTheme={preferredTheme}
+            setPreferredTheme={setPreferredTheme}
+          />
         },
       ]
     },
