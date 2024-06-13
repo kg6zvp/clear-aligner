@@ -6,8 +6,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import LinkIcon from '@mui/icons-material/Link';
 import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
 import useTrackLocation from './utils/useTrackLocation';
-import { AppContext, THEME } from './App';
-import { DefaultProjectName } from './state/links/tableManager';
+import { THEME } from './App';
 import useBusyDialog from './utils/useBusyDialog';
 
 
@@ -29,7 +28,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
   useTrackLocation();
   const busyDialog = useBusyDialog();
 
-  const [showMenu, setShowMenu] = useState(false);
   const [menuBarDelegate, setMenuBarDelegate] = useState(
     null as JSX.Element | string | null
   );
@@ -43,13 +41,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
   );
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { preferences, projects } = useContext(AppContext);
-  const projectName = useMemo(() => (
-    (projects || []).find(p =>
-      p.id === preferences?.currentProject)?.name
-    ?? projects?.[0]?.name
-    ?? DefaultProjectName
-  ), [projects, preferences?.currentProject]);
 
   return (
     <LayoutContext.Provider value={layoutContext}>
@@ -120,7 +111,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
                     px: 2.5,
                   }}
                   onClick={() => {
-                    setShowMenu(false);
                     navigate({
                       pathname: '/concordance',
                       search: createSearchParams(searchParams).toString()
