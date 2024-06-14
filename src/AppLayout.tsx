@@ -8,6 +8,7 @@ import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
 import useTrackLocation from './utils/useTrackLocation';
 import { THEME } from './App';
 import useBusyDialog from './utils/useBusyDialog';
+import { MiniDrawer } from './features/miniDrawer/miniDrawer';
 
 
 export interface LayoutContextProps {
@@ -52,85 +53,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
           height: '100%',
           overflow: 'hidden',
         }}>
-          <Drawer variant="permanent" open={false}>
-            <List>
-              <ListItem disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: "center",
-                    px: 1.0,
-                  }}
-                  onClick={() => {
-                    navigate({
-                      pathname: '/projects'
-                    });
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: "auto",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <HomeIcon />
-                  </ListItemIcon>
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: "center",
-                    px: 1.0,
-                  }}
-                  onClick={() => {
-                    navigate({
-                      pathname: '/alignment',
-                      search: createSearchParams(searchParams).toString()
-                    });
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: "auto",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <LinkIcon />
-                  </ListItemIcon>
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding sx={{ display: "block" }}>
-                <ListItemButton
-                  sx={{
-                    minHeight: 48,
-                    justifyContent: "center",
-                    px: 1.0,
-                  }}
-                  onClick={() => {
-                    navigate({
-                      pathname: '/concordance',
-                      search: createSearchParams(searchParams).toString()
-                    });
-                  }}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      mr: "auto",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <SpaceDashboardIcon />
-                  </ListItemIcon>
-                </ListItemButton>
-              </ListItem>
-            </List>
-          </Drawer>
-
+          <MiniDrawer/>
           <div id={'outlet'} style={{ marginLeft: '40px', flexGrow: 1, overflow: 'auto' }}>
             <Outlet />
           </div>
