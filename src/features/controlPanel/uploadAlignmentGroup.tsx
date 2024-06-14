@@ -2,18 +2,19 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentFileSchema, alignmentFileSchemaErrorMessageMapper } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button, ButtonGroup } from '@mui/material';
-import { FileDownload, FileUpload } from '@mui/icons-material';
+import { FileDownload, FileUpload, Sync } from '@mui/icons-material';
 import uuid from 'uuid-random';
 import saveAlignmentFile from '../../helpers/alignmentFile';
 import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
-import { useSyncAlignments } from '../../state/links/useSyncAlignments';
+import { SyncProgress, useSyncAlignments } from '../../state/links/useSyncAlignments';
+import { SyncProgressDialog } from './syncProgressDialog';
 
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
@@ -38,8 +39,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
   useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
-  const [ syncLinksKey ] = useState<string|undefined>(undefined);
-  const [ cancelSyncKey ] = useState<string|undefined>(undefined);
+  const [ syncLinksKey, setSyncLinksKey ] = useState<string|undefined>(undefined);
+  const [ cancelSyncKey, setCancelSyncKey ] = useState<string|undefined>(undefined);
   const syncState = useSyncAlignments(projectId, syncLinksKey, cancelSyncKey);
   const [ getAllLinksKey, setGetAllLinksKey ] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
@@ -61,36 +62,36 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
       saveKey: uuid()
     });
   }, [ syncState.file, setAlignmentFileSaveState ]);
+  const showSyncProgressDialog = useMemo<boolean>(() => syncState.progress === SyncProgress.IN_PROGRESS, [ syncState.progress ]);
 
   return (
     <span>
-      {/*Todo: Add this Tooltip, Dialog and Button back in with CA-115*/}
-      {/*<RemovableTooltip*/}
-      {/*  removed={alignmentFileErrors?.showDialog}*/}
-      {/*  title="Sync Alignments"*/}
-      {/*  describeChild*/}
-      {/*  arrow>*/}
-      {/*  <span>*/}
-      {/*    <SyncProgressDialog*/}
-      {/*      showDialog={showSyncProgressDialog}*/}
-      {/*      onCancel={() => setCancelSyncKey(uuid())}*/}
-      {/*    />*/}
-      {/*    <Button*/}
-      {/*      size={size as 'medium' | 'small' | undefined}*/}
-      {/*      disabled={containers.length === 0 || !allowImport}*/}
-      {/*      variant="contained"*/}
-      {/*      sx={{*/}
-      {/*        minWidth: '100%',*/}
-      {/*        marginBottom: '.2em'*/}
-      {/*      }}*/}
-      {/*      onClick={() => {*/}
-      {/*        setSyncLinksKey(uuid());*/}
-      {/*      }} >*/}
-      {/*      <Sync />*/}
-      {/*    </Button>*/}
-      {/*  </span>*/}
-      {/*</RemovableTooltip>*/}
-      {/*<br/>*/}
+      <RemovableTooltip
+        removed={alignmentFileErrors?.showDialog}
+        title="Sync Alignments"
+        describeChild
+        arrow>
+        <span>
+          <SyncProgressDialog
+            showDialog={showSyncProgressDialog}
+            onCancel={() => setCancelSyncKey(uuid())}
+          />
+          <Button
+            size={size as 'medium' | 'small' | undefined}
+            disabled={containers.length === 0 || !allowImport}
+            variant="contained"
+            sx={{
+              minWidth: '100%',
+              marginBottom: '.2em'
+            }}
+            onClick={() => {
+              setSyncLinksKey(uuid());
+            }} >
+            <Sync />
+          </Button>
+        </span>
+      </RemovableTooltip>
+      <br/>
       <ButtonGroup>
         <RemovableTooltip
           removed={alignmentFileErrors?.showDialog}

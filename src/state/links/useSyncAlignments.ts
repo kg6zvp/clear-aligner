@@ -1,6 +1,12 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { LinkOrigin, LinkStatus } from '../../structs';
+import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import { generateJsonString } from '../../common/generateJsonString';
+import { useDatabase } from '../../hooks/useDatabase';
+import { JournalEntryTableName } from './tableManager';
+import { mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
+
+const SERVER_URL = undefined;
 
 export enum SyncProgress {
   IDLE,
@@ -25,6 +31,7 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
   const [ progress, setProgress ] = useState<SyncProgress>(SyncProgress.IDLE);
   const [ file, setFile ] = useState<AlignmentFile|undefined>();
   const abortController = useRef<AbortController|undefined>();
+  const dbApi = useDatabase();
 
   const cleanupRequest = useCallback(() => {
     abortController.current = undefined;
@@ -45,26 +52,38 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     if (lastSyncKey === syncLinksKey) {
       return;
     }
-    const fetchLinks = async ({ signal }: AbortController) => {
+    const sendJournal = async (signal: AbortSignal) => {
+      const journalEntries = (await dbApi.getAll(projectId!, JournalEntryTableName))
+        // @ts-ignore
+        .map(mapJournalEntryEntityToJournalEntryDTO);
+      try {
+        await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
+          signal,
+          method: 'PATCH',
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: generateJsonString(journalEntries)
+        });
+      } catch (x) {
+        cleanupRequest();
+        throw new Error('Aborted');
+      }
+    };
+    const fetchLinks = async (signal: AbortSignal) => {
       let response;
       try {
-        response = await fetch(`http://localhost:8080/api/projects/${projectId}/alignment_links/`, {
+        response = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
           signal,
           headers: { accept: 'application/json' }
         });
       } catch (x) {
-        setProgress(SyncProgress.IDLE);
-        abortController.current = undefined;
-        return;
+        cleanupRequest();
+        throw new Error('Aborted');
       }
       const linksBody: {
-        links: {
-          id: string,
-          sources: string[],
-          targets: string[],
-          origin: LinkOrigin,
-          status: LinkStatus
-        }[]
+        links: ServerAlignmentLinkDTO[]
       } = await response.json();
       const tmpFile = {
         type: 'translation',
@@ -73,8 +92,8 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
           .map(l => ({
             meta: {
               id: l.id,
-              origin: l.origin,
-              status: l.status
+              origin: l.meta.origin,
+              status: l.meta.status
             },
             source: l.sources,
             target: l.targets
@@ -83,13 +102,19 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
       setFile(tmpFile);
       cleanupRequest();
     };
+
+    const syncLinks = async ({ signal }: AbortController) => {
+      await sendJournal(signal);
+      await fetchLinks(signal);
+    }
+
     if (progress === SyncProgress.IN_PROGRESS) {
       abortController.current?.abort('retry');
     }
     abortController.current = new AbortController();
     setLastSyncKey(syncLinksKey);
     setProgress(SyncProgress.IN_PROGRESS);
-    void fetchLinks(abortController.current);
+    void syncLinks(abortController.current);
   }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId]);
 
   return {

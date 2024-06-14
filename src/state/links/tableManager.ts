@@ -420,7 +420,8 @@ export class LinksTable extends VirtualTable {
    * @param alignmentRecord Input Alignment record (required).
    */
   static createAlignmentRecordId = (alignmentRecord: AlignmentRecord): string =>
-    LinksTable.createIdFromWordId(alignmentRecord?.target?.[0] ?? EmptyWordId);
+    alignmentRecord.meta.id
+    ?? LinksTable.createIdFromWordId(alignmentRecord?.target?.[0] ?? EmptyWordId);
 }
 
 const databaseHookDebug = (text: string, ...args: any[]) => {
