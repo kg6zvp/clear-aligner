@@ -2,7 +2,7 @@
  * This file contains the MiniDrawer component
  */
 import * as React from "react";
-import { styled, Theme, CSSObject } from "@mui/material/styles";
+import {  styled, Theme, CSSObject } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
 import Divider from "@mui/material/Divider";
@@ -19,47 +19,44 @@ import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useNavigate } from 'react-router-dom';
 
-/**
- * This component is used as the main navigation for the app
- */
-export const MiniDrawer = () => {
-  const drawerWidth = 240;
+const drawerWidth = 240;
 
-  const openedMixin = (theme: Theme): CSSObject => ({
-    width: drawerWidth,
-    transition: theme.transitions.create("width", {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
-    overflowX: "hidden",
-  });
+const openedMixin = (theme: Theme): CSSObject => ({
+  width: drawerWidth,
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+  overflowX: "hidden",
+});
 
-  const closedMixin = (theme: Theme): CSSObject => ({
-    transition: theme.transitions.create("width", {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
-    overflowX: "hidden",
-    width: `calc(${theme.spacing(7)} + 1px)`,
-    [theme.breakpoints.up("sm")]: {
-      width: `calc(${theme.spacing(8)} + 1px)`,
-    },
-  });
+const closedMixin = (theme: Theme): CSSObject => ({
+  transition: theme.transitions.create("width", {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  overflowX: "hidden",
+  width: `calc(${theme.spacing(7)} + 1px)`,
+  [theme.breakpoints.up("sm")]: {
+    width: `calc(${theme.spacing(8)} + 1px)`,
+  },
+});
 
-  const DrawerHeader = styled("div")(({ theme }) => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    padding: theme.spacing(0, 1),
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
-  }));
+const DrawerHeader = styled("div")(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  padding: theme.spacing(0, 1),
+  // necessary for content to be below app bar
+  ...theme.mixins.toolbar,
+}));
 
-  const Drawer = styled(MuiDrawer, {
-    shouldForwardProp: (prop) => prop !== "open",
-  })(({ theme, open }) => {
-    console.log('inside Drawer, theme is: ', theme);
-    return {
+const Drawer = styled(MuiDrawer, {
+  shouldForwardProp: (prop) => prop !== "open",
+})(({ theme, open }) => {
+  console.log('inside Drawer, theme is: ', theme);
+  console.log('openedMixin(theme) is: ', openedMixin(theme))
+  return {
     width: drawerWidth,
     flexShrink: 0,
     whiteSpace: "nowrap",
@@ -74,15 +71,20 @@ export const MiniDrawer = () => {
     }),
   }});
 
-    const [open, setOpen] = React.useState(false);
 
-    const handleDrawerOpen = () => {
-      setOpen(true);
-    };
+/**
+ * This component is used as the main navigation for the app
+ */
+export const MiniDrawer = () => {
+  const [open, setOpen] = React.useState(false);
 
-    const handleDrawerClose = () => {
-      setOpen(false);
-    };
+  const handleDrawerOpen = () => {
+    setOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setOpen(false);
+  };
 
   const navigate = useNavigate();
 
