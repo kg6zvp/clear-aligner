@@ -2,7 +2,16 @@
  * This file contains the useDatabase hook, which returns the collection of
  * APIs to the database.
  */
-import { AlignmentSide, Corpus, LanguageInfo, Link } from '../structs';
+import {
+  AlignmentSide,
+  Corpus,
+  DeleteByIdParams,
+  DeleteParams,
+  InsertParams,
+  LanguageInfo,
+  Link,
+  SaveParams
+} from '../structs';
 import { PivotWordFilter } from '../features/concordanceView/concordanceView';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useMemo } from 'react';
@@ -31,14 +40,16 @@ export interface DatabaseApi {
     c: number // frequency
   }[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
-  insert: <T,>(sourceName: string, table: string, itemOrItems: T[], chunkSize?: number) => Promise<boolean>;
+  insert: <T,>({ sourceName, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => Promise<boolean>;
+  deleteAll: ({ sourceName, table }: DeleteParams) => Promise<boolean>;
+  deleteByIds: ({ sourceName, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => Promise<boolean>;
   /**
    * Persist/update an entity (or entities) in a database
    * @param sourceName datasource name to be accessed
    * @param table table to save into
    * @param itemOrItems entities to persist
    */
-  save: <T,>(sourceName: string, table: string, itemOrItems: T|T[]) => Promise<boolean>;
+  save: <T,>({ sourceName, table, itemOrItems, disableJournaling }: SaveParams<T>) => Promise<boolean>;
   getAll: <T,>(sourceName: string, table: string, itemLimit: number, itemSkip?: number) => Promise<T[]>;
   /**
    * Call to trigger an update to the `sources_text` and `targets_text` fields

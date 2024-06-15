@@ -5,6 +5,29 @@
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { z } from 'zod';
 
+interface ProjectRepositoryBaseParams {
+  sourceName: string;
+  table: string;
+}
+interface MutatingOperationParams extends ProjectRepositoryBaseParams {
+  disableJournaling?: boolean;
+}
+
+export interface InsertParams<T> extends MutatingOperationParams {
+  itemOrItems: T|T[];
+  chunkSize?: number;
+}
+
+export interface SaveParams<T> extends MutatingOperationParams {
+  itemOrItems: T|T[];
+}
+
+export interface DeleteParams extends MutatingOperationParams { }
+
+export interface DeleteByIdParams extends MutatingOperationParams {
+  itemIdOrIds: string|string[]
+}
+
 export enum SyntaxType {
   // Has syntax data.
   Source = 'source',
