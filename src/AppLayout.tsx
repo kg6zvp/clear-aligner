@@ -1,16 +1,11 @@
-import { Drawer, List, ListItem, ListItemButton, ListItemIcon } from '@mui/material';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useMemo, useState } from 'react';
 import Themed from './features/themed';
-import { createSearchParams, Outlet, useNavigate, useSearchParams } from 'react-router-dom';
-import HomeIcon from '@mui/icons-material/Home';
-import LinkIcon from '@mui/icons-material/Link';
-import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard';
+import { Outlet } from 'react-router-dom';
 import useTrackLocation from './utils/useTrackLocation';
 import { THEME } from './App';
 import useBusyDialog from './utils/useBusyDialog';
 import { MiniDrawer } from './features/miniDrawer/miniDrawer';
 import { Box } from '@mui/system';
-
 
 export interface LayoutContextProps {
   windowTitle: string;
@@ -41,9 +36,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
     }),
     [setMenuBarDelegate]
   );
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
