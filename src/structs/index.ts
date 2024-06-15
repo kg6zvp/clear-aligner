@@ -5,25 +5,44 @@
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { z } from 'zod';
 
+/**
+ * Parameters common to Project Repository functions
+ */
 interface ProjectRepositoryBaseParams {
   sourceName: string;
   table: string;
 }
+
+/**
+ * Parameters common to mutating operations in the Project Repository
+ */
 interface MutatingOperationParams extends ProjectRepositoryBaseParams {
   disableJournaling?: boolean;
 }
 
+/**
+ * Parameters for the insert function of the Project Repository
+ */
 export interface InsertParams<T> extends MutatingOperationParams {
   itemOrItems: T|T[];
   chunkSize?: number;
 }
 
+/**
+ * Parameters for the save function of the project repository
+ */
 export interface SaveParams<T> extends MutatingOperationParams {
   itemOrItems: T|T[];
 }
 
+/**
+ * Parameters for the delete function of the Project Repository
+ */
 export interface DeleteParams extends MutatingOperationParams { }
 
+/**
+ * Parameters for the deleteById function of the Project Repository
+ */
 export interface DeleteByIdParams extends MutatingOperationParams {
   itemIdOrIds: string|string[]
 }

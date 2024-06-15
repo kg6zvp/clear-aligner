@@ -4,7 +4,7 @@ import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO
 import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from './tableManager';
-import { mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
+import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
 
 const SERVER_URL = undefined;
 
@@ -17,6 +17,8 @@ export interface SyncState {
   file?: AlignmentFile;
   progress: SyncProgress;
 }
+
+const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): JournalEntryDTO => mapJournalEntryEntityToJournalEntryDTO(journalEntry);
 
 /**
  * hook to synchronize alignments. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
@@ -54,8 +56,7 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     }
     const sendJournal = async (signal: AbortSignal) => {
       const journalEntries = (await dbApi.getAll(projectId!, JournalEntryTableName))
-        // @ts-ignore
-        .map(mapJournalEntryEntityToJournalEntryDTO);
+        .map(mapJournalEntryEntityToJournalEntryDTOHelper);
       try {
         await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
           signal,
