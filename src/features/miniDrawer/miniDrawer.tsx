@@ -89,7 +89,7 @@ export const MiniDrawer = () => {
   const navigate = useNavigate();
 
     return (
-      <Box sx={{ display: "flex" }}>
+
         <Drawer variant="permanent" open={open}>
           <Divider />
           <ListItem key={"1"} disablePadding sx={{ display: "block" }}>
@@ -214,6 +214,5 @@ export const MiniDrawer = () => {
             </ListItemButton>
           </ListItem>
         </Drawer>
-      </Box>
     )
 }

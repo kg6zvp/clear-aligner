@@ -9,6 +9,7 @@ import useTrackLocation from './utils/useTrackLocation';
 import { THEME } from './App';
 import useBusyDialog from './utils/useBusyDialog';
 import { MiniDrawer } from './features/miniDrawer/miniDrawer';
+import { Box } from '@mui/system';
 
 
 export interface LayoutContextProps {
@@ -53,10 +54,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
           height: '100%',
           overflow: 'hidden',
         }}>
-          <MiniDrawer/>
-          <div id={'outlet'} style={{ marginLeft: '40px', flexGrow: 1, overflow: 'auto' }}>
-            <Outlet />
-          </div>
+          <Box sx={{ display: "flex" }}>
+            <MiniDrawer/>
+            <div id={'outlet'} style={{ flexGrow: 1, overflow: 'auto' }}>
+              <Outlet />
+            </div>
+          </Box>
         </div>
       </Themed>
     </LayoutContext.Provider>

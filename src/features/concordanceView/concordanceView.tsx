@@ -439,7 +439,7 @@ export const ConcordanceView = () => {
           display: 'flex',
           gridGap: '.2em',
           gridTemplateColumns: 'repeat(18, 1fr)',
-          width: '97.5vw !important'
+          width: '95.5vw !important'
         }}
       >
         {/**
@@ -454,7 +454,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '35%',
             gap: '1em',
-            marginLeft: '2em',
+            marginLeft: '1em',
             marginTop: '1em'
           }}
         >
@@ -519,7 +519,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '40%',
             gap: '1em',
-            marginLeft: '2em',
+            marginLeft: '1em',
             marginTop: '1em'
           }}
         >
@@ -555,7 +555,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '100%',
             gap: '1em',
-            margin: '2em',
+            margin: '1em',
             marginTop: '.5em'
           }}
         >
