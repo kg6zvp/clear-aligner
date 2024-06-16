@@ -432,7 +432,7 @@ export const ConcordanceView = () => {
   )
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', display: 'flex' }}>
       <Box
         sx={{
           flex: 1,
