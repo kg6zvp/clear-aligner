@@ -18,6 +18,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 
 const drawerWidth = 240;
 
@@ -211,6 +212,10 @@ export const MiniDrawer = () => {
                 sx={{ opacity: open ? 1 : 0 }}
               />
             </ListItemButton>
+          </ListItem>
+          <Divider />
+          <ListItem key={"5"} disablePadding sx={{ display: "block" }}>
+            <ProfileAvatar/>
           </ListItem>
         </Drawer>
     )
