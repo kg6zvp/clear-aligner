@@ -16,7 +16,8 @@ import ListItemText from "@mui/material/ListItemText";
 import HomeIcon from "@mui/icons-material/Home";
 import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const drawerWidth = 240;
 
@@ -44,8 +45,6 @@ const closedMixin = (theme: Theme): CSSObject => ({
 const Drawer = styled(MuiDrawer, {
   shouldForwardProp: (prop) => prop !== "open",
 })(({ theme, open }) => {
-  console.log('inside Drawer, theme is: ', theme);
-  console.log('openedMixin(theme) is: ', openedMixin(theme))
   return {
     width: drawerWidth,
     flexShrink: 0,
@@ -75,6 +74,13 @@ export const MiniDrawer = () => {
   const handleDrawerClose = () => {
     setOpen(false);
   };
+
+  const [selectedIndex, setSelectedIndex] = React.useState("");
+
+  const location = useLocation();
+  useEffect(() => {
+    setSelectedIndex(location.pathname)
+  }, [location.pathname])
 
   const navigate = useNavigate();
 
@@ -129,6 +135,7 @@ export const MiniDrawer = () => {
                 })
                 handleDrawerClose();
               }}
+              selected={selectedIndex === '/projects'}
             >
               <ListItemIcon
                 sx={{
@@ -158,6 +165,7 @@ export const MiniDrawer = () => {
                 })
                 handleDrawerClose()
               }}
+              selected={selectedIndex === '/alignment'}
             >
               <ListItemIcon
                 sx={{
@@ -187,6 +195,7 @@ export const MiniDrawer = () => {
                 })
                 handleDrawerClose()
               }}
+              selected={selectedIndex === '/concordance'}
             >
               <ListItemIcon
                 sx={{
