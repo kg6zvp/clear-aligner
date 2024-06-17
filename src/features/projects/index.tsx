@@ -65,8 +65,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = (
         </Grid>
         <Box sx={{ display: 'flex',
           flexDirection: 'column',
-          alignItems: 'flex-end',
-          paddingRight: '3rem'
+          alignItems: 'flex-start',
+          paddingTop: '5rem',
+          paddingLeft: '2.3rem'
         }}>
           <FormControl sx={{ width: 175 }} >
             <InputLabel id={'theme-label'}>Theme</InputLabel>
