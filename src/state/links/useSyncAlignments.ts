@@ -105,8 +105,10 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     };
 
     const syncLinks = async ({ signal }: AbortController) => {
-      await sendJournal(signal);
-      await fetchLinks(signal);
+      try {
+        await sendJournal(signal);
+        await fetchLinks(signal);
+      } catch (x) { }
     }
 
     if (progress === SyncProgress.IN_PROGRESS) {
