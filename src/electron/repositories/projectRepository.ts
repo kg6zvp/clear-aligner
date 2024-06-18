@@ -15,7 +15,7 @@ import {
   SaveParams
 } from '../../structs';
 import { PivotWordFilter } from '../../features/concordanceView/concordanceView';
-import { BaseEntity, Column, CreateDateColumn, DataSource, Entity, EntitySchema, In, PrimaryColumn } from 'typeorm';
+import { Column, DataSource, Entity, EntitySchema, In, PrimaryColumn } from 'typeorm';
 import { BaseRepository } from './baseRepository';
 import fs from 'fs';
 import path from 'path';
@@ -25,6 +25,9 @@ import { AddLinkStatus1715305810421 } from '../typeorm-migrations/project/171530
 import { AddJournalLinkTable1718060579447 } from '../typeorm-migrations/project/1718060579447-add-journal-link-table';
 import uuid from 'uuid-random';
 import { createPatch, Operation } from 'rfc6902';
+import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
+import { JournalEntryType } from '../../common/data/journalEntryDTO';
+import { generateJsonString } from '../../common/generateJsonString';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -35,30 +38,28 @@ export const DefaultProjectName = 'default';
 export const ProjectDatabaseDirectory = 'projects';
 export const JournalEntryTableName = 'journal_entries';
 
-export enum JournalEntryType {
-  CREATE = "CREATE",
-  UPDATE = "UPDATE",
-  DELETE = "DELETE"
-}
-
 /**
  * Journal entry object
  */
 @Entity({ name: JournalEntryTableName })
-export class JournalEntryEntity extends BaseEntity {
+export class JournalEntryEntity {
   @PrimaryColumn({ type: 'text' })
   id?: string;
   @Column({ type: 'text', nullable: false })
   linkId: string;
   @Column({ type: 'text', nullable: false })
   type: JournalEntryType;
-  @CreateDateColumn
+  @Column({ type: 'datetime' })
   date: Date;
-  @Column({ nullable: true })
-  diff?: string;
+  @Column({ nullable: false })
+  diff: string;
 
   constructor() {
-    super();
+    this.id = '';
+    this.linkId = '';
+    this.type = JournalEntryType.CREATE;
+    this.date = new Date();
+    this.diff = '';
   }
 }
 
@@ -535,7 +536,8 @@ export class ProjectRepository extends BaseRepository {
                           id: uuid(),
                           linkId: link.id,
                           type: JournalEntryType.CREATE,
-                          diff: this.generateJsonString(link)
+                          date: new Date(),
+                          diff: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
                         } as JournalEntryEntity))));
                 break;
               case CorporaTableName:
@@ -602,13 +604,7 @@ export class ProjectRepository extends BaseRepository {
    * @param pastLink before
    * @param currentLink after
    */
-  generateLinkDiff = (pastLink: Link, currentLink: Link): Operation[] => createPatch(pastLink, currentLink);
-
-  /**
-   * Generate a padded json string
-   * @param object array, object, etc. to be serialized
-   */
-  generateJsonString = (object: any) => JSON.stringify(object, null, 2);
+  generateLinkDiff = (pastLink: Link, currentLink: Link): Operation[] => createPatch(mapLinkEntityToServerAlignmentLink(pastLink), mapLinkEntityToServerAlignmentLink(currentLink));
 
   save = async <T,> ({ sourceName, table, itemOrItems, disableJournaling }: SaveParams<T>) => {
     this.logDatabaseTime('save()');
@@ -654,7 +650,8 @@ export class ProjectRepository extends BaseRepository {
                     id: uuid(),
                     linkId: link.id,
                     type: JournalEntryType.UPDATE,
-                    diff: this.generateJsonString(linkDiff)
+                    date: new Date(),
+                    diff: generateJsonString(linkDiff)
                   } as JournalEntryEntity);
                 })
                 .filter((entry) => !!entry)
@@ -1107,10 +1104,7 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  getAll = async (sourceName: string, table: string, itemLimit: number, itemSkip: number) => {
-    if (!itemLimit) {
-      return [];
-    }
+  getAll = async (sourceName: string, table: string, itemLimit?: number, itemSkip?: number) => {
     this.logDatabaseTime(`getAll()`);
     try {
       const dataSource = await this.getDataSource(sourceName);
@@ -1120,12 +1114,12 @@ export class ProjectRepository extends BaseRepository {
           result = await this.getAllLinks(dataSource, itemLimit, itemSkip);
           break;
         default:
-          result = (await dataSource
+          const queryBuilder = dataSource
             .getRepository(table)
-            .createQueryBuilder()
-            .take(itemLimit)
-            .skip(itemSkip ?? 0)
-            .getMany())
+            .createQueryBuilder();
+          if (itemLimit) queryBuilder.take(itemLimit);
+          if (itemSkip) queryBuilder.skip(itemSkip);
+          result = (await queryBuilder.getMany())
             .filter(Boolean);
           break;
       }
@@ -1178,7 +1172,8 @@ export class ProjectRepository extends BaseRepository {
                 id: uuid(),
                 linkId: link.id,
                 type: JournalEntryType.DELETE,
-                diff: this.generateJsonString(link)
+                date: new Date(),
+                diff: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
               } as JournalEntryEntity)));
           }
           await dataSource
@@ -1211,7 +1206,7 @@ export class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('findBetweenIds()');
     try {
       const dataSource = await this.getDataSource(sourceName);
-      let result = [];
+      let result: any[];
       switch (table) {
         case LinkTableName:
           result = await this.findLinksBetweenIds(dataSource, fromId, toId);

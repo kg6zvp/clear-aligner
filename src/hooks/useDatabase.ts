@@ -50,7 +50,7 @@ export interface DatabaseApi {
    * @param itemOrItems entities to persist
    */
   save: <T,>({ sourceName, table, itemOrItems, disableJournaling }: SaveParams<T>) => Promise<boolean>;
-  getAll: <T,>(sourceName: string, table: string, itemLimit: number, itemSkip?: number) => Promise<T[]>;
+  getAll: <T,>(sourceName: string, table: string, itemLimit?: number, itemSkip?: number) => Promise<T[]>;
   /**
    * Call to trigger an update to the `sources_text` and `targets_text` fields
    * in the `links` table
