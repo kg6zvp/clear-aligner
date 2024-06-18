@@ -1,4 +1,4 @@
-import { Avatar, Button, IconButton, Menu, MenuItem } from '@mui/material';
+import { Avatar, Button, Divider, IconButton, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close'
 import { styled } from '@mui/material/styles';
@@ -6,6 +6,12 @@ import Badge from '@mui/material/Badge';
 import React, { useEffect } from 'react';
 import {useNetworkState} from "@uidotdev/usehooks"
 import Snackbar from '@mui/material/Snackbar';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import SettingsIcon from '@mui/icons-material/Settings';
+import InfoIcon from '@mui/icons-material/Info';
+import ListItemText from '@mui/material/ListItemText';
+import FeedbackIcon from '@mui/icons-material/Feedback';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const userState = {
   LoggedIn: {
@@ -53,9 +59,37 @@ const ProfileMenu = () => {
           'aria-labelledby': 'basic-button',
         }}
       >
-        <MenuItem onClick={handleClose}>Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        <MenuItem onClick={handleClose}>Logout</MenuItem>
+        <MenuItem onClick={handleClose} disabled>
+          <ListItemIcon>
+            <SettingsIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>
+            Settings
+          </ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleClose} disabled>
+          <ListItemIcon>
+            <InfoIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>
+            About
+          </ListItemText>
+        </MenuItem>
+        <MenuItem onClick={handleClose} disabled>
+          <ListItemIcon>
+            <FeedbackIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>
+            Feedback
+          </ListItemText>
+        </MenuItem>
+        <Divider/>
+        <MenuItem onClick={handleClose}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" />
+          </ListItemIcon>
+          Sign in to ClearAligner Sync
+        </MenuItem>
       </Menu>
     </div>
   );
