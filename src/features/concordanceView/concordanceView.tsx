@@ -293,7 +293,7 @@ export const AlignmentTableControlPanel = ({
  * and the AlignmentTable
  */
 export const ConcordanceView = () => {
-  const layoutCtx = useContext(LayoutContext);
+  useContext(LayoutContext);
   const dispatch = useAppDispatch();
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
   const [selectedRows, setSelectedRows] = React.useState([]);
@@ -313,9 +313,7 @@ export const ConcordanceView = () => {
   const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);
-
+  useMemo(() => !!pivotWords, [pivotWords]);
   const [selectedPivotWord, setSelectedPivotWord] = useState<
     PivotWord | undefined
   >();
@@ -374,17 +372,6 @@ export const ConcordanceView = () => {
     },
     [handleUpdateSelectedAlignedWord, linksPendingUpdate, getSaveChangesConfirmation ]
   );
-
-
-  useEffect(() => {
-    if (!loading) {
-      layoutCtx.setMenuBarDelegate(
-        <Typography sx={{ textAlign: 'center' }}>
-          Alignments :: Batch-review Mode
-        </Typography>
-      );
-    }
-  }, [layoutCtx, loading]);
 
   const [searchParams, setSearchParams] = useSearchParams();
 

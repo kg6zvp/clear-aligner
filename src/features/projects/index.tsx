@@ -3,7 +3,7 @@
  * Project Mode of the CA application.
  */
 import { Button, Card, CardContent, FormControl, Grid, InputLabel, MenuItem, Select, Typography } from '@mui/material';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -29,16 +29,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = (
     setSelectedProjectId(projectId);
     setOpenProjectDialog(true);
   }, [setSelectedProjectId, setOpenProjectDialog]);
-  const layoutCtx = useContext(LayoutContext);
-
-  useEffect(() => {
-    layoutCtx.setMenuBarDelegate(
-      <Typography sx={{ textAlign: 'center' }}>
-        Projects
-      </Typography>
-    )
-  }, [layoutCtx, preferences?.currentProject]);
-
+  useContext(LayoutContext);
   return (
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}

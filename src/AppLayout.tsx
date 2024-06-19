@@ -1,4 +1,4 @@
-import React, { createContext, useMemo, useState } from 'react';
+import React, { createContext, useMemo } from 'react';
 import Themed from './features/themed';
 import { Outlet } from 'react-router-dom';
 import useTrackLocation from './utils/useTrackLocation';
@@ -10,9 +10,6 @@ import { Box } from '@mui/system';
 export interface LayoutContextProps {
   windowTitle: string;
   setWindowTitle: (title: string) => void;
-  setMenuBarDelegate: React.Dispatch<
-    React.SetStateAction<JSX.Element | string | null>
-  >;
 }
 
 export const LayoutContext = createContext({} as LayoutContextProps);
@@ -25,16 +22,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
   useTrackLocation();
   const busyDialog = useBusyDialog();
 
-  const [menuBarDelegate, setMenuBarDelegate] = useState(
-    null as JSX.Element | string | null
-  );
   const layoutContext: LayoutContextProps = useMemo(
     () => ({
       windowTitle: document.title,
       setWindowTitle: (title) => (document.title = title),
-      setMenuBarDelegate
     }),
-    [setMenuBarDelegate]
+    []
   );
   return (
     <LayoutContext.Provider value={layoutContext}>

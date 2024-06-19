@@ -1,18 +1,9 @@
 /**
- * This file contains the MiniDrawer component
+ * This file contains the MiniDrawer component which is used for the main
+ * navigation of the App.
  */
 import * as React from "react";
-import {  styled, Theme, CSSObject } from "@mui/material/styles";
-import MuiDrawer from "@mui/material/Drawer";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-
 import HomeIcon from "@mui/icons-material/Home";
 import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
@@ -21,62 +12,35 @@ import { useEffect } from 'react';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 
 const drawerWidth = 240;
+import { Drawer, IconButton, Tooltip } from '@mui/material';
 
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: drawerWidth,
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: "hidden",
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
-  [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
-  },
-});
-
-const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== "open",
-})(({ theme, open }) => {
-  return {
-    width: drawerWidth,
-    flexShrink: 0,
-    whiteSpace: "nowrap",
-    boxSizing: "border-box",
-    ...(open && {
-      ...openedMixin(theme),
-      "& .MuiDrawer-paper": openedMixin(theme),
-    }),
-    ...(!open && {
-      ...closedMixin(theme),
-      "& .MuiDrawer-paper": closedMixin(theme),
-    }),
-  }});
 
 
 /**
  * This component is used as the main navigation for the app
  */
 export const MiniDrawer = () => {
-  const [open, setOpen] = React.useState(false);
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
   const [selectedIndex, setSelectedIndex] = React.useState("");
+  const drawerWidth = 50;
+
+  const ListItems = {
+    "Home": {
+      key: '/projects',
+      path: '/projects',
+      displayName: 'Home/Projects'
+    },
+    "Alignment": {
+      key: '/alignment',
+      path: '/alignment',
+      displayName: 'Alignment Editor'
+    },
+    "Concordance": {
+      key: '/concordance',
+      path: '/concordance',
+      displayName: 'Concordance'
+    }
+
+  }
 
   const location = useLocation();
   useEffect(() => {
@@ -86,137 +50,81 @@ export const MiniDrawer = () => {
   const navigate = useNavigate();
 
     return (
-
-        <Drawer variant="permanent" open={open}>
-          <Divider />
-          <ListItem key={"1"} disablePadding sx={{ display: "block" }}>
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                minHeight: 48,
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: open ? "flex-end" : "flex-start",
-                px: 1.5,
-              }}
-            >
+      <Drawer
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+      >
+          <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column" }}>
+            <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
               <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                sx={{
-                  ...(open && { display: "none" }),
+                onClick={() => {
+                  navigate({ pathname: ListItems.Home.path })
                 }}
-                onClick={handleDrawerOpen}
-              >
-                <MenuIcon />
-              </IconButton>
-              <IconButton
+                color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
                 sx={{
-                  ...(!open && { display: "none" }),
-                }}
-                onClick={handleDrawerClose}
-              >
-                <ChevronLeftIcon />
-              </IconButton>
-            </ListItemIcon>
-          </ListItem>
-
-          <Divider />
-
-          <ListItem key={"2"} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-              onClick={() => {
-                navigate({
-                  pathname: '/projects'
-                })
-                handleDrawerClose();
-              }}
-              selected={selectedIndex === '/projects'}
-            >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  p: 1,
+                  backgroundColor: selectedIndex === ListItems.Home.path ? 'lightgrey' : null,
+                  '&:hover': {
+                    backgroundColor: 'lightgrey'
+                  }
                 }}
               >
                 <HomeIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={"Home/Projects"}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
+              </IconButton>
+            </Tooltip>
+
           </ListItem>
-          <ListItem key={"3"} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-              onClick={() => {
-                navigate({
-                  pathname: '/alignment'
-                })
-                handleDrawerClose()
-              }}
-              selected={selectedIndex === '/alignment'}
-            >
-              <ListItemIcon
+          <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column" }}>
+            <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
+              <IconButton
+                onClick={() => {
+                  navigate({ pathname: ListItems.Alignment.path })
+                }}
+                color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  p: 1,
+                  backgroundColor: selectedIndex === ListItems.Alignment.path ? 'lightgrey' : null,
+                  '&:hover': {
+                    backgroundColor: 'lightgrey'
+                  }
                 }}
               >
-                <LinkIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={"Alignment Editor"}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
+                  <LinkIcon />
+              </IconButton>
+            </Tooltip>
           </ListItem>
-          <ListItem key={"4"} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-              onClick={() => {
-                navigate({
-                  pathname: '/concordance'
-                })
-                handleDrawerClose()
-              }}
-              selected={selectedIndex === '/concordance'}
-            >
-              <ListItemIcon
+          <ListItem key={ListItems.Concordance.key} sx={{ display: "flex", flexDirection: "column" }}>
+            <Tooltip title={ListItems.Concordance.displayName} placement="right" arrow>
+              <IconButton
+                onClick={() => {
+                  navigate({ pathname: ListItems.Concordance.path })
+                }}
+                color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  p: 1,
+                  backgroundColor: selectedIndex === ListItems.Concordance.path ? 'lightgrey' : null,
+                  '&:hover': {
+                    backgroundColor: 'lightgrey'
+                  }
                 }}
               >
-                <SpaceDashboardIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={"Concordance"}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
+                  <SpaceDashboardIcon />
+              </IconButton>
+            </Tooltip>
           </ListItem>
           <Divider />
           <ListItem key={"5"} disablePadding sx={{ display: "block" }}>
             <ProfileAvatar/>
           </ListItem>
+
         </Drawer>
     )
 }
