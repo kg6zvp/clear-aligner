@@ -1,64 +1,18 @@
 /**
- * This file contains the MiniDrawer component
+ * This file contains the MiniDrawer component which is used for the main
+ * navigation of the App.
  */
 import * as React from "react";
-import {  styled, Theme, CSSObject } from "@mui/material/styles";
-import MuiDrawer from "@mui/material/Drawer";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-
 import HomeIcon from "@mui/icons-material/Home";
 import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Drawer, IconButton, Tooltip } from '@mui/material';
 
-const drawerWidth = 240;
-
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: drawerWidth,
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: "hidden",
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: "hidden",
-  width: `calc(${theme.spacing(7)} + 1px)`,
-  [theme.breakpoints.up("sm")]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
-  },
-});
-
-const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== "open",
-})(({ theme, open }) => {
-  return {
-    width: drawerWidth,
-    flexShrink: 0,
-    whiteSpace: "nowrap",
-    boxSizing: "border-box",
-    ...(open && {
-      ...openedMixin(theme),
-      "& .MuiDrawer-paper": openedMixin(theme),
-    }),
-    ...(!open && {
-      ...closedMixin(theme),
-      "& .MuiDrawer-paper": closedMixin(theme),
-    }),
-  }});
 
 
 /**
@@ -66,16 +20,8 @@ const Drawer = styled(MuiDrawer, {
  */
 export const MiniDrawer = () => {
   const [open, setOpen] = React.useState(false);
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
-
   const [selectedIndex, setSelectedIndex] = React.useState("");
+  const drawerWidth = 50;
 
   const location = useLocation();
   useEffect(() => {
@@ -85,133 +31,65 @@ export const MiniDrawer = () => {
   const navigate = useNavigate();
 
     return (
-
-        <Drawer variant="permanent" open={open}>
-          <Divider />
-          <ListItem key={"1"} disablePadding sx={{ display: "block" }}>
-            <ListItemIcon
-              sx={{
-                minWidth: 0,
-                minHeight: 48,
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: open ? "flex-end" : "flex-start",
-                px: 1.5,
-              }}
-            >
-              <IconButton
-                color="inherit"
-                aria-label="open drawer"
-                sx={{
-                  ...(open && { display: "none" }),
-                }}
-                onClick={handleDrawerOpen}
-              >
-                <MenuIcon />
-              </IconButton>
-              <IconButton
-                sx={{
-                  ...(!open && { display: "none" }),
-                }}
-                onClick={handleDrawerClose}
-              >
-                <ChevronLeftIcon />
-              </IconButton>
-            </ListItemIcon>
-          </ListItem>
-
-          <Divider />
-
+      <Drawer
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+      >
           <ListItem key={"2"} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-              onClick={() => {
-                navigate({
-                  pathname: '/projects'
-                })
-                handleDrawerClose();
-              }}
-              selected={selectedIndex === '/projects'}
-            >
-              <ListItemIcon
+            <Tooltip title="Home/Projects" placement="right" arrow>
+              <IconButton
+                onClick={() => {
+                  navigate({ pathname: '/projects' })
+                }}
+                color={selectedIndex === '/projects' ? 'primary' : 'default'}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  px: 1.75
                 }}
               >
                 <HomeIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={"Home/Projects"}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
+              </IconButton>
+            </Tooltip>
+
           </ListItem>
           <ListItem key={"3"} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-              onClick={() => {
-                navigate({
-                  pathname: '/alignment'
-                })
-                handleDrawerClose()
-              }}
-              selected={selectedIndex === '/alignment'}
-            >
-              <ListItemIcon
+            <Tooltip title="Alignment" placement="right" arrow>
+              <IconButton
+                onClick={() => {
+                  navigate({ pathname: '/alignment' })
+                }}
+                color={selectedIndex === '/alignment' ? 'primary' : 'default'}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  px: 1.75
                 }}
               >
-                <LinkIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={"Alignment Editor"}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
+                  <LinkIcon />
+              </IconButton>
+            </Tooltip>
           </ListItem>
           <ListItem key={"4"} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-              onClick={() => {
-                navigate({
-                  pathname: '/concordance'
-                })
-                handleDrawerClose()
-              }}
-              selected={selectedIndex === '/concordance'}
-            >
-              <ListItemIcon
+            <Tooltip title="Concordance" placement="right" arrow>
+              <IconButton
+                onClick={() => {
+                  navigate({ pathname: '/concordance' })
+                }}
+                color={selectedIndex === '/concordance' ? 'primary' : 'default'}
                 sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
+                  px: 1.75
                 }}
               >
-                <SpaceDashboardIcon />
-              </ListItemIcon>
-              <ListItemText
-                primary={"Concordance"}
-                sx={{ opacity: open ? 1 : 0 }}
-              />
-            </ListItemButton>
+                  <SpaceDashboardIcon />
+              </IconButton>
+            </Tooltip>
           </ListItem>
+
         </Drawer>
     )
 }
