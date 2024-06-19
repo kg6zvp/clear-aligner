@@ -10,11 +10,7 @@ import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
-
-const drawerWidth = 240;
-import { Drawer, IconButton, Tooltip } from '@mui/material';
-
-
+import { Divider, Drawer, IconButton, Tooltip } from '@mui/material';
 
 /**
  * This component is used as the main navigation for the app
@@ -124,7 +120,6 @@ export const MiniDrawer = () => {
           <ListItem key={"5"} disablePadding sx={{ display: "block" }}>
             <ProfileAvatar/>
           </ListItem>
-
         </Drawer>
     )
 }
