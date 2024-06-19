@@ -28,8 +28,13 @@ const userState = {
   }
 }
 
-const ProfileMenu = () => {
+interface ProfileMenuProps {
+  isSignInDisabled: boolean;
+}
+
+const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -84,7 +89,7 @@ const ProfileMenu = () => {
           </ListItemText>
         </MenuItem>
         <Divider/>
-        <MenuItem onClick={handleClose}>
+        <MenuItem disabled={isSignInDisabled} onClick={handleClose}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
@@ -105,21 +110,21 @@ export const ProfileAvatar = () => {
   const network = useNetworkState();
   const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
+  const [isSignInDisabled, setIsSignInDisabled] = React.useState(false)
 
   useEffect( () => {
-    console.log('inside useEffect')
     if(network.online){
-      console.log('inside network.online')
       setUserStatus(userState.LoggedOut)
       setSnackBarMessage('Internet Connection Detected.')
       setIsSnackBarOpen(true)
+      setIsSignInDisabled(false)
 
     }
     else{
-      console.log('inside the else')
       setSnackBarMessage('No internet connection.')
       setIsSnackBarOpen(true)
       setUserStatus(userState.Offline)
+      setIsSignInDisabled(true)
     }
   },[network])
 
@@ -179,7 +184,9 @@ export const ProfileAvatar = () => {
                 width: 27,
               }}
             >
-              <ProfileMenu/>
+              <ProfileMenu
+                isSignInDisabled={isSignInDisabled}
+              />
             </Avatar>
         </StyledBadge>
       <Snackbar
