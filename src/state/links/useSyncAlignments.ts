@@ -67,6 +67,10 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
           },
           body: generateJsonString(journalEntries)
         });
+        await dbApi.deleteAll({
+          sourceName: projectId!,
+          table: JournalEntryTableName
+        });
       } catch (x) {
         cleanupRequest();
         throw new Error('Aborted');
