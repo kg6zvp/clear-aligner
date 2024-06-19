@@ -51,6 +51,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
+        sx={{color: 'white'}}
       >
         <Person/>
       </Button>
@@ -175,13 +176,13 @@ export const ProfileAvatar = () => {
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           variant="dot"
           sx={{
-            margin: 2.3,
+            margin: 1,
           }}
         >
             <Avatar
               sx={{
-                height: 27,
-                width: 27,
+                height: 35,
+                width: 35,
               }}
             >
               <ProfileMenu
