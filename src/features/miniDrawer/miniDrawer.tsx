@@ -4,8 +4,6 @@
  */
 import * as React from "react";
 import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import HomeIcon from "@mui/icons-material/Home";
 import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
@@ -19,9 +17,27 @@ import { Drawer, IconButton, Tooltip } from '@mui/material';
  * This component is used as the main navigation for the app
  */
 export const MiniDrawer = () => {
-  const [open, setOpen] = React.useState(false);
   const [selectedIndex, setSelectedIndex] = React.useState("");
   const drawerWidth = 50;
+
+  const ListItems = {
+    "Home": {
+      key: '/projects',
+      path: '/projects',
+      displayName: 'Home/Projects'
+    },
+    "Alignment": {
+      key: '/alignment',
+      path: '/alignment',
+      displayName: 'Alignment Editor'
+    },
+    "Concordance": {
+      key: '/concordance',
+      path: '/concordance',
+      displayName: 'Concordance'
+    }
+
+  }
 
   const location = useLocation();
   useEffect(() => {
@@ -43,15 +59,19 @@ export const MiniDrawer = () => {
         variant="permanent"
         anchor="left"
       >
-          <ListItem key={"2"} disablePadding sx={{ display: "block" }}>
-            <Tooltip title="Home/Projects" placement="right" arrow>
+          <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column" }}>
+            <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
               <IconButton
                 onClick={() => {
-                  navigate({ pathname: '/projects' })
+                  navigate({ pathname: ListItems.Home.path })
                 }}
-                color={selectedIndex === '/projects' ? 'primary' : 'default'}
+                color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
                 sx={{
-                  px: 1.75
+                  p: 1,
+                  backgroundColor: selectedIndex === ListItems.Home.path ? 'lightgrey' : null,
+                  '&:hover': {
+                    backgroundColor: 'lightgrey'
+                  }
                 }}
               >
                 <HomeIcon />
@@ -59,30 +79,38 @@ export const MiniDrawer = () => {
             </Tooltip>
 
           </ListItem>
-          <ListItem key={"3"} disablePadding sx={{ display: "block" }}>
-            <Tooltip title="Alignment" placement="right" arrow>
+          <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column" }}>
+            <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
               <IconButton
                 onClick={() => {
-                  navigate({ pathname: '/alignment' })
+                  navigate({ pathname: ListItems.Alignment.path })
                 }}
-                color={selectedIndex === '/alignment' ? 'primary' : 'default'}
+                color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
                 sx={{
-                  px: 1.75
+                  p: 1,
+                  backgroundColor: selectedIndex === ListItems.Alignment.path ? 'lightgrey' : null,
+                  '&:hover': {
+                    backgroundColor: 'lightgrey'
+                  }
                 }}
               >
                   <LinkIcon />
               </IconButton>
             </Tooltip>
           </ListItem>
-          <ListItem key={"4"} disablePadding sx={{ display: "block" }}>
-            <Tooltip title="Concordance" placement="right" arrow>
+          <ListItem key={ListItems.Concordance.key} sx={{ display: "flex", flexDirection: "column" }}>
+            <Tooltip title={ListItems.Concordance.displayName} placement="right" arrow>
               <IconButton
                 onClick={() => {
-                  navigate({ pathname: '/concordance' })
+                  navigate({ pathname: ListItems.Concordance.path })
                 }}
-                color={selectedIndex === '/concordance' ? 'primary' : 'default'}
+                color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
                 sx={{
-                  px: 1.75
+                  p: 1,
+                  backgroundColor: selectedIndex === ListItems.Concordance.path ? 'lightgrey' : null,
+                  '&:hover': {
+                    backgroundColor: 'lightgrey'
+                  }
                 }}
               >
                   <SpaceDashboardIcon />
