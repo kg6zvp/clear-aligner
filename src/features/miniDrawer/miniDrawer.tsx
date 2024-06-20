@@ -9,7 +9,7 @@ import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Drawer, IconButton, Tooltip } from '@mui/material';
+import { Drawer, IconButton, Tooltip, useTheme } from '@mui/material';
 
 
 
@@ -19,6 +19,7 @@ import { Drawer, IconButton, Tooltip } from '@mui/material';
 export const MiniDrawer = () => {
   const [selectedIndex, setSelectedIndex] = React.useState("");
   const drawerWidth = 50;
+  const theme = useTheme();
 
   const ListItems = {
     "Home": {
@@ -45,7 +46,6 @@ export const MiniDrawer = () => {
   }, [location.pathname])
 
   const navigate = useNavigate();
-
     return (
       <Drawer
         sx={{
@@ -68,9 +68,11 @@ export const MiniDrawer = () => {
                 color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
                 sx={{
                   p: 1,
-                  backgroundColor: selectedIndex === ListItems.Home.path ? 'lightgrey' : null,
+                  backgroundColor: selectedIndex === ListItems.Home.path ?
+                    (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
+                    : null,
                   '&:hover': {
-                    backgroundColor: 'lightgrey'
+                    backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
                   }
                 }}
               >
@@ -88,9 +90,11 @@ export const MiniDrawer = () => {
                 color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
                 sx={{
                   p: 1,
-                  backgroundColor: selectedIndex === ListItems.Alignment.path ? 'lightgrey' : null,
+                  backgroundColor: selectedIndex === ListItems.Alignment.path ?
+                    (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
+                    : null,
                   '&:hover': {
-                    backgroundColor: 'lightgrey'
+                    backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
                   }
                 }}
               >
@@ -107,9 +111,11 @@ export const MiniDrawer = () => {
                 color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
                 sx={{
                   p: 1,
-                  backgroundColor: selectedIndex === ListItems.Concordance.path ? 'lightgrey' : null,
+                  backgroundColor: selectedIndex === ListItems.Concordance.path ?
+                    (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
+                    : null,
                   '&:hover': {
-                    backgroundColor: 'lightgrey'
+                    backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
                   }
                 }}
               >
