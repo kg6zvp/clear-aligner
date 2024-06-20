@@ -1,17 +1,17 @@
-import { Avatar, Button, Divider, IconButton, Menu, MenuItem } from '@mui/material';
+import { Avatar, Button, Divider, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
-import CloseIcon from '@mui/icons-material/Close'
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
 import React, { useEffect } from 'react';
 import {useNetworkState} from "@uidotdev/usehooks"
-import Snackbar from '@mui/material/Snackbar';
+
 import ListItemIcon from '@mui/material/ListItemIcon';
 import SettingsIcon from '@mui/icons-material/Settings';
 import InfoIcon from '@mui/icons-material/Info';
 import ListItemText from '@mui/material/ListItemText';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { CustomSnackbar } from '../snackbar';
 
 const userState = {
   LoggedIn: {
@@ -109,46 +109,20 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
 export const ProfileAvatar = () => {
   const [userStatus, setUserStatus] = React.useState(userState.LoggedIn)
   const network = useNetworkState();
-  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
-  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+
   const [isSignInDisabled, setIsSignInDisabled] = React.useState(false)
 
   useEffect( () => {
     if(network.online){
       setUserStatus(userState.LoggedOut)
-      setSnackBarMessage('Internet Connection Detected.')
-      setIsSnackBarOpen(true)
       setIsSignInDisabled(false)
-
     }
     else{
-      setSnackBarMessage('No internet connection.')
-      setIsSnackBarOpen(true)
       setUserStatus(userState.Offline)
       setIsSignInDisabled(true)
     }
   },[network])
 
-  const handleCloseSnackbar = (event: React.SyntheticEvent | Event, reason?: string) => {
-    if (reason === 'clickaway') {
-      return;
-    }
-
-    setIsSnackBarOpen(false);
-  };
-
-  const action = (
-    <React.Fragment>
-      <IconButton
-        size="small"
-        aria-label="close"
-        color="inherit"
-        onClick={handleCloseSnackbar}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    </React.Fragment>
-  );
 
   const StyledBadge = styled(Badge)(({ theme }) => ({
     '& .MuiBadge-badge': {
@@ -190,13 +164,6 @@ export const ProfileAvatar = () => {
               />
             </Avatar>
         </StyledBadge>
-      <Snackbar
-        open={isSnackBarOpen}
-        autoHideDuration={5000}
-        onClose={handleCloseSnackbar}
-        message={snackBarMessage}
-        action={action}
-      />
     </>
 
   )

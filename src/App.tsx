@@ -14,6 +14,7 @@ import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
+import { CustomSnackbar } from './features/snackbar';
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -87,6 +88,7 @@ const App = () => {
             <RouterProvider router={router}/>
         </Provider>
       </AppContext.Provider>
+      <CustomSnackbar/>
     </>
   );
 };
