@@ -13,6 +13,7 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
+import { CloudSync } from '@mui/icons-material';
 
 interface ProjectsViewProps {
 }
@@ -108,6 +109,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         alignItems: 'flex-end',
         height: '100%'
       }}>
+        <CloudSync />
         <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
               onClick={() => onClick(project.id)}>
           <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.name}</Typography>

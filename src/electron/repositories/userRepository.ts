@@ -2,9 +2,13 @@
  * This file supports the User Repository, mainly used for user preferences.
  */
 import { BaseRepository } from './baseRepository';
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntitySchema, Repository } from 'typeorm';
 import path from 'path';
 import { ControlPanelFormat, UserPreferenceDto } from '../../state/preferences/tableManager';
+import { AddProjectsTable1718861542573 } from '../typeorm-migrations/user/1718861542573-add-projects-table';
+import { ProjectEntity, ProjectTableName } from '../../common/data/user/project';
+import { UserRepositoryIFace } from '../../common/repositories/userRepository';
+import uuid from 'uuid-random';
 
 /**
  * This class encapsulates the user preferences
@@ -45,26 +49,62 @@ const preferenceEntity = new EntitySchema({
   }
 });
 
+const projectEntitySchema = new EntitySchema<ProjectEntity>({
+  name: 'project', tableName: ProjectTableName, target: ProjectEntity, columns: {
+    id: {
+      primary: true, type: 'varchar', generated: undefined
+    },
+    name: {
+      type: 'varchar'
+    },
+    location: {
+      type: 'varchar'
+    },
+    serverState: {
+      name: 'server_state',
+      type: 'varchar'
+    }
+  }
+})
+
 
 /**
  * This class sets up the User Repository
  */
-export class UserRepository extends BaseRepository {
+export class UserRepository extends BaseRepository implements UserRepositoryIFace {
   static USER_DB_NAME = 'user';
 
   getDataSource: () => Promise<DataSource>;
 
-  getMigrations = async () => ([]);
+  getMigrations = async (): Promise<any[]> => ([
+    AddProjectsTable1718861542573
+  ]);
 
   constructor() {
     super();
     this.getDataSource = async () =>
       await this.getDataSourceWithEntities(
         UserRepository.USER_DB_NAME,
-        [preferenceEntity],
+        [
+          preferenceEntity,
+          projectEntitySchema
+        ],
         path.join(this.getTemplatesDirectory(), 'clear-aligner-user.sqlite'),
         this.getDataDirectory());
   }
+
+  projectPersist = async (p: ProjectEntity): Promise<ProjectEntity> => {
+    const repo: Repository<ProjectEntity> = (await this.getDataSource()).getRepository(ProjectEntity);
+    if (!p.id) {
+      p.id = uuid();
+    }
+    await repo.insert(p);
+    return (await repo.findOneBy({ id: p.id }))!;
+  };
+  projectSave = async (p: ProjectEntity): Promise<ProjectEntity> => {
+    const repo: Repository<ProjectEntity> = (await this.getDataSource()).getRepository(ProjectEntity);
+    return await repo.save(p);
+  };
 
   getPreferences = async () => {
     const preferences = await (await this.getDataSource())
