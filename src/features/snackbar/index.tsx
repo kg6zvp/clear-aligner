@@ -57,7 +57,7 @@ export const CustomSnackbar = (): ReactElement => {
       onClose={handleCloseSnackbar}
       message={snackBarMessage}
       action={action}
-      anchorOrigin={{vertical: 'bottom', horizontal: 'center'}}
+      anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
     />
   );
 };

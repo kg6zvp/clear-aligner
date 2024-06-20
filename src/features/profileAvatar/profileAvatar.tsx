@@ -1,4 +1,4 @@
-import { Avatar, Button, Divider, Menu, MenuItem } from '@mui/material';
+import { Avatar, Button, Dialog, DialogTitle, Divider, Menu, MenuItem, Popover } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
@@ -37,6 +37,7 @@ interface ProfileMenuProps {
  */
 const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -45,6 +46,15 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const handleLoginClick = (event: { currentTarget: React.SetStateAction<HTMLElement | null>; }) => {
+    setAnchorEl(event.currentTarget);
+    handleClose()
+
+    setIsLoginModalOpen(true);
+  }
+  const handleLoginModalClose = () => {
+    setIsLoginModalOpen(false);
+  }
 
   return (
     <div>
@@ -100,13 +110,21 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
           </ListItemText>
         </MenuItem>
         <Divider/>
-        <MenuItem disabled={isSignInDisabled} onClick={handleClose}>
+        <MenuItem disabled={isSignInDisabled} onClick={handleLoginClick}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
           Sign in to ClearAligner Sync
         </MenuItem>
       </Menu>
+      <Popover
+        open={isLoginModalOpen}
+        onClose={handleLoginModalClose}
+      >
+        <DialogTitle>
+          Sign in for ClearAligner Sync
+        </DialogTitle>
+      </Popover>
     </div>
   );
 }
