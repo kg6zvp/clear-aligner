@@ -11,7 +11,6 @@ import InfoIcon from '@mui/icons-material/Info';
 import ListItemText from '@mui/material/ListItemText';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { CustomSnackbar } from '../snackbar';
 
 const userState = {
   LoggedIn: {
@@ -64,7 +63,14 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
-      >
+        anchorOrigin={{
+          vertical:'top',
+          horizontal: 'right'
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right'
+        }}>
         <MenuItem onClick={handleClose} disabled>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
@@ -155,8 +161,8 @@ export const ProfileAvatar = () => {
         >
             <Avatar
               sx={{
-                height: 35,
-                width: 35,
+                height: 30,
+                width: 30,
               }}
             >
               <ProfileMenu

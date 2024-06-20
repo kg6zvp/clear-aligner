@@ -10,7 +10,7 @@ import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
-import { Divider, Drawer, IconButton, Tooltip } from '@mui/material';
+import { Drawer, IconButton, Stack, Tooltip } from '@mui/material';
 
 /**
  * This component is used as the main navigation for the app
@@ -58,68 +58,75 @@ export const MiniDrawer = () => {
         variant="permanent"
         anchor="left"
       >
-          <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column" }}>
-            <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
-              <IconButton
-                onClick={() => {
-                  navigate({ pathname: ListItems.Home.path })
-                }}
-                color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
-                sx={{
-                  p: 1,
-                  backgroundColor: selectedIndex === ListItems.Home.path ? 'lightgrey' : null,
-                  '&:hover': {
-                    backgroundColor: 'lightgrey'
-                  }
-                }}
-              >
-                <HomeIcon />
-              </IconButton>
-            </Tooltip>
-
-          </ListItem>
-          <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column" }}>
-            <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
-              <IconButton
-                onClick={() => {
-                  navigate({ pathname: ListItems.Alignment.path })
-                }}
-                color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
-                sx={{
-                  p: 1,
-                  backgroundColor: selectedIndex === ListItems.Alignment.path ? 'lightgrey' : null,
-                  '&:hover': {
-                    backgroundColor: 'lightgrey'
-                  }
-                }}
-              >
+        <Stack direction={"column"}
+               justifyContent={"space-between"}
+               alignItems={"center"}
+               sx={{height: '100vh'}}>
+          <Stack>
+            <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+              <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
+                <IconButton
+                  onClick={() => {
+                    navigate({ pathname: ListItems.Home.path })
+                  }}
+                  color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
+                  sx={{
+                    p: 1,
+                    backgroundColor: selectedIndex === ListItems.Home.path ? 'lightgrey' : null,
+                    '&:hover': {
+                      backgroundColor: 'lightgrey'
+                    }
+                  }}
+                >
+                  <HomeIcon />
+                </IconButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+              <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
+                <IconButton
+                  onClick={() => {
+                    navigate({ pathname: ListItems.Alignment.path })
+                  }}
+                  color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
+                  sx={{
+                    p: 1,
+                    backgroundColor: selectedIndex === ListItems.Alignment.path ? 'lightgrey' : null,
+                    '&:hover': {
+                      backgroundColor: 'lightgrey'
+                    }
+                  }}
+                >
                   <LinkIcon />
-              </IconButton>
-            </Tooltip>
-          </ListItem>
-          <ListItem key={ListItems.Concordance.key} sx={{ display: "flex", flexDirection: "column" }}>
-            <Tooltip title={ListItems.Concordance.displayName} placement="right" arrow>
-              <IconButton
-                onClick={() => {
-                  navigate({ pathname: ListItems.Concordance.path })
-                }}
-                color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
-                sx={{
-                  p: 1,
-                  backgroundColor: selectedIndex === ListItems.Concordance.path ? 'lightgrey' : null,
-                  '&:hover': {
-                    backgroundColor: 'lightgrey'
-                  }
-                }}
-              >
+                </IconButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem key={ListItems.Concordance.key} sx={{ display: "flex", flexDirection: "column", px: 0}}>
+              <Tooltip title={ListItems.Concordance.displayName} placement="right" arrow>
+                <IconButton
+                  onClick={() => {
+                    navigate({ pathname: ListItems.Concordance.path })
+                  }}
+                  color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
+                  sx={{
+                    p: 1,
+                    backgroundColor: selectedIndex === ListItems.Concordance.path ? 'lightgrey' : null,
+                    '&:hover': {
+                      backgroundColor: 'lightgrey'
+                    }
+                  }}
+                >
                   <SpaceDashboardIcon />
-              </IconButton>
-            </Tooltip>
-          </ListItem>
-          <Divider />
-          <ListItem key={"5"} disablePadding sx={{ display: "block" }}>
-            <ProfileAvatar/>
-          </ListItem>
-        </Drawer>
+                </IconButton>
+              </Tooltip>
+            </ListItem>
+          </Stack>
+          <Stack>
+            <ListItem key={"5"} sx={{ display: "block", px: 0, pb: 3 }}>
+              <ProfileAvatar/>
+            </ListItem>
+          </Stack>
+        </Stack>
+      </Drawer>
     )
 }
