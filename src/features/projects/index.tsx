@@ -2,22 +2,26 @@
  * This file contains the ProjectsView Component which is responsible for the
  * Project Mode of the CA application.
  */
-import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
-import React, { useContext, useEffect } from 'react';
+import { Button, Card, CardContent, FormControl, Grid, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import React, { useContext } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { DefaultProjectName } from '../../state/links/tableManager';
-import { AppContext } from '../../App';
+import { AppContext, THEME_PREFERENCE } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
+import { Box } from '@mui/system';
 
 interface ProjectsViewProps {
+  preferredTheme: "night" | "day" | "auto";
+  setPreferredTheme: Function;
 }
 
-const ProjectsView: React.FC<ProjectsViewProps> = () => {
+const ProjectsView: React.FC<ProjectsViewProps> = (
+  {preferredTheme, setPreferredTheme}) => {
   const { projects, preferences  } = React.useContext(AppContext);
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
@@ -25,19 +29,11 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
     setSelectedProjectId(projectId);
     setOpenProjectDialog(true);
   }, [setSelectedProjectId, setOpenProjectDialog]);
-  const layoutCtx = useContext(LayoutContext);
-
-  useEffect(() => {
-    layoutCtx.setMenuBarDelegate(
-      <Typography sx={{ textAlign: 'center' }}>
-        Projects
-      </Typography>
-    )
-  }, [layoutCtx, preferences?.currentProject]);
-
+  useContext(LayoutContext);
   return (
     <>
-      <Grid container flexDirection="column" flexWrap={'nowrap'} sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+      <Grid container flexDirection="column" flexWrap={'nowrap'}
+            sx={{ height: '100%', width: '100%', paddingTop: '2.1rem', overflow: 'hidden' }}>
         <Grid container sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
           <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           <Button
@@ -54,10 +50,35 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
                 project={project}
                 onClick={selectProject}
                 currentProject={projects.find((p: Project) =>
-                    p.id === preferences?.currentProject) ?? projects?.[0]}
+                  p.id === preferences?.currentProject) ?? projects?.[0]}
               />
             ))}
         </Grid>
+        <Box sx={{ display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          paddingTop: '5rem',
+          paddingLeft: '2.3rem'
+        }}>
+          <FormControl sx={{ width: 175 }} >
+            <InputLabel id={'theme-label'}>Theme</InputLabel>
+            <Select
+              labelId={'theme-label'}
+              id={'theme-select'}
+              value={preferredTheme}
+              label={'Theme'}
+              onChange={({ target: { value } }) =>
+                setPreferredTheme(value as THEME_PREFERENCE)
+              }
+            >
+              <MenuItem value={'auto' as THEME_PREFERENCE}>
+                Follow System
+              </MenuItem>
+              <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
+              <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Grid>
       <ProjectDialog
         open={openProjectDialog}
