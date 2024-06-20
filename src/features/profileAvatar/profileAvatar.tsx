@@ -31,6 +31,10 @@ interface ProfileMenuProps {
   isSignInDisabled: boolean;
 }
 
+/**
+ * This component is used for users to display the
+ * User Profile Menu when the Avatar is clicked
+ */
 const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
