@@ -1,4 +1,4 @@
-import { ProjectEntity } from '../data/user/project';
+import { ProjectEntity } from '../data/project/project';
 
 export interface UserRepositoryIFace {
   projectPersist: (p: ProjectEntity) => Promise<ProjectEntity>;

@@ -1,5 +1,5 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
-import { ProjectTableName } from '../../../common/data/user/project';
+import { ProjectTableName } from '../../../common/data/project/project';
 
 export class AddProjectsTable1718861542573 implements MigrationInterface {
 

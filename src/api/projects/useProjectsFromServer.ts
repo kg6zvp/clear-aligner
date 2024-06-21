@@ -1,4 +1,4 @@
-import { ProjectDTO } from '../../common/data/user/project';
+import { ProjectDTO } from '../../common/data/project/project';
 import { useEffect, useState } from 'react';
 import uuid from 'uuid-random';
 import { SERVER_URL } from '../../common';
@@ -14,7 +14,7 @@ export const useProjectsFromServer = ({ syncProjectsKey }: UseProjectsFromServer
   const dbApi = useDatabase();
 
   useEffect(() => {
-    const syncProjects = async () => {
+    const getProjects = async () => {
       try {
         const projectsResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
           method: 'GET',
@@ -29,7 +29,7 @@ export const useProjectsFromServer = ({ syncProjectsKey }: UseProjectsFromServer
         console.error(x);
       }
     }
-    void syncProjects();
+    void getProjects();
   }, [lastSyncKey, setProjects]);
 
   return projects;

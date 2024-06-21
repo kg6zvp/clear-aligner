@@ -14,8 +14,8 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
 import { Cloud, CloudSync, Computer } from '@mui/icons-material';
-import { useProjectsFromServer } from '../../state/projects/useProjectsFromServer';
-import { ProjectDTO, ProjectState } from '../../common/data/user/project';
+import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
+import { ProjectDTO, ProjectState } from '../../common/data/project/project';
 
 export interface LocalAndRemoteProject {
   local?: Project;
@@ -137,6 +137,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setPreferences, preferences, project.local?.id, projectState.userPreferenceTable, projectState.linksTable]);
 
+  const syncLocalProjectWithServer = React.useCallback(() => {
+    console.log("project.local: ", project.local)
+  }, [project]);
+
+  console.log("project: ", project)
+
   const icon = useMemo(() => {
     if (project.local && !project.remote) {
       return (<Computer />);
@@ -182,6 +188,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         height: '100%'
       }}>
         {icon}
+        {
+          project.local && (
+            <Button onClick={syncLocalProjectWithServer}>Sync Project</Button>
+          )
+        }
         <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
               onClick={() => onClick(project)}>
           <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>

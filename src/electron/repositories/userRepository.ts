@@ -6,7 +6,7 @@ import { DataSource, EntitySchema, Repository } from 'typeorm';
 import path from 'path';
 import { ControlPanelFormat, UserPreferenceDto } from '../../state/preferences/tableManager';
 import { AddProjectsTable1718861542573 } from '../typeorm-migrations/user/1718861542573-add-projects-table';
-import { ProjectEntity, ProjectTableName } from '../../common/data/user/project';
+import { ProjectEntity, ProjectTableName } from '../../common/data/project/project';
 import { UserRepositoryIFace } from '../../common/repositories/userRepository';
 import uuid from 'uuid-random';
 

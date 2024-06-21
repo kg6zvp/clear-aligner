@@ -13,7 +13,7 @@ import saveAlignmentFile from '../../helpers/alignmentFile';
 import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
-import { SyncProgress, useSyncAlignments } from '../../state/links/useSyncAlignments';
+import { SyncProgress, useSyncAlignments } from '../../api/alignments/useSyncAlignments';
 import { SyncProgressDialog } from './syncProgressDialog';
 
 
