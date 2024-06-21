@@ -1,4 +1,4 @@
-import { ProjectDTO, ProjectState } from '../../common/data/user/project';
+import { ProjectDTO } from '../../common/data/user/project';
 import { useEffect, useState } from 'react';
 import uuid from 'uuid-random';
 import { SERVER_URL } from '../../common';

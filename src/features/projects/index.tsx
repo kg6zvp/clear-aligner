@@ -14,7 +14,6 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
 import { Cloud, CloudSync, Computer } from '@mui/icons-material';
-import uuid from 'uuid-random';
 import { useProjectsFromServer } from '../../state/projects/useProjectsFromServer';
 import { ProjectDTO, ProjectState } from '../../common/data/user/project';
 
@@ -90,7 +89,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
           >Create New</Button>
         </Grid>
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
-          {projects/*.sort((p1: Project) => p1.id === DefaultProjectName ? -1 : projects.indexOf(p1)) //*/
+          {projects
+            .sort((p1: LocalAndRemoteProject) => p1.local?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: LocalAndRemoteProject) => (
               <ProjectCard
                 key={project.local?.id ?? project.remote?.name}
@@ -164,7 +164,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
                        }}
       >Open Remote</Button> );
     }
-  }, [isCurrentProject, project.local, project.remote]);
+  }, [isCurrentProject, project.local, project.remote, updateCurrentProject]);
 
   return (
     <Card sx={theme => ({

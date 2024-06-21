@@ -121,7 +121,7 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     setLastSyncKey(syncLinksKey);
     setProgress(SyncProgress.IN_PROGRESS);
     void syncLinks(abortController.current);
-  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId]);
+  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId, dbApi]);
 
   return {
     file,
