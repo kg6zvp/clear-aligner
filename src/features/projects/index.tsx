@@ -3,7 +3,7 @@
  * Project Mode of the CA application.
  */
 import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -13,20 +13,62 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
-import { CloudSync } from '@mui/icons-material';
+import { Cloud, CloudSync, Computer } from '@mui/icons-material';
+import uuid from 'uuid-random';
+import { useProjectsFromServer } from '../../state/projects/useProjectsFromServer';
+import { ProjectDTO, ProjectState } from '../../common/data/user/project';
+
+export interface LocalAndRemoteProject {
+  local?: Project;
+  remote?: ProjectDTO;
+}
 
 interface ProjectsViewProps {
 }
 
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
-  const { projects, preferences  } = React.useContext(AppContext);
+  const { projects: localProjects, preferences  } = React.useContext(AppContext);
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
-  const selectProject = React.useCallback((projectId: string) => {
-    setSelectedProjectId(projectId);
-    setOpenProjectDialog(true);
+  const selectProject = React.useCallback((project: LocalAndRemoteProject) => {
+    if (project.local) {
+      setSelectedProjectId(project.local.id);
+      setOpenProjectDialog(true);
+    }
   }, [setSelectedProjectId, setOpenProjectDialog]);
   const layoutCtx = useContext(LayoutContext);
+
+  const allRemoteProjects = useProjectsFromServer({});
+  const remoteProjects = useMemo<ProjectDTO[]>(() =>
+    allRemoteProjects.filter(p => p.state === ProjectState.PUBLISHED), [allRemoteProjects]);
+
+  const projects = useMemo<LocalAndRemoteProject[]>(() => {
+    const localOnly: LocalAndRemoteProject[] = localProjects
+      .filter((lp) => !remoteProjects.find(rp => lp.id === rp.name))
+      .map((local) => ({
+        local
+      }));
+    console.log('localOnly', localOnly);
+    const remoteOnly: LocalAndRemoteProject[] = remoteProjects
+      .filter((rp) => !localProjects.find((lp) => lp.id === rp.name))
+      .map((remote) => ({
+        remote
+      }));
+    console.log('remoteOnly', remoteOnly);
+    const localAndRemote: LocalAndRemoteProject[] = localProjects
+      .filter((local) => remoteProjects.find((rp) => local.id === rp.name))
+      .map((local) => ({
+        local,
+        remote:  remoteProjects.find((rp) => local.id === rp.name)
+      }));
+    console.log('localAndRemote', localAndRemote);
+    const projectsOut = [...localAndRemote, ...localOnly, ...remoteOnly];
+    console.log('fullList', projectsOut);
+    /*if (remoteProjects.length > 0 && localProjects && localProjects.length > 0) {
+      debugger;
+    } //*/
+    return projectsOut;
+  }, [localProjects,  remoteProjects]);
 
   useEffect(() => {
     layoutCtx.setMenuBarDelegate(
@@ -48,14 +90,15 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
           >Create New</Button>
         </Grid>
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
-          {projects.sort((p1: Project) => p1.id === DefaultProjectName ? -1 : projects.indexOf(p1))
-            .map((project: Project) => (
+          {projects/*.sort((p1: Project) => p1.id === DefaultProjectName ? -1 : projects.indexOf(p1)) //*/
+            .map((project: LocalAndRemoteProject) => (
               <ProjectCard
-                key={project.id ?? project.name}
+                key={project.local?.id ?? project.remote?.name}
                 project={project}
                 onClick={selectProject}
-                currentProject={projects.find((p: Project) =>
-                    p.id === preferences?.currentProject) ?? projects?.[0]}
+                currentProject={projects.filter(({ local }) => !!local)
+                  .find((p: LocalAndRemoteProject) =>
+                    p.local?.id === preferences?.currentProject) ?? projects?.[0]}
               />
             ))}
         </Grid>
@@ -73,26 +116,55 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
 };
 
 interface ProjectCardProps {
-  project: Project;
-  currentProject: Project | undefined;
-  onClick: (id: string) => void;
+  project: LocalAndRemoteProject;
+  currentProject: LocalAndRemoteProject | undefined;
+  onClick: (project: LocalAndRemoteProject) => void;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
   useCorpusContainers();
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
-  const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
+  const isCurrentProject = React.useMemo(() => project.local?.id === currentProject?.local?.id, [project.local?.id, currentProject?.local?.id]);
 
   const updateCurrentProject = React.useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
-    projectState.linksTable.setSourceName(project.id);
+    projectState.linksTable.setSourceName(project.local!.id);
     setPreferences((p: UserPreference | undefined) => ({
       ...(p ?? {}) as UserPreference,
-      currentProject: project.id,
+      currentProject: project.local!.id,
       initialized: InitializationStates.UNINITIALIZED
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
+  }, [setPreferences, preferences, project.local?.id, projectState.userPreferenceTable, projectState.linksTable]);
+
+  const icon = useMemo(() => {
+    if (project.local && !project.remote) {
+      return (<Computer />);
+    } else if (project.remote && !project.local) {
+      return (<Cloud />);
+    } else {
+      return (<CloudSync />);
+    }
+  }, [project.local, project.remote]);
+
+  const currentProjectIndicator = useMemo(() => {
+    if (isCurrentProject) {
+      return ( <Typography variant="subtitle2">Current Project</Typography> );
+    } else if (project.local) {
+      return ( <Button variant="text" size="small" sx={{ textTransform: 'none' }}
+                onClick={e => {
+                  e.preventDefault();
+                  updateCurrentProject();
+                }}
+        >Open</Button> );
+    } else if (!project.local && project.remote) {
+      return ( <Button variant="text" size="small" sx={{ textTransform: 'none' }}
+                       onClick={e => {
+                         throw new Error('NOT IMPLEMENTED: TODO');
+                       }}
+      >Open Remote</Button> );
+    }
+  }, [isCurrentProject, project.local, project.remote]);
 
   return (
     <Card sx={theme => ({
@@ -109,36 +181,27 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         alignItems: 'flex-end',
         height: '100%'
       }}>
-        <CloudSync />
+        {icon}
         <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
-              onClick={() => onClick(project.id)}>
-          <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.name}</Typography>
+              onClick={() => onClick(project)}>
+          <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>
         </Grid>
         <Grid container justifyContent="space-between" alignItems="center">
           <Grid item>
-            {
-              isCurrentProject ? (
-                <Typography variant="subtitle2">Current Project</Typography>
-              ) : (
-                <Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                        onClick={e => {
-                          e.preventDefault();
-                          updateCurrentProject();
-                        }}
-                >Open</Button>
-              )
-            }
+            {currentProjectIndicator}
           </Grid>
           <Grid item>
-            <UploadAlignmentGroup
-              projectId={project.id}
-              size="small"
-              containers={[
-                ...(project.sourceCorpora ? [project.sourceCorpora] : []),
-                ...(project.targetCorpora ? [project.targetCorpora] : [])
-              ]}
-              allowImport={isCurrentProject}
-            />
+            {project.local ?
+              <UploadAlignmentGroup
+                projectId={project.local!.id}
+                size="small"
+                containers={[
+                  ...(project.local!.sourceCorpora ? [project.local!.sourceCorpora] : []),
+                  ...(project.local!.targetCorpora ? [project.local!.targetCorpora] : [])
+                ]}
+                allowImport={isCurrentProject}
+              />
+              : <></>}
           </Grid>
         </Grid>
       </CardContent>

@@ -5,8 +5,7 @@ import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from './tableManager';
 import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
-
-const SERVER_URL = undefined;
+import { SERVER_URL } from '../../common';
 
 export enum SyncProgress {
   IDLE,
