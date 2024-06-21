@@ -188,11 +188,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         height: '100%'
       }}>
         {icon}
-        {
-          project.local && (
-            <Button onClick={syncLocalProjectWithServer}>Sync Project</Button>
-          )
-        }
         <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
               onClick={() => onClick(project)}>
           <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>

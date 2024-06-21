@@ -16,13 +16,13 @@ export interface SyncState {
 }
 
 /**
- * hook to synchronize projects. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
+ * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
  * @param entity The project entity to sync
- * @param syncLinksKey update this value to perform a sync
+ * @param syncProjectKey update this value to perform a sync
  * @param cancelSyncKey update this value to cancel a sync
  */
-export const useSyncProjects = (entity: ProjectEntity, syncLinksKey?: string, cancelSyncKey?: string): SyncState => {
-  const [ lastSyncKey, setLastSyncKey ] = useState(syncLinksKey);
+export const useSyncProjects = (entity: ProjectEntity, syncProjectKey?: string, cancelSyncKey?: string): SyncState => {
+  const [ lastSyncKey, setLastSyncKey ] = useState(syncProjectKey);
   const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
 
   const [ progress, setProgress ] = useState<SyncProgress>(SyncProgress.IDLE);
@@ -32,9 +32,9 @@ export const useSyncProjects = (entity: ProjectEntity, syncLinksKey?: string, ca
   const cleanupRequest = useCallback(() => {
     abortController.current = undefined;
     setProgress(SyncProgress.IDLE);
-    setLastSyncKey(syncLinksKey);
+    setLastSyncKey(syncProjectKey);
     setLastCancelKey(cancelSyncKey);
-  }, [setProgress, abortController, setLastSyncKey, setLastCancelKey, syncLinksKey, cancelSyncKey]);
+  }, [setProgress, abortController, setLastSyncKey, setLastCancelKey, syncProjectKey, cancelSyncKey]);
 
   useEffect(() => {
     if (lastCancelKey === cancelSyncKey) {
@@ -45,10 +45,10 @@ export const useSyncProjects = (entity: ProjectEntity, syncLinksKey?: string, ca
   }, [abortController, lastCancelKey, setLastCancelKey, cancelSyncKey, cleanupRequest]);
 
   useEffect(() => {
-    if (lastSyncKey === syncLinksKey) {
+    if (lastSyncKey === syncProjectKey) {
       return;
     }
-    const sendJournal = async (signal: AbortSignal) => {
+    const syncProject = async (signal: AbortSignal) => {
       try {
         await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
           signal,
@@ -69,9 +69,9 @@ export const useSyncProjects = (entity: ProjectEntity, syncLinksKey?: string, ca
       abortController.current?.abort('retry');
     }
     abortController.current = new AbortController();
-    setLastSyncKey(syncLinksKey);
+    setLastSyncKey(syncProjectKey);
     setProgress(SyncProgress.IN_PROGRESS);
-  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, dbApi]);
+  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncProjectKey, cleanupRequest, dbApi]);
 
   return {
     progress
