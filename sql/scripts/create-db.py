@@ -52,7 +52,7 @@ def insert_language(project_conn, project_cursor, language):
 def insert_corpus(project_conn, project_cursor, corpus):
     insert_language(project_conn, project_cursor, corpus['language'])
     project_cursor.execute(
-        f'INSERT INTO corpora (id, side, name, full_name, file_name, language_id) VALUES ({val(corpus.get("id"))}, {val(corpus.get("side"))}, {val(corpus.get("name"))}, {val(corpus.get("fullName"))}, {val(corpus.get("fileName"))}, {val(corpus.get("language").get("code"))})')
+        f'INSERT INTO corpora (id, side, name, full_name, file_name, language_id, is_synced) VALUES ({val(corpus.get("id"))}, {val(corpus.get("side"))}, {val(corpus.get("name"))}, {val(corpus.get("fullName"))}, {val(corpus.get("fileName"))}, {val(corpus.get("language").get("code"))} {val(corpus.get("isSynced"))})')
     project_conn.commit()
 
 
@@ -112,6 +112,7 @@ def read_corpus(project_conn, project_cursor, metadata, tsv_file, id_field):
                 'position_part': bcvwp.get('part'),
                 'normalized_text': text.lower(),
                 'source_verse_bcvid': source_verse,
+                'is_synced': False
             })
             current_percentage = math.floor((idx / total_rows) * 100)
             if idx % 1000 == 0:
@@ -131,6 +132,7 @@ def parse_args():
     parser.add_argument('-ci', '--corpus-id', required=False, nargs=1)
     parser.add_argument('-cn', '--corpus-name', required=False, nargs=1)
     parser.add_argument('-cfn', '--corpus-full-name', required=False, nargs=1)
+    parser.add_argument('-cis', '--corpus-is-synced', required=False, nargs=1)
     parser.add_argument('-cs', '--corpus-side', required=False, nargs=1, choices=['sources', 'targets'])
     parser.add_argument('-cl', '--corpus-language', required=False, nargs=1)
     parser.add_argument('-ctd', '--corpus-text-direction', required=False, nargs=1, choices=['ltr', 'rtl'])
@@ -145,6 +147,7 @@ def parse_args():
                  or not result.corpus_side
                  or not result.corpus_language
                  or not result.corpus_text_direction
+                 or not result.corpus_is_synced
                  or not result.corpus_font_family):
         raise RuntimeError('Missing corpus arguments (run with "-h" for complete list)')
 
@@ -178,6 +181,7 @@ def main():
                 'fullName': inputs.corpus_full_name[0],
                 'side': inputs.corpus_side[0],
                 'fileName': os.path.basename(inputs.corpus_file[0]),
+                'isSynced': os.path.basename(inputs.corpus_is_synced[0]),
                 'language': {
                     'code': inputs.corpus_language[0],
                     'textDirection': inputs.corpus_text_direction[0],

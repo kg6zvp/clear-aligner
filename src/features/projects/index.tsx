@@ -16,6 +16,7 @@ import { LayoutContext } from '../../AppLayout';
 import { Cloud, CloudSync, Computer } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectDTO, ProjectState } from '../../common/data/project/project';
+import { SyncProgress, useSyncProjects } from '../../api/projects/useSyncProject';
 
 export interface LocalAndRemoteProject {
   local?: Project;
@@ -123,6 +124,8 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
   useCorpusContainers();
+  const {sync: syncProject, progress} = useSyncProjects();
+
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.local?.id === currentProject?.local?.id, [project.local?.id, currentProject?.local?.id]);
 
@@ -139,17 +142,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
 
   const syncLocalProjectWithServer = React.useCallback(() => {
     console.log("project.local: ", project.local)
+    if(project.local) {
+      syncProject(project.local);
+    }
   }, [project]);
 
   console.log("project: ", project)
 
   const icon = useMemo(() => {
     if (project.local && !project.remote) {
-      return (<Computer />);
-    } else if (project.remote && !project.local) {
-      return (<Cloud />);
+      if(project.local.isSynced) {
+        return (<Computer sx={theme => ({fill: theme.palette.text.secondary})} />);
+      } else {
+        return (
+          <CloudSync
+            sx={theme => ({fill: theme.palette.text.secondary})}
+          />
+        );
+      }
     } else {
-      return (<CloudSync />);
+      return (<Cloud sx={theme => ({fill: theme.palette.text.secondary})}/ >);
     }
   }, [project.local, project.remote]);
 
@@ -188,6 +200,11 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         height: '100%'
       }}>
         {icon}
+        {
+          project.local && (
+            <Button color={progress === SyncProgress.FAILED ? "error" : "primary"} onClick={syncLocalProjectWithServer}>Sync Projects</Button>
+          )
+        }
         <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
               onClick={() => onClick(project)}>
           <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>

@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS "corpora"
     name        TEXT not null,
     full_name   TEXT not null,
     file_name   TEXT not null,
-    language_id TEXT not null
+    language_id TEXT not null,
+    is_synced   BOOLEAN not null
 );
 CREATE TABLE links
 (

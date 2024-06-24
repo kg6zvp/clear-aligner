@@ -15,17 +15,26 @@ export enum SyncProgress {
 export interface SyncState {
   file?: AlignmentFile;
   progress: SyncProgress;
+  sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
 }
 
 const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): JournalEntryDTO => mapJournalEntryEntityToJournalEntryDTO(journalEntry);
+
+interface SyncAlignmentProps {
+  projectId?: string;
+  syncLinksKey?: string;
+  cancelSyncKey?: string;
+  manuallySync?: boolean;
+}
 
 /**
  * hook to synchronize alignments. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
  * @param projectId project being synchronized
  * @param syncLinksKey update this value to perform a sync
  * @param cancelSyncKey update this value to cancel a sync
+ * @param manuallySync
  */
-export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, cancelSyncKey?: string): SyncState => {
+export const useSyncAlignments = ({ projectId, syncLinksKey, cancelSyncKey, manuallySync }: SyncAlignmentProps): SyncState => {
   const [ lastSyncKey, setLastSyncKey ] = useState(syncLinksKey);
   const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
 
@@ -41,8 +50,71 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     setLastCancelKey(cancelSyncKey);
   }, [setProgress, abortController, setLastSyncKey, setLastCancelKey, syncLinksKey, cancelSyncKey]);
 
+  const sendJournal = useCallback(async (signal: AbortSignal, alignmentProjectId?: string) => {
+    const journalEntries = (await dbApi.getAll(alignmentProjectId!, JournalEntryTableName))
+      .map(mapJournalEntryEntityToJournalEntryDTOHelper);
+    try {
+      await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${alignmentProjectId}/alignment_links/`, {
+        signal,
+        method: 'PATCH',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: generateJsonString(journalEntries)
+      });
+      await dbApi.deleteAll({
+        sourceName: alignmentProjectId!,
+        table: JournalEntryTableName
+      });
+    } catch (x) {
+      cleanupRequest();
+      throw new Error('Aborted');
+    }
+  }, []);
+  const fetchLinks = useCallback(async (signal: AbortSignal, alignmentProjectId?: string) => {
+    let response;
+    try {
+      response = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${alignmentProjectId}/alignment_links/`, {
+        signal,
+        headers: { accept: 'application/json' }
+      });
+    } catch (x) {
+      cleanupRequest();
+      throw new Error('Aborted');
+    }
+    const linksBody: {
+      links: ServerAlignmentLinkDTO[]
+    } = await response.json();
+    const tmpFile = {
+      type: 'translation',
+      meta: { creator: 'api' },
+      records: linksBody.links
+        .map(l => ({
+          meta: {
+            id: l.id,
+            origin: l.meta.origin,
+            status: l.meta.status
+          },
+          source: l.sources,
+          target: l.targets
+        } as AlignmentRecord))
+    };
+    setFile(tmpFile);
+    cleanupRequest();
+  }, []);
+  const syncLinks = useCallback(async (alignmentProjectId?: string, controller?: AbortController) => {
+    const signal = (controller ?? new AbortController()).signal;
+    try {
+      await sendJournal(signal, alignmentProjectId);
+      await fetchLinks(signal, alignmentProjectId);
+      return true;
+    } catch (x) { }
+  }, [projectId]);
+
+
   useEffect(() => {
-    if (lastCancelKey === cancelSyncKey) {
+    if (lastCancelKey === cancelSyncKey || manuallySync) {
       return;
     }
     abortController.current?.abort('cancel');
@@ -50,68 +122,8 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
   }, [abortController, lastCancelKey, setLastCancelKey, cancelSyncKey, cleanupRequest]);
 
   useEffect(() => {
-    if (lastSyncKey === syncLinksKey) {
+    if (lastSyncKey === syncLinksKey || manuallySync) {
       return;
-    }
-    const sendJournal = async (signal: AbortSignal) => {
-      const journalEntries = (await dbApi.getAll(projectId!, JournalEntryTableName))
-        .map(mapJournalEntryEntityToJournalEntryDTOHelper);
-      try {
-        await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
-          signal,
-          method: 'PATCH',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: generateJsonString(journalEntries)
-        });
-        await dbApi.deleteAll({
-          sourceName: projectId!,
-          table: JournalEntryTableName
-        });
-      } catch (x) {
-        cleanupRequest();
-        throw new Error('Aborted');
-      }
-    };
-    const fetchLinks = async (signal: AbortSignal) => {
-      let response;
-      try {
-        response = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
-          signal,
-          headers: { accept: 'application/json' }
-        });
-      } catch (x) {
-        cleanupRequest();
-        throw new Error('Aborted');
-      }
-      const linksBody: {
-        links: ServerAlignmentLinkDTO[]
-      } = await response.json();
-      const tmpFile = {
-        type: 'translation',
-        meta: { creator: 'api' },
-        records: linksBody.links
-          .map(l => ({
-            meta: {
-              id: l.id,
-              origin: l.meta.origin,
-              status: l.meta.status
-            },
-            source: l.sources,
-            target: l.targets
-          } as AlignmentRecord))
-      };
-      setFile(tmpFile);
-      cleanupRequest();
-    };
-
-    const syncLinks = async ({ signal }: AbortController) => {
-      try {
-        await sendJournal(signal);
-        await fetchLinks(signal);
-      } catch (x) { }
     }
 
     if (progress === SyncProgress.IN_PROGRESS) {
@@ -120,11 +132,12 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     abortController.current = new AbortController();
     setLastSyncKey(syncLinksKey);
     setProgress(SyncProgress.IN_PROGRESS);
-    void syncLinks(abortController.current);
+    void syncLinks(projectId, abortController.current);
   }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId, dbApi]);
 
   return {
     file,
-    progress
+    progress,
+    sync: syncLinks
   };
 }

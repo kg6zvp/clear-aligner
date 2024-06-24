@@ -1,6 +1,16 @@
 import { AlignmentSide, CorpusDTO } from './corpus';
-import { Corpus, CorpusViewType, LanguageInfo, SyntaxRoot, TextDirection, Verse, Word } from '../../../structs';
+import {
+  Corpus,
+  CorpusContainer,
+  CorpusViewType,
+  LanguageInfo,
+  SyntaxRoot,
+  TextDirection,
+  Verse,
+  Word
+} from '../../../structs';
 import { LanguageDTO, TextDirectionDTO } from './language';
+import { Project } from '../../../state/projects/tableManager';
 
 export const ProjectTableName = "project";
 
@@ -42,22 +52,24 @@ export const mapProjectDTOToProjectEntity = (dto: ProjectDTO, location: ProjectL
   corpora: (dto.corpora || []).map(mapCorpusDTOToCorpusEntity)
 });
 
-export const mapProjectEntityToProjectDTO = (entity: ProjectEntity): ProjectDTO => ({
-  id: entity.id,
-  name: entity.name,
-  state: entity.serverState,
-  corpora: (entity.corpora || []).map(mapCorpusEntityToCorpusDTO)
+export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
+  id: project.id,
+  name: project.name,
+  state: ProjectState.PUBLISHED,
+  corpora: [project.targetCorpora, project.sourceCorpora].map(mapCorpusEntityToCorpusDTO).filter(Boolean) as CorpusDTO[]
 })
 
-export const mapCorpusEntityToCorpusDTO = (entity: Corpus): CorpusDTO => {
+export const mapCorpusEntityToCorpusDTO = (container?: CorpusContainer): CorpusDTO | undefined => {
+  const corpus = (container?.corpora || [])[0];
+  if(!corpus) return;
   return {
-    id: entity.id,
-    name: entity.name,
-    side: AlignmentSide[entity.side as keyof typeof AlignmentSide],
-    fullName: entity.fullName,
-    fileName: entity.fileName || "",
-    language: mapLanguageEntityToLanguageDTO(entity.language),
-    languageCode: entity.language.code
+    id: corpus.id,
+    name: corpus.name,
+    side: corpus.side,
+    fullName: corpus.fullName,
+    fileName: corpus.fileName || "",
+    language: mapLanguageEntityToLanguageDTO(corpus.language),
+    languageCode: corpus.language.code
   }
 }
 

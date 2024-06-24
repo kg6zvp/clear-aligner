@@ -7,7 +7,7 @@ export enum AlignmentSide {
 export interface CorpusDTO {
   id: string; // uuid
   name: string;
-  side: AlignmentSide;
+  side: string;
   fullName: string;
   fileName: string;
   language: LanguageDTO;

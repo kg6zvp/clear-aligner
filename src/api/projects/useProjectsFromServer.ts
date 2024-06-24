@@ -23,8 +23,9 @@ export const useProjectsFromServer = ({ syncProjectsKey }: UseProjectsFromServer
             'Content-Type': 'application/json'
           }
         });
-        const projects = await projectsResponse.json()
-        setProjects(projects as ProjectDTO[]);
+        const projects = await projectsResponse.json();
+        console.log("projects response: ", projects)
+        setProjects((Array.isArray(projects) ? projects : []) as ProjectDTO[]);
       } catch (x) {
         console.error(x);
       }

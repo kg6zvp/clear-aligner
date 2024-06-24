@@ -1,27 +1,30 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
 import { SERVER_URL } from '../../common';
-import { Project } from '../../structs';
-import { mapProjectEntityToProjectDTO, ProjectEntity } from '../../common/data/project/project';
+import { mapProjectEntityToProjectDTO } from '../../common/data/project/project';
+import { Project } from '../../state/projects/tableManager';
+import { useSyncAlignments } from '../alignments/useSyncAlignments';
 
 export enum SyncProgress {
   IDLE,
-  IN_PROGRESS
+  IN_PROGRESS,
+  SUCCESS,
+  FAILED
 }
 
 export interface SyncState {
-  project?: Project;
+  sync: (project: Project) => Promise<unknown>;
   progress: SyncProgress;
 }
 
 /**
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
- * @param entity The project entity to sync
  * @param syncProjectKey update this value to perform a sync
  * @param cancelSyncKey update this value to cancel a sync
  */
-export const useSyncProjects = (entity: ProjectEntity, syncProjectKey?: string, cancelSyncKey?: string): SyncState => {
+export const useSyncProjects = (syncProjectKey?: string, cancelSyncKey?: string): SyncState => {
+  const {sync: syncAlignments} = useSyncAlignments({manuallySync: true})
   const [ lastSyncKey, setLastSyncKey ] = useState(syncProjectKey);
   const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
 
@@ -31,49 +34,42 @@ export const useSyncProjects = (entity: ProjectEntity, syncProjectKey?: string, 
 
   const cleanupRequest = useCallback(() => {
     abortController.current = undefined;
-    setProgress(SyncProgress.IDLE);
-    setLastSyncKey(syncProjectKey);
-    setLastCancelKey(cancelSyncKey);
-  }, [setProgress, abortController, setLastSyncKey, setLastCancelKey, syncProjectKey, cancelSyncKey]);
+  }, []);
 
-  useEffect(() => {
-    if (lastCancelKey === cancelSyncKey) {
-      return;
-    }
-    abortController.current?.abort('cancel');
-    cleanupRequest();
-  }, [abortController, lastCancelKey, setLastCancelKey, cancelSyncKey, cleanupRequest]);
-
-  useEffect(() => {
-    if (lastSyncKey === syncProjectKey) {
-      return;
-    }
-    const syncProject = async (signal: AbortSignal) => {
-      try {
-        await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
-          signal,
-          method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: generateJsonString(mapProjectEntityToProjectDTO(entity))
-        });
-      } catch (x) {
-        cleanupRequest();
-        throw new Error('Aborted');
+  const syncProject = async (project: Project) => {
+    try {
+      console.log("api request payload: ", project, mapProjectEntityToProjectDTO(project))
+      setProgress(SyncProgress.IN_PROGRESS);
+      const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
+        signal: abortController.current?.signal,
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: generateJsonString(mapProjectEntityToProjectDTO(project))
+      });
+      let syncProgress = SyncProgress.FAILED;
+      // If the project request was successful, update the alignments for the project.
+      if(res.ok) {
+        const persistedProject = await res.json();
+        const alignmentsSynced = await syncAlignments(persistedProject.id);
+        if(alignmentsSynced) {
+          syncProgress = SyncProgress.SUCCESS;
+        }
       }
-    };
-
-    if (progress === SyncProgress.IN_PROGRESS) {
-      abortController.current?.abort('retry');
+      setProgress(syncProgress)
+      return res;
+    } catch (x) {
+      cleanupRequest();
+      setProgress(SyncProgress.FAILED);
+      setTimeout(() => {
+        setProgress(SyncProgress.IDLE);
+      }, 5000);
     }
-    abortController.current = new AbortController();
-    setLastSyncKey(syncProjectKey);
-    setProgress(SyncProgress.IN_PROGRESS);
-  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncProjectKey, cleanupRequest, dbApi]);
-
+  };
   return {
+    sync: syncProject,
     progress
   };
 }

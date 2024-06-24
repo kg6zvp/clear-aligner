@@ -118,7 +118,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             wordsByVerse: {},
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
-            side: AlignmentSide.TARGET
+            side: AlignmentSide.TARGET,
+            isSynced: false // Resets sync state on create/update
           } as Corpus;
 
           if (fileContent) {

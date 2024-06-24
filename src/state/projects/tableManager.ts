@@ -17,6 +17,7 @@ export interface Project {
   languageCode: string;
   textDirection: string;
   fileName: string;
+  isSynced?: boolean;
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
