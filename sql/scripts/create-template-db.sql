@@ -10,15 +10,15 @@ CREATE TABLE language
 );
 CREATE TABLE IF NOT EXISTS "corpora"
 (
-    id          TEXT
+    id             TEXT
         constraint id
             primary key,
-    side        TEXT not null,
-    name        TEXT not null,
-    full_name   TEXT not null,
-    file_name   TEXT not null,
-    language_id TEXT not null,
-    is_synced   BOOLEAN not null
+    side           TEXT not null,
+    name           TEXT not null,
+    full_name      TEXT not null,
+    file_name      TEXT not null,
+    language_id    TEXT not null,
+    last_sync_time integer
 );
 CREATE TABLE links
 (

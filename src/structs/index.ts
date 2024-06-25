@@ -130,7 +130,7 @@ export interface Corpus {
   viewType?: CorpusViewType;
   syntax?: SyntaxRoot;
   hasGloss?: boolean;
-  isSynced?: boolean;
+  lastSyncTime?: number;
 }
 
 /**

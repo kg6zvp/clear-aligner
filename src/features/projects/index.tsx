@@ -151,7 +151,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
 
   const icon = useMemo(() => {
     if (project.local && !project.remote) {
-      if(project.local.isSynced) {
+      if(project.local.lastSyncTime) {
         return (<Computer sx={theme => ({fill: theme.palette.text.secondary})} />);
       } else {
         return (

@@ -158,7 +158,7 @@ class CorporaEntity {
   full_name?: string;
   file_name?: string;
   words?: string;
-  is_synced?: boolean;
+  last_sync_time?: number;
 
   constructor() {
     this.id = undefined;
@@ -168,7 +168,7 @@ class CorporaEntity {
     this.full_name = '';
     this.file_name = '';
     this.words = undefined;
-    this.is_synced = false;
+    this.last_sync_time = 0;
   }
 }
 
@@ -203,7 +203,7 @@ const corporaSchema = new EntitySchema({
       type: 'text'
     }, language_id: {
       type: 'text'
-    }, is_synced: {
+    }, last_sync_time: {
       type: 'boolean'
     }
   }
@@ -319,7 +319,7 @@ export class ProjectRepository extends BaseRepository {
     name: corpus.name,
     full_name: corpus.fullName,
     file_name: corpus.fileName,
-    is_synced: corpus.isSynced,
+    last_sync_time: corpus.lastSyncTime,
     language_id: corpus.language?.code
   });
 
@@ -329,7 +329,7 @@ export class ProjectRepository extends BaseRepository {
     name: corpus.name,
     fullName: corpus.full_name,
     fileName: corpus.file_name,
-    isSynced: corpus.is_synced,
+    lastSyncTime: corpus.last_sync_time,
     language: {
       code: corpus.language_id
     }
@@ -956,17 +956,18 @@ export class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('getAllCorpora()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = (await entityManager.query(`select c.id             as id,
+      const results = (await entityManager.query(`select c.id       as id,
                                                          c.name           as name,
                                                          c.full_name      as fullName,
                                                          c.file_name      as fileName,
                                                          c.side           as side,
-                                                         c.is_synced      as isSynced,
+                                                         c.last_sync_time as lastSyncTime,
                                                          l.code           as code,
                                                          l.text_direction as textDirection,
                                                          l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
+      console.log("results: ", results)
       this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
@@ -976,7 +977,7 @@ export class ProjectRepository extends BaseRepository {
           fileName: result.fileName,
           fullName: result.fullName,
           side: result.side,
-          isSynced: result.isSynced,
+          lastSyncTime: result.lastSyncTime,
           language: {
             code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }
