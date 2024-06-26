@@ -15,6 +15,35 @@ import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
 import { CustomSnackbar } from './features/snackbar';
+import { Amplify } from "aws-amplify"
+
+
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      userPoolId: "us-east-1_ZOweHZ2FF",
+      userPoolClientId: "55ts5kcfbqmi7edl1qeanf1ni0",
+      identityPoolId: "",
+      loginWith: {
+        email: true,
+      },
+      signUpVerificationMethod: "code",
+      userAttributes: {
+        email: {
+          required: true,
+        },
+      },
+      allowGuestAccess: true,
+      passwordFormat: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireNumbers: true,
+        requireSpecialCharacters: true,
+      },
+    },
+  },
+})
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -56,7 +85,7 @@ const App = () => {
   const router = createHashRouter([
     {
       path: '/',
-      element: <AppLayout theme={theme}/>,
+      element: <AppLayout theme={theme} />,
       children: [
         {
           index: true,

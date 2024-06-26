@@ -5,6 +5,8 @@ import React, { ReactElement } from 'react';
 import { Box } from '@mui/system';
 import { Button, DialogTitle, Popover, Stack, Typography } from '@mui/material';
 import TextField from '@mui/material/TextField';
+import { signIn } from "aws-amplify/auth";
+
 
 interface LoginProps {
   isLoginModalOpen: boolean;
@@ -19,6 +21,11 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
   const handleLogin = async() => {
     console.log('emailAddress is: ', emailAddress)
     console.log('password is: ', password)
+
+    await signIn({
+      username: emailAddress,
+      password: password,
+    })
   }
 
   return (
