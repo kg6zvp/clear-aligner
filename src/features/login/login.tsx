@@ -9,10 +9,18 @@ import TextField from '@mui/material/TextField';
 interface LoginProps {
   isLoginModalOpen: boolean;
   handleLoginModalClose: () => void;
-  popOverAnchorEl: any;
+  popOverAnchorEl: HTMLElement | null;
 }
 
 export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalClose, popOverAnchorEl}): ReactElement => {
+  const [emailAddress, setEmailAddress] = React.useState("")
+  const [password, setPassword] = React.useState("")
+
+  const handleLogin = async() => {
+    console.log('emailAddress is: ', emailAddress)
+    console.log('password is: ', password)
+  }
+
   return (
     <Popover
       open={isLoginModalOpen}
@@ -47,10 +55,29 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
             p={5}
           >
             <Stack>
-              <TextField required id="emailAddress" label="Email address" type="email" InputLabelProps={{shrink: true, required: false}} />
-              <TextField required id="password" label="Password" type="password" InputLabelProps={{shrink: true, required: false}}/>
+              <TextField
+                required
+                id="emailAddress"
+                label="Email address"
+                type="email"
+                InputLabelProps={{shrink: true, required: false}}
+                onChange={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setEmailAddress(e.target.value)
+                }}
+              />
+              <TextField
+                required
+                id="password"
+                label="Password"
+                type="password"
+                InputLabelProps={{shrink: true, required: false}}
+                onChange={(e) => setPassword(e.target.value)}
+              />
               <Button
                 variant="contained"
+                onClick={handleLogin}
               >Sign In
               </Button>
             </Stack>
