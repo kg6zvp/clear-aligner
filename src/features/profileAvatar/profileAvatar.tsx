@@ -1,9 +1,9 @@
-import { Avatar, Button, Dialog, DialogTitle, Divider, Menu, MenuItem, Popover } from '@mui/material';
+import { Avatar, Button, Divider, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
 import React, { useEffect } from 'react';
-import {useNetworkState} from "@uidotdev/usehooks"
+import { useNetworkState } from '@uidotdev/usehooks';
 
 import ListItemIcon from '@mui/material/ListItemIcon';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -11,6 +11,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import ListItemText from '@mui/material/ListItemText';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Login from '../login/login';
 
 const userState = {
   LoggedIn: {
@@ -37,7 +38,9 @@ interface ProfileMenuProps {
  */
 const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
+
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -47,7 +50,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
     setAnchorEl(null);
   };
   const handleLoginClick = (event: { currentTarget: React.SetStateAction<HTMLElement | null>; }) => {
-    setAnchorEl(event.currentTarget);
+    setPopOverAnchorEl(event.currentTarget);
     handleClose()
 
     setIsLoginModalOpen(true);
@@ -55,7 +58,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const handleLoginModalClose = () => {
     setIsLoginModalOpen(false);
   }
-
   return (
     <div>
       <Button
@@ -117,14 +119,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
           Sign in to ClearAligner Sync
         </MenuItem>
       </Menu>
-      <Popover
-        open={isLoginModalOpen}
-        onClose={handleLoginModalClose}
-      >
-        <DialogTitle>
-          Sign in for ClearAligner Sync
-        </DialogTitle>
-      </Popover>
+      <Login
+        isLoginModalOpen={isLoginModalOpen}
+        handleLoginModalClose={handleLoginModalClose}
+        popOverAnchorEl={popOverAnchorEl}
+      />
     </div>
   );
 }
