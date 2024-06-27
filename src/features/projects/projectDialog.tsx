@@ -132,7 +132,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
             side: AlignmentSide.TARGET,
-            lastUpdated: DateTime.now().setZone('utc').toMillis(),
+            lastUpdated: DateTime.now().toUTC().toMillis(),
             lastSyncTime: (project.targetCorpora?.corpora ?? []).find(c => c.lastSyncTime)?.lastSyncTime
           } as Corpus;
 
@@ -184,7 +184,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [deleteProject, project, projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
+  }, [deleteProject, projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
 
   const setInitialProjectState = React.useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);

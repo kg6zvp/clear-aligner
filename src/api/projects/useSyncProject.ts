@@ -36,7 +36,7 @@ export const useSyncProjects = (): SyncState => {
   const syncProject = async (project: Project) => {
     try {
       if(project.targetCorpora) {
-        const syncTime = DateTime.now().setZone('utc').toMillis();
+        const syncTime = DateTime.now().toUTC().toMillis();
         project.targetCorpora.corpora = (project.targetCorpora?.corpora ?? []).map(c => ({
           ...c,
           lastSyncTime: syncTime,

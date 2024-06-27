@@ -14,7 +14,7 @@ import { isLoadingAnyCorpora } from '../workbench/query';
 const BusyRefreshTimeInMs = 500;
 const DefaultBusyMessage = 'Please wait...';
 
-const useBusyDialog = () => {
+const useBusyDialog = (customStatus?: string) => {
   const { projectState } = useContext(AppContext);
   const [databaseStatus, setDatabaseStatus] = useState<{
     projects: DatabaseStatus,
@@ -86,13 +86,21 @@ const useBusyDialog = () => {
         value: undefined
       };
     }
+    if (customStatus) {
+      return {
+        isBusy: true,
+        text: customStatus,
+        variant: 'indeterminate',
+        value: undefined
+      };
+    }
     return {
       isBusy: false,
       text: undefined,
       variant: 'indeterminate',
       value: undefined
     };
-  }, [databaseStatus, isLoadingCorpora, numProjects]);
+  }, [databaseStatus, isLoadingCorpora, numProjects, customStatus]);
 
   return (
     <Dialog

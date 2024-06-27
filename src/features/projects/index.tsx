@@ -16,8 +16,9 @@ import { LayoutContext } from '../../AppLayout';
 import { Cloud, CloudSync, Computer } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectDTO } from '../../common/data/project/project';
-import { useSyncProjects } from '../../api/projects/useSyncProject';
+import { SyncProgress, useSyncProjects } from '../../api/projects/useSyncProject';
 import { DateTime } from 'luxon';
+import useBusyDialog from '../../utils/useBusyDialog';
 
 export interface LocalAndRemoteProject {
   local?: Project;
@@ -28,7 +29,7 @@ interface ProjectsViewProps {
 }
 
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
-  const { projects: localProjects, preferences  } = React.useContext(AppContext);
+  const { projects: localProjects, preferences } = React.useContext(AppContext);
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
   const selectProject = React.useCallback((project: LocalAndRemoteProject) => {
@@ -39,14 +40,14 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
   }, [setSelectedProjectId, setOpenProjectDialog]);
   const layoutCtx = useContext(LayoutContext);
 
-  const {projects: allRemoteProjects, refetch: refetchRemoteProjects} = useProjectsFromServer({});
+  const { projects: allRemoteProjects, refetch: refetchRemoteProjects } = useProjectsFromServer({});
 
   const projects = useMemo<LocalAndRemoteProject[]>(() => {
-     const projectMap: Map<string, LocalAndRemoteProject> = new Map();
+    const projectMap: Map<string, LocalAndRemoteProject> = new Map();
 
     localProjects
       .forEach((local) => {
-        projectMap.set(local.id, {local});
+        projectMap.set(local.id, { local });
       });
     allRemoteProjects
       .filter(remote => remote.id)
@@ -54,10 +55,10 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
         projectMap.set(remote.name === 'default' ? remote.name : remote.id!, {
           ...(projectMap.get(remote.name === 'default' ? remote.name : remote.id!) || {}),
           remote
-        })
+        });
       });
-     return Array.from(projectMap.values());
-  }, [localProjects,  allRemoteProjects]);
+    return Array.from(projectMap.values());
+  }, [localProjects, allRemoteProjects]);
 
   const unavailableProjectNames: string[] = React.useMemo(() => (
     Array.from(new Set([...localProjects, ...allRemoteProjects].map(p => (p.name || '').trim())))
@@ -68,12 +69,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
       <Typography sx={{ textAlign: 'center' }}>
         Projects
       </Typography>
-    )
+    );
   }, [layoutCtx, preferences?.currentProject]);
 
   return (
     <>
-      <Grid container flexDirection="column" flexWrap={'nowrap'} sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+      <Grid container flexDirection="column" flexWrap={'nowrap'}
+            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
         <Grid container sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
           <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           <Button
@@ -120,7 +122,8 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refetchRemoteProjects, onClick }) => {
   useCorpusContainers();
-  const {sync: syncProject} = useSyncProjects();
+  const { sync: syncProject, progress: syncingProjects } = useSyncProjects();
+  const busyDialog = useBusyDialog(syncingProjects === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined);
 
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.local?.id === currentProject?.local?.id, [project.local?.id, currentProject?.local?.id]);
@@ -137,7 +140,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
   }, [setPreferences, preferences, project.local?.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   const syncLocalProjectWithServer = React.useCallback(() => {
-    if(project.local) {
+    if (project.local) {
       syncProject(project.local).then(() => refetchRemoteProjects()).catch(console.error);
     }
   }, [project, refetchRemoteProjects, syncProject]);
@@ -146,107 +149,112 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
     (project.local?.targetCorpora?.corpora ?? []).find(c => !!c.lastSyncTime)?.lastSyncTime
   ), [project]);
 
-
   const cloudSyncInfo = useMemo(() => {
-    if(!project.remote && !lastSyncTime) {
+    if (!project.remote && !lastSyncTime) {
       return (
         <Grid container justifyContent="flex-end" alignItems="center">
-          <Button variant="text" sx={{textTransform: 'none'}} onClick={syncLocalProjectWithServer}>Sync Project</Button>
-          <Computer sx={theme => ({fill: theme.palette.text.secondary})} />
+          <Button variant="text" disabled={syncingProjects !== SyncProgress.IDLE} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
+            Project</Button>
+          <Computer sx={theme => ({ fill: theme.palette.text.secondary })} />
         </Grid>
       );
-    } else if(!project.local && project.remote) {
+    } else if (!project.local && project.remote) {
       return (
         <Grid container justifyContent="flex-end" alignItems="center">
-          <Typography variant="subtitle2" sx={{mr: 1}}>Remote Project</Typography>
-          <Cloud sx={theme => ({fill: theme.palette.text.secondary})} />
+          <Typography variant="subtitle2" sx={{ mr: 1 }}>Remote Project</Typography>
+          <Cloud sx={theme => ({ fill: theme.palette.text.secondary })} />
         </Grid>
-      )
+      );
     } else {
       return (
-       <Grid container flexDirection="column">
-         <Grid container justifyContent="flex-end" alignItems="center">
-           {
-             lastSyncTime === (project.remote?.corpora ?? []).find(c => c.lastUpdated)?.lastUpdated ? (
-               <Typography variant="subtitle2" sx={{mr: 1}}>Project Synced</Typography>
-             ) : (
-               <Button variant="text" sx={{textTransform: 'none'}} onClick={syncLocalProjectWithServer}>Sync Project</Button>
-             )
-           }
-           <CloudSync sx={theme => ({fill: theme.palette.text.secondary})} />
-         </Grid>
-       </Grid>
-      )
+        <Grid container flexDirection="column">
+          <Grid container justifyContent="flex-end" alignItems="center">
+            {
+              lastSyncTime === (project.local?.targetCorpora?.corpora ?? []).find(c => !!c.lastUpdated)?.lastUpdated ? (
+                <Typography variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
+              ) : (
+                <Button variant="text" disabled={syncingProjects !== SyncProgress.IDLE} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
+                  Project</Button>
+              )
+            }
+            <CloudSync sx={theme => ({ fill: theme.palette.text.secondary })} />
+          </Grid>
+        </Grid>
+      );
     }
-  }, [project.local, project.remote, lastSyncTime, syncLocalProjectWithServer]);
+  }, [project.local, project.remote, lastSyncTime, syncLocalProjectWithServer, syncingProjects]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
-      return ( <Typography variant="subtitle2">Current Project</Typography> );
+      return (<Typography variant="subtitle2">Current Project</Typography>);
     } else if (project.local) {
-      return ( <Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                onClick={e => {
-                  e.preventDefault();
-                  updateCurrentProject();
-                }}
-        >Open</Button> );
+      return (<Button variant="text" size="small" sx={{ textTransform: 'none' }}
+                      onClick={e => {
+                        e.preventDefault();
+                        updateCurrentProject();
+                      }}
+      >Open</Button>);
     } else if (!project.local && project.remote) {
-      return ( <Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                       onClick={e => {
-                         throw new Error('NOT IMPLEMENTED: TODO');
-                       }}
-      >Open Remote</Button> );
+      return (<Button variant="text" size="small" sx={{ textTransform: 'none' }}
+                      onClick={e => {
+                        throw new Error('NOT IMPLEMENTED: TODO');
+                      }}
+      >Open Remote</Button>);
     }
   }, [isCurrentProject, project.local, project.remote, updateCurrentProject]);
 
   return (
-    <Card sx={theme => ({
-      height: 250, width: 250, m: 2.5, '&:hover': {
-        boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
-          ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
-          : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-      }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' },
-      position: 'relative'
-    })}>
-      <CardContent sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        height: '100%'
-      }}>
-        {cloudSyncInfo}
-        <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
-              onClick={() => onClick(project)}>
-          <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>
-        </Grid>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item>
-            {currentProjectIndicator}
+    <>
+      <Card sx={theme => ({
+        height: 250, width: 250, m: 2.5, '&:hover': {
+          boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
+            ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
+            : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
+        }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' },
+        position: 'relative'
+      })}>
+        <CardContent sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          height: '100%'
+        }}>
+          {cloudSyncInfo}
+          <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
+                onClick={() => onClick(project)}>
+            <Typography variant="h6"
+                        sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>
           </Grid>
-          <Grid item>
-            {project.local ?
-              <UploadAlignmentGroup
-                projectId={project.local!.id}
-                size="small"
-                containers={[
-                  ...(project.local!.sourceCorpora ? [project.local!.sourceCorpora] : []),
-                  ...(project.local!.targetCorpora ? [project.local!.targetCorpora] : [])
-                ]}
-                allowImport={isCurrentProject}
-              />
-              : <></>}
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Grid item>
+              {currentProjectIndicator}
+            </Grid>
+            <Grid item>
+              {project.local ?
+                <UploadAlignmentGroup
+                  projectId={project.local!.id}
+                  size="small"
+                  containers={[
+                    ...(project.local!.sourceCorpora ? [project.local!.sourceCorpora] : []),
+                    ...(project.local!.targetCorpora ? [project.local!.targetCorpora] : [])
+                  ]}
+                  allowImport={isCurrentProject}
+                />
+                : <></>}
+            </Grid>
           </Grid>
-        </Grid>
-        {
-          lastSyncTime && (
-            <Typography variant="caption" sx={{position: 'absolute', bottom: 0, left: 10}}>
-              Synced On:&nbsp;{DateTime.fromMillis(lastSyncTime, {zone: 'local'}).toFormat("yyyy/mm/dd hh:mm:ss a")}
-            </Typography>
-          )
-        }
-      </CardContent>
-    </Card>
+          {
+            lastSyncTime && (
+              <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
+                Synced On:&nbsp;{DateTime.fromJSDate(new Date(lastSyncTime)).toFormat('MM/dd/yyyy hh:mm:ss a')}
+              </Typography>
+            )
+          }
+        </CardContent>
+      </Card>
+      {syncingProjects === SyncProgress.IN_PROGRESS && busyDialog}
+    </>
   );
 };
 
