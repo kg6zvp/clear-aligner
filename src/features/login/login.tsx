@@ -6,6 +6,7 @@ import { Box } from '@mui/system';
 import { Button, DialogTitle, Popover, Stack, Typography } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signIn } from "aws-amplify/auth";
+import { signOut } from "aws-amplify/auth"
 
 
 interface LoginProps {
@@ -28,18 +29,17 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
     })
   }
 
+  const handleSignOut = async() => {
+    await signOut();
+  }
+
   return (
     <Popover
       open={isLoginModalOpen}
       onClose={handleLoginModalClose}
-      anchorEl={popOverAnchorEl}
       anchorOrigin={{
-        vertical:'top',
-        horizontal: 'right'
-      }}
-      transformOrigin={{
-        vertical: 'bottom',
-        horizontal: 'right'
+        vertical:'bottom',
+        horizontal: 'left'
       }}
     >
       <Box>
@@ -86,6 +86,12 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
                 variant="contained"
                 onClick={handleLogin}
               >Sign In
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleSignOut}
+              >
+                Sign Out
               </Button>
             </Stack>
 
