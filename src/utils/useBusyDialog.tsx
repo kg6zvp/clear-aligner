@@ -2,20 +2,31 @@
  * This file contains the useBusyDialog component that can be shown to users
  * while wait for an action in the background to complete.
  */
-import { useContext, useMemo, useState } from 'react';
-import { Box, CircularProgress, Dialog, DialogContent, DialogContentText, Typography } from '@mui/material';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import {
+  Box,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Grid, IconButton,
+  Typography
+} from '@mui/material';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseStatus } from '../state/databaseManagement';
 import _ from 'lodash';
 import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 import { isLoadingAnyCorpora } from '../workbench/query';
+import { Close } from '@mui/icons-material';
 
 const BusyRefreshTimeInMs = 500;
 const DefaultBusyMessage = 'Please wait...';
 
-const useBusyDialog = (customStatus?: string) => {
+const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction) => {
   const { projectState } = useContext(AppContext);
+  const [cancel, setCancel] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<{
     projects: DatabaseStatus,
     links: DatabaseStatus
@@ -46,7 +57,8 @@ const useBusyDialog = (customStatus?: string) => {
     isBusy?: boolean,
     text?: string,
     variant?: 'determinate' | 'indeterminate',
-    value?: number
+    value?: number,
+    isCancelled?: boolean
   }>(() => {
     const busyInfo =
       [databaseStatus?.links, databaseStatus?.projects]
@@ -102,9 +114,28 @@ const useBusyDialog = (customStatus?: string) => {
     };
   }, [databaseStatus, isLoadingCorpora, numProjects, customStatus]);
 
+  useEffect(() => {
+    setCancel(false);
+  }, [customStatus]);
+
   return (
     <Dialog
-      open={!!spinnerParams.isBusy}>
+      open={!!spinnerParams.isBusy && !cancel}
+    >
+      <DialogTitle>
+        <Grid container justifyContent="flex-end" alignItems="center">
+          {
+            !!onCancel && (
+              <IconButton onClick={() => {
+                setCancel(true);
+                onCancel();
+              }} sx={{m: 0}}>
+                <Close sx={{height: 18, width: 'auto'}} />
+              </IconButton>
+            )
+          }
+        </Grid>
+      </DialogTitle>
       <DialogContent>
         <Box sx={{
           display: 'flex',

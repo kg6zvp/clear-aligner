@@ -122,8 +122,13 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refetchRemoteProjects, onClick }) => {
   useCorpusContainers();
+
+
   const { sync: syncProject, progress: syncingProjects } = useSyncProjects();
-  const busyDialog = useBusyDialog(syncingProjects === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined);
+
+  const busyDialog = useBusyDialog(
+    syncingProjects === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined
+  );
 
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.local?.id === currentProject?.local?.id, [project.local?.id, currentProject?.local?.id]);
@@ -153,7 +158,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
     if (!project.remote && !lastSyncTime) {
       return (
         <Grid container justifyContent="flex-end" alignItems="center">
-          <Button variant="text" disabled={syncingProjects !== SyncProgress.IDLE} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
+          <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
             Project</Button>
           <Computer sx={theme => ({ fill: theme.palette.text.secondary })} />
         </Grid>
@@ -173,7 +178,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
               lastSyncTime === (project.local?.targetCorpora?.corpora ?? []).find(c => !!c.lastUpdated)?.lastUpdated ? (
                 <Typography variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
               ) : (
-                <Button variant="text" disabled={syncingProjects !== SyncProgress.IDLE} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
+                <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
                   Project</Button>
               )
             }
@@ -245,9 +250,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
             </Grid>
           </Grid>
           {
-            lastSyncTime && (
+            (lastSyncTime && syncingProjects !== SyncProgress.FAILED) && (
               <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
                 Synced On:&nbsp;{DateTime.fromJSDate(new Date(lastSyncTime)).toFormat('MM/dd/yyyy hh:mm:ss a')}
+              </Typography>
+            )
+          }
+          {
+            syncingProjects === SyncProgress.FAILED && (
+              <Typography variant="caption" color="error" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
+                There was an error uploading this project.
               </Typography>
             )
           }
