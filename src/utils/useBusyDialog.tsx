@@ -94,8 +94,6 @@ const useBusyDialog = () => {
     };
   }, [databaseStatus, isLoadingCorpora, numProjects]);
 
-  console.log("corpora request: ", isLoadingCorpora, numProjects, databaseStatus)
-
   return (
     <Dialog
       open={!!spinnerParams.isBusy}>

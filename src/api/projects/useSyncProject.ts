@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import { generateJsonString } from '../../common/generateJsonString';
-import { useDatabase } from '../../hooks/useDatabase';
 import { SERVER_URL } from '../../common';
 import { mapProjectEntityToProjectDTO } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
+import { AppContext } from '../../App';
+import { DateTime } from 'luxon';
 
 export enum SyncProgress {
   IDLE,
@@ -20,17 +21,13 @@ export interface SyncState {
 
 /**
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
- * @param syncProjectKey update this value to perform a sync
- * @param cancelSyncKey update this value to cancel a sync
  */
-export const useSyncProjects = (syncProjectKey?: string, cancelSyncKey?: string): SyncState => {
-  const {sync: syncAlignments} = useSyncAlignments({manuallySync: true})
-  const [ lastSyncKey, setLastSyncKey ] = useState(syncProjectKey);
-  const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
+export const useSyncProjects = (): SyncState => {
+  const {sync: syncAlignments} = useSyncAlignments({manuallySync: true});
+  const { projectState  } = useContext(AppContext);
 
   const [ progress, setProgress ] = useState<SyncProgress>(SyncProgress.IDLE);
   const abortController = useRef<AbortController|undefined>();
-  const dbApi = useDatabase();
 
   const cleanupRequest = useCallback(() => {
     abortController.current = undefined;
@@ -38,7 +35,15 @@ export const useSyncProjects = (syncProjectKey?: string, cancelSyncKey?: string)
 
   const syncProject = async (project: Project) => {
     try {
-      console.log("api request payload: ", project, mapProjectEntityToProjectDTO(project))
+      if(project.targetCorpora) {
+        const syncTime = DateTime.now().setZone('utc').toMillis();
+        project.targetCorpora.corpora = (project.targetCorpora?.corpora ?? []).map(c => ({
+          ...c,
+          lastSyncTime: syncTime,
+          lastUpdated: syncTime
+        }));
+      }
+      await projectState.projectTable?.update?.(project, false);
       setProgress(SyncProgress.IN_PROGRESS);
       const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
         signal: abortController.current?.signal,

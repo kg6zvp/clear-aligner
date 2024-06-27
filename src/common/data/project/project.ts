@@ -1,13 +1,10 @@
-import { AlignmentSide, CorpusDTO } from './corpus';
+import { CorpusDTO } from './corpus';
 import {
   Corpus,
   CorpusContainer,
   CorpusViewType,
   LanguageInfo,
-  SyntaxRoot,
   TextDirection,
-  Verse,
-  Word
 } from '../../../structs';
 import { LanguageDTO, TextDirectionDTO } from './language';
 import { Project } from '../../../state/projects/tableManager';
@@ -55,7 +52,7 @@ export const mapProjectDTOToProjectEntity = (dto: ProjectDTO, location: ProjectL
 export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
   id: project.id,
   name: project.name,
-  state: ProjectState.PUBLISHED,
+  state: ProjectState.DRAFT,
   corpora: [project.targetCorpora, project.sourceCorpora].map(mapCorpusEntityToCorpusDTO).filter(Boolean) as CorpusDTO[]
 })
 
@@ -69,7 +66,8 @@ export const mapCorpusEntityToCorpusDTO = (container?: CorpusContainer): CorpusD
     fullName: corpus.fullName,
     fileName: corpus.fileName || "",
     language: mapLanguageEntityToLanguageDTO(corpus.language),
-    languageCode: corpus.language.code
+    languageCode: corpus.language.code,
+    lastUpdated: corpus.lastUpdated
   }
 }
 
@@ -86,7 +84,8 @@ export const mapCorpusDTOToCorpusEntity = (dto: CorpusDTO): Corpus => {
     books: {},
     fileName: dto.fileName,
     fullText: "",
-    viewType: CorpusViewType.Paragraph
+    viewType: CorpusViewType.Paragraph,
+    lastUpdated: dto.lastUpdated
   }
 }
 

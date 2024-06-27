@@ -13,6 +13,8 @@
     "@mui/x-data-grid": "^6.18.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@rgrove/parse-xml": "^3.0.0",
+    "@types/luxon": "^3.4.2",
+    "luxon": "^3.4.2",
     "@uidotdev/usehooks": "^2.4.1",
     "better-sqlite3": "^9.4.3",
     "cache-manager": "^5.4.0",

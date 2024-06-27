@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS "corpora"
     full_name      TEXT not null,
     file_name      TEXT not null,
     language_id    TEXT not null,
-    last_sync_time integer
+    last_sync_time bigint,
+    last_updated bigint
 );
 CREATE TABLE links
 (

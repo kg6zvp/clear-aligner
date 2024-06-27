@@ -159,6 +159,7 @@ class CorporaEntity {
   file_name?: string;
   words?: string;
   last_sync_time?: number;
+  last_updated?: number;
 
   constructor() {
     this.id = undefined;
@@ -169,6 +170,7 @@ class CorporaEntity {
     this.file_name = '';
     this.words = undefined;
     this.last_sync_time = 0;
+    this.last_updated = Date.now();
   }
 }
 
@@ -204,7 +206,10 @@ const corporaSchema = new EntitySchema({
     }, language_id: {
       type: 'text'
     }, last_sync_time: {
-      type: 'boolean'
+      type: 'bigint'
+    },
+    last_updated: {
+      type: 'bigint'
     }
   }
 });
@@ -320,6 +325,7 @@ export class ProjectRepository extends BaseRepository {
     full_name: corpus.fullName,
     file_name: corpus.fileName,
     last_sync_time: corpus.lastSyncTime,
+    last_updated: corpus.lastUpdated,
     language_id: corpus.language?.code
   });
 
@@ -330,6 +336,7 @@ export class ProjectRepository extends BaseRepository {
     fullName: corpus.full_name,
     fileName: corpus.file_name,
     lastSyncTime: corpus.last_sync_time,
+    lastUpdated: corpus.last_updated,
     language: {
       code: corpus.language_id
     }
@@ -385,8 +392,12 @@ export class ProjectRepository extends BaseRepository {
       // Creates the data source
       const projectDataSource = await this.getDataSource(project.id);
       // Inserts corpora to the {project.id} data source
-      const corpora = [...project.corpora];
-      await this.insert(project.id, CorporaTableName, corpora);
+      const corpora = [...project.corpora].filter(Boolean);
+      await this.insert({
+        sourceName: project.id,
+        table: CorporaTableName,
+        itemOrItems: corpora
+      });
       const sources = await projectDataSource.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();
@@ -515,6 +526,9 @@ export class ProjectRepository extends BaseRepository {
   };
 
   insert = async <T,> ({ sourceName, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => {
+    if(!table || !sourceName || !itemOrItems) {
+      return false;
+    }
     this.logDatabaseTime('insert()');
     try {
       await (await this.getDataSource(sourceName))
@@ -570,7 +584,7 @@ export class ProjectRepository extends BaseRepository {
         });
       return true;
     } catch (ex) {
-      console.error('insert()', ex);
+      console.error('insert()', ex, itemOrItems);
       return false;
     } finally {
       this.logDatabaseTimeEnd('insert()');
@@ -962,12 +976,12 @@ export class ProjectRepository extends BaseRepository {
                                                          c.file_name      as fileName,
                                                          c.side           as side,
                                                          c.last_sync_time as lastSyncTime,
+                                                         c.last_updated   as lastUpdated,
                                                          l.code           as code,
                                                          l.text_direction as textDirection,
                                                          l.font_family    as fontFamily
                                                   from corpora c
                                                            inner join language l on c.language_id = l.code;`));
-      console.log("results: ", results)
       this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
       return (results ?? [])
         .filter(Boolean)
@@ -978,6 +992,7 @@ export class ProjectRepository extends BaseRepository {
           fullName: result.fullName,
           side: result.side,
           lastSyncTime: result.lastSyncTime,
+          lastUpdated: result.lastUpdated,
           language: {
             code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }

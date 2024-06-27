@@ -12,4 +12,5 @@ export interface CorpusDTO {
   fileName: string;
   language: LanguageDTO;
   languageCode: string;
+  lastUpdated: number;
 }

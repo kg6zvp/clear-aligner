@@ -1,37 +1,35 @@
 import { ProjectDTO } from '../../common/data/project/project';
-import { useEffect, useState } from 'react';
-import uuid from 'uuid-random';
+import { useCallback, useEffect, useState } from 'react';
 import { SERVER_URL } from '../../common';
-import { useDatabase } from '../../hooks/useDatabase';
 
 export interface UseProjectsFromServerProps {
   syncProjectsKey?: string;
 }
 
-export const useProjectsFromServer = ({ syncProjectsKey }: UseProjectsFromServerProps): ProjectDTO[] => {
+export const useProjectsFromServer = ({ syncProjectsKey }: UseProjectsFromServerProps): {
+  projects: ProjectDTO[],
+  refetch: CallableFunction
+} => {
   const [ projects, setProjects ] = useState<ProjectDTO[]>([]);
-  const [ lastSyncKey, setLastSyncKey ] = useState(syncProjectsKey ?? uuid());
-  const dbApi = useDatabase();
+  const getProjects = useCallback(async () => {
+    try {
+      const projectsResponse = await fetch(`${SERVER_URL ?? 'http://localhost:8080'}/api/projects/`, {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      const projects = await projectsResponse.json();
+      Array.isArray(projects) && setProjects(projects as ProjectDTO[]);
+    } catch (x) {
+      console.error(x);
+    }
+  }, []);
 
   useEffect(() => {
-    const getProjects = async () => {
-      try {
-        const projectsResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
-          method: 'GET',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        const projects = await projectsResponse.json();
-        console.log("projects response: ", projects)
-        setProjects((Array.isArray(projects) ? projects : []) as ProjectDTO[]);
-      } catch (x) {
-        console.error(x);
-      }
-    }
     void getProjects();
-  }, [lastSyncKey, setProjects]);
+  }, [getProjects, syncProjectsKey, setProjects]);
 
-  return projects;
+  return { projects, refetch: getProjects };
 }

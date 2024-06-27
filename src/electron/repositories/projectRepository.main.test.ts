@@ -8,5 +8,4 @@ test('ProjectRepository#getAllLinks', async () => {
   const source = await projectRepository.getDataSource('default');
   await projectRepository.getAllLinks(source, 100, 0);
   const end = new Date().getTime();
-  console.log('time elapsed', end-start);
 }, 90_000);

@@ -131,6 +131,7 @@ export interface Corpus {
   syntax?: SyntaxRoot;
   hasGloss?: boolean;
   lastSyncTime?: number;
+  lastUpdated: number;
 }
 
 /**

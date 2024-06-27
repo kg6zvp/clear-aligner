@@ -17,7 +17,6 @@ export interface Project {
   languageCode: string;
   textDirection: string;
   fileName: string;
-  lastSyncTime?: number;
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
@@ -109,7 +108,12 @@ export class ProjectTable extends VirtualTable {
     });
     for (const chunk of _.chunk(wordsOrParts, UIInsertChunkSize)) {
       // @ts-ignore
-      await window.databaseApi.insert(project.id, 'words_or_parts', chunk, DatabaseInsertChunkSize).catch(console.error);
+      await window.databaseApi.insert({
+        sourceName: project.id,
+        table: 'words_or_parts',
+        itemOrItems: chunk,
+        chunkSize: DatabaseInsertChunkSize
+      }).catch(console.error);
       progressCtr += chunk.length;
       this.setDatabaseBusyProgress(progressCtr, progressMax);
 

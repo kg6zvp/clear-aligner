@@ -15,8 +15,9 @@ import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
 import { Cloud, CloudSync, Computer } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
-import { ProjectDTO, ProjectState } from '../../common/data/project/project';
-import { SyncProgress, useSyncProjects } from '../../api/projects/useSyncProject';
+import { ProjectDTO } from '../../common/data/project/project';
+import { useSyncProjects } from '../../api/projects/useSyncProject';
+import { DateTime } from 'luxon';
 
 export interface LocalAndRemoteProject {
   local?: Project;
@@ -38,37 +39,29 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
   }, [setSelectedProjectId, setOpenProjectDialog]);
   const layoutCtx = useContext(LayoutContext);
 
-  const allRemoteProjects = useProjectsFromServer({});
-  const remoteProjects = useMemo<ProjectDTO[]>(() =>
-    allRemoteProjects.filter(p => p.state === ProjectState.PUBLISHED), [allRemoteProjects]);
+  const {projects: allRemoteProjects, refetch: refetchRemoteProjects} = useProjectsFromServer({});
 
   const projects = useMemo<LocalAndRemoteProject[]>(() => {
-    const localOnly: LocalAndRemoteProject[] = localProjects
-      .filter((lp) => !remoteProjects.find(rp => lp.id === rp.name))
-      .map((local) => ({
-        local
-      }));
-    console.log('localOnly', localOnly);
-    const remoteOnly: LocalAndRemoteProject[] = remoteProjects
-      .filter((rp) => !localProjects.find((lp) => lp.id === rp.name))
-      .map((remote) => ({
-        remote
-      }));
-    console.log('remoteOnly', remoteOnly);
-    const localAndRemote: LocalAndRemoteProject[] = localProjects
-      .filter((local) => remoteProjects.find((rp) => local.id === rp.name))
-      .map((local) => ({
-        local,
-        remote:  remoteProjects.find((rp) => local.id === rp.name)
-      }));
-    console.log('localAndRemote', localAndRemote);
-    const projectsOut = [...localAndRemote, ...localOnly, ...remoteOnly];
-    console.log('fullList', projectsOut);
-    /*if (remoteProjects.length > 0 && localProjects && localProjects.length > 0) {
-      debugger;
-    } //*/
-    return projectsOut;
-  }, [localProjects,  remoteProjects]);
+     const projectMap: Map<string, LocalAndRemoteProject> = new Map();
+
+    localProjects
+      .forEach((local) => {
+        projectMap.set(local.id, {local});
+      });
+    allRemoteProjects
+      .filter(remote => remote.id)
+      .forEach((remote) => {
+        projectMap.set(remote.name === 'default' ? remote.name : remote.id!, {
+          ...(projectMap.get(remote.name === 'default' ? remote.name : remote.id!) || {}),
+          remote
+        })
+      });
+     return Array.from(projectMap.values());
+  }, [localProjects,  allRemoteProjects]);
+
+  const unavailableProjectNames: string[] = React.useMemo(() => (
+    Array.from(new Set([...localProjects, ...allRemoteProjects].map(p => (p.name || '').trim())))
+  ), [localProjects, allRemoteProjects]);
 
   useEffect(() => {
     layoutCtx.setMenuBarDelegate(
@@ -94,9 +87,10 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
             .sort((p1: LocalAndRemoteProject) => p1.local?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: LocalAndRemoteProject) => (
               <ProjectCard
-                key={project.local?.id ?? project.remote?.name}
+                key={`${project.local?.id ?? project.remote?.name}-${(project.local?.targetCorpora?.corpora ?? [])?.find(c => c.lastSyncTime)?.lastSyncTime}`}
                 project={project}
                 onClick={selectProject}
+                refetchRemoteProjects={refetchRemoteProjects}
                 currentProject={projects.filter(({ local }) => !!local)
                   .find((p: LocalAndRemoteProject) =>
                     p.local?.id === preferences?.currentProject) ?? projects?.[0]}
@@ -111,6 +105,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
           setOpenProjectDialog(false);
           setSelectedProjectId(null);
         }}
+        unavailableProjectNames={unavailableProjectNames}
       />
     </>
   );
@@ -120,11 +115,12 @@ interface ProjectCardProps {
   project: LocalAndRemoteProject;
   currentProject: LocalAndRemoteProject | undefined;
   onClick: (project: LocalAndRemoteProject) => void;
+  refetchRemoteProjects: CallableFunction;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refetchRemoteProjects, onClick }) => {
   useCorpusContainers();
-  const {sync: syncProject, progress} = useSyncProjects();
+  const {sync: syncProject} = useSyncProjects();
 
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.local?.id === currentProject?.local?.id, [project.local?.id, currentProject?.local?.id]);
@@ -141,29 +137,48 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   }, [setPreferences, preferences, project.local?.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   const syncLocalProjectWithServer = React.useCallback(() => {
-    console.log("project.local: ", project.local)
     if(project.local) {
-      syncProject(project.local);
+      syncProject(project.local).then(() => refetchRemoteProjects()).catch(console.error);
     }
-  }, [project]);
+  }, [project, refetchRemoteProjects, syncProject]);
 
-  console.log("project: ", project)
+  const lastSyncTime = React.useMemo(() => (
+    (project.local?.targetCorpora?.corpora ?? []).find(c => !!c.lastSyncTime)?.lastSyncTime
+  ), [project]);
 
-  const icon = useMemo(() => {
-    if (project.local && !project.remote) {
-      if(project.local.lastSyncTime) {
-        return (<Computer sx={theme => ({fill: theme.palette.text.secondary})} />);
-      } else {
-        return (
-          <CloudSync
-            sx={theme => ({fill: theme.palette.text.secondary})}
-          />
-        );
-      }
+
+  const cloudSyncInfo = useMemo(() => {
+    if(!project.remote && !lastSyncTime) {
+      return (
+        <Grid container justifyContent="flex-end" alignItems="center">
+          <Button variant="text" sx={{textTransform: 'none'}} onClick={syncLocalProjectWithServer}>Sync Project</Button>
+          <Computer sx={theme => ({fill: theme.palette.text.secondary})} />
+        </Grid>
+      );
+    } else if(!project.local && project.remote) {
+      return (
+        <Grid container justifyContent="flex-end" alignItems="center">
+          <Typography variant="subtitle2" sx={{mr: 1}}>Remote Project</Typography>
+          <Cloud sx={theme => ({fill: theme.palette.text.secondary})} />
+        </Grid>
+      )
     } else {
-      return (<Cloud sx={theme => ({fill: theme.palette.text.secondary})}/ >);
+      return (
+       <Grid container flexDirection="column">
+         <Grid container justifyContent="flex-end" alignItems="center">
+           {
+             lastSyncTime === (project.remote?.corpora ?? []).find(c => c.lastUpdated)?.lastUpdated ? (
+               <Typography variant="subtitle2" sx={{mr: 1}}>Project Synced</Typography>
+             ) : (
+               <Button variant="text" sx={{textTransform: 'none'}} onClick={syncLocalProjectWithServer}>Sync Project</Button>
+             )
+           }
+           <CloudSync sx={theme => ({fill: theme.palette.text.secondary})} />
+         </Grid>
+       </Grid>
+      )
     }
-  }, [project.local, project.remote]);
+  }, [project.local, project.remote, lastSyncTime, syncLocalProjectWithServer]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
@@ -190,7 +205,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
           ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
           : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-      }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' }
+      }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' },
+      position: 'relative'
     })}>
       <CardContent sx={{
         display: 'flex',
@@ -199,12 +215,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         alignItems: 'flex-end',
         height: '100%'
       }}>
-        {icon}
-        {
-          project.local && (
-            <Button color={progress === SyncProgress.FAILED ? "error" : "primary"} onClick={syncLocalProjectWithServer}>Sync Projects</Button>
-          )
-        }
+        {cloudSyncInfo}
         <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
               onClick={() => onClick(project)}>
           <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>
@@ -227,6 +238,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
               : <></>}
           </Grid>
         </Grid>
+        {
+          lastSyncTime && (
+            <Typography variant="caption" sx={{position: 'absolute', bottom: 0, left: 10}}>
+              Synced On:&nbsp;{DateTime.fromMillis(lastSyncTime, {zone: 'local'}).toFormat("yyyy/mm/dd hh:mm:ss a")}
+            </Typography>
+          )
+        }
       </CardContent>
     </Card>
   );

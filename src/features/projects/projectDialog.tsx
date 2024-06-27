@@ -32,6 +32,8 @@ import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
+import {DateTime} from 'luxon';
+import { useDeleteProject } from '../../api/projects/useDeleteProject';
 
 
 enum TextDirection {
@@ -43,6 +45,7 @@ interface ProjectDialogProps {
   open: boolean;
   closeCallback: () => void;
   projectId: string | null;
+  unavailableProjectNames?: string[];
 }
 
 const getInitialProjectState = (): Project => ({
@@ -55,8 +58,9 @@ const getInitialProjectState = (): Project => ({
   linksTable: new LinksTable()
 });
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
+const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
   const dispatch = useAppDispatch();
+  const {deleteProject} = useDeleteProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = React.useState<Project>(initialProjectState);
@@ -82,15 +86,24 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     closeCallback();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
+  const invalidProjectName = React.useMemo(() => {
+    const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
+    return (
+      unavailableProjectNames.filter(name => name !== foundProject?.name).includes((project.name || '').trim())
+      && !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
+    );
+  }, [unavailableProjectNames, projectState, projectId, projects, project]);
+
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
     && (project.fileName || '').length
     && (project.name || '').length
+    && !invalidProjectName
     && (project.abbreviation || '').length
     && (project.languageCode || '').length
     && Object.keys(TextDirection).includes((project.textDirection || '').toUpperCase())
     && projectUpdated
-  ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
+  ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
   const handleSubmit = React.useCallback(async (type: 'create'|'update', e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
@@ -119,7 +132,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
             side: AlignmentSide.TARGET,
-            lastSyncTime: Date.now(),
+            lastUpdated: DateTime.now().setZone('utc').toMillis(),
+            lastSyncTime: (project.targetCorpora?.corpora ?? []).find(c => c.lastSyncTime)?.lastSyncTime
           } as Corpus;
 
           if (fileContent) {
@@ -135,7 +149,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
-          console.log("projectToUpdate: ", projectToUpdate)
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             setProjects((p: Project[]) => [...p, projectToUpdate]);
@@ -159,6 +172,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
       await projectState.projectTable?.remove?.(projectId);
+      await deleteProject(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
         setPreferences((p: UserPreference | undefined) => ({
@@ -170,7 +184,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
+  }, [deleteProject, project, projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
 
   const setInitialProjectState = React.useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
@@ -207,7 +221,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                 <Typography variant="subtitle2">Name</Typography>
                 <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.name}
                            onChange={({ target: { value: name } }) =>
-                             handleUpdate({ name })} />
+                             handleUpdate({ name })}
+                          error={invalidProjectName}
+                         helperText={invalidProjectName ? 'Project name already in use.' : ''}
+                />
               </FormControl>
               <FormControl>
                 <Typography variant="subtitle2">Abbreviation</Typography>

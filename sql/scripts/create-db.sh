@@ -31,7 +31,8 @@ else
     -cl 'heb' \
     -ctd 'rtl'\
     -cff 'sbl-hebrew' \
-    -clst ''
+    -clst '' \
+    -clu ''
   python3 ./create-db.py \
     -of "${templateDbPath}" \
     -cf '../../src/tsv/source_macula_greek_SBLGNT.tsv' \
@@ -42,7 +43,8 @@ else
     -cl 'grc' \
     -ctd 'ltr'\
     -cff '' \
-    -clst ''
+    -clst '' \
+    -clu ''
   python3 ./create-db.py \
     -of "${templateDbPath}" \
     -sf 'finalize-db.sql'
@@ -78,7 +80,8 @@ else
     -ctd 'ltr'\
     -cff '' \
     -cif 'id' \
-    -clst ''
+    -clst '' \
+    -clu ''
   python3 ./create-db.py \
     -of "${defaultDbPath}" \
     -sf 'finalize-db.sql'
