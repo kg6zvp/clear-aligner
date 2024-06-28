@@ -89,20 +89,17 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInEnabled, setUserStatus
 
       <Menu
         id="basic-menu"
-        anchorEl={anchorEl}
+        anchorReference="anchorPosition"
         open={open}
         onClose={handleClose}
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
-        anchorOrigin={{
-          vertical:'top',
-          horizontal: 'right'
-        }}
-        transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right'
+        anchorPosition={{
+          top: 735,
+          left: 25,
         }}>
+
         <MenuItem onClick={handleClose} disabled>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />

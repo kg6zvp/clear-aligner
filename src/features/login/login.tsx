@@ -42,9 +42,10 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
     <Popover
       open={isLoginModalOpen}
       onClose={handleLoginModalClose}
-      anchorOrigin={{
-        vertical:'bottom',
-        horizontal: 'left'
+      anchorReference="anchorPosition"
+      anchorPosition={{
+        top: 590,
+        left: 25,
       }}
     >
       <Box>
