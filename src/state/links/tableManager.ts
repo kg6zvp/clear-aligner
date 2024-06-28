@@ -22,6 +22,7 @@ const DatabaseCacheMaxSize = 1_000;
 export const EmptyWordId = '00000000000';
 export const DefaultProjectName = 'default';
 export const LinkTableName = 'links';
+export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
 const PreloadVerseRange = 3;
 
@@ -64,27 +65,46 @@ export class LinksTable extends VirtualTable {
     this.logDatabaseTime('save()');
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
+      const [ linksToPersist, linksToUpdate ]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
       let allResult = false;
-      const newLinksArray = [];
-      const newLinksArrayIDs = [];
-      const linkIDsToRemove = [];
-      for (const link of links){
-        const newLink: Link = {
-          id: link.id ?? uuid(),
-          metadata: link.metadata,
-          sources: (link.sources ?? []).map(BCVWP.sanitize),
-          targets: (link.targets ?? []).map(BCVWP.sanitize)
-        };
-        linkIDsToRemove.push(link.id || "");
-        newLinksArray.push(newLink)
-        newLinksArrayIDs.push(newLink.id || "");
-      }
+
+      const linkIds = linksToUpdate.map(({ id }) => id!);
+
       await this.checkDatabase();
-      await this.remove(linkIDsToRemove, true, true);
-      const oneResult = await dbApi.save(this.getSourceName(), LinkTableName, newLinksArray);
-      await dbApi.updateLinkText(this.getSourceName(), newLinksArrayIDs);
+      if (linksToPersist.length > 0) {
+        const insertResult = await dbApi.insert({
+          sourceName: this.getSourceName(),
+          table: LinkTableName,
+          itemOrItems: linksToPersist.map((link) => {
+            const id = uuid();
+            linkIds.push(id);
+            return ({
+              id,
+              metadata: link.metadata,
+              sources: (link.sources ?? []).map(BCVWP.sanitize),
+              targets: (link.targets ?? []).map(BCVWP.sanitize)
+            });
+          }),
+          disableJournaling: suppressOnUpdate
+        });
+        allResult ||= insertResult;
+      }
+      if (linksToUpdate.length > 0) {
+        const saveResult = await dbApi.save({
+          sourceName: this.getSourceName(),
+          table: LinkTableName,
+          itemOrItems: linksToUpdate.map((link) => ({
+            id: link.id,
+            metadata: link.metadata,
+            sources: (link.sources ?? []).map(BCVWP.sanitize),
+            targets: (link.targets ?? []).map(BCVWP.sanitize)
+          })),
+          disableJournaling: suppressOnUpdate
+        });
+        allResult ||= saveResult;
+      }
+      await dbApi.updateLinkText(this.getSourceName(), linkIds);
       await this._onUpdate(suppressOnUpdate);
-      allResult ||= oneResult;
 
       return allResult;
     } catch (e) {
@@ -108,8 +128,11 @@ export class LinksTable extends VirtualTable {
     this.setDatabaseBusyText('Removing old links...');
     try {
       await this.checkDatabase();
-      // @ts-ignore
-      const result = await window.databaseApi.deleteAll(this.getSourceName(), LinkTableName);
+      const result = await dbApi.deleteAll({
+        sourceName: this.getSourceName(),
+        table: LinkTableName,
+        disableJournaling: true
+      });
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
@@ -123,7 +146,7 @@ export class LinksTable extends VirtualTable {
 
   saveAlignmentFile = async (alignmentFile: AlignmentFile,
                              suppressOnUpdate = false,
-                             isForced = false) =>
+                             isForced = false) => {
     await this.saveAll(alignmentFile.records.map(
       (record) =>
         ({
@@ -135,11 +158,18 @@ export class LinksTable extends VirtualTable {
           sources: record.source,
           targets: record.target
         } as Link)
-    ), suppressOnUpdate, isForced);
+    ), suppressOnUpdate, isForced, true);
+    // remove journal entries on import
+    await dbApi.deleteAll({
+      sourceName: this.getSourceName(),
+      table: JournalEntryTableName
+    });
+  };
 
   saveAll = async (inputLinks: Link[],
                    suppressOnUpdate = false,
-                   isForced = false) => {
+                   isForced = false,
+                   disableJournaling = false) => {
     // reentry is possible because everything is
     // done in chunks with promises
     if (!isForced && this.isDatabaseBusy()) {
@@ -176,7 +206,13 @@ export class LinksTable extends VirtualTable {
         progressMax
       });
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
-        await dbApi.insert(this.getSourceName(), LinkTableName, chunk, DatabaseInsertChunkSize);
+        await dbApi.insert({
+          sourceName: this.getSourceName(),
+          table: LinkTableName,
+          itemOrItems: chunk,
+          chunkSize: DatabaseInsertChunkSize,
+          disableJournaling
+      });
         progressCtr += chunk.length;
         this.setDatabaseBusyProgress(progressCtr, progressMax);
 
@@ -295,8 +331,11 @@ export class LinksTable extends VirtualTable {
     this.logDatabaseTime('remove()');
     try {
       await this.checkDatabase();
-      // @ts-ignore
-      const result = await window.databaseApi.deleteByIds(this.getSourceName(), LinkTableName, itemIdOrIds ?? '');
+      const result = await dbApi.deleteByIds({
+        sourceName: this.getSourceName(),
+        table: LinkTableName,
+        itemIdOrIds: itemIdOrIds ?? ''
+      });
       await this._onUpdate(suppressOnUpdate);
       return result;
     } catch (ex) {
@@ -381,7 +420,8 @@ export class LinksTable extends VirtualTable {
    * @param alignmentRecord Input Alignment record (required).
    */
   static createAlignmentRecordId = (alignmentRecord: AlignmentRecord): string =>
-    LinksTable.createIdFromWordId(alignmentRecord?.target?.[0] ?? EmptyWordId);
+    alignmentRecord.meta.id
+    ?? LinksTable.createIdFromWordId(alignmentRecord?.target?.[0] ?? EmptyWordId);
 }
 
 const databaseHookDebug = (text: string, ...args: any[]) => {
