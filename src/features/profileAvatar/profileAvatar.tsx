@@ -33,7 +33,8 @@ export const userState = {
 }
 
 interface ProfileMenuProps {
-  isSignInEnabled: boolean;
+  isSignInButtonVisible: boolean;
+  isSignInButtonDisabled: boolean;
   setUserStatus: Function;
 }
 
@@ -41,11 +42,10 @@ interface ProfileMenuProps {
  * This component is used for users to display the
  * User Profile Menu when the Avatar is clicked
  */
-const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInEnabled, setUserStatus}) => {
+const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, setUserStatus, isSignInButtonDisabled}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
-
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -125,8 +125,11 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInEnabled, setUserStatus
           </ListItemText>
         </MenuItem>
         <Divider/>
-        {isSignInEnabled
-          ? (<MenuItem onClick={handleLoginClick}>
+        {isSignInButtonVisible
+          ? (<MenuItem
+            onClick={handleLoginClick}
+            disabled={isSignInButtonDisabled}
+          >
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
@@ -160,25 +163,26 @@ export const ProfileAvatar = () => {
   const [userStatus, setUserStatus] = React.useState(userState.LoggedIn)
   const network = useNetworkState();
 
-  const [isSignInEnabled, setIsSignInEnabled] = React.useState(true)
+  const [isSignInButtonVisible, setIsSignInButtonVisible] = React.useState(true)
+  const [isSignInButtonDisabled, setIsSignInButtonDisabled] = React.useState(false)
 
+
+  // check network status
   useEffect( () => {
     if(network.online){
-      setUserStatus(userState.LoggedOut)
-      setIsSignInEnabled(true)
+      setIsSignInButtonDisabled(false)
     }
     else{
-      setUserStatus(userState.Offline)
-      setIsSignInEnabled(false)
+      setIsSignInButtonDisabled(true)
     }
   },[network])
 
   useEffect(() => {
     if(userStatus === userState.LoggedIn){
-      setIsSignInEnabled(false);
+      setIsSignInButtonVisible(false);
     }
     else if (userStatus === userState.LoggedOut){
-      setIsSignInEnabled(true);
+      setIsSignInButtonVisible(true);
     }
   },[userStatus])
 
@@ -191,7 +195,7 @@ export const ProfileAvatar = () => {
         console.log('userId is: ', userId)
         console.log('signInDetails is: ', signInDetails)
         setUserStatus(userState.LoggedIn)
-        setIsSignInEnabled(false);
+        setIsSignInButtonVisible(false);
       }
       catch(error){
         console.log('error retrieving current user details: ', error)
@@ -237,7 +241,8 @@ export const ProfileAvatar = () => {
               }}
             >
               <ProfileMenu
-                isSignInEnabled={isSignInEnabled}
+                isSignInButtonVisible={isSignInButtonVisible}
+                isSignInButtonDisabled={isSignInButtonDisabled}
                 setUserStatus={setUserStatus}
               />
             </Avatar>
