@@ -16,6 +16,7 @@ import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
 import { CustomSnackbar } from './features/snackbar';
 import { Amplify } from "aws-amplify"
+import { NetworkState } from '@uidotdev/usehooks';
 
 
 Amplify.configure({
@@ -53,6 +54,7 @@ export interface AppContextProps {
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   containers: Containers;
+  network: NetworkState;
 }
 
 export type THEME = 'night' | 'day';

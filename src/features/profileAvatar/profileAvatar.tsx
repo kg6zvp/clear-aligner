@@ -2,8 +2,7 @@ import { Avatar, Button, Divider, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
-import React, { useEffect } from 'react';
-import { useNetworkState } from '@uidotdev/usehooks';
+import React, { useContext, useEffect } from 'react';
 
 import ListItemIcon from '@mui/material/ListItemIcon';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -13,6 +12,7 @@ import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Login from '../login/login';
 import { signOut, getCurrentUser } from 'aws-amplify/auth';
+import { AppContext } from '../../App';
 
 /**
  * userState is an object containing the different user States
@@ -161,11 +161,9 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, setUser
  */
 export const ProfileAvatar = () => {
   const [userStatus, setUserStatus] = React.useState(userState.LoggedIn)
-  const network = useNetworkState();
-
   const [isSignInButtonVisible, setIsSignInButtonVisible] = React.useState(true)
   const [isSignInButtonDisabled, setIsSignInButtonDisabled] = React.useState(false)
-
+  const appCtx = useContext(AppContext);
 
   // Update Network and Logged In Status
   useEffect( () => {
@@ -183,7 +181,7 @@ export const ProfileAvatar = () => {
         console.log('error retrieving current user details: ', error)
       }
     }
-    if(network.online){
+    if(appCtx.network.online){
       setIsSignInButtonDisabled(false)
       getCurrentUserDetails();
     }
@@ -191,7 +189,7 @@ export const ProfileAvatar = () => {
       setIsSignInButtonDisabled(true)
       setUserStatus(userState.Offline)
     }
-  },[network])
+  },[appCtx.network])
 
   useEffect(() => {
     if(userStatus === userState.LoggedIn){

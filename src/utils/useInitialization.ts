@@ -11,6 +11,7 @@ import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { useInterval } from 'usehooks-ts';
+import { useNetworkState } from '@uidotdev/usehooks';
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -18,6 +19,8 @@ const useInitialization = () => {
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
+
+  const network = useNetworkState();
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -126,7 +129,8 @@ const useInitialization = () => {
     setPreferences,
     projects,
     setProjects,
-    containers
+    containers,
+    network
   } as AppContextProps;
 };
 
