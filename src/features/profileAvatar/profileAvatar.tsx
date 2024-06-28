@@ -167,26 +167,7 @@ export const ProfileAvatar = () => {
   const [isSignInButtonDisabled, setIsSignInButtonDisabled] = React.useState(false)
 
 
-  // check network status
-  useEffect( () => {
-    if(network.online){
-      setIsSignInButtonDisabled(false)
-    }
-    else{
-      setIsSignInButtonDisabled(true)
-    }
-  },[network])
-
-  useEffect(() => {
-    if(userStatus === userState.LoggedIn){
-      setIsSignInButtonVisible(false);
-    }
-    else if (userStatus === userState.LoggedOut){
-      setIsSignInButtonVisible(true);
-    }
-  },[userStatus])
-
-  // check to see if a user is currently logged in
+  // Update Network and Logged In Status
   useEffect( () => {
     const getCurrentUserDetails = async () => {
       try{
@@ -198,11 +179,28 @@ export const ProfileAvatar = () => {
         setIsSignInButtonVisible(false);
       }
       catch(error){
+        setUserStatus(userState.LoggedOut)
         console.log('error retrieving current user details: ', error)
       }
     }
-    getCurrentUserDetails();
-  },[])
+    if(network.online){
+      setIsSignInButtonDisabled(false)
+      getCurrentUserDetails();
+    }
+    else{
+      setIsSignInButtonDisabled(true)
+      setUserStatus(userState.Offline)
+    }
+  },[network])
+
+  useEffect(() => {
+    if(userStatus === userState.LoggedIn){
+      setIsSignInButtonVisible(false);
+    }
+    else if (userStatus === userState.LoggedOut){
+      setIsSignInButtonVisible(true);
+    }
+  },[userStatus])
 
 
   const StyledBadge = styled(Badge)(({ theme }) => ({
