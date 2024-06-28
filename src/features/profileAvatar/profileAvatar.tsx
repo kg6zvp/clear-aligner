@@ -12,7 +12,7 @@ import ListItemText from '@mui/material/ListItemText';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Login from '../login/login';
-import { signOut } from 'aws-amplify/auth';
+import { signOut, getCurrentUser } from 'aws-amplify/auth';
 
 /**
  * userState is an object containing the different user States
@@ -181,6 +181,24 @@ export const ProfileAvatar = () => {
       setIsSignInEnabled(true);
     }
   },[userStatus])
+
+  // check to see if a user is currently logged in
+  useEffect( () => {
+    const getCurrentUserDetails = async () => {
+      try{
+        const { username, userId, signInDetails } = await getCurrentUser();
+        console.log('username is: ', username)
+        console.log('userId is: ', userId)
+        console.log('signInDetails is: ', signInDetails)
+        setUserStatus(userState.LoggedIn)
+        setIsSignInEnabled(false);
+      }
+      catch(error){
+        console.log('error retrieving current user details: ', error)
+      }
+    }
+    getCurrentUserDetails();
+  },[])
 
 
   const StyledBadge = styled(Badge)(({ theme }) => ({
