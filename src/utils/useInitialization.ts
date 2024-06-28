@@ -12,6 +12,8 @@ import { getAvailableCorporaContainers, InitializationStates } from '../workbenc
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { useInterval } from 'usehooks-ts';
 import { useNetworkState } from '@uidotdev/usehooks';
+import { userState } from '../features/profileAvatar/profileAvatar';
+import { getCurrentUser } from 'aws-amplify/auth';
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -19,7 +21,7 @@ const useInitialization = () => {
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
-
+  const [userStatus, setUserStatus] = React.useState(userState.LoggedOut)
   const network = useNetworkState();
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
@@ -122,6 +124,29 @@ const useInitialization = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update Network and Logged In Status
+  useEffect( () => {
+    const getCurrentUserDetails = async () => {
+      try{
+        const { username, userId, signInDetails } = await getCurrentUser();
+        console.log('username is: ', username)
+        console.log('userId is: ', userId)
+        console.log('signInDetails is: ', signInDetails)
+        setUserStatus(userState.LoggedIn)
+      }
+      catch(error){
+        setUserStatus(userState.LoggedOut)
+        console.log('error retrieving current user details: ', error)
+      }
+    }
+    if(network.online){
+      getCurrentUserDetails();
+    }
+    else{
+      setUserStatus(userState.Offline)
+    }
+  },[network])
+
   return {
     projectState: state,
     setProjectState: setState,
@@ -130,7 +155,9 @@ const useInitialization = () => {
     projects,
     setProjects,
     containers,
-    network
+    network,
+    userStatus,
+    setUserStatus,
   } as AppContextProps;
 };
 

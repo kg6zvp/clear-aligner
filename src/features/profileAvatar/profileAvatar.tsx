@@ -35,18 +35,17 @@ export const userState = {
 interface ProfileMenuProps {
   isSignInButtonVisible: boolean;
   isSignInButtonDisabled: boolean;
-  setUserStatus: Function;
 }
 
 /**
  * This component is used for users to display the
  * User Profile Menu when the Avatar is clicked
  */
-const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, setUserStatus, isSignInButtonDisabled}) => {
+const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignInButtonDisabled}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
-
+  const { setUserStatus } = useContext(AppContext);
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -160,36 +159,19 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, setUser
  * and do things like access personal preferences.
  */
 export const ProfileAvatar = () => {
-  const [userStatus, setUserStatus] = React.useState(userState.LoggedIn)
   const [isSignInButtonVisible, setIsSignInButtonVisible] = React.useState(true)
   const [isSignInButtonDisabled, setIsSignInButtonDisabled] = React.useState(false)
-  const appCtx = useContext(AppContext);
+  const { network, userStatus } = useContext(AppContext);
 
   // Update Network and Logged In Status
   useEffect( () => {
-    const getCurrentUserDetails = async () => {
-      try{
-        const { username, userId, signInDetails } = await getCurrentUser();
-        console.log('username is: ', username)
-        console.log('userId is: ', userId)
-        console.log('signInDetails is: ', signInDetails)
-        setUserStatus(userState.LoggedIn)
-        setIsSignInButtonVisible(false);
-      }
-      catch(error){
-        setUserStatus(userState.LoggedOut)
-        console.log('error retrieving current user details: ', error)
-      }
-    }
-    if(appCtx.network.online){
+    if(network.online){
       setIsSignInButtonDisabled(false)
-      getCurrentUserDetails();
     }
     else{
       setIsSignInButtonDisabled(true)
-      setUserStatus(userState.Offline)
     }
-  },[appCtx.network])
+  },[network])
 
   useEffect(() => {
     if(userStatus === userState.LoggedIn){
@@ -239,7 +221,6 @@ export const ProfileAvatar = () => {
               <ProfileMenu
                 isSignInButtonVisible={isSignInButtonVisible}
                 isSignInButtonDisabled={isSignInButtonDisabled}
-                setUserStatus={setUserStatus}
               />
             </Avatar>
         </StyledBadge>

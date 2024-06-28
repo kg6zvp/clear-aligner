@@ -55,6 +55,8 @@ export interface AppContextProps {
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   containers: Containers;
   network: NetworkState;
+  userStatus: any;
+  setUserStatus: Function;
 }
 
 export type THEME = 'night' | 'day';
