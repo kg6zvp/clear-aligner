@@ -36,8 +36,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
 
   }
 
-
-
   return (
     <Popover
       open={isLoginModalOpen}
@@ -51,9 +49,9 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
       <Box>
         <DialogTitle>
           <Typography
-            variant={'h6'}
             color={'blue'}
             align={'center'}
+            fontSize={'18px'}
           >
             Sign in for ClearAligner Sync
           </Typography>
@@ -76,8 +74,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
                 type="email"
                 InputLabelProps={{shrink: true, required: false}}
                 onChange={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
                   setEmailAddress(e.target.value)
                 }}
               />
