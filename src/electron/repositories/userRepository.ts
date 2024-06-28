@@ -6,9 +6,12 @@ import { DataSource, EntitySchema, Repository } from 'typeorm';
 import path from 'path';
 import { ControlPanelFormat, UserPreferenceDto } from '../../state/preferences/tableManager';
 import { AddProjectsTable1718861542573 } from '../typeorm-migrations/user/1718861542573-add-projects-table';
-import { ProjectEntity, ProjectTableName } from '../../common/data/project/project';
+import { ProjectEntity } from '../../common/data/project/project';
 import { UserRepositoryIFace } from '../../common/repositories/userRepository';
 import uuid from 'uuid-random';
+import { AddProjectSync1719514157111 } from '../typeorm-migrations/user/1719514157111-add-project-sync';
+
+export const ProjectTableName = 'project';
 
 /**
  * This class encapsulates the user preferences
@@ -63,6 +66,14 @@ const projectEntitySchema = new EntitySchema<ProjectEntity>({
     serverState: {
       name: 'server_state',
       type: 'varchar'
+    },
+    lastSyncTime: {
+      name: 'last_sync_time',
+      type: 'bigint'
+    },
+    lastUpdated: {
+      name: 'last_updated',
+      type: 'bigint'
     }
   }
 })
@@ -77,7 +88,8 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
   getDataSource: () => Promise<DataSource>;
 
   getMigrations = async (): Promise<any[]> => ([
-    AddProjectsTable1718861542573
+    AddProjectsTable1718861542573,
+    AddProjectSync1719514157111
   ]);
 
   constructor() {
@@ -92,7 +104,10 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
         path.join(this.getTemplatesDirectory(), 'clear-aligner-user.sqlite'),
         this.getDataDirectory());
   }
-
+  getProjects = async (): Promise<ProjectEntity[]> => {
+    const repo: Repository<ProjectEntity> = (await this.getDataSource()).getRepository(ProjectEntity);
+    return await repo.createQueryBuilder(ProjectTableName).getMany() || [];
+  };
   projectPersist = async (p: ProjectEntity): Promise<ProjectEntity> => {
     const repo: Repository<ProjectEntity> = (await this.getDataSource()).getRepository(ProjectEntity);
     if (!p.id) {

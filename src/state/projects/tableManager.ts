@@ -7,6 +7,7 @@ import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
@@ -20,6 +21,8 @@ export interface Project {
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
+  lastSyncTime?: number;
+  lastUpdated?: number;
 }
 
 export interface ProjectDto {
@@ -89,6 +92,28 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
+  sync = async (project: Project, location: ProjectLocation): Promise<boolean> => {
+    try {
+      if (this.isDatabaseBusy()) return false;
+      this.incrDatabaseBusyCtr();
+      const projectEntity: ProjectEntity = {
+        id: project.id,
+        name: project.name,
+        location,
+        serverState: ProjectState.DRAFT,
+        lastSyncTime: project.lastSyncTime,
+        lastUpdated: project.lastUpdated
+      };
+      // @ts-ignore
+      await window.databaseApi.projectSave(projectEntity);
+      this.decrDatabaseBusyCtr();
+      return true;
+    } catch (e) {
+      console.error('Error syncing project: ', e);
+      return false;
+    }
+  };
+
   insertWordsOrParts = async (project: Project) => {
     this.incrDatabaseBusyCtr();
     const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
@@ -148,11 +173,24 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
+  getProjectTableData = async (): Promise<ProjectEntity[]> => {
+    try {
+      return (await dbApi.getProjects()) ?? [];
+    } catch (ex) {
+      console.error('Unable to convert data source to project: ', ex);
+      return [];
+    }
+  }
+
   getProjects = async (requery = false): Promise<Map<string, Project> | undefined> => {
     if (requery) {
-      const projects = await this.getDataSourcesAsProjects();
-      if (projects) {
-        this.projects = new Map<string, Project>(projects.filter(p => p).map(p => [p.id, p]));
+      const dataSources = await this.getDataSourcesAsProjects();
+      if (dataSources) {
+        const projectEntities = await this.getProjectTableData();
+        this.projects = new Map<string, Project>(dataSources.filter(p => p).map(p => [p.id, {
+          ...(projectEntities.find(e => e.id === p.id) ?? {}),
+          ...p,
+        }]));
       }
     }
     return this.projects;

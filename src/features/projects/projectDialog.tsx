@@ -132,8 +132,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
             side: AlignmentSide.TARGET,
-            lastUpdated: DateTime.now().toUTC().toMillis(),
-            lastSyncTime: (project.targetCorpora?.corpora ?? []).find(c => c.lastSyncTime)?.lastSyncTime
           } as Corpus;
 
           if (fileContent) {
@@ -149,6 +147,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
+          projectToUpdate.lastUpdated = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             setProjects((p: Project[]) => [...p, projectToUpdate]);

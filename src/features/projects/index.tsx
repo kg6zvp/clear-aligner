@@ -15,7 +15,7 @@ import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
 import { Cloud, CloudSync, Computer } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
-import { ProjectDTO } from '../../common/data/project/project';
+import { ProjectDTO, ProjectLocation } from '../../common/data/project/project';
 import { SyncProgress, useSyncProjects } from '../../api/projects/useSyncProject';
 import { DateTime } from 'luxon';
 import useBusyDialog from '../../utils/useBusyDialog';
@@ -89,7 +89,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
             .sort((p1: LocalAndRemoteProject) => p1.local?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: LocalAndRemoteProject) => (
               <ProjectCard
-                key={`${project.local?.id ?? project.remote?.name}-${(project.local?.targetCorpora?.corpora ?? [])?.find(c => c.lastSyncTime)?.lastSyncTime}`}
+                key={`${project.local?.id ?? project.remote?.name}-${project.local?.lastSyncTime}`}
                 project={project}
                 onClick={selectProject}
                 refetchRemoteProjects={refetchRemoteProjects}
@@ -144,50 +144,62 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setPreferences, preferences, project.local?.id, projectState.userPreferenceTable, projectState.linksTable]);
 
+  const lastSyncTime = React.useMemo(() => (
+    project.local?.lastSyncTime
+  ), [project]);
+
+  const projectLocation: ProjectLocation = React.useMemo(() => {
+    if (!project.remote && !lastSyncTime) {
+      return ProjectLocation.LOCAL;
+    } else if (!project.local && project.remote) {
+      return ProjectLocation.REMOTE;
+    } else {
+      return ProjectLocation.SYNCED;
+    }
+  }, [project]);
+
   const syncLocalProjectWithServer = React.useCallback(() => {
     if (project.local) {
-      syncProject(project.local).then(() => refetchRemoteProjects()).catch(console.error);
+      syncProject(project.local, projectLocation).then(() => refetchRemoteProjects()).catch(console.error);
     }
   }, [project, refetchRemoteProjects, syncProject]);
 
-  const lastSyncTime = React.useMemo(() => (
-    (project.local?.targetCorpora?.corpora ?? []).find(c => !!c.lastSyncTime)?.lastSyncTime
-  ), [project]);
-
   const cloudSyncInfo = useMemo(() => {
-    if (!project.remote && !lastSyncTime) {
-      return (
-        <Grid container justifyContent="flex-end" alignItems="center">
-          <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
-            Project</Button>
-          <Computer sx={theme => ({ fill: theme.palette.text.secondary })} />
-        </Grid>
-      );
-    } else if (!project.local && project.remote) {
-      return (
-        <Grid container justifyContent="flex-end" alignItems="center">
-          <Typography variant="subtitle2" sx={{ mr: 1 }}>Remote Project</Typography>
-          <Cloud sx={theme => ({ fill: theme.palette.text.secondary })} />
-        </Grid>
-      );
-    } else {
-      return (
-        <Grid container flexDirection="column">
+    switch(projectLocation) {
+      case ProjectLocation.LOCAL:
+        return (
           <Grid container justifyContent="flex-end" alignItems="center">
-            {
-              lastSyncTime === (project.local?.targetCorpora?.corpora ?? []).find(c => !!c.lastUpdated)?.lastUpdated ? (
-                <Typography variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
-              ) : (
-                <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
-                  Project</Button>
-              )
-            }
-            <CloudSync sx={theme => ({ fill: theme.palette.text.secondary })} />
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
+              Project</Button>
+            <Computer sx={theme => ({ fill: theme.palette.text.secondary })} />
           </Grid>
-        </Grid>
-      );
+        );
+      case ProjectLocation.REMOTE:
+        return (
+          <Grid container justifyContent="flex-end" alignItems="center">
+            <Typography variant="subtitle2" sx={{ mr: 1 }}>Remote Project</Typography>
+            <Cloud sx={theme => ({ fill: theme.palette.text.secondary })} />
+          </Grid>
+        );
+      case ProjectLocation.SYNCED:
+      default:
+        return (
+          <Grid container flexDirection="column">
+            <Grid container justifyContent="flex-end" alignItems="center">
+              {
+                lastSyncTime === project.local?.lastUpdated ? (
+                  <Typography variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
+                ) : (
+                  <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
+                    Project</Button>
+                )
+              }
+              <CloudSync sx={theme => ({ fill: theme.palette.text.secondary })} />
+            </Grid>
+          </Grid>
+        );
     }
-  }, [project.local, project.remote, lastSyncTime, syncLocalProjectWithServer, syncingProjects]);
+  }, [projectLocation, project, lastSyncTime, syncLocalProjectWithServer, syncingProjects]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {

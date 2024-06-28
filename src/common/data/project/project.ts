@@ -21,6 +21,8 @@ export interface ProjectDTO {
   name: string;
   state?: ProjectState;
   corpora: CorpusDTO[];
+  lastUpdated?: number;
+  lastSyncTime?: number;
 }
 
 export enum ProjectLocation {
@@ -34,6 +36,8 @@ export class ProjectEntity {
   name: string;
   location: ProjectLocation;
   serverState?: ProjectState;
+  lastSyncTime?: number;
+  lastUpdated?: number;
   corpora?: Corpus[];
   constructor() {
     this.name = '';
@@ -46,14 +50,18 @@ export const mapProjectDTOToProjectEntity = (dto: ProjectDTO, location: ProjectL
   name: dto.name,
   serverState: dto.state,
   location,
-  corpora: (dto.corpora || []).map(mapCorpusDTOToCorpusEntity)
+  corpora: (dto.corpora || []).map(mapCorpusDTOToCorpusEntity),
+  lastUpdated: dto.lastUpdated,
+  lastSyncTime: dto.lastSyncTime
 });
 
 export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
   id: project.id,
   name: project.name,
   state: ProjectState.DRAFT,
-  corpora: [project.targetCorpora, project.sourceCorpora].map(mapCorpusEntityToCorpusDTO).filter(Boolean) as CorpusDTO[]
+  corpora: [project.targetCorpora, project.sourceCorpora].map(mapCorpusEntityToCorpusDTO).filter(Boolean) as CorpusDTO[],
+  lastSyncTime: project.lastSyncTime,
+  lastUpdated: project.lastUpdated
 })
 
 export const mapCorpusEntityToCorpusDTO = (container?: CorpusContainer): CorpusDTO | undefined => {
@@ -67,7 +75,6 @@ export const mapCorpusEntityToCorpusDTO = (container?: CorpusContainer): CorpusD
     fileName: corpus.fileName || "",
     language: mapLanguageEntityToLanguageDTO(corpus.language),
     languageCode: corpus.language.code,
-    lastUpdated: corpus.lastUpdated
   }
 }
 
@@ -85,7 +92,6 @@ export const mapCorpusDTOToCorpusEntity = (dto: CorpusDTO): Corpus => {
     fileName: dto.fileName,
     fullText: "",
     viewType: CorpusViewType.Paragraph,
-    lastUpdated: dto.lastUpdated
   }
 }
 

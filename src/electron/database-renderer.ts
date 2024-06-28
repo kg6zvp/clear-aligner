@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('databaseApi', {
   // User
   getPreferences: () => ipcRenderer.invoke(`${ChannelPrefix}:getPreferences`),
   createOrUpdatePreferences: (preferences) => ipcRenderer.invoke(`${ChannelPrefix}:createOrUpdatePreferences`, preferences),
+  projectSave: (project) => ipcRenderer.invoke(`${ChannelPrefix}:projectSave`, project),
+  getProjects: () => ipcRenderer.invoke(`${ChannelPrefix}:getProjects`),
   // Projects
   getDataSources: () => ipcRenderer.invoke(`${ChannelPrefix}:getDataSources`),
   getDataSource: (sourceName: string) => ipcRenderer.invoke(`${ChannelPrefix}:getDataSource`, sourceName),

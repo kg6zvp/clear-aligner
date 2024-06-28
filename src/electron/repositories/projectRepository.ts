@@ -158,8 +158,6 @@ class CorporaEntity {
   full_name?: string;
   file_name?: string;
   words?: string;
-  last_sync_time?: number;
-  last_updated?: number;
 
   constructor() {
     this.id = undefined;
@@ -169,8 +167,6 @@ class CorporaEntity {
     this.full_name = '';
     this.file_name = '';
     this.words = undefined;
-    this.last_sync_time = 0;
-    this.last_updated = Date.now();
   }
 }
 
@@ -205,12 +201,7 @@ const corporaSchema = new EntitySchema({
       type: 'text'
     }, language_id: {
       type: 'text'
-    }, last_sync_time: {
-      type: 'bigint'
     },
-    last_updated: {
-      type: 'bigint'
-    }
   }
 });
 
@@ -324,8 +315,6 @@ export class ProjectRepository extends BaseRepository {
     name: corpus.name,
     full_name: corpus.fullName,
     file_name: corpus.fileName,
-    last_sync_time: corpus.lastSyncTime,
-    last_updated: corpus.lastUpdated,
     language_id: corpus.language?.code
   });
 
@@ -335,8 +324,6 @@ export class ProjectRepository extends BaseRepository {
     name: corpus.name,
     fullName: corpus.full_name,
     fileName: corpus.file_name,
-    lastSyncTime: corpus.last_sync_time,
-    lastUpdated: corpus.last_updated,
     language: {
       code: corpus.language_id
     }
@@ -975,8 +962,6 @@ export class ProjectRepository extends BaseRepository {
                                                          c.full_name      as fullName,
                                                          c.file_name      as fileName,
                                                          c.side           as side,
-                                                         c.last_sync_time as lastSyncTime,
-                                                         c.last_updated   as lastUpdated,
                                                          l.code           as code,
                                                          l.text_direction as textDirection,
                                                          l.font_family    as fontFamily
@@ -991,8 +976,6 @@ export class ProjectRepository extends BaseRepository {
           fileName: result.fileName,
           fullName: result.fullName,
           side: result.side,
-          lastSyncTime: result.lastSyncTime,
-          lastUpdated: result.lastUpdated,
           language: {
             code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }
