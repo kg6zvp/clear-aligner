@@ -51,8 +51,9 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
       <Box>
         <DialogTitle>
           <Typography
-            variant="h6"
+            variant={'h6'}
             color={'blue'}
+            align={'center'}
           >
             Sign in for ClearAligner Sync
           </Typography>
