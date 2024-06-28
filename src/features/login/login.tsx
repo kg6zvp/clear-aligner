@@ -7,31 +7,36 @@ import { Button, DialogTitle, Popover, Stack, Typography } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signIn } from "aws-amplify/auth";
 import { signOut } from "aws-amplify/auth"
+import { userState } from '../profileAvatar/profileAvatar';
 
 
 interface LoginProps {
   isLoginModalOpen: boolean;
   handleLoginModalClose: () => void;
   popOverAnchorEl: HTMLElement | null;
+  setUserStatus: Function;
 }
 
-export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalClose, popOverAnchorEl}): ReactElement => {
+export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalClose, popOverAnchorEl, setUserStatus}): ReactElement => {
   const [emailAddress, setEmailAddress] = React.useState("")
   const [password, setPassword] = React.useState("")
 
   const handleLogin = async() => {
-    console.log('emailAddress is: ', emailAddress)
-    console.log('password is: ', password)
 
-    await signIn({
-      username: emailAddress,
-      password: password,
-    })
+    try{
+      const {nextStep, isSignedIn} = await signIn({
+        username: emailAddress,
+        password: password,
+      })
+      setUserStatus(userState.LoggedIn);
+    }
+    catch (error){
+      console.log('error signing in: ', error)
+    }
+
   }
 
-  const handleSignOut = async() => {
-    await signOut();
-  }
+
 
   return (
     <Popover
@@ -86,12 +91,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
                 variant="contained"
                 onClick={handleLogin}
               >Sign In
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleSignOut}
-              >
-                Sign Out
               </Button>
             </Stack>
 

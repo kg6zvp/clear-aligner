@@ -12,8 +12,12 @@ import ListItemText from '@mui/material/ListItemText';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Login from '../login/login';
+import { signOut } from 'aws-amplify/auth';
 
-const userState = {
+/**
+ * userState is an object containing the different user States
+ */
+export const userState = {
   LoggedIn: {
     color:  'green',
     label: 'Logged In'
@@ -29,14 +33,15 @@ const userState = {
 }
 
 interface ProfileMenuProps {
-  isSignInDisabled: boolean;
+  isSignInEnabled: boolean;
+  setUserStatus: Function;
 }
 
 /**
  * This component is used for users to display the
  * User Profile Menu when the Avatar is clicked
  */
-const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
+const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInEnabled, setUserStatus}) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
@@ -58,6 +63,17 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
   const handleLoginModalClose = () => {
     setIsLoginModalOpen(false);
   }
+  const handleSignOut = async() => {
+    try{
+      await signOut();
+      setUserStatus(userState.LoggedOut);
+      handleClose();
+    }
+    catch(error){
+      console.log('error signing out: ', error)
+    }
+  }
+
   return (
     <div>
       <Button
@@ -112,17 +128,27 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInDisabled}) => {
           </ListItemText>
         </MenuItem>
         <Divider/>
-        <MenuItem disabled={isSignInDisabled} onClick={handleLoginClick}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          Sign in to ClearAligner Sync
-        </MenuItem>
+        {isSignInEnabled
+          ? (<MenuItem onClick={handleLoginClick}>
+            <ListItemIcon>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
+            Sign in to ClearAligner Sync
+          </MenuItem>)
+          : (<MenuItem onClick={handleSignOut}>
+            <ListItemIcon>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
+            Sign out of ClearAligner
+          </MenuItem>)
+        }
+
       </Menu>
       <Login
         isLoginModalOpen={isLoginModalOpen}
         handleLoginModalClose={handleLoginModalClose}
         popOverAnchorEl={popOverAnchorEl}
+        setUserStatus={setUserStatus}
       />
     </div>
   );
@@ -137,18 +163,27 @@ export const ProfileAvatar = () => {
   const [userStatus, setUserStatus] = React.useState(userState.LoggedIn)
   const network = useNetworkState();
 
-  const [isSignInDisabled, setIsSignInDisabled] = React.useState(false)
+  const [isSignInEnabled, setIsSignInEnabled] = React.useState(true)
 
   useEffect( () => {
     if(network.online){
       setUserStatus(userState.LoggedOut)
-      setIsSignInDisabled(false)
+      setIsSignInEnabled(true)
     }
     else{
       setUserStatus(userState.Offline)
-      setIsSignInDisabled(true)
+      setIsSignInEnabled(false)
     }
   },[network])
+
+  useEffect(() => {
+    if(userStatus === userState.LoggedIn){
+      setIsSignInEnabled(false);
+    }
+    else if (userStatus === userState.LoggedOut){
+      setIsSignInEnabled(true);
+    }
+  },[userStatus])
 
 
   const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -187,7 +222,8 @@ export const ProfileAvatar = () => {
               }}
             >
               <ProfileMenu
-                isSignInDisabled={isSignInDisabled}
+                isSignInEnabled={isSignInEnabled}
+                setUserStatus={setUserStatus}
               />
             </Avatar>
         </StyledBadge>
