@@ -9,7 +9,8 @@ import LinkIcon from "@mui/icons-material/Link";
 import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Drawer, IconButton, Tooltip, useTheme } from '@mui/material';
+import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
+import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 
 
 
@@ -46,6 +47,7 @@ export const MiniDrawer = () => {
   }, [location.pathname])
 
   const navigate = useNavigate();
+
     return (
       <Drawer
         sx={{
@@ -59,71 +61,81 @@ export const MiniDrawer = () => {
         variant="permanent"
         anchor="left"
       >
-          <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column" }}>
-            <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
-              <IconButton
-                onClick={() => {
-                  navigate({ pathname: ListItems.Home.path })
-                }}
-                color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
-                sx={{
-                  p: 1,
+        <Stack direction={"column"}
+               justifyContent={"space-between"}
+               alignItems={"center"}
+               sx={{height: '100vh'}}>
+          <Stack>
+            <ListItem key={ListItems.Home.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+              <Tooltip title={ListItems.Home.displayName} placement="right" arrow>
+                <IconButton
+                  onClick={() => {
+                    navigate({ pathname: ListItems.Home.path })
+                  }}
+                  color={selectedIndex === ListItems.Home.path ? 'primary' : 'default'}
+                  sx={{
+                    p: 1,
                   backgroundColor: selectedIndex === ListItems.Home.path ?
                     (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
                     : null,
-                  '&:hover': {
+                    '&:hover': {
                     backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
-                  }
-                }}
-              >
-                <HomeIcon />
-              </IconButton>
-            </Tooltip>
-
-          </ListItem>
-          <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column" }}>
-            <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
-              <IconButton
-                onClick={() => {
-                  navigate({ pathname: ListItems.Alignment.path })
-                }}
-                color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
-                sx={{
-                  p: 1,
+                    }
+                  }}
+                >
+                  <HomeIcon />
+                </IconButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem key={ListItems.Alignment.key} sx={{ display: "flex", flexDirection: "column", px: 0 }}>
+              <Tooltip title={ListItems.Alignment.displayName} placement="right" arrow>
+                <IconButton
+                  onClick={() => {
+                    navigate({ pathname: ListItems.Alignment.path })
+                  }}
+                  color={selectedIndex === ListItems.Alignment.path ? 'primary' : 'default'}
+                  sx={{
+                    p: 1,
                   backgroundColor: selectedIndex === ListItems.Alignment.path ?
                     (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
                     : null,
-                  '&:hover': {
+                    '&:hover': {
                     backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
-                  }
-                }}
-              >
+                    }
+                  }}
+                >
                   <LinkIcon />
-              </IconButton>
-            </Tooltip>
-          </ListItem>
-          <ListItem key={ListItems.Concordance.key} sx={{ display: "flex", flexDirection: "column" }}>
-            <Tooltip title={ListItems.Concordance.displayName} placement="right" arrow>
-              <IconButton
-                onClick={() => {
-                  navigate({ pathname: ListItems.Concordance.path })
-                }}
-                color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
-                sx={{
-                  p: 1,
+                </IconButton>
+              </Tooltip>
+            </ListItem>
+            <ListItem key={ListItems.Concordance.key} sx={{ display: "flex", flexDirection: "column", px: 0}}>
+              <Tooltip title={ListItems.Concordance.displayName} placement="right" arrow>
+                <IconButton
+                  onClick={() => {
+                    navigate({ pathname: ListItems.Concordance.path })
+                  }}
+                  color={selectedIndex === ListItems.Concordance.path ? 'primary' : 'default'}
+                  sx={{
+                    p: 1,
                   backgroundColor: selectedIndex === ListItems.Concordance.path ?
                     (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
                     : null,
-                  '&:hover': {
+                    '&:hover': {
                     backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
-                  }
-                }}
-              >
+                    }
+                  }}
+                >
                   <SpaceDashboardIcon />
-              </IconButton>
-            </Tooltip>
-          </ListItem>
-
-        </Drawer>
+                </IconButton>
+              </Tooltip>
+            </ListItem>
+          </Stack>
+          <Stack>
+            <ListItem key={"5"} sx={{ display: "block", px: 0, pb: 3 }}>
+              <ProfileAvatar/>
+            </ListItem>
+          </Stack>
+        </Stack>
+      </Drawer>
     )
 }
