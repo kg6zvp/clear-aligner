@@ -124,7 +124,7 @@ const useInitialization = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update Network and Logged In Status
+  // Update UserStatus
   useEffect( () => {
     const getCurrentUserDetails = async () => {
       try{

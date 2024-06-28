@@ -1,11 +1,12 @@
 /**
  * This file contains the CustomSnackbar Component
  */
-import React, { ReactElement, useEffect } from 'react';
+import React, { ReactElement, useContext, useEffect } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { useNetworkState } from '@uidotdev/usehooks';
+import { AppContext } from '../../App';
 
 /**
  * CustomSnackbar displays a temporary informational
@@ -15,7 +16,7 @@ export const CustomSnackbar = (): ReactElement => {
   const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
 
-  const network = useNetworkState();
+  const { network } = useContext(AppContext);
 
   const handleCloseSnackbar = (event: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -39,7 +40,7 @@ export const CustomSnackbar = (): ReactElement => {
   );
 
   useEffect( () => {
-    if(network.online){
+    if(network && network.online){
       setSnackBarMessage('Internet Connection Detected.')
       setIsSnackBarOpen(true)
     }
