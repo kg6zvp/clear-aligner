@@ -45,8 +45,10 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
+  const [showLoginError, setShowLoginError] = React.useState(false);
   const { setUserStatus } = useContext(AppContext);
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
+
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -55,13 +57,14 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
     setAnchorEl(null);
   };
   const handleLoginClick = (event: { currentTarget: React.SetStateAction<HTMLElement | null>; }) => {
-    setPopOverAnchorEl(event.currentTarget);
+    setPopOverAnchorEl(document.getElementById("anchorButton"));
     handleClose()
 
     setIsLoginModalOpen(true);
   }
   const handleLoginModalClose = () => {
     setIsLoginModalOpen(false);
+    setShowLoginError(false);
   }
   const handleSignOut = async() => {
     try{
@@ -79,29 +82,32 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   return (
     <div>
       <Button
-        id="basic-button"
-        aria-controls={open ? 'basic-menu' : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
+        id="anchorButton"
+        sx={{
+          color: 'white'
+        }}
         onClick={handleClick}
-        sx={{color: 'white'}}
       >
         <Person/>
       </Button>
 
       <Menu
         id="basic-menu"
-        anchorReference="anchorPosition"
+        anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
         MenuListProps={{
           'aria-labelledby': 'basic-button',
         }}
-        anchorPosition={{
-          top: 735,
-          left: 25,
-        }}>
-
+        anchorOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+      >
         <MenuItem onClick={handleClose} disabled>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
@@ -151,6 +157,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
         handleLoginModalClose={handleLoginModalClose}
         popOverAnchorEl={popOverAnchorEl}
         setUserStatus={setUserStatus}
+        showLoginError={showLoginError}
+        setShowLoginError={setShowLoginError}
       />
     </div>
   );

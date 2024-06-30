@@ -8,6 +8,7 @@ import TextField from '@mui/material/TextField';
 import { signIn } from "aws-amplify/auth";
 import { userState } from '../profileAvatar/profileAvatar';
 import { AppContext } from '../../App';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 
 interface LoginProps {
@@ -15,9 +16,16 @@ interface LoginProps {
   handleLoginModalClose: () => void;
   popOverAnchorEl: HTMLElement | null;
   setUserStatus: Function;
+  showLoginError: boolean;
+  setShowLoginError: Function;
 }
 
-export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalClose, popOverAnchorEl, setUserStatus}): ReactElement => {
+export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
+                                             handleLoginModalClose,
+                                             popOverAnchorEl,
+                                             setUserStatus,
+                                             setShowLoginError,
+                                             showLoginError}): ReactElement => {
   const [emailAddress, setEmailAddress] = React.useState("")
   const [password, setPassword] = React.useState("")
 
@@ -30,11 +38,13 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
         password: password,
       })
       setUserStatus(userState.LoggedIn);
+      setShowLoginError(false)
       setSnackBarMessage("Signed into ClearAligner Sync Server.")
       setIsSnackBarOpen(true);
     }
     catch (error){
       console.log('error signing in: ', error)
+      setShowLoginError(true)
     }
 
   }
@@ -43,10 +53,14 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
     <Popover
       open={isLoginModalOpen}
       onClose={handleLoginModalClose}
-      anchorReference="anchorPosition"
-      anchorPosition={{
-        top: 590,
-        left: 25,
+      anchorEl={popOverAnchorEl}
+      anchorOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+      transformOrigin={{
+        vertical: 'bottom',
+        horizontal: 'center',
       }}
     >
       <Box>
@@ -67,7 +81,8 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
             }}
             noValidate
             autoComplete="off"
-            p={5}
+            px={5}
+            pb={6}
           >
             <Stack>
               <TextField
@@ -91,8 +106,24 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
               <Button
                 variant="contained"
                 onClick={handleLogin}
+                sx={{
+                  borderRadius: 5
+                }}
+                startIcon={<LogoutIcon/>}
+
               >Sign In
               </Button>
+              {showLoginError &&
+                <Typography
+                  color={'red'}
+                  fontSize={'small'}
+                  sx={{
+                    mt: 1
+                  }}
+                >
+                  Incorrect email address or password.
+                </Typography>
+              }
             </Stack>
           </Box>
         </Stack>
