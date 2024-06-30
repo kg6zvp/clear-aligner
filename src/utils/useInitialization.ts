@@ -153,11 +153,11 @@ const useInitialization = () => {
   // trigger snackbar messages indicating network status
   useEffect( () => {
     if(network && network.online){
-      setSnackBarMessage('Internet Connection Detected!')
+      setSnackBarMessage('Internet Connection Detected')
       setIsSnackBarOpen(true)
     }
     else{
-      setSnackBarMessage('No internet connection!')
+      setSnackBarMessage('No internet connection')
       setIsSnackBarOpen(true)
     }
   },[network])
