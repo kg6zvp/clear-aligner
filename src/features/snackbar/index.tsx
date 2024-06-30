@@ -1,7 +1,7 @@
 /**
  * This file contains the CustomSnackbar Component
  */
-import React, { ReactElement, useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -13,8 +13,6 @@ import { AppContext } from '../../App';
  * toast, aka snackbar
  */
 export const CustomSnackbar= () => {
-
-  const network  = useNetworkState();
 
   const {isSnackBarOpen, setIsSnackBarOpen, snackBarMessage } = useContext(AppContext)
 

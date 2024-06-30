@@ -33,7 +33,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
 
   const handleLogin = async() => {
     try{
-      const {nextStep, isSignedIn} = await signIn({
+      await signIn({
         username: emailAddress,
         password: password,
       })
