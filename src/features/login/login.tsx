@@ -1,13 +1,13 @@
 /**
  * This file contains the NewFeatureComponent.
  */
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useContext } from 'react';
 import { Box } from '@mui/system';
 import { Button, DialogTitle, Popover, Stack, Typography } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signIn } from "aws-amplify/auth";
-import { signOut } from "aws-amplify/auth"
 import { userState } from '../profileAvatar/profileAvatar';
+import { AppContext } from '../../App';
 
 
 interface LoginProps {
@@ -21,14 +21,17 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
   const [emailAddress, setEmailAddress] = React.useState("")
   const [password, setPassword] = React.useState("")
 
-  const handleLogin = async() => {
+  const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
 
+  const handleLogin = async() => {
     try{
       const {nextStep, isSignedIn} = await signIn({
         username: emailAddress,
         password: password,
       })
       setUserStatus(userState.LoggedIn);
+      setSnackBarMessage("Signed into ClearAligner Sync Server.")
+      setIsSnackBarOpen(true);
     }
     catch (error){
       console.log('error signing in: ', error)
@@ -91,8 +94,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen, handleLoginModalCl
               >Sign In
               </Button>
             </Stack>
-
-
           </Box>
         </Stack>
       </Box>

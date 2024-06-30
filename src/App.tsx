@@ -124,7 +124,6 @@ const App = () => {
         </Provider>
         <CustomSnackbar />
       </AppContext.Provider>
-
     </>
   );
 };

@@ -11,7 +11,7 @@ import ListItemText from '@mui/material/ListItemText';
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Login from '../login/login';
-import { signOut, getCurrentUser } from 'aws-amplify/auth';
+import { signOut } from 'aws-amplify/auth';
 import { AppContext } from '../../App';
 
 /**
@@ -46,6 +46,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const { setUserStatus } = useContext(AppContext);
+  const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -65,6 +66,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const handleSignOut = async() => {
     try{
       await signOut();
+      setIsSnackBarOpen(true);
+      setSnackBarMessage("Signed out.")
       setUserStatus(userState.LoggedOut);
       handleClose();
     }
