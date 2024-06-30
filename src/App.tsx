@@ -22,8 +22,8 @@ import { NetworkState } from '@uidotdev/usehooks';
 Amplify.configure({
   Auth: {
     Cognito: {
-      userPoolId: "us-east-1_ZOweHZ2FF",
-      userPoolClientId: "55ts5kcfbqmi7edl1qeanf1ni0",
+      userPoolId: "us-east-1_63WiOrSMN",
+      userPoolClientId: "jteqgoa1rgptil2tdi7b0nqjb",
       identityPoolId: "",
       loginWith: {
         email: true,
