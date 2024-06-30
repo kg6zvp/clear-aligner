@@ -2,7 +2,7 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentFileSchema, alignmentFileSchemaErrorMessageMapper } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
@@ -15,6 +15,8 @@ import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncAlignments } from '../../state/links/useSyncAlignments';
 import { SyncProgressDialog } from './syncProgressDialog';
+import { AppContext } from '../../App';
+import { userState } from '../profileAvatar/profileAvatar';
 
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
@@ -63,6 +65,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     });
   }, [ syncState.file, setAlignmentFileSaveState ]);
   const showSyncProgressDialog = useMemo<boolean>(() => syncState.progress === SyncProgress.IN_PROGRESS, [ syncState.progress ]);
+  const { userStatus } = useContext(AppContext);
 
   return (
     <span>
@@ -78,7 +81,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
           />
           <Button
             size={size as 'medium' | 'small' | undefined}
-            disabled={containers.length === 0 || !allowImport}
+            disabled={containers.length === 0 || !allowImport || (userStatus !== userState.LoggedIn) }
             variant="contained"
             sx={{
               minWidth: '100%',
