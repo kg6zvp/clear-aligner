@@ -57,12 +57,14 @@ export interface AppContextProps {
   network: NetworkState;
   userStatus: any;
   setUserStatus: Function;
+  isSnackBarOpen: boolean;
+  setIsSnackBarOpen: Function;
+  snackBarMessage: string;
+  setSnackBarMessage: Function;
 }
 
 export type THEME = 'night' | 'day';
 export type THEME_PREFERENCE = THEME | 'auto';
-
-
 
 export const AppContext = createContext({} as AppContextProps);
 
@@ -120,8 +122,9 @@ const App = () => {
         <Provider store={store}>
             <RouterProvider router={router}/>
         </Provider>
+        <CustomSnackbar />
       </AppContext.Provider>
-      <CustomSnackbar/>
+
     </>
   );
 };

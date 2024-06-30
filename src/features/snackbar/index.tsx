@@ -8,21 +8,33 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useNetworkState } from '@uidotdev/usehooks';
 import { AppContext } from '../../App';
 
+
+
+// interface CustomSnackbarProps {
+//   isSnackBarOpen: boolean,
+//   setIsSnackBarOpen: Function,
+//   snackBarMessage: string,
+//   setSnackBarMessage: Function
+// }
+
 /**
  * CustomSnackbar displays a temporary informational
  * toast, aka snackbar
  */
-export const CustomSnackbar = (): ReactElement => {
-  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
-  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+export const CustomSnackbar= () => {
 
-  const { network } = useContext(AppContext);
+  const network  = useNetworkState();
+
+  // const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
+  // const [snackBarMessage, setSnackBarMessage] = React.useState("")
+
+  const {isSnackBarOpen, setIsSnackBarOpen, snackBarMessage, setSnackBarMessage } = useContext(AppContext)
+
 
   const handleCloseSnackbar = (event: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
     }
-
     setIsSnackBarOpen(false);
   };
 
@@ -39,16 +51,16 @@ export const CustomSnackbar = (): ReactElement => {
     </React.Fragment>
   );
 
-  useEffect( () => {
-    if(network && network.online){
-      setSnackBarMessage('Internet Connection Detected.')
-      setIsSnackBarOpen(true)
-    }
-    else{
-      setSnackBarMessage('No internet connection.')
-      setIsSnackBarOpen(true)
-    }
-  },[network])
+  // useEffect( () => {
+  //   if(network && network.online){
+  //     setSnackBarMessage('Internet Connection Detected!')
+  //     setIsSnackBarOpen(true)
+  //   }
+  //   else{
+  //     setSnackBarMessage('No internet connection!')
+  //     setIsSnackBarOpen(true)
+  //   }
+  // },[network])
 
 
   return (

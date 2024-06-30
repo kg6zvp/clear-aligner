@@ -23,6 +23,9 @@ const useInitialization = () => {
   const [containers, setContainers] = useState<Containers>({});
   const [userStatus, setUserStatus] = React.useState(userState.LoggedOut)
   const network = useNetworkState();
+  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
+  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -147,6 +150,19 @@ const useInitialization = () => {
     }
   },[network])
 
+  // trigger snackbar messages indicating network status
+  useEffect( () => {
+    if(network && network.online){
+      setSnackBarMessage('Internet Connection Detected!')
+      setIsSnackBarOpen(true)
+    }
+    else{
+      setSnackBarMessage('No internet connection!')
+      setIsSnackBarOpen(true)
+    }
+  },[network])
+
+
   return {
     projectState: state,
     setProjectState: setState,
@@ -158,6 +174,10 @@ const useInitialization = () => {
     network,
     userStatus,
     setUserStatus,
+    isSnackBarOpen,
+    setIsSnackBarOpen,
+    snackBarMessage,
+    setSnackBarMessage
   } as AppContextProps;
 };
 
