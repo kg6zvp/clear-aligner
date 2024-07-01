@@ -32,8 +32,9 @@ import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
-import {DateTime} from 'luxon';
+import { DateTime } from 'luxon';
 import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { ProjectLocation } from '../../common/data/project/project';
 
 
 enum TextDirection {
@@ -55,7 +56,8 @@ const getInitialProjectState = (): Project => ({
   languageCode: 'eng',
   textDirection: 'ltr',
   fileName: '',
-  linksTable: new LinksTable()
+  linksTable: new LinksTable(),
+  location: ProjectLocation.LOCAL
 });
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
@@ -119,7 +121,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           };
 
           const targetCorpus = {
-            id: project.id,
+            id: uuidv4(),
             name: project.abbreviation,
             fullName: project.name,
             fileName: project.fileName,
@@ -147,6 +149,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
+          projectToUpdate.lastSyncTime = 0;
           projectToUpdate.lastUpdated = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
@@ -219,6 +222,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               <FormControl>
                 <Typography variant="subtitle2">Name</Typography>
                 <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.name}
+                           disabled={project.location === ProjectLocation.REMOTE}
                            onChange={({ target: { value: name } }) =>
                              handleUpdate({ name })}
                           error={invalidProjectName}
@@ -228,6 +232,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               <FormControl>
                 <Typography variant="subtitle2">Abbreviation</Typography>
                 <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.abbreviation}
+                           disabled={project.location === ProjectLocation.REMOTE}
                            onChange={({ target: { value: abbreviation } }) =>
                              handleUpdate({ abbreviation })}
                 />
@@ -245,6 +250,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                     }
                   }}
                   sx={{ mb: 2 }}
+                  disabled={project.location === ProjectLocation.REMOTE}
                   value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
                   onChange={(_, language) =>
                     handleUpdate({
@@ -256,6 +262,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               <FormControl>
                 <Typography variant="subtitle2">Text Direction</Typography>
                 <Select size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.textDirection}
+                        disabled={project.location === ProjectLocation.REMOTE}
                         onChange={({ target: { value: textDirection } }) =>
                           handleUpdate({ textDirection: textDirection as string })
                         }>
@@ -269,7 +276,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                 </Select>
               </FormControl>
 
-              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }}>
+              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }} disabled={project.location === ProjectLocation.REMOTE}>
                 Upload File
                 <input type="file" hidden
                        onClick={(event) => {
@@ -323,7 +330,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         <DialogActions>
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
             {
-              projectId && allowDelete
+              (projectId && allowDelete && project.location !== ProjectLocation.REMOTE)
                 ? <Button variant="text" color="error" sx={{ textTransform: 'none' }}
                           onClick={() => setOpenConfirmDelete(true)}
                           startIcon={<DeleteOutline />}
@@ -333,7 +340,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             <Button
               variant="contained"
               sx={{ textTransform: 'none' }}
-              disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy()}
+              disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
               onClick={e => {
                 handleSubmit(projectId ? 'update' : 'create', e).then(() => {
                   // handleClose() in the .then() ensures dialog doesn't close prematurely

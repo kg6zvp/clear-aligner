@@ -23,6 +23,7 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
   lastUpdated?: number;
+  location: ProjectLocation
 }
 
 export interface ProjectDto {
@@ -43,19 +44,27 @@ export class ProjectTable extends VirtualTable {
   }
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
+    console.log("save is called")
     try {
-      if (this.isDatabaseBusy()) return;
+      if (this.isDatabaseBusy()) {
+        console.log("Unable to save project while database is busy.")
+        return;
+      }
       this.incrDatabaseBusyCtr();
+      console.log("calling save");
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+      console.log("createdProject: ", createdProject, project, ProjectTable.convertToDto(project))
+      await this.sync(project);
       updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(createdProject.id, createdProject);
       this.decrDatabaseBusyCtr();
-      return createdProject?.[0] ? ProjectTable.convertDataSourceToProject(createdProject?.[0]) : undefined;
+      return createdProject ? ProjectTable.convertDataSourceToProject(createdProject) : undefined;
     } catch (e) {
       console.error('Error creating project: ', e);
       return undefined;
     } finally {
+      console.log("in finally call")
       await this._onUpdate(suppressOnUpdate);
     }
   };
@@ -76,11 +85,18 @@ export class ProjectTable extends VirtualTable {
   };
 
   update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
+    console.log("updating project")
     try {
-      if (this.isDatabaseBusy()) return;
+      if (this.isDatabaseBusy()) {
+        console.log("database is busy. Unable to update.");
+        return;
+      }
       this.incrDatabaseBusyCtr();
+
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+      console.log("updatedProject: ", updatedProject)
+      await this.sync(project);
       updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(updatedProject, updatedProject);
       this.decrDatabaseBusyCtr();
@@ -92,14 +108,13 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
-  sync = async (project: Project, location: ProjectLocation): Promise<boolean> => {
+  sync = async (project: Project): Promise<boolean> => {
     try {
-      if (this.isDatabaseBusy()) return false;
       this.incrDatabaseBusyCtr();
       const projectEntity: ProjectEntity = {
         id: project.id,
         name: project.name,
-        location,
+        location: project.location ?? ProjectLocation.LOCAL,
         serverState: ProjectState.DRAFT,
         lastSyncTime: project.lastSyncTime,
         lastUpdated: project.lastUpdated
@@ -187,9 +202,11 @@ export class ProjectTable extends VirtualTable {
       const dataSources = await this.getDataSourcesAsProjects();
       if (dataSources) {
         const projectEntities = await this.getProjectTableData();
-        this.projects = new Map<string, Project>(dataSources.filter(p => p).map(p => [p.id, {
+        console.log("dataSources: ", dataSources, projectEntities)
+        this.projects = new Map<string, Project>(dataSources.filter(Boolean).map(p => [p.id, {
           ...(projectEntities.find(e => e.id === p.id) ?? {}),
           ...p,
+          lastUpdated: Math.max(projectEntities.find(e => e.id === p.id)?.lastUpdated || 0, p.lastUpdated || 0)
         }]));
       }
     }

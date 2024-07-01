@@ -7,6 +7,8 @@ import { useSyncAlignments } from '../alignments/useSyncAlignments';
 import { AppContext } from '../../App';
 import { DateTime } from 'luxon';
 import { useDeleteProject } from './useDeleteProject';
+import { useSyncWordsOrParts } from './useSyncWordsOrParts';
+import { getCorpusFromDatabase } from '../../workbench/query';
 
 export enum SyncProgress {
   IDLE,
@@ -17,7 +19,7 @@ export enum SyncProgress {
 }
 
 export interface SyncState {
-  sync: (project: Project, location: ProjectLocation) => Promise<unknown>;
+  sync: (project: Project) => Promise<unknown>;
   progress: SyncProgress;
   cancelSync: (project?: Project) => void;
 }
@@ -25,7 +27,8 @@ export interface SyncState {
 /**
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
  */
-export const useSyncProjects = (): SyncState => {
+export const useSyncProject = (): SyncState => {
+  const {sync: syncWordsOrParts} = useSyncWordsOrParts();
   const { sync: syncAlignments } = useSyncAlignments({ manuallySync: true });
   const { deleteProject } = useDeleteProject();
   const { projectState, projects } = useContext(AppContext);
@@ -45,19 +48,25 @@ export const useSyncProjects = (): SyncState => {
     return resetProject;
   }, [projectState]);
 
-  const syncProject = useCallback(async (project: Project, location: ProjectLocation) => {
+  const syncProject = useCallback(async (project: Project) => {
     try {
       const currentProjectData = projects.find(p => p.id === project.id);
       const syncTime = DateTime.now().toUTC().toMillis();
       project.lastSyncTime = syncTime;
       project.lastUpdated = syncTime;
+      project.location = ProjectLocation.SYNCED;
       if (progress === SyncProgress.CANCELED) return;
-      await projectState.projectTable?.sync?.(project, location);
+      await projectState.projectTable?.sync?.(project);
       if ((progress as SyncProgress) === SyncProgress.CANCELED) {
         currentProjectData && await resetProject(currentProjectData);
         return;
       }
       setProgress(SyncProgress.IN_PROGRESS);
+      const corporaFromDatabase: any[] = [];
+      [...(project.targetCorpora?.corpora ?? []), ...(project.sourceCorpora?.corpora ?? [])].forEach(c => {
+        getCorpusFromDatabase(c, project.id).then(res => corporaFromDatabase.push(res));
+      });
+      console.log("Syncing project: ", project, mapProjectEntityToProjectDTO(project), corporaFromDatabase, [...(project.targetCorpora?.corpora ?? []), ...(project.sourceCorpora?.corpora ?? [])])
       const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
         signal: abortController.current?.signal,
         method: 'POST',
@@ -70,8 +79,9 @@ export const useSyncProjects = (): SyncState => {
       let syncProgress = SyncProgress.FAILED;
       // If the project request was successful, update the alignments for the project.
       if (res.ok) {
-        const persistedProject = await res.json();
-        const alignmentsSynced = await syncAlignments(persistedProject.id);
+        const syncedWords = await syncWordsOrParts(project);
+        console.log("syncedWords: ", syncedWords)
+        const alignmentsSynced = await syncAlignments(project.id);
         if (alignmentsSynced) {
           syncProgress = SyncProgress.SUCCESS;
         }

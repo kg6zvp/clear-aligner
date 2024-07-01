@@ -34,7 +34,7 @@ export const CorporaTableName = 'corpora';
 export const LanguageTableName = 'language';
 export const LinksToSourceWordsName = 'links__source_words';
 export const LinksToTargetWordsName = 'links__target_words';
-export const DefaultProjectName = 'default';
+export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
 export const ProjectDatabaseDirectory = 'projects';
 export const JournalEntryTableName = 'journal_entries';
 
@@ -304,7 +304,7 @@ export class ProjectRepository extends BaseRepository {
       await this.getDataSourceWithEntities(sourceName || DefaultProjectName,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
         path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName
-          ? 'projects/clear-aligner-default.sqlite'
+          ? 'projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
@@ -385,6 +385,7 @@ export class ProjectRepository extends BaseRepository {
         table: CorporaTableName,
         itemOrItems: corpora
       });
+      console.log("corpora to save: ", corpora);
       const sources = await projectDataSource.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();

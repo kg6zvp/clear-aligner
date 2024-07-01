@@ -1,10 +1,7 @@
-export enum TextDirectionDTO {
-  ltr,
-  rtl
-}
+import { TextDirection } from "structs";
 
 export interface LanguageDTO {
   code: string;
-  textDirection: TextDirectionDTO;
+  textDirection: TextDirection;
   fontFamily: string;
 }

@@ -126,7 +126,8 @@ const useInitialization = () => {
     setPreferences,
     projects,
     setProjects,
-    containers
+    containers,
+    setContainers
   } as AppContextProps;
 };
 

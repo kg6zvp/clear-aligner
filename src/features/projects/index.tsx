@@ -2,7 +2,7 @@
  * This file contains the ProjectsView Component which is responsible for the
  * Project Mode of the CA application.
  */
-import { Button, Card, CardContent, Grid, Typography } from '@mui/material';
+import { Button, Card, CardContent, Grid, Theme, Typography } from '@mui/material';
 import React, { useContext, useEffect, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
@@ -13,56 +13,53 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
-import { Cloud, CloudSync, Computer } from '@mui/icons-material';
+import { CloudDownload, CloudSync, Computer, Refresh } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
-import { ProjectDTO, ProjectLocation } from '../../common/data/project/project';
-import { SyncProgress, useSyncProjects } from '../../api/projects/useSyncProject';
+import { ProjectLocation } from '../../common/data/project/project';
+import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { DateTime } from 'luxon';
 import useBusyDialog from '../../utils/useBusyDialog';
-
-export interface LocalAndRemoteProject {
-  local?: Project;
-  remote?: ProjectDTO;
-}
+import { Progress } from '../../api/ApiModels';
+import { useDownloadProject } from '../../api/projects/useDownloadProject';
 
 interface ProjectsViewProps {
 }
 
+const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
+  switch (progress) {
+    case Progress.FAILED:
+      return theme.palette.error.main;
+    case Progress.IN_PROGRESS:
+      return theme.palette.text.secondary;
+    case Progress.IDLE:
+    case Progress.SUCCESS:
+    default:
+      return theme.palette.primary.main;
+  }
+};
+
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
-  const { projects: localProjects, preferences } = React.useContext(AppContext);
+  const layoutCtx = useContext(LayoutContext);
+  const { projects, preferences } = React.useContext(AppContext);
+  const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
+    enabled: false // Prevents immediate and useEffect-based requerying
+  });
+
+  console.log('projects on list page: ', projects);
+
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
-  const selectProject = React.useCallback((project: LocalAndRemoteProject) => {
-    if (project.local) {
-      setSelectedProjectId(project.local.id);
+
+  const selectProject = React.useCallback((project: Project) => {
+    if (project) {
+      setSelectedProjectId(project.id);
       setOpenProjectDialog(true);
     }
   }, [setSelectedProjectId, setOpenProjectDialog]);
-  const layoutCtx = useContext(LayoutContext);
-
-  const { projects: allRemoteProjects, refetch: refetchRemoteProjects } = useProjectsFromServer({});
-
-  const projects = useMemo<LocalAndRemoteProject[]>(() => {
-    const projectMap: Map<string, LocalAndRemoteProject> = new Map();
-
-    localProjects
-      .forEach((local) => {
-        projectMap.set(local.id, { local });
-      });
-    allRemoteProjects
-      .filter(remote => remote.id)
-      .forEach((remote) => {
-        projectMap.set(remote.name === 'default' ? remote.name : remote.id!, {
-          ...(projectMap.get(remote.name === 'default' ? remote.name : remote.id!) || {}),
-          remote
-        });
-      });
-    return Array.from(projectMap.values());
-  }, [localProjects, allRemoteProjects]);
 
   const unavailableProjectNames: string[] = React.useMemo(() => (
-    Array.from(new Set([...localProjects, ...allRemoteProjects].map(p => (p.name || '').trim())))
-  ), [localProjects, allRemoteProjects]);
+    projects.map(p => (p.name || '').trim())
+  ), [projects]);
 
   useEffect(() => {
     layoutCtx.setMenuBarDelegate(
@@ -76,26 +73,48 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
-        <Grid container sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
-          <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
-          <Button
-            variant="contained"
-            onClick={() => setOpenProjectDialog(true)}
-            sx={{ textTransform: 'none', fontWeight: 'bold' }}
-          >Create New</Button>
+        <Grid container justifyContent="space-between" alignItems="center"
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
+          <Grid container sx={{ width: 'fit-content' }}>
+            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+            <Button
+              variant="contained"
+              onClick={() => setOpenProjectDialog(true)}
+              sx={{ textTransform: 'none', fontWeight: 'bold' }}
+            >Create New</Button>
+          </Grid>
+          <Grid item sx={{ px: 2 }}>
+            <Button variant="text" onClick={() => refetchRemoteProjects({persist: true})}>
+              <Grid container alignItems="center">
+                <Refresh sx={theme => ({
+                  mr: 1,
+                  mb: .5,
+                  ...(remoteFetchProgress === Progress.IN_PROGRESS ? {
+                    '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                    animation: '2s linear infinite rotation',
+                    fill: getPaletteFromProgress(remoteFetchProgress, theme)
+                  } : {})
+                })} />
+                <Typography variant="subtitle2" sx={theme => ({
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: getPaletteFromProgress(remoteFetchProgress, theme)
+                })}>
+                  {remoteFetchProgress === Progress.IN_PROGRESS ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                </Typography>
+              </Grid>
+            </Button>
+          </Grid>
         </Grid>
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects
-            .sort((p1: LocalAndRemoteProject) => p1.local?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
-            .map((project: LocalAndRemoteProject) => (
+            .sort((p1: Project) => p1?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
+            .map((project: Project) => (
               <ProjectCard
-                key={`${project.local?.id ?? project.remote?.name}-${project.local?.lastSyncTime}`}
+                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}`}
                 project={project}
                 onClick={selectProject}
-                refetchRemoteProjects={refetchRemoteProjects}
-                currentProject={projects.filter(({ local }) => !!local)
-                  .find((p: LocalAndRemoteProject) =>
-                    p.local?.id === preferences?.currentProject) ?? projects?.[0]}
+                currentProject={projects.find((p: Project) => p?.id === preferences?.currentProject) ?? projects?.[0]}
               />
             ))}
         </Grid>
@@ -114,71 +133,59 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
 };
 
 interface ProjectCardProps {
-  project: LocalAndRemoteProject;
-  currentProject: LocalAndRemoteProject | undefined;
-  onClick: (project: LocalAndRemoteProject) => void;
-  refetchRemoteProjects: CallableFunction;
+  project: Project;
+  currentProject: Project | undefined;
+  onClick: (project: Project) => void;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refetchRemoteProjects, onClick }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
   useCorpusContainers();
 
-
-  const { sync: syncProject, progress: syncingProjects } = useSyncProjects();
+  const {downloadProject} = useDownloadProject();
+  const { sync: syncProject, progress: syncingProject } = useSyncProject();
 
   const busyDialog = useBusyDialog(
-    syncingProjects === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined
+    syncingProject === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined
   );
 
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
-  const isCurrentProject = React.useMemo(() => project.local?.id === currentProject?.local?.id, [project.local?.id, currentProject?.local?.id]);
+  const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
   const updateCurrentProject = React.useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
-    projectState.linksTable.setSourceName(project.local!.id);
+    projectState.linksTable.setSourceName(project.id);
     setPreferences((p: UserPreference | undefined) => ({
       ...(p ?? {}) as UserPreference,
-      currentProject: project.local!.id,
+      currentProject: project.id,
       initialized: InitializationStates.UNINITIALIZED
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setPreferences, preferences, project.local?.id, projectState.userPreferenceTable, projectState.linksTable]);
-
-  const lastSyncTime = React.useMemo(() => (
-    project.local?.lastSyncTime
-  ), [project]);
-
-  const projectLocation: ProjectLocation = React.useMemo(() => {
-    if (!project.remote && !lastSyncTime) {
-      return ProjectLocation.LOCAL;
-    } else if (!project.local && project.remote) {
-      return ProjectLocation.REMOTE;
-    } else {
-      return ProjectLocation.SYNCED;
-    }
-  }, [project]);
+  }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   const syncLocalProjectWithServer = React.useCallback(() => {
-    if (project.local) {
-      syncProject(project.local, projectLocation).then(() => refetchRemoteProjects()).catch(console.error);
-    }
-  }, [project, refetchRemoteProjects, syncProject]);
+    syncProject(project).catch(console.error);
+  }, [project, syncProject]);
 
   const cloudSyncInfo = useMemo(() => {
-    switch(projectLocation) {
+    switch (project.location) {
       case ProjectLocation.LOCAL:
         return (
           <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
-              Project</Button>
-            <Computer sx={theme => ({ fill: theme.palette.text.secondary })} />
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+                    sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
+              Sync Project
+              <Computer sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
+            </Button>
           </Grid>
         );
       case ProjectLocation.REMOTE:
         return (
           <Grid container justifyContent="flex-end" alignItems="center">
-            <Typography variant="subtitle2" sx={{ mr: 1 }}>Remote Project</Typography>
-            <Cloud sx={theme => ({ fill: theme.palette.text.secondary })} />
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+                    sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
+              Download Project
+              <CloudDownload sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
+            </Button>
           </Grid>
         );
       case ProjectLocation.SYNCED:
@@ -187,38 +194,44 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
           <Grid container flexDirection="column">
             <Grid container justifyContent="flex-end" alignItems="center">
               {
-                lastSyncTime === project.local?.lastUpdated ? (
-                  <Typography variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
+                project.lastSyncTime && project.lastUpdated && project.lastSyncTime === project.lastUpdated ? (
+                  <Typography color="text.secondary" variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
                 ) : (
-                  <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProjects)} sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>Sync
-                    Project</Button>
+                  <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+                          sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
+                    {![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ? 'Syncing...' : 'Sync Project'}
+                  </Button>
                 )
               }
-              <CloudSync sx={theme => ({ fill: theme.palette.text.secondary })} />
+              <CloudSync sx={theme => ({ fill: (
+                [SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ||
+                  !(project.lastSyncTime && project.lastUpdated && project.lastSyncTime === project.lastUpdated)
+                )
+                  ? theme.palette.primary.main
+                  : theme.palette.text.secondary
+              })} />
             </Grid>
           </Grid>
         );
     }
-  }, [projectLocation, project, lastSyncTime, syncLocalProjectWithServer, syncingProjects]);
+  }, [project, syncLocalProjectWithServer, syncingProject]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
       return (<Typography variant="subtitle2">Current Project</Typography>);
-    } else if (project.local) {
-      return (<Button variant="text" size="small" sx={{ textTransform: 'none' }}
+    } else if(project.location !== ProjectLocation.REMOTE ) {
+      return (
+        <Button variant="text" size="small" sx={{ textTransform: 'none' }}
                       onClick={e => {
                         e.preventDefault();
                         updateCurrentProject();
                       }}
-      >Open</Button>);
-    } else if (!project.local && project.remote) {
-      return (<Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                      onClick={e => {
-                        throw new Error('NOT IMPLEMENTED: TODO');
-                      }}
-      >Open Remote</Button>);
+        >Open</Button>
+      );
+    } else {
+      return <></>
     }
-  }, [isCurrentProject, project.local, project.remote, updateCurrentProject]);
+  }, [isCurrentProject, project, updateCurrentProject]);
 
   return (
     <>
@@ -241,20 +254,20 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
           <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
                 onClick={() => onClick(project)}>
             <Typography variant="h6"
-                        sx={{ textAlign: 'center', mt: 4 }}>{project.local?.name ?? project.remote?.name}</Typography>
+                        sx={{ textAlign: 'center', mt: 4 }}>{project.name}</Typography>
           </Grid>
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid item>
               {currentProjectIndicator}
             </Grid>
             <Grid item>
-              {project.local ?
+              {project.location !== ProjectLocation.REMOTE ?
                 <UploadAlignmentGroup
-                  projectId={project.local!.id}
+                  projectId={project.id}
                   size="small"
                   containers={[
-                    ...(project.local!.sourceCorpora ? [project.local!.sourceCorpora] : []),
-                    ...(project.local!.targetCorpora ? [project.local!.targetCorpora] : [])
+                    ...(project.sourceCorpora ? [project.sourceCorpora] : []),
+                    ...(project.targetCorpora ? [project.targetCorpora] : [])
                   ]}
                   allowImport={isCurrentProject}
                 />
@@ -262,14 +275,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
             </Grid>
           </Grid>
           {
-            (lastSyncTime && syncingProjects !== SyncProgress.FAILED) && (
+            (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
               <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
-                Synced On:&nbsp;{DateTime.fromJSDate(new Date(lastSyncTime)).toFormat('MM/dd/yyyy hh:mm:ss a')}
+                Synced On:&nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MM/dd/yyyy hh:mm:ss a')}
               </Typography>
             )
           }
           {
-            syncingProjects === SyncProgress.FAILED && (
+            syncingProject === SyncProgress.FAILED && (
               <Typography variant="caption" color="error" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
                 There was an error uploading this project.
               </Typography>
@@ -277,7 +290,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, refe
           }
         </CardContent>
       </Card>
-      {syncingProjects === SyncProgress.IN_PROGRESS && busyDialog}
+      {syncingProject === SyncProgress.IN_PROGRESS && busyDialog}
     </>
   );
 };

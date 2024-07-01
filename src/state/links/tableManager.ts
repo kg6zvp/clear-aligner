@@ -62,6 +62,8 @@ export class LinksTable extends VirtualTable {
       return false;
     }
 
+    console.log("linkOrLinks: ", linkOrLinks)
+
     this.logDatabaseTime('save()');
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];

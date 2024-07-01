@@ -1,13 +1,16 @@
 import { CorpusDTO } from './corpus';
 import {
+  AlignmentSide,
   Corpus,
   CorpusContainer,
   CorpusViewType,
   LanguageInfo,
-  TextDirection,
+  TextDirection
 } from '../../../structs';
-import { LanguageDTO, TextDirectionDTO } from './language';
+import { LanguageDTO } from './language';
 import { Project } from '../../../state/projects/tableManager';
+import { DateTime } from 'luxon';
+import { mapWordOrPartDtoToWordOrPart, WordOrPartDTO } from './wordsOrParts';
 
 export const ProjectTableName = "project";
 
@@ -45,28 +48,43 @@ export class ProjectEntity {
   }
 }
 
-export const mapProjectDTOToProjectEntity = (dto: ProjectDTO, location: ProjectLocation): ProjectEntity => ({
-  id: dto.id,
-  name: dto.name,
-  serverState: dto.state,
-  location,
-  corpora: (dto.corpora || []).map(mapCorpusDTOToCorpusEntity),
-  lastUpdated: dto.lastUpdated,
-  lastSyncTime: dto.lastSyncTime
-});
-
 export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
   id: project.id,
   name: project.name,
   state: ProjectState.DRAFT,
-  corpora: [project.targetCorpora, project.sourceCorpora].map(mapCorpusEntityToCorpusDTO).filter(Boolean) as CorpusDTO[],
+  corpora: [...(project.targetCorpora?.corpora ?? []), ...(project.sourceCorpora?.corpora ?? [])]
+    .map(mapCorpusEntityToCorpusDTO)
+    .filter(Boolean) as CorpusDTO[],
   lastSyncTime: project.lastSyncTime,
   lastUpdated: project.lastUpdated
-})
+});
 
-export const mapCorpusEntityToCorpusDTO = (container?: CorpusContainer): CorpusDTO | undefined => {
-  const corpus = (container?.corpora || [])[0];
-  if(!corpus) return;
+export const mapProjectDtoToProject = (projectEntity: ProjectDTO, location: ProjectLocation): Project | undefined => {
+  const targetCorpus = (projectEntity.corpora ?? []).find(c => c.side === AlignmentSide.TARGET);
+  if(!targetCorpus || !projectEntity.id) return;
+  const currentTime = DateTime.now().toMillis();
+  return {
+    id: projectEntity.id,
+    name: targetCorpus.fullName,
+    abbreviation: targetCorpus.name,
+    fileName: targetCorpus.fileName ?? "",
+    languageCode: targetCorpus.language.code,
+    textDirection: targetCorpus.language.textDirection as unknown as TextDirection,
+    location: location,
+    lastUpdated: projectEntity.lastUpdated ?? currentTime,
+    lastSyncTime: projectEntity.lastSyncTime ?? 0,
+    targetCorpora: CorpusContainer.fromIdAndCorpora(
+      AlignmentSide.TARGET,
+      (projectEntity.corpora ?? []).map(mapCorpusDTOToCorpusEntity).filter(c => c.side === AlignmentSide.TARGET) ?? []
+    ),
+    sourceCorpora: CorpusContainer.fromIdAndCorpora(
+      AlignmentSide.SOURCE,
+      (projectEntity.corpora ?? []).map(mapCorpusDTOToCorpusEntity).filter(c => c.side === AlignmentSide.SOURCE) ?? []
+    )
+  }
+}
+
+export const mapCorpusEntityToCorpusDTO = (corpus: Corpus): CorpusDTO | undefined => {
   return {
     id: corpus.id,
     name: corpus.name,
@@ -85,7 +103,7 @@ export const mapCorpusDTOToCorpusEntity = (dto: CorpusDTO): Corpus => {
     fullName: dto.fullName,
     language: mapLanguageDTOToLanguageEntity(dto.language),
     side: String(dto.side),
-    words: [],
+    words: (dto.words || []).map(mapWordOrPartDtoToWordOrPart),
     wordsByVerse: {},
     wordLocation: new Map(),
     books: {},
@@ -106,7 +124,7 @@ export const mapLanguageDTOToLanguageEntity = (dto: LanguageDTO): LanguageInfo =
 export const mapLanguageEntityToLanguageDTO = (entity: LanguageInfo): LanguageDTO => {
   return {
     code: entity.code,
-    textDirection: entity.textDirection as unknown as TextDirectionDTO,
+    textDirection: entity.textDirection,
     fontFamily: entity.fontFamily || ""
   }
 }

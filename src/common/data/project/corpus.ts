@@ -1,4 +1,5 @@
 import { LanguageDTO } from "./language";
+import { WordOrPartDTO } from './wordsOrParts';
 
 export enum AlignmentSide {
   sources,
@@ -12,4 +13,5 @@ export interface CorpusDTO {
   fileName: string;
   language: LanguageDTO;
   languageCode: string;
+  words?: WordOrPartDTO[];
 }

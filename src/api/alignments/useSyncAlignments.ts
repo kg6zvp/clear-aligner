@@ -16,6 +16,7 @@ export interface SyncState {
   file?: AlignmentFile;
   progress: SyncProgress;
   sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
+  cancel: CallableFunction;
 }
 
 const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): JournalEntryDTO => mapJournalEntryEntityToJournalEntryDTO(journalEntry);
@@ -138,6 +139,7 @@ export const useSyncAlignments = ({ projectId, syncLinksKey, cancelSyncKey, manu
   return {
     file,
     progress,
-    sync: syncLinks
+    sync: syncLinks,
+    cancel: () => {}
   };
 }

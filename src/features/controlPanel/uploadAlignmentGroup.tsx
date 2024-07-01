@@ -23,6 +23,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
   size?: string,
   allowImport?: boolean;
 }) => {
+  console.log("projectId: ", projectId)
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,16 +40,14 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
   useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
-  const [ syncLinksKey, setSyncLinksKey ] = useState<string|undefined>(undefined);
-  const [ cancelSyncKey, setCancelSyncKey ] = useState<string|undefined>(undefined);
-  const syncState = useSyncAlignments({projectId, syncLinksKey, cancelSyncKey});
+  const {sync: syncLinks, progress: syncProgress, file, cancel: cancelSync } = useSyncAlignments({manuallySync: true});
   const [ getAllLinksKey, setGetAllLinksKey ] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
   useEffect(() => {
     saveAlignmentFile(allLinks);
   }, [allLinks]);
   useEffect(() => {
-    if (!syncState.file) {
+    if (!file) {
       return;
     }
     // clear errors, if any
@@ -58,11 +57,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     });
     // import/save file
     setAlignmentFileSaveState({
-      alignmentFile: syncState.file,
+      alignmentFile: file,
       saveKey: uuid()
     });
-  }, [ syncState.file, setAlignmentFileSaveState ]);
-  const showSyncProgressDialog = useMemo<boolean>(() => syncState.progress === SyncProgress.IN_PROGRESS, [ syncState.progress ]);
+  }, [ file, setAlignmentFileSaveState ]);
+  const showSyncProgressDialog = useMemo<boolean>(() => syncProgress === SyncProgress.IN_PROGRESS, [ syncProgress ]);
 
   return (
     <span>
@@ -74,7 +73,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
         <span>
           <SyncProgressDialog
             showDialog={showSyncProgressDialog}
-            onCancel={() => setCancelSyncKey(uuid())}
+            onCancel={() => cancelSync()}
           />
           <Button
             size={size as 'medium' | 'small' | undefined}
@@ -84,9 +83,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
               minWidth: '100%',
               marginBottom: '.2em'
             }}
-            onClick={() => {
-              setSyncLinksKey(uuid());
-            }} >
+            onClick={() => syncLinks(projectId)}
+          >
             <Sync />
           </Button>
         </span>

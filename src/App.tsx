@@ -22,6 +22,7 @@ export interface AppContextProps {
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   containers: Containers;
+  setContainers: React.Dispatch<React.SetStateAction<Containers>>;
 }
 
 export const AppContext = createContext({} as AppContextProps);
