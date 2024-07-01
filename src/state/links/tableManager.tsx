@@ -120,7 +120,9 @@ export class LinksTable extends VirtualTable {
     return !!(await window.databaseApi.existsById(this.getSourceName(), LinkTableName, linkId));
   };
 
-  removeAll = async (suppressOnUpdate = false, isForced = false) => {
+  removeAll = async (suppressOnUpdate = false,
+                     isForced = false,
+                     disableJournaling = false) => {
     if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
@@ -130,6 +132,12 @@ export class LinksTable extends VirtualTable {
     this.setDatabaseBusyText('Removing old links...');
     try {
       await this.checkDatabase();
+      if (!disableJournaling) {
+        await dbApi.deleteAll({
+          sourceName: this.getSourceName(),
+          table: JournalEntryTableName
+        });
+      }
       const result = await dbApi.deleteAll({
         sourceName: this.getSourceName(),
         table: LinkTableName
@@ -176,8 +184,8 @@ export class LinksTable extends VirtualTable {
     this.incrDatabaseBusyCtr();
     this.setDatabaseBusyText(`Loading ${inputLinks.length.toLocaleString()} links...`);
     try {
-      await this.removeAll(true, true);
       await this.checkDatabase();
+      await this.removeAll(true, true, disableJournaling);
 
       this.setDatabaseBusyText(`Sorting ${inputLinks.length.toLocaleString()} links...`);
       this.logDatabaseTime('saveAll(): sorted');
