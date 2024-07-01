@@ -1,5 +1,5 @@
 /**
- * This file contains the NewFeatureComponent.
+ * This file contains the Login component
  */
 import React, { ReactElement, useContext } from 'react';
 import { Box } from '@mui/system';
@@ -20,6 +20,10 @@ interface LoginProps {
   setShowLoginError: Function;
 }
 
+/**
+ * The Login component is used for user authentication via AWS Cognito
+ * and AWS Amplify
+ */
 export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                                              handleLoginModalClose,
                                              popOverAnchorEl,
