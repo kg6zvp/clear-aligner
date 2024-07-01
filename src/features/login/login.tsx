@@ -66,7 +66,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       <Box>
         <DialogTitle>
           <Typography
-            color={'blue'}
+            color={'#1976d2'}
             align={'center'}
             fontSize={'18px'}
           >
