@@ -132,7 +132,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
           </Box>
         </Stack>
       </Box>
-
     </Popover>
   );
 };

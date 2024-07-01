@@ -1,3 +1,6 @@
+/**
+ * This file contains the ProfileAvatar and the ProfileMenu component
+ */
 import { Avatar, Button, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
@@ -34,7 +37,7 @@ interface ProfileMenuProps {
 }
 
 /**
- * This component is used for users to display the
+ * The ProfileMenu component is used for users to see the
  * User Profile Menu when the Avatar is clicked
  */
 const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignInButtonDisabled}) => {
@@ -137,8 +140,8 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
 
 
 /**
- * This component is used for users to login/logout
- * and do things like access personal preferences.
+ * This ProfileAvatar component is used for users to access a menu
+ * with login/logout, settings, about, etc.
  */
 export const ProfileAvatar = () => {
   const [isSignInButtonVisible, setIsSignInButtonVisible] = React.useState(true)
