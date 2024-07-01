@@ -45,7 +45,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const [popOverAnchorEl, setPopOverAnchorEl] = React.useState<null | HTMLElement>(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = React.useState(false);
   const [showLoginError, setShowLoginError] = React.useState(false);
-  const { setUserStatus } = useContext(AppContext);
+  const { network, setUserStatus } = useContext(AppContext);
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
 
   const open = Boolean(anchorEl);
@@ -77,7 +77,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
       console.log('error signing out: ', error)
     }
   }
-
   return (
     <div>
       <Button
@@ -117,7 +116,10 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
             </ListItemIcon>
             Sign in to ClearAligner Sync
           </MenuItem>)
-          : (<MenuItem onClick={handleSignOut}>
+          : (<MenuItem
+            disabled={network.online === false}
+            onClick={handleSignOut}
+          >
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
