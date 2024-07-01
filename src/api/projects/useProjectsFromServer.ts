@@ -7,7 +7,6 @@ import { SERVER_URL } from '../../common';
 import { AppContext } from '../../App';
 import { Progress } from '../ApiModels';
 import { Project } from '../../state/projects/tableManager';
-import { getCorpusFromDatabase } from '../../workbench/query';
 
 export interface UseProjectsFromServerProps {
   syncProjectsKey?: string;
@@ -35,12 +34,6 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
       const projects = (Array.isArray(projectDtos) ? projectDtos.map(p => mapProjectDtoToProject(p, ProjectLocation.REMOTE)) : [])
         .filter(p => p?.targetCorpora?.corpora) as Project[];
 
-      if(projects[0]) {
-        const project = projects[0];
-        for ( let c of [...(project.targetCorpora?.corpora ?? []), ...(project.sourceCorpora?.corpora ?? [])]) {
-          console.log("corpus from database; ", await getCorpusFromDatabase(c, project.id), project);
-        }
-      }
       console.log("persist: ", persist, projects);
       // Save in local database if persist is specified.
       if(persist) {

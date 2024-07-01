@@ -40,12 +40,12 @@ const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
 
 const ProjectsView: React.FC<ProjectsViewProps> = () => {
   const layoutCtx = useContext(LayoutContext);
-  const { projects, preferences } = React.useContext(AppContext);
+  const { preferences, projects: initialProjects } = React.useContext(AppContext);
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
     enabled: false // Prevents immediate and useEffect-based requerying
   });
 
-  console.log('projects on list page: ', projects);
+  const projects = React.useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
 
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
@@ -141,8 +141,8 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
   useCorpusContainers();
 
-  const {downloadProject} = useDownloadProject();
-  const { sync: syncProject, progress: syncingProject } = useSyncProject();
+  const {downloadProject, dialog: downloadProjectDialog} = useDownloadProject();
+  const { sync: syncProject, progress: syncingProject, dialog: syncDialog } = useSyncProject();
 
   const busyDialog = useBusyDialog(
     syncingProject === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined
@@ -200,16 +200,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
                   <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
                           sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
                     {![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ? 'Syncing...' : 'Sync Project'}
+                    <CloudSync sx={theme => ({ ml: 1, fill: (
+                        ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ||
+                        (project.lastSyncTime && project.lastUpdated && project.lastSyncTime === project.lastUpdated)
+                      )
+                        ? theme.palette.text.secondary
+                        : theme.palette.primary.main
+                    })} />
                   </Button>
                 )
               }
-              <CloudSync sx={theme => ({ fill: (
-                [SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ||
-                  !(project.lastSyncTime && project.lastUpdated && project.lastSyncTime === project.lastUpdated)
-                )
-                  ? theme.palette.primary.main
-                  : theme.palette.text.secondary
-              })} />
             </Grid>
           </Grid>
         );
@@ -290,7 +290,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           }
         </CardContent>
       </Card>
-      {syncingProject === SyncProgress.IN_PROGRESS && busyDialog}
+      {syncDialog}
+      {downloadProjectDialog}
     </>
   );
 };
