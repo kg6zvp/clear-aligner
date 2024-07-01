@@ -132,8 +132,7 @@ export class LinksTable extends VirtualTable {
       await this.checkDatabase();
       const result = await dbApi.deleteAll({
         sourceName: this.getSourceName(),
-        table: LinkTableName,
-        disableJournaling: true
+        table: LinkTableName
       });
       await this._onUpdate(suppressOnUpdate);
       return result;
@@ -160,12 +159,7 @@ export class LinksTable extends VirtualTable {
           sources: record.source,
           targets: record.target
         } as Link)
-    ), suppressOnUpdate, isForced, true);
-    // remove journal entries on import
-    await dbApi.deleteAll({
-      sourceName: this.getSourceName(),
-      table: JournalEntryTableName
-    });
+    ), suppressOnUpdate, isForced);
   };
 
   saveAll = async (inputLinks: Link[],
@@ -217,7 +211,6 @@ export class LinksTable extends VirtualTable {
         });
         progressCtr += chunk.length;
         this.setDatabaseBusyProgress(progressCtr, progressMax);
-
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
         const toLinkTitle = LinksTable.createLinkTitle(chunk[chunk.length - 1]);
