@@ -131,15 +131,11 @@ const useInitialization = () => {
   useEffect( () => {
     const getCurrentUserDetails = async () => {
       try{
-        const { username, userId, signInDetails } = await getCurrentUser();
-        console.log('username is: ', username)
-        console.log('userId is: ', userId)
-        console.log('signInDetails is: ', signInDetails)
+        await getCurrentUser();
         setUserStatus(userState.LoggedIn)
       }
       catch(error){
         setUserStatus(userState.LoggedOut)
-        console.log('error retrieving current user details: ', error)
       }
     }
     if(network.online){
