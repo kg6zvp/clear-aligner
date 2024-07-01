@@ -1,14 +1,10 @@
-import { Avatar, Button, Divider, Menu, MenuItem } from '@mui/material';
+import { Avatar, Button, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
 import React, { useContext, useEffect } from 'react';
 
 import ListItemIcon from '@mui/material/ListItemIcon';
-import SettingsIcon from '@mui/icons-material/Settings';
-import InfoIcon from '@mui/icons-material/Info';
-import ListItemText from '@mui/material/ListItemText';
-import FeedbackIcon from '@mui/icons-material/Feedback';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Login from '../login/login';
 import { signOut } from 'aws-amplify/auth';
@@ -108,31 +104,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
           horizontal: 'center',
         }}
       >
-        <MenuItem onClick={handleClose} disabled>
-          <ListItemIcon>
-            <SettingsIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>
-            Settings
-          </ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleClose} disabled>
-          <ListItemIcon>
-            <InfoIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>
-            About
-          </ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleClose} disabled>
-          <ListItemIcon>
-            <FeedbackIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>
-            Feedback
-          </ListItemText>
-        </MenuItem>
-        <Divider/>
         {isSignInButtonVisible
           ? (<MenuItem
             onClick={handleLoginClick}
