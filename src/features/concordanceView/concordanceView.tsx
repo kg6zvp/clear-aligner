@@ -419,7 +419,10 @@ export const ConcordanceView = () => {
   )
 
   return (
-    <div style={{ position: 'relative', display: 'flex' }}>
+    <div style={{
+      position: 'relative',
+      display: 'flex',
+    }}>
       <Box
         sx={{
           flex: 1,
@@ -477,7 +480,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 10.5em)',
+              height: 'calc(100vh - 9em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }
@@ -514,7 +517,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 4em)',
+              height: 'calc(100vh - 2.5em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }
@@ -566,7 +569,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 125px - 4em)',
+              height: 'calc(100vh - 37px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }
