@@ -11,6 +11,9 @@ import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { useInterval } from 'usehooks-ts';
+import { useNetworkState } from '@uidotdev/usehooks';
+import { userState } from '../features/profileAvatar/profileAvatar';
+import { getCurrentUser } from 'aws-amplify/auth';
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -18,6 +21,11 @@ const useInitialization = () => {
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
+  const [userStatus, setUserStatus] = React.useState(userState.LoggedOut)
+  const network = useNetworkState();
+  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
+  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -119,6 +127,38 @@ const useInitialization = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update UserStatus
+  useEffect( () => {
+    const getCurrentUserDetails = async () => {
+      try{
+        await getCurrentUser();
+        setUserStatus(userState.LoggedIn)
+      }
+      catch(error){
+        setUserStatus(userState.LoggedOut)
+      }
+    }
+    if(network.online){
+      getCurrentUserDetails();
+    }
+    else{
+      setUserStatus(userState.Offline)
+    }
+  },[network])
+
+  // trigger snackbar messages indicating network status
+  useEffect( () => {
+    if(network && network.online){
+      setSnackBarMessage('Internet Connection Detected')
+      setIsSnackBarOpen(true)
+    }
+    else{
+      setSnackBarMessage('No internet connection')
+      setIsSnackBarOpen(true)
+    }
+  },[network])
+
+
   return {
     projectState: state,
     setProjectState: setState,
@@ -126,7 +166,14 @@ const useInitialization = () => {
     setPreferences,
     projects,
     setProjects,
-    containers
+    containers,
+    network,
+    userStatus,
+    setUserStatus,
+    isSnackBarOpen,
+    setIsSnackBarOpen,
+    snackBarMessage,
+    setSnackBarMessage
   } as AppContextProps;
 };
 
