@@ -3,7 +3,7 @@
  */
 import React, { ReactElement, useContext } from 'react';
 import { Box } from '@mui/system';
-import { Button, DialogTitle, Popover, Stack, Typography } from '@mui/material';
+import { Button, DialogTitle, Popover, Stack, Typography, useTheme } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signIn } from "aws-amplify/auth";
 import { userState } from '../profileAvatar/profileAvatar';
@@ -32,7 +32,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                                              showLoginError}): ReactElement => {
   const [emailAddress, setEmailAddress] = React.useState("")
   const [password, setPassword] = React.useState("")
-
+  const theme = useTheme();
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
 
   const handleLogin = async() => {
@@ -70,7 +70,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       <Box>
         <DialogTitle>
           <Typography
-            color={'#1976d2'}
+            color={theme.palette.mode === 'light' ? '#1976d2' : '#90caf9'}
             align={'center'}
             fontSize={'18px'}
           >
