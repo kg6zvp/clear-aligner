@@ -241,8 +241,6 @@ export const getAvailableCorporaContainers = async (appCtx: AppContextProps): Pr
     const targetContainer = CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET,
       outputCorpora.filter(outputCorpus => outputCorpus.side === AlignmentSide.TARGET));
 
-    console.log("containers: ", outputCorpora, targetContainer)
-
     return {
       projectId: appCtx.preferences?.currentProject,
       sourceContainer,

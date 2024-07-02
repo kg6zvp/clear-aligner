@@ -12,6 +12,7 @@ import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { DateTime } from 'luxon';
 
 const DatabaseInsertChunkSize = 10_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
@@ -61,8 +62,6 @@ export class LinksTable extends VirtualTable {
     if (!isForced && this.isDatabaseBusy()) {
       return false;
     }
-
-    console.log("linkOrLinks: ", linkOrLinks)
 
     this.logDatabaseTime('save()');
     try {
@@ -444,7 +443,7 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
 export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
-  const { projectState } = React.useContext(AppContext);
+  const { projectState, preferences, projects } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
   }>({});
@@ -460,6 +459,11 @@ export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
     databaseHookDebug('useSaveLink(): status', status);
     projectState?.linksTable.save(linkOrLinks)
       .then(result => {
+        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
+        if(currentProject) {
+          currentProject.lastUpdated = DateTime.now().toMillis();
+          projectState?.projectTable?.update?.(currentProject, false);
+        }
         const endStatus = {
           ...status,
           result

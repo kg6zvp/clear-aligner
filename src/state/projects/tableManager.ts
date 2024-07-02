@@ -44,17 +44,13 @@ export class ProjectTable extends VirtualTable {
   }
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
-    console.log("save is called")
     try {
       if (this.isDatabaseBusy()) {
-        console.log("Unable to save project while database is busy.")
         return;
       }
       this.incrDatabaseBusyCtr();
-      console.log("calling save");
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
-      console.log("createdProject: ", createdProject, project, ProjectTable.convertToDto(project))
       await this.sync(project);
       updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(createdProject.id, createdProject);
@@ -64,7 +60,6 @@ export class ProjectTable extends VirtualTable {
       console.error('Error creating project: ', e);
       return undefined;
     } finally {
-      console.log("in finally call")
       await this._onUpdate(suppressOnUpdate);
     }
   };
@@ -85,17 +80,14 @@ export class ProjectTable extends VirtualTable {
   };
 
   update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
-    console.log("updating project")
     try {
       if (this.isDatabaseBusy()) {
-        console.log("database is busy. Unable to update.");
         return;
       }
       this.incrDatabaseBusyCtr();
 
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
-      console.log("updatedProject: ", updatedProject)
       await this.sync(project);
       updateWordsOrParts && await this.insertWordsOrParts(project);
       this.projects.set(updatedProject, updatedProject);
@@ -146,7 +138,7 @@ export class ProjectTable extends VirtualTable {
       progressCtr,
       progressMax
     });
-    for (const chunk of _.chunk(wordsOrParts, UIInsertChunkSize)) {
+    for (const chunk of _.chunk(wordsOrParts, 10000).slice(0,1)) {
       // @ts-ignore
       await window.databaseApi.insert({
         sourceName: project.id,
@@ -163,6 +155,7 @@ export class ProjectTable extends VirtualTable {
         ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
         : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
 
+      break;
     }
     this.setDatabaseBusyText('Finishing project creation...');
     this.decrDatabaseBusyCtr();
@@ -202,12 +195,13 @@ export class ProjectTable extends VirtualTable {
       const dataSources = await this.getDataSourcesAsProjects();
       if (dataSources) {
         const projectEntities = await this.getProjectTableData();
-        console.log("dataSources: ", dataSources, projectEntities)
-        this.projects = new Map<string, Project>(dataSources.filter(Boolean).map(p => [p.id, {
-          ...(projectEntities.find(e => e.id === p.id) ?? {}),
-          ...p,
-          lastUpdated: Math.max(projectEntities.find(e => e.id === p.id)?.lastUpdated || 0, p.lastUpdated || 0)
-        }]));
+        this.projects = new Map<string, Project>(dataSources.filter(Boolean).map(p => {
+          const entity = projectEntities.find(e => e.id === p.id);
+          return [p.id, {
+            ...p,
+            ...(entity ?? {}),
+          }]
+        }));
       }
     }
     return this.projects;

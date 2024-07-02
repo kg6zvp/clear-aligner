@@ -62,7 +62,7 @@ const getInitialProjectState = (): Project => ({
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
   const dispatch = useAppDispatch();
-  const {deleteProject} = useDeleteProject();
+  const {deleteProject, dialog: deleteDialog} = useDeleteProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = React.useState<Project>(initialProjectState);
@@ -149,10 +149,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
-          projectToUpdate.lastSyncTime = 0;
           projectToUpdate.lastUpdated = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
+            projectToUpdate.lastSyncTime = 0;
             await projectState.projectTable?.save?.(projectToUpdate, !!fileContent);
           } else {
             await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
@@ -372,6 +372,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           </Grid>
         </DialogContent>
       </Dialog>
+      {deleteDialog}
     </>
   );
 };

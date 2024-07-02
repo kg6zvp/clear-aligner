@@ -11,6 +11,8 @@ import { AppContext } from '../../App';
 import { DateTime } from 'luxon';
 import { getAvailableCorporaContainers } from '../../workbench/query';
 import { Box, Button, CircularProgress, Dialog, Grid, Stack, Typography } from '@mui/material';
+import { useDeleteProject } from './useDeleteProject';
+import useCancelTask, { CancelToken } from '../useCancelTask';
 
 enum ProjectDownloadProgress {
   IDLE,
@@ -35,15 +37,33 @@ export interface SyncState {
  */
 export const useDownloadProject = (): SyncState => {
   const { projectState, setProjects, ...appCtx } = useContext(AppContext);
+  const {deleteProject} = useDeleteProject();
+  const {cancel, reset, cancelToken} = useCancelTask();
   const [progress, setProgress] = useState<ProjectDownloadProgress>(ProjectDownloadProgress.IDLE);
+  const [projectId, setProjectId] = useState<string>();
   const abortController = useRef<AbortController | undefined>();
 
-  const cleanupRequest = useCallback(() => {
+  const cleanupRequest = useCallback(async () => {
     abortController.current = undefined;
-  }, []);
+    reset();
+    if(projectId) {
+      const projectMap = await projectState.projectTable?.getProjects(true);
+      const savedProject = Array.from(projectMap?.values?.() ?? []).find(p => p.id === projectId);
+      if(savedProject) {
+        await deleteProject(projectId);
+        savedProject.lastSyncTime = 0;
+        savedProject.lastUpdated = DateTime.now().toMillis();
+        savedProject.location = ProjectLocation.REMOTE;
+        projectState.projectTable?.save(savedProject, false);
+      }
+      setProjectId(undefined);
+    }
+  }, [projectState]);
 
-  const downloadProject = async (projectId: string) => {
+  const downloadProject = async (projectId: string, cancelToken: CancelToken) => {
+    setProjectId(projectId);
     try {
+      if(cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_PROJECT);
       const projectResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}`, {
         signal: abortController.current?.signal,
@@ -52,6 +72,7 @@ export const useDownloadProject = (): SyncState => {
           accept: 'application/json'
         }
       });
+      if(cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
       const tokenResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/tokens`, {
         signal: abortController.current?.signal,
@@ -64,8 +85,9 @@ export const useDownloadProject = (): SyncState => {
       if (projectResponse.ok) {
         const projectData: ProjectDTO = await projectResponse.json();
         const tokens = ((await tokenResponse.json())?.tokens ?? []);
+        if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
-        tokens.forEach((t: WordOrPartDTO, idx: number) => {
+        tokens.forEach((t: WordOrPartDTO) => {
           projectData.corpora = (projectData.corpora || []).map(c => c.id === t.corpusId ? {
             ...c,
             words: [...(c.words || []).filter(w => w.id !== t.id), t]
@@ -74,23 +96,26 @@ export const useDownloadProject = (): SyncState => {
         const currentTime = DateTime.now().toMillis();
         projectData.lastUpdated = currentTime;
         projectData.lastSyncTime = currentTime;
+        if(cancelToken.canceled) return;
         const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;
-        console.log('project: ', project, projectData);
         if (!project) {
           setProgress(ProjectDownloadProgress.FAILED);
           return;
         }
+        if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.UPDATING);
         Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
           .map(p => p.id).includes(project.id)
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
 
+        if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
         const localProjects = await projectState.projectTable?.getProjects?.(true);
         setProjects(p => Array.from(localProjects?.values?.() ?? p));
         appCtx.setContainers((await getAvailableCorporaContainers({ projectState, setProjects, ...appCtx })));
       }
+      if(cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.SUCCESS);
       return projectResponse;
     } catch (x) {
@@ -102,9 +127,11 @@ export const useDownloadProject = (): SyncState => {
     }
   };
 
-  const onCancel = React.useCallback(() => {
+  const onCancel = React.useCallback(async () => {
     setProgress(ProjectDownloadProgress.CANCELED);
+    cancel();
     abortController.current?.abort?.();
+    await cleanupRequest();
   }, []);
 
   const dialog = React.useMemo(() => {
@@ -149,10 +176,8 @@ export const useDownloadProject = (): SyncState => {
     )
   }, [progress]);
 
-  console.log('progress: ', progress);
-
   return {
-    downloadProject,
+    downloadProject: (projectId) => downloadProject(projectId, cancelToken),
     progress,
     dialog
   };

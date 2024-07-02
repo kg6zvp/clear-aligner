@@ -18,7 +18,6 @@ import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer'
 import { ProjectLocation } from '../../common/data/project/project';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { DateTime } from 'luxon';
-import useBusyDialog from '../../utils/useBusyDialog';
 import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 
@@ -84,7 +83,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
             >Create New</Button>
           </Grid>
           <Grid item sx={{ px: 2 }}>
-            <Button variant="text" onClick={() => refetchRemoteProjects({persist: true})}>
+            <Button variant="text" onClick={() => refetchRemoteProjects({persist: true, currentProjects: projects})}>
               <Grid container alignItems="center">
                 <Refresh sx={theme => ({
                   mr: 1,
@@ -111,7 +110,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = () => {
             .sort((p1: Project) => p1?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
               <ProjectCard
-                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}`}
+                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.lastUpdated}`}
                 project={project}
                 onClick={selectProject}
                 currentProject={projects.find((p: Project) => p?.id === preferences?.currentProject) ?? projects?.[0]}
@@ -144,10 +143,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const {downloadProject, dialog: downloadProjectDialog} = useDownloadProject();
   const { sync: syncProject, progress: syncingProject, dialog: syncDialog } = useSyncProject();
 
-  const busyDialog = useBusyDialog(
-    syncingProject === SyncProgress.IN_PROGRESS ? 'Syncing projects...' : undefined
-  );
-
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
@@ -173,7 +168,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           <Grid container justifyContent="flex-end" alignItems="center">
             <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
                     sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
-              Sync Project
+              Upload Project
               <Computer sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
             </Button>
           </Grid>
@@ -193,23 +188,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         return (
           <Grid container flexDirection="column">
             <Grid container justifyContent="flex-end" alignItems="center">
-              {
-                project.lastSyncTime && project.lastUpdated && project.lastSyncTime === project.lastUpdated ? (
-                  <Typography color="text.secondary" variant="subtitle2" sx={{ mr: 1 }}>Project Synced</Typography>
-                ) : (
-                  <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
-                          sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
-                    {![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ? 'Syncing...' : 'Sync Project'}
-                    <CloudSync sx={theme => ({ ml: 1, fill: (
-                        ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) ||
-                        (project.lastSyncTime && project.lastUpdated && project.lastSyncTime === project.lastUpdated)
-                      )
-                        ? theme.palette.text.secondary
-                        : theme.palette.primary.main
-                    })} />
-                  </Button>
-                )
-              }
+              <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary})} />
             </Grid>
           </Grid>
         );
@@ -277,7 +256,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           {
             (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
               <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
-                Synced On:&nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MM/dd/yyyy hh:mm:ss a')}
+                <span style={{fontWeight: 'bold'}}>Last sync:</span>
+                &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
               </Typography>
             )
           }

@@ -385,7 +385,6 @@ export class ProjectRepository extends BaseRepository {
         table: CorporaTableName,
         itemOrItems: corpora
       });
-      console.log("corpora to save: ", corpora);
       const sources = await projectDataSource.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();

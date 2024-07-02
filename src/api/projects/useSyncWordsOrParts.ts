@@ -24,7 +24,6 @@ export const useSyncWordsOrParts = (): SyncState => {
 
   const syncWordsOrParts = async (project: Project) => {
     try {
-      console.log("syncing words: ", project)
       setProgress(Progress.IN_PROGRESS);
       const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/tokens`, {
         signal: abortController.current?.signal,
@@ -38,7 +37,6 @@ export const useSyncWordsOrParts = (): SyncState => {
           ...(project.targetCorpora?.corpora ?? [])
         ].flatMap(c => c.words).map(mapWordOrPartToWordOrPartDTO))
       });
-      console.log("token res: ", res)
       let syncProgress = Progress.FAILED;
       if(res.ok) {
         syncProgress = Progress.SUCCESS;

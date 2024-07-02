@@ -9,6 +9,8 @@ import { DateTime } from 'luxon';
 import { useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { getCorpusFromDatabase } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
+import useCancelTask, { CancelToken } from '../useCancelTask';
+import { useDeleteProject } from './useDeleteProject';
 
 export enum SyncProgress {
   IDLE,
@@ -27,51 +29,57 @@ export interface SyncState {
   sync: (project: Project) => Promise<unknown>;
   progress: SyncProgress;
   dialog: any;
+  file: any;
 }
 
 /**
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
  */
 export const useSyncProject = (): SyncState => {
+  const {cancel, cancelToken, reset} = useCancelTask();
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
-  const { sync: syncAlignments } = useSyncAlignments({ manuallySync: true });
+  const { sync: syncAlignments, file } = useSyncAlignments();
+  const {deleteProject} = useDeleteProject();
   const { projectState, projects } = useContext(AppContext);
-
+  const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const abortController = useRef<AbortController | undefined>();
 
-  const cleanupRequest = useCallback((project: Project, syncTime?: number) => {
-    project.lastSyncTime = syncTime ?? 0;
-    projectState.projectTable?.update?.(project, false);
+  const cleanupRequest = useCallback(() => {
+    setProgress(SyncProgress.IDLE);
+    if(initialProjectState) {
+      if(initialProjectState.location === ProjectLocation.LOCAL) {
+        initialProjectState.lastSyncTime = 0;
+        void deleteProject(initialProjectState.id);
+      }
+      projectState.projectTable?.update?.(initialProjectState, false);
+      projectState.projectTable?.sync(initialProjectState);
+    }
     abortController.current = undefined;
-  }, []);
+    reset();
+  }, [initialProjectState]);
 
-  const syncProject = useCallback(async (project: Project) => {
-    const previousSyncTime = project.lastSyncTime;
+  const syncProject = useCallback(async (project: Project, cancelToken: CancelToken) => {
+    setInitialProjectState({...project});
     try {
       const syncTime = DateTime.now().toUTC().toMillis();
-      project.lastSyncTime = syncTime;
-      project.lastUpdated = syncTime;
-      project.location = ProjectLocation.SYNCED;
-      if (progress === SyncProgress.CANCELED) return;
-      setProgress(SyncProgress.SYNCING_LOCAL);
-      await projectState.projectTable?.sync?.(project);
-      if ((progress as SyncProgress) === SyncProgress.CANCELED) {
-        return;
-      }
-      setProgress(SyncProgress.RETRIEVING_TOKENS);
+      if(cancelToken.canceled) return;
 
-      for (const container of [project.targetCorpora, project.sourceCorpora]) {
-        for (const corpus of (container?.corpora ?? [])) {
-          const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
-          corpus.words = corpusFromDB.words;
-          corpus.wordsByVerse = corpusFromDB.wordsByVerse;
-          console.log("corpusFromDB: ", corpusFromDB)
+      if(project.location === ProjectLocation.LOCAL) {
+        setProgress(SyncProgress.RETRIEVING_TOKENS);
+        for (const container of [project.targetCorpora, project.sourceCorpora]) {
+          for (const corpus of (container?.corpora ?? [])) {
+            if(cancelToken.canceled) return;
+            const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
+            corpus.words = corpusFromDB.words;
+            corpus.wordsByVerse = corpusFromDB.wordsByVerse;
+          }
         }
       }
 
-      console.log('project in sync: ', project);
+      if(cancelToken.canceled) return;
       setProgress(SyncProgress.SYNCING_PROJECT);
+      project.lastUpdated = syncTime;
       const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
         signal: abortController.current?.signal,
         method: 'POST',
@@ -83,26 +91,42 @@ export const useSyncProject = (): SyncState => {
       });
       // If the project request was successful, update the alignments for the project.
       if (res.ok) {
+        if(cancelToken.canceled) return;
         setProgress(SyncProgress.SYNCING_TOKENS);
-        const syncedWords = await syncWordsOrParts(project);
-        console.log('syncedWords: ', syncedWords);
+        if(project.location !== ProjectLocation.LOCAL) {
+          await syncWordsOrParts(project);
+        }
+        if(cancelToken.canceled) return;
         setProgress(SyncProgress.SYNCING_ALIGNMENTS);
         await syncAlignments(project.id);
       }
+      project.lastSyncTime = syncTime;
+      project.location = ProjectLocation.SYNCED;
+      await projectState.projectTable?.sync?.(project);
+      if(cancelToken.canceled) return;
       setProgress(SyncProgress.SUCCESS);
       return res;
     } catch (x) {
-      cleanupRequest(project, previousSyncTime);
+      cleanupRequest();
       setProgress(SyncProgress.FAILED);
       setTimeout(() => {
         setProgress(SyncProgress.IDLE);
       }, 5000);
+    } finally {
+      setInitialProjectState(undefined);
     }
   }, [progress, projects, projectState]);
 
+  React.useEffect(() => {
+    if(progress === SyncProgress.CANCELED) {
+      cancel();
+      abortController.current?.abort?.();
+      cleanupRequest();
+    }
+  }, [progress]);
+
   const onCancel = React.useCallback(() => {
     setProgress(SyncProgress.CANCELED);
-    abortController.current?.abort?.();
   }, []);
 
   const dialog = React.useMemo(() => {
@@ -115,13 +139,9 @@ export const useSyncProject = (): SyncState => {
         dialogMessage = 'Retrieving tokens from the local database...';
         break;
       case SyncProgress.SYNCING_PROJECT:
-        dialogMessage = 'Syncing project with the server...';
-        break;
       case SyncProgress.SYNCING_TOKENS:
-        dialogMessage = 'Syncing words and parts with the server...';
-        break;
       case SyncProgress.SYNCING_ALIGNMENTS:
-        dialogMessage = 'Syncing alignments with the server...';
+        dialogMessage = 'Syncing with the server...';
         break;
     }
 
@@ -149,8 +169,9 @@ export const useSyncProject = (): SyncState => {
 
 
   return {
-    sync: syncProject,
+    sync: project => new Promise(res => setTimeout(() => res(syncProject(project, cancelToken)), 2000)),
     progress,
-    dialog
+    dialog,
+    file
   };
 };
