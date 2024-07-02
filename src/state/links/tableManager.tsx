@@ -16,7 +16,7 @@ import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 
 const DatabaseInsertChunkSize = 10_000;
-const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
+const UIInsertChunkSize = DatabaseInsertChunkSize / 2;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;

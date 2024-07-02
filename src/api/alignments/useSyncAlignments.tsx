@@ -1,5 +1,5 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -16,6 +16,13 @@ import { get, patch } from 'aws-amplify/api';
 import _ from 'lodash';
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
+
+const SERVER_URL = undefined;
+
+export enum SyncProgress {
+  IDLE,
+  IN_PROGRESS
+}
 
 export interface SyncState {
   file?: AlignmentFile;
@@ -35,7 +42,7 @@ export const useSyncAlignments = (): SyncState => {
   const abortController = useRef<AbortController | undefined>();
   const dbApi = useDatabase();
 
-  const cleanupRequest = React.useCallback(() => {
+  const cleanupRequest = useCallback(() => {
     setProgress(Progress.CANCELED);
     abortController.current?.abort?.();
   }, []);
