@@ -380,6 +380,7 @@ export class ProjectRepository extends BaseRepository {
       const projectDataSource = await this.getDataSource(project.id);
       // Inserts corpora to the {project.id} data source
       const corpora = [...project.corpora].filter(Boolean);
+      console.log("corpora: ", corpora)
       await this.insert({
         sourceName: project.id,
         table: CorporaTableName,

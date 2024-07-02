@@ -15,6 +15,7 @@ export class AddProjectSync1719514157111 implements MigrationInterface {
     await queryRunner.addColumn(ProjectTableName, new TableColumn({
       name: 'last_sync_time',
       type: 'BIGINT',
+      isNullable: true
     }));
     await queryRunner.query(`UPDATE ${ProjectTableName} SET last_updated = '' WHERE ${ProjectTableName}.last_updated IS NULL`);
     await queryRunner.query(`UPDATE ${ProjectTableName} SET last_sync_time = '' WHERE ${ProjectTableName}.last_sync_time IS NULL`);

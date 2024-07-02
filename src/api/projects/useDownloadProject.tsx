@@ -13,6 +13,7 @@ import { getAvailableCorporaContainers } from '../../workbench/query';
 import { Box, Button, CircularProgress, Dialog, Grid, Stack, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
+import { AlignmentSide } from '../../structs';
 
 enum ProjectDownloadProgress {
   IDLE,
@@ -87,7 +88,7 @@ export const useDownloadProject = (): SyncState => {
         const tokens = ((await tokenResponse.json())?.tokens ?? []);
         if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
-        tokens.forEach((t: WordOrPartDTO) => {
+        tokens.filter((t: WordOrPartDTO) => t.side === AlignmentSide.TARGET).forEach((t: WordOrPartDTO) => {
           projectData.corpora = (projectData.corpora || []).map(c => c.id === t.corpusId ? {
             ...c,
             words: [...(c.words || []).filter(w => w.id !== t.id), t]
@@ -102,6 +103,7 @@ export const useDownloadProject = (): SyncState => {
           setProgress(ProjectDownloadProgress.FAILED);
           return;
         }
+        console.log("project: ", project, projectData)
         if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.UPDATING);
         Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
@@ -119,7 +121,7 @@ export const useDownloadProject = (): SyncState => {
       setProgress(ProjectDownloadProgress.SUCCESS);
       return projectResponse;
     } catch (x) {
-      cleanupRequest();
+      cleanupRequest().catch(console.error);
       setProgress(ProjectDownloadProgress.FAILED);
       setTimeout(() => {
         setProgress(ProjectDownloadProgress.IDLE);

@@ -39,6 +39,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
       if(persist) {
         const localProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
         for (const project of projects.filter(p => p?.targetCorpora?.corpora?.length)) {
+          project.sourceCorpora = undefined;
           const localProject: Project = localProjects.get(project.id);
           if(localProject && localProject.targetCorpora?.corpora?.[0]) {
             project.lastSyncTime = DateTime.now().toMillis();

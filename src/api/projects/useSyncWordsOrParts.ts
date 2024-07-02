@@ -4,9 +4,10 @@ import { generateJsonString } from '../../common/generateJsonString';
 import { mapWordOrPartToWordOrPartDTO } from '../../common/data/project/wordsOrParts';
 import { Project } from 'state/projects/tableManager';
 import { Progress } from 'api/ApiModels';
+import { AlignmentSide } from '../../structs';
 
 export interface SyncState {
-  sync: (project: Project) => Promise<unknown>;
+  sync: (project: Project, side?: AlignmentSide) => Promise<unknown>;
   progress: Progress;
 }
 
@@ -22,7 +23,7 @@ export const useSyncWordsOrParts = (): SyncState => {
     abortController.current = undefined;
   }, []);
 
-  const syncWordsOrParts = async (project: Project) => {
+  const syncWordsOrParts = async (project: Project, side?: AlignmentSide) => {
     try {
       setProgress(Progress.IN_PROGRESS);
       const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/tokens`, {
@@ -33,8 +34,8 @@ export const useSyncWordsOrParts = (): SyncState => {
           'Content-Type': 'application/json'
         },
         body: generateJsonString([
-          ...(project.sourceCorpora?.corpora ?? []),
-          ...(project.targetCorpora?.corpora ?? [])
+          ...(side === AlignmentSide.TARGET ? [] : (project.sourceCorpora?.corpora ?? [])),
+          ...(side === AlignmentSide.SOURCE ? [] : (project.targetCorpora?.corpora ?? []))
         ].flatMap(c => c.words).map(mapWordOrPartToWordOrPartDTO))
       });
       let syncProgress = Progress.FAILED;

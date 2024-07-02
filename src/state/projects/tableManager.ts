@@ -49,11 +49,12 @@ export class ProjectTable extends VirtualTable {
         return;
       }
       this.incrDatabaseBusyCtr();
+      console.log("saving project: ", ProjectTable.convertToDto(project), project)
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
       await this.sync(project);
       updateWordsOrParts && await this.insertWordsOrParts(project);
-      this.projects.set(createdProject.id, createdProject);
+      createdProject && this.projects.set(createdProject.id, createdProject);
       this.decrDatabaseBusyCtr();
       return createdProject ? ProjectTable.convertDataSourceToProject(createdProject) : undefined;
     } catch (e) {
@@ -128,6 +129,7 @@ export class ProjectTable extends VirtualTable {
         .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
         .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
+    console.log("removing the target words or parts")
     // @ts-ignore
     await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
@@ -138,6 +140,7 @@ export class ProjectTable extends VirtualTable {
       progressCtr,
       progressMax
     });
+  console.log("wordsOrParts: ", wordsOrParts);
     for (const chunk of _.chunk(wordsOrParts, 10000).slice(0,1)) {
       // @ts-ignore
       await window.databaseApi.insert({

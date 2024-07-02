@@ -11,6 +11,7 @@ import { getCorpusFromDatabase } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
+import { AlignmentSide } from '../../structs';
 
 export enum SyncProgress {
   IDLE,
@@ -65,17 +66,17 @@ export const useSyncProject = (): SyncState => {
       const syncTime = DateTime.now().toUTC().toMillis();
       if(cancelToken.canceled) return;
 
-      if(project.location === ProjectLocation.LOCAL) {
-        setProgress(SyncProgress.RETRIEVING_TOKENS);
-        for (const container of [project.targetCorpora, project.sourceCorpora]) {
-          for (const corpus of (container?.corpora ?? [])) {
-            if(cancelToken.canceled) return;
-            const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
-            corpus.words = corpusFromDB.words;
-            corpus.wordsByVerse = corpusFromDB.wordsByVerse;
-          }
+      setProgress(SyncProgress.RETRIEVING_TOKENS);
+      for (const container of [project.targetCorpora, project.sourceCorpora]) {
+        for (const corpus of (container?.corpora ?? [])) {
+          if(cancelToken.canceled) return;
+          const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
+          corpus.words = corpusFromDB.words;
+          corpus.wordsByVerse = corpusFromDB.wordsByVerse;
         }
       }
+
+      console.log("syncing project: ", project)
 
       if(cancelToken.canceled) return;
       setProgress(SyncProgress.SYNCING_PROJECT);
@@ -93,9 +94,7 @@ export const useSyncProject = (): SyncState => {
       if (res.ok) {
         if(cancelToken.canceled) return;
         setProgress(SyncProgress.SYNCING_TOKENS);
-        if(project.location !== ProjectLocation.LOCAL) {
-          await syncWordsOrParts(project);
-        }
+        await syncWordsOrParts(project, project.location === ProjectLocation.SYNCED ? AlignmentSide.TARGET : undefined);
         if(cancelToken.canceled) return;
         setProgress(SyncProgress.SYNCING_ALIGNMENTS);
         await syncAlignments(project.id);
