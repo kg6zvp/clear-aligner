@@ -123,7 +123,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
             <ListItemIcon>
               <LogoutIcon fontSize="small" />
             </ListItemIcon>
-            Sign out of ClearAligner
+            Sign out of ClearAligner Sync
           </MenuItem>)
         }
 
