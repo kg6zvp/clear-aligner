@@ -60,7 +60,7 @@ export const useDownloadProject = (): SyncState => {
       }
       setProjectId(undefined);
     }
-  }, [projectState]);
+  }, [projectState, deleteProject, projectId, reset]);
 
   const downloadProject = async (projectId: string, cancelToken: CancelToken) => {
     setProjectId(projectId);
@@ -144,7 +144,7 @@ export const useDownloadProject = (): SyncState => {
     cancel();
     abortController.current?.abort?.();
     await cleanupRequest();
-  }, []);
+  }, [cleanupRequest, cancel]);
 
   const dialog = React.useMemo(() => {
     let dialogMessage = "Loading...";
@@ -186,7 +186,7 @@ export const useDownloadProject = (): SyncState => {
         </Grid>
       </Dialog>
     )
-  }, [progress]);
+  }, [progress, onCancel]);
 
   return {
     downloadProject: (projectId) => downloadProject(projectId, cancelToken),

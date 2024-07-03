@@ -24,7 +24,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
   const getProjects = useCallback(async ({persist, currentProjects} = {persist: false, currentProjects: []}) => {
     try {
       setProgress(Progress.IN_PROGRESS);
-      const projectsResponse = await fetch(`${SERVER_URL ?? 'http://localhost:8080'}/api/projects/`, {
+      const projectsResponse = await fetch(`${SERVER_URL ?? 'http://localhost:8080'}/api/projects`, {
         method: 'GET',
         headers: {
           accept: 'application/json',

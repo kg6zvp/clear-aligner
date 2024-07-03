@@ -58,7 +58,7 @@ export const useSyncProject = (): SyncState => {
     }
     abortController.current = undefined;
     reset();
-  }, [initialProjectState]);
+  }, [initialProjectState, deleteProject, projectState.projectTable, reset]);
 
   const syncProject = useCallback(async (project: Project, cancelToken: CancelToken) => {
     setInitialProjectState({...project});
@@ -79,7 +79,7 @@ export const useSyncProject = (): SyncState => {
       if(cancelToken.canceled) return;
       setProgress(SyncProgress.SYNCING_PROJECT);
       project.lastUpdated = syncTime;
-      const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/`, {
+      const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
         signal: abortController.current?.signal,
         method: 'POST',
         headers: {
