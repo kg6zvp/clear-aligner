@@ -43,7 +43,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       })
       setUserStatus(userState.LoggedIn);
       setShowLoginError(false)
-      setSnackBarMessage("Signed into ClearAligner Sync Server.")
+      setSnackBarMessage("Signed into ClearAligner Sync.")
       setIsSnackBarOpen(true);
     }
     catch (error){
@@ -74,7 +74,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
             align={'center'}
             fontSize={'18px'}
           >
-            Sign in for ClearAligner Sync
+            ClearAligner Sync
           </Typography>
         </DialogTitle>
         <Stack>
