@@ -8,7 +8,6 @@ import React, { useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
-import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
@@ -64,12 +63,6 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     };
     void loadSourceWords().catch(console.error);
   }, [targetContainer?.corpora, setAvailableWords, targetContainer]);
-
-  useEffect(() => {
-    layoutCtx?.setMenuBarDelegate(
-      <BCVDisplay currentPosition={appCtx.preferences?.bcv} />
-    );
-  }, [layoutCtx, appCtx.preferences?.bcv]);
 
   // reset selected tokens when the book, chapter or verse changes
   useEffect(() => {

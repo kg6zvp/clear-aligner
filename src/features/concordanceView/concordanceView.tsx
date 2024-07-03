@@ -285,7 +285,7 @@ export const AlignmentTableControlPanel = ({
  * and the AlignmentTable
  */
 export const ConcordanceView = () => {
-  const layoutCtx = useContext(LayoutContext);
+  useContext(LayoutContext);
   const dispatch = useAppDispatch();
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
   const [selectedRows, setSelectedRows] = React.useState([]);
@@ -305,9 +305,7 @@ export const ConcordanceView = () => {
   const [updatedSelectedRows, setUpdatedSelectedRows] = React.useState<Link[]>([])
   const { pivotWords } = usePivotWords(wordSource, wordFilter, pivotWordSortData);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const loading = useMemo(() => !!pivotWords, [pivotWords, pivotWords?.length]);
-
+  useMemo(() => !!pivotWords, [pivotWords]);
   const [selectedPivotWord, setSelectedPivotWord] = useState<
     PivotWord | undefined
   >();
@@ -367,17 +365,6 @@ export const ConcordanceView = () => {
     [handleUpdateSelectedAlignedWord, linksPendingUpdate, getSaveChangesConfirmation ]
   );
 
-
-  useEffect(() => {
-    if (!loading) {
-      layoutCtx.setMenuBarDelegate(
-        <Typography sx={{ textAlign: 'center' }}>
-          Alignments :: Batch-review Mode
-        </Typography>
-      );
-    }
-  }, [layoutCtx, loading]);
-
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -424,14 +411,17 @@ export const ConcordanceView = () => {
   )
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{
+      position: 'relative',
+      display: 'flex',
+    }}>
       <Box
         sx={{
           flex: 1,
           display: 'flex',
           gridGap: '.2em',
           gridTemplateColumns: 'repeat(18, 1fr)',
-          width: '100vw !important'
+          width: '95.5vw !important'
         }}
       >
         {/**
@@ -446,7 +436,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '35%',
             gap: '1em',
-            marginLeft: '2em',
+            marginLeft: '1em',
             marginTop: '1em'
           }}
         >
@@ -482,7 +472,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 10.5em)',
+              height: 'calc(100vh - 9em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }
@@ -511,7 +501,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '40%',
             gap: '1em',
-            marginLeft: '2em',
+            marginLeft: '1em',
             marginTop: '1em'
           }}
         >
@@ -519,7 +509,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 64px - 4em)',
+              height: 'calc(100vh - 2.5em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }
@@ -547,7 +537,7 @@ export const ConcordanceView = () => {
             gridColumn: '1',
             width: '100%',
             gap: '1em',
-            margin: '2em',
+            margin: '1em',
             marginTop: '.5em'
           }}
         >
@@ -571,7 +561,7 @@ export const ConcordanceView = () => {
             sx={{
               display: 'flex',
               width: '100%',
-              height: 'calc(100vh - 125px - 4em)',
+              height: 'calc(100vh - 37px - 4em)',
               '.MuiTableContainer-root::-webkit-scrollbar': {
                 width: 0
               }

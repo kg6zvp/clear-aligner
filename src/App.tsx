@@ -1,7 +1,7 @@
 import './App.css';
 import './styles/theme.css';
-import React, { createContext } from 'react';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
+import React, { createContext, useMemo, useState } from 'react';
+import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
 import { ConcordanceView } from './features/concordanceView/concordanceView';
@@ -13,6 +13,38 @@ import ProjectsView from 'features/projects';
 import { Project } from './state/projects/tableManager';
 import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
+import { useMediaQuery } from '@mui/material';
+import { CustomSnackbar } from './features/snackbar';
+import { Amplify } from "aws-amplify"
+import { NetworkState } from '@uidotdev/usehooks';
+
+
+Amplify.configure({
+  Auth: {
+    Cognito: {
+      userPoolId: "us-east-1_63WiOrSMN",
+      userPoolClientId: "jteqgoa1rgptil2tdi7b0nqjb",
+      identityPoolId: "",
+      loginWith: {
+        email: true,
+      },
+      signUpVerificationMethod: "code",
+      userAttributes: {
+        email: {
+          required: true,
+        },
+      },
+      allowGuestAccess: true,
+      passwordFormat: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireNumbers: true,
+        requireSpecialCharacters: true,
+      },
+    },
+  },
+})
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -22,21 +54,52 @@ export interface AppContextProps {
   projects: Project[];
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
   containers: Containers;
+  network: NetworkState;
+  userStatus: any;
+  setUserStatus: Function;
+  isSnackBarOpen: boolean;
+  setIsSnackBarOpen: Function;
+  snackBarMessage: string;
+  setSnackBarMessage: Function;
   setContainers: React.Dispatch<React.SetStateAction<Containers>>;
 }
+
+export type THEME = 'night' | 'day';
+export type THEME_PREFERENCE = THEME | 'auto';
 
 export const AppContext = createContext({} as AppContextProps);
 
 const App = () => {
   const appContext: AppContextProps = useInitialization();
 
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const themeDefault: THEME = useMemo(
+    () => (prefersDarkMode ? 'night' : 'day'),
+    [prefersDarkMode]
+  );
+  const [preferredTheme, setPreferredTheme] = useState(
+    'auto' as THEME_PREFERENCE
+  );
+  const theme = useMemo(() => {
+    switch (preferredTheme) {
+      case 'auto':
+        return themeDefault;
+      default:
+        return preferredTheme;
+    }
+  }, [themeDefault, preferredTheme]);
+
   const router = createHashRouter([
     {
       path: '/',
-      element: <AppLayout/>,
+      element: <AppLayout theme={theme} />,
       children: [
         {
-          path: '/',
+          index: true,
+          element: <Navigate to="/projects" replace />,
+        },
+        {
+          path: '/alignment',
           element: <AlignmentEditor />
         },
         {
@@ -45,7 +108,10 @@ const App = () => {
         },
         {
           path: '/projects',
-          element: <ProjectsView />
+          element: <ProjectsView
+            preferredTheme={preferredTheme}
+            setPreferredTheme={setPreferredTheme}
+          />
         },
       ]
     },
@@ -57,6 +123,7 @@ const App = () => {
         <Provider store={store}>
             <RouterProvider router={router}/>
         </Provider>
+        <CustomSnackbar />
       </AppContext.Provider>
     </>
   );

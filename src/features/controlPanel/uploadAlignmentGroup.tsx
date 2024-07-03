@@ -45,6 +45,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
   const { sync: syncProject, progress, dialog, file } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
+
   useEffect(() => {
     saveAlignmentFile(allLinks);
   }, [allLinks]);

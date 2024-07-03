@@ -59,6 +59,15 @@ const lightTheme = createTheme({
       borderRadius: '0.25rem',
     },
   },
+  components: {
+    MuiDrawer:{
+      styleOverrides:{
+        paper:{
+          backgroundColor: '#eeeeee'
+        }
+      }
+    }
+  }
 });
 
 interface ThemedProps {
