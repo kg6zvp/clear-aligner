@@ -1,6 +1,6 @@
 import {
   mapProjectDtoToProject,
-  ProjectLocation
+  ProjectLocation, ProjectState
 } from '../../common/data/project/project';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { SERVER_URL } from '../../common';
@@ -21,7 +21,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
   const { projectState, setProjects } = useContext(AppContext);
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
 
-  const getProjects = useCallback(async ({persist, currentProjects} = {persist: false, currentProjects: []}) => {
+  const getProjects = useCallback(async ({ persist, currentProjects } = { persist: false, currentProjects: [] }) => {
     try {
       setProgress(Progress.IN_PROGRESS);
       const projectsResponse = await fetch(`${SERVER_URL ?? 'http://localhost:8080'}/api/projects`, {
@@ -32,16 +32,21 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         }
       });
       const projectDtos = await projectsResponse.json();
-      const projects = (Array.isArray(projectDtos) ? projectDtos.map(p => mapProjectDtoToProject(p, ProjectLocation.REMOTE)) : [])
-        .filter(p => p?.targetCorpora?.corpora) as Project[];
+      const projects = (
+        Array.isArray(projectDtos)
+          ? projectDtos
+            .filter(p => p.state === ProjectState.PUBLISHED)
+            .map(p => mapProjectDtoToProject(p, ProjectLocation.REMOTE))
+          : []
+      ).filter(p => p?.targetCorpora?.corpora) as Project[];
 
       // Save in local database if persist is specified.
-      if(persist) {
+      if (persist) {
         const localProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
         for (const project of projects.filter(p => p?.targetCorpora?.corpora?.length)) {
           project.sourceCorpora = undefined;
           const localProject: Project = localProjects.get(project.id);
-          if(localProject && localProject.targetCorpora?.corpora?.[0]) {
+          if (localProject && localProject.targetCorpora?.corpora?.[0]) {
             project.lastSyncTime = DateTime.now().toMillis();
             project.lastUpdated = DateTime.now().toMillis();
             project.location = ProjectLocation.SYNCED;
@@ -51,7 +56,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           }
         }
         const removedProjects: Project[] = Array.from(localProjects.values()).filter((lp: Project) =>
-          !projects.some(p => lp.id === p.id ) && lp.targetCorpora?.corpora?.reduce((a,b) => a && b)
+          !projects.some(p => lp.id === p.id) && lp.targetCorpora?.corpora?.reduce((a, b) => a && b)
         );
         for (const removedProject of removedProjects) {
           removedProject.location = ProjectLocation.LOCAL;
@@ -76,4 +81,4 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
   }, [getProjects, syncProjectsKey, enabled]);
 
   return { refetch: getProjects, progress };
-}
+};

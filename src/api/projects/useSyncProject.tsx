@@ -1,7 +1,7 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
 import { generateJsonString } from '../../common/generateJsonString';
 import { SERVER_URL } from '../../common';
-import { mapProjectEntityToProjectDTO, ProjectLocation } from '../../common/data/project/project';
+import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
 import { AppContext } from '../../App';
@@ -12,6 +12,7 @@ import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/materia
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { AlignmentSide } from '../../structs';
+import { usePublishProject } from './usePublishProject';
 
 export enum SyncProgress {
   IDLE,
@@ -37,6 +38,7 @@ export interface SyncState {
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
  */
 export const useSyncProject = (): SyncState => {
+  const {publishProject} = usePublishProject();
   const {cancel, cancelToken, reset} = useCancelTask();
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, file } = useSyncAlignments();
@@ -101,6 +103,9 @@ export const useSyncProject = (): SyncState => {
       project.location = ProjectLocation.SYNCED;
       await projectState.projectTable?.sync?.(project);
       if(cancelToken.canceled) return;
+      // Update project state to Published.
+      publishProject(project, ProjectState.PUBLISHED);
+
       setProgress(SyncProgress.SUCCESS);
       return res;
     } catch (x) {

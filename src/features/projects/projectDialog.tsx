@@ -20,7 +20,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Close, DeleteOutline } from '@mui/icons-material';
+import { Close, DeleteOutline, Unpublished } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
@@ -34,7 +34,8 @@ import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { DateTime } from 'luxon';
 import { useDeleteProject } from '../../api/projects/useDeleteProject';
-import { ProjectLocation } from '../../common/data/project/project';
+import { ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { usePublishProject } from '../../api/projects/usePublishProject';
 
 
 enum TextDirection {
@@ -62,6 +63,7 @@ const getInitialProjectState = (): Project => ({
 
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
   const dispatch = useAppDispatch();
+  const {publishProject, dialog: publishDialog} = usePublishProject();
   const {deleteProject, dialog: deleteDialog} = useDeleteProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
@@ -329,14 +331,24 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         </DialogContent>
         <DialogActions>
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
-            {
-              (projectId && allowDelete && project.location !== ProjectLocation.REMOTE)
-                ? <Button variant="text" color="error" sx={{ textTransform: 'none' }}
-                          onClick={() => setOpenConfirmDelete(true)}
-                          startIcon={<DeleteOutline />}
-                >Delete</Button>
-                : <Box />
-            }
+            <Grid container alignItems="center" sx={{width: 'fit-content'}}>
+              {
+                (projectId && allowDelete && project.location !== ProjectLocation.REMOTE)
+                  ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
+                            onClick={() => setOpenConfirmDelete(true)}
+                            startIcon={<DeleteOutline />}
+                  >Delete</Button>
+                  : <Box />
+              }
+              {
+                (project && allowDelete && project.location === ProjectLocation.SYNCED)
+                  ? <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
+                            onClick={() => publishProject(project, ProjectState.DRAFT).then(() => handleClose())}
+                            startIcon={<Unpublished />}
+                  >Unpublish</Button>
+                  : <Box />
+              }
+            </Grid>
             <Button
               variant="contained"
               sx={{ textTransform: 'none' }}
@@ -373,6 +385,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         </DialogContent>
       </Dialog>
       {deleteDialog}
+      {publishDialog}
     </>
   );
 };

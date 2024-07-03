@@ -25,10 +25,6 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
-  const [linkSaveState, setLinkSaveState] = useState<{
-    link?: Link,
-    saveKey?: string,
-  }>();
   const [linkRemoveState, setLinkRemoveState] = useState<{
     linkId?: string,
     removeKey?: string,
@@ -42,7 +38,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  const {saveLink} = useSaveLink();
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
@@ -84,10 +80,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const createLink = () => {
-    setLinkSaveState({
-      link: inProgressLink ?? undefined,
-      saveKey: uuid()
-    });
+    inProgressLink && saveLink(inProgressLink);
     dispatch(resetTextSegments());
   }
 

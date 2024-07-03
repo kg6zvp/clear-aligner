@@ -51,7 +51,7 @@ export class ProjectEntity {
 export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
   id: project.id,
   name: project.name,
-  state: ProjectState.DRAFT,
+  state: project.state ?? ProjectState.DRAFT,
   corpora: [...(project.targetCorpora?.corpora ?? []), ...(project.sourceCorpora?.corpora ?? [])]
     .map(mapCorpusEntityToCorpusDTO)
     .filter(Boolean) as CorpusDTO[],
@@ -65,7 +65,7 @@ export const mapProjectDtoToProject = (projectEntity: ProjectDTO, location: Proj
   const currentTime = DateTime.now().toMillis();
   return {
     id: projectEntity.id,
-    name: targetCorpus.fullName,
+    name: projectEntity.name,
     abbreviation: targetCorpus.name,
     fileName: targetCorpus.fileName ?? "",
     languageCode: targetCorpus.language.code,

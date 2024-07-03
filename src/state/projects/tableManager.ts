@@ -23,7 +23,8 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
   lastUpdated?: number;
-  location: ProjectLocation
+  location: ProjectLocation;
+  state?: ProjectState;
 }
 
 export interface ProjectDto {
@@ -78,24 +79,25 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
-  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
+  update = (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => new Promise((res) => {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
 
       // @ts-ignore
-      const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
-      await this.sync(project);
-      updateWordsOrParts && await this.insertWordsOrParts(project);
-      this.projects.set(updatedProject, updatedProject);
-      this.decrDatabaseBusyCtr();
-      return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
+      window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project)).then(updatedProject => {
+        this.sync(project).catch(console.error);
+        updateWordsOrParts && this.insertWordsOrParts(project).catch(console.error);
+        this.projects.set(updatedProject, updatedProject);
+        this.decrDatabaseBusyCtr();
+        res(updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined);
+      });
     } catch (e) {
       console.error('Error updating project: ', e);
     } finally {
-      await this._onUpdate(suppressOnUpdate);
+      this._onUpdate(suppressOnUpdate).catch(console.error);
     }
-  };
+  });
 
   sync = async (project: Project): Promise<boolean> => {
     try {
@@ -104,7 +106,7 @@ export class ProjectTable extends VirtualTable {
         id: project.id,
         name: project.name,
         location: project.location ?? ProjectLocation.LOCAL,
-        serverState: ProjectState.DRAFT,
+        serverState: project.state ?? ProjectState.DRAFT,
         lastSyncTime: project.lastSyncTime,
         lastUpdated: project.lastUpdated
       };

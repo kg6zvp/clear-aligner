@@ -438,31 +438,26 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * on re-render. A constant value will ensure an operation only happens once, and a UUID
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param linkOrLinks Link to save (optional; undefined = no save).
- * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
-export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
+export const useSaveLink = () => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
   }>({});
-  const prevSaveKey = useRef<string | undefined>();
 
-  useEffect(() => {
-    if (!linkOrLinks
-      || !saveKey
-      || prevSaveKey.current === saveKey) {
+  const saveLink = React.useCallback((linkOrLinks?: Link | Link[]) => {
+    if (!linkOrLinks) {
       return;
     }
-    prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveLink(): status', status);
     projectState?.linksTable.save(linkOrLinks)
       .then(result => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if(currentProject) {
+          console.log("1")
           currentProject.lastUpdated = DateTime.now().toMillis();
           projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
+          console.log("2")
         }
         const endStatus = {
           ...status,
@@ -471,9 +466,9 @@ export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
         setStatus(endStatus);
         databaseHookDebug('useSaveLink(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, prevSaveKey, linkOrLinks, saveKey, status]);
+  }, [projects, projectState]);
 
-  return { ...status };
+  return { status, saveLink };
 };
 
 /**
