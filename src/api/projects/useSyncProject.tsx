@@ -76,8 +76,6 @@ export const useSyncProject = (): SyncState => {
         }
       }
 
-      console.log("syncing project: ", project)
-
       if(cancelToken.canceled) return;
       setProgress(SyncProgress.SYNCING_PROJECT);
       project.lastUpdated = syncTime;

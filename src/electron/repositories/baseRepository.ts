@@ -121,7 +121,6 @@ export class BaseRepository implements RepositoryWithMigrations {
 
       this.logDatabaseTime('getDataSourceWithEntities(): created data source');
       try {
-        console.log("databaseFile: ", databaseFile)
         const newDataSource = new DataSource({
           type: 'better-sqlite3',
           database: databaseFile,

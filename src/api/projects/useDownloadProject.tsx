@@ -10,10 +10,11 @@ import {
 import { AppContext } from '../../App';
 import { DateTime } from 'luxon';
 import { getAvailableCorporaContainers } from '../../workbench/query';
-import { Box, Button, CircularProgress, Dialog, Grid, Stack, Typography } from '@mui/material';
+import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { AlignmentSide } from '../../structs';
+import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 
 enum ProjectDownloadProgress {
   IDLE,
@@ -103,13 +104,22 @@ export const useDownloadProject = (): SyncState => {
           setProgress(ProjectDownloadProgress.FAILED);
           return;
         }
-        console.log("project: ", project, projectData)
         if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.UPDATING);
         Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
           .map(p => p.id).includes(project.id)
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
+
+
+        const alignmentResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/alignment_links/`, {
+          signal: abortController.current?.signal,
+          headers: { accept: 'application/json' }
+        });
+        const linksBody: {
+          links: ServerAlignmentLinkDTO[]
+        } | undefined = await alignmentResponse.json();
+        await projectState.linksTable?.save?.((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity));
 
         if(cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
