@@ -154,8 +154,9 @@ export class LinksTable extends VirtualTable {
   };
 
   saveAlignmentFile = async (alignmentFile: AlignmentFile,
-                             suppressOnUpdate = false,
-                             isForced = false) => {
+                             suppressOnUpdate: boolean = false,
+                             isForced: boolean = false,
+                             disableJournaling: boolean = false) => {
     await this.saveAll(alignmentFile.records.map(
       (record) =>
         ({
@@ -167,7 +168,7 @@ export class LinksTable extends VirtualTable {
           sources: record.source,
           targets: record.target
         } as Link)
-    ), suppressOnUpdate, isForced);
+    ), suppressOnUpdate, isForced, disableJournaling);
   };
 
   saveAll = async (inputLinks: Link[],
@@ -492,7 +493,7 @@ export const useSaveLink = () => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
-export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
+export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, disableJournaling?: boolean) => {
   const { projectState } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     isPending: boolean;
@@ -518,7 +519,7 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
+    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, disableJournaling)
       .then(() => {
         const endStatus = {
           ...startStatus,

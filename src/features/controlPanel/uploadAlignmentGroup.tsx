@@ -32,10 +32,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
     alignmentFile?: AlignmentFile,
-    saveKey?: string
+    saveKey?: string,
+    suppressJournaling?: boolean
   }>();
 
-  const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
+  const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
     errors?: ZodError<AlignmentFile>,
     showDialog?: boolean
   }>();
@@ -62,7 +63,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     // import/save file
     setAlignmentFileSaveState({
       alignmentFile: file,
-      saveKey: uuid()
+      saveKey: uuid(),
+      suppressJournaling: true
     });
   }, [file, setAlignmentFileSaveState]);
 
