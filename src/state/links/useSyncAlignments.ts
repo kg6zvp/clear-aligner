@@ -5,8 +5,14 @@ import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from './tableManager';
 import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
-
-const SERVER_URL = undefined;
+import {
+  ClearAlignerApi,
+  getApiOptionsWithAuth,
+  JournalEntryUploadChunkSize,
+  OverrideCaApiEndpoint
+} from '../../server/amplifySetup';
+import { get, patch } from 'aws-amplify/api';
+import _ from 'lodash';
 
 export enum SyncProgress {
   IDLE,
@@ -27,12 +33,11 @@ const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): Journa
  * @param cancelSyncKey update this value to cancel a sync
  */
 export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, cancelSyncKey?: string): SyncState => {
-  const [ lastSyncKey, setLastSyncKey ] = useState(syncLinksKey);
-  const [ lastCancelKey, setLastCancelKey ] = useState(cancelSyncKey);
-
-  const [ progress, setProgress ] = useState<SyncProgress>(SyncProgress.IDLE);
-  const [ file, setFile ] = useState<AlignmentFile|undefined>();
-  const abortController = useRef<AbortController|undefined>();
+  const [lastSyncKey, setLastSyncKey] = useState(syncLinksKey);
+  const [lastCancelKey, setLastCancelKey] = useState(cancelSyncKey);
+  const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
+  const [file, setFile] = useState<AlignmentFile | undefined>();
+  const abortController = useRef<AbortController | undefined>();
   const dbApi = useDatabase();
 
   const cleanupRequest = useCallback(() => {
@@ -58,15 +63,30 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
       const journalEntries = (await dbApi.getAll(projectId!, JournalEntryTableName))
         .map(mapJournalEntryEntityToJournalEntryDTOHelper);
       try {
-        await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
-          signal,
-          method: 'PATCH',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: generateJsonString(journalEntries)
-        });
+        const requestPath = `/api/projects/${projectId}/alignment_links`;
+        if (OverrideCaApiEndpoint) {
+          await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+            signal,
+            method: 'PATCH',
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: generateJsonString(journalEntries)
+          });
+        } else {
+          for (const journalEntryChunk of _.chunk(journalEntries, JournalEntryUploadChunkSize)) {
+            const responseOperation = patch({
+              apiName: ClearAlignerApi,
+              path: requestPath,
+              options: getApiOptionsWithAuth(journalEntryChunk)
+            });
+            signal.onabort = () => {
+              responseOperation.cancel();
+            };
+            await responseOperation.response;
+          }
+        }
         await dbApi.deleteAll({
           sourceName: projectId!,
           table: JournalEntryTableName
@@ -79,17 +99,30 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     const fetchLinks = async (signal: AbortSignal) => {
       let response;
       try {
-        response = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}/alignment_links/`, {
-          signal,
-          headers: { accept: 'application/json' }
-        });
+        const requestPath = `/api/projects/${projectId}/alignment_links`;
+        if (OverrideCaApiEndpoint) {
+          response = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+            signal,
+            headers: { accept: 'application/json' }
+          })).json();
+        } else {
+          const responseOperation = get({
+            apiName: ClearAlignerApi,
+            path: requestPath,
+            options: getApiOptionsWithAuth()
+          });
+          signal.onabort = () => {
+            responseOperation.cancel();
+          };
+          response = (await responseOperation.response).body.json();
+        }
       } catch (x) {
         cleanupRequest();
         throw new Error('Aborted');
       }
       const linksBody: {
         links: ServerAlignmentLinkDTO[]
-      } = await response.json();
+      } = await response;
       const tmpFile = {
         type: 'translation',
         meta: { creator: 'api' },
@@ -112,8 +145,9 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
       try {
         await sendJournal(signal);
         await fetchLinks(signal);
-      } catch (x) { }
-    }
+      } catch (x) {
+      }
+    };
 
     if (progress === SyncProgress.IN_PROGRESS) {
       abortController.current?.abort('retry');
@@ -122,10 +156,10 @@ export const useSyncAlignments = (projectId?: string, syncLinksKey?: string, can
     setLastSyncKey(syncLinksKey);
     setProgress(SyncProgress.IN_PROGRESS);
     void syncLinks(abortController.current);
-  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId]);
+  }, [abortController, setProgress, progress, lastSyncKey, setLastSyncKey, syncLinksKey, cleanupRequest, projectId, dbApi]);
 
   return {
     file,
     progress
   };
-}
+};
