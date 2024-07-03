@@ -21,7 +21,7 @@ const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 export const EmptyWordId = '00000000000';
-export const DefaultProjectName = 'default';
+export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
 export const LinkTableName = 'links';
 export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
@@ -462,7 +462,7 @@ export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if(currentProject) {
           currentProject.lastUpdated = DateTime.now().toMillis();
-          projectState?.projectTable?.update?.(currentProject, false);
+          projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
         }
         const endStatus = {
           ...status,

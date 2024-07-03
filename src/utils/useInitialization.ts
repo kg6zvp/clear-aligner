@@ -27,7 +27,7 @@ const useInitialization = () => {
     const currentProjects = await state.projectTable?.getProjects(false);
     if(!currentProjects?.size) {
       state.projectTable?.getProjects(true).then(res => {
-        res && setProjects(p => [...(res.values() ?? p)]);
+        res && setProjects(p => [...(res.values() ?? p)].filter(p => p.targetCorpora?.corpora?.[0]));
       });
     }
   }, 1000);
@@ -96,7 +96,7 @@ const useInitialization = () => {
       const initializeProject = () => new Promise((resolve) => {
           let projects: Project[] = [];
         currProjectTable.getProjects(true).then(res => {
-          projects = [...res!.values()];
+          projects = [...res!.values()].filter(p => p.targetCorpora?.corpora?.[0]);
           setProjects(projects);
           resolve(projects);
         });

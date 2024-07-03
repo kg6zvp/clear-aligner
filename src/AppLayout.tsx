@@ -77,7 +77,7 @@ export const AppLayout = () => {
     (projects || []).find(p =>
       p.id === preferences?.currentProject)?.name
     ?? projects?.[0]?.name
-    ?? DefaultProjectName
+    ?? ""
   ), [projects, preferences?.currentProject]);
 
   return (

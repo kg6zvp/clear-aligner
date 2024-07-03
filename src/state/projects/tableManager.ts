@@ -80,9 +80,7 @@ export class ProjectTable extends VirtualTable {
 
   update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
     try {
-      if (this.isDatabaseBusy()) {
-        return;
-      }
+      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
 
       // @ts-ignore
