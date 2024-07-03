@@ -69,7 +69,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
     try{
       await signOut();
       setIsSnackBarOpen(true);
-      setSnackBarMessage("Signed out.")
+      setSnackBarMessage("Signed out of ClearAligner Sync.")
       setUserStatus(userState.LoggedOut);
       handleClose();
     }
