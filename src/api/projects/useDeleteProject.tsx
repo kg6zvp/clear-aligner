@@ -1,8 +1,13 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { SERVER_URL } from '../../common';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { Progress } from '../ApiModels';
 import useCancelTask, { CancelToken } from '../useCancelTask';
+import {
+  ClearAlignerApi,
+  getApiOptionsWithAuth,
+  OverrideCaApiEndpoint
+} from '../../server/amplifySetup';
+import { del } from 'aws-amplify/api';
 
 export interface DeleteState {
   deleteProject: (projectId: string) => Promise<unknown>;
@@ -28,21 +33,38 @@ export const useDeleteProject = (): DeleteState => {
     try {
       if(cancelToken.canceled) return;
       setProgress(Progress.IN_PROGRESS);
-      const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}`, {
-        signal: abortController.current?.signal,
-        method: 'DELETE',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-      });
+
+      let res;
       let syncProgress = Progress.FAILED;
-      // If the project request was successful, update the alignments for the project.
-      if(res.ok) {
-        syncProgress = Progress.SUCCESS;
+      const requestPath = `/api/projects/${projectId}`;
+      if (OverrideCaApiEndpoint) {
+        res = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+          signal: abortController.current?.signal,
+          method: 'DELETE',
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        // If the project request was successful, update the alignments for the project.
+        if(res.ok) {
+          syncProgress = Progress.SUCCESS;
+        }
+      } else {
+        const responseOperation = del({
+          apiName: ClearAlignerApi,
+          path: requestPath,
+          options: getApiOptionsWithAuth()
+        });
+        await responseOperation.response;
+        if(abortController.current?.signal) {
+          abortController.current.signal.onabort = () => {
+            responseOperation.cancel();
+          };
+        }
       }
       if(cancelToken.canceled) return;
-      setProgress(syncProgress)
+      setProgress(syncProgress);
       return res;
     } catch (x) {
       cleanupRequest();

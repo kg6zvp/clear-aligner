@@ -45,9 +45,7 @@ export class ProjectTable extends VirtualTable {
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
     try {
-      if (this.isDatabaseBusy()) {
-        return;
-      }
+      if(this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
@@ -86,8 +84,8 @@ export class ProjectTable extends VirtualTable {
 
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
-      this.sync(project).catch(console.error);
-      updateWordsOrParts && this.insertWordsOrParts(project).catch(console.error);
+      await this.sync(project).catch(console.error);
+      updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
       this.projects.set(project.id, project);
       this.decrDatabaseBusyCtr();
       return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
