@@ -8,6 +8,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { ChannelPrefix } from './database-shared';
 import { DatabaseApi } from '../hooks/useDatabase';
+import { EnvironmentVariables } from '../structs/environmentVariables';
 
 contextBridge.exposeInMainWorld('databaseApi', {
   // User
@@ -46,3 +47,9 @@ contextBridge.exposeInMainWorld('databaseApi', {
   getAllWordsByCorpus: (database, side, corpusId, wordLimit, wordSkip) => ipcRenderer.invoke(`${ChannelPrefix}:getAllWordsByCorpus`, database, side, corpusId, wordLimit, wordSkip),
   getAllCorpora: (database) => ipcRenderer.invoke(`${ChannelPrefix}:getAllCorpora`, database)
 } as DatabaseApi);
+
+contextBridge.exposeInMainWorld('environmentVariables', {
+  caApiEndpoint: process.env['CA_API_ENDPOINT'],
+  userPoolId: process.env['CA_USER_POOL_ID'],
+  userPoolClientId: process.env['CA_USER_POOL_CLIENT_ID']
+} as EnvironmentVariables);

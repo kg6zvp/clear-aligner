@@ -15,36 +15,9 @@ import useInitialization from './utils/useInitialization';
 import { Containers } from './hooks/useCorpusContainers';
 import { useMediaQuery } from '@mui/material';
 import { CustomSnackbar } from './features/snackbar';
-import { Amplify } from "aws-amplify"
 import { NetworkState } from '@uidotdev/usehooks';
+import { setUpAmplify } from './server/amplifySetup';
 
-
-Amplify.configure({
-  Auth: {
-    Cognito: {
-      userPoolId: "us-east-1_63WiOrSMN",
-      userPoolClientId: "jteqgoa1rgptil2tdi7b0nqjb",
-      identityPoolId: "",
-      loginWith: {
-        email: true,
-      },
-      signUpVerificationMethod: "code",
-      userAttributes: {
-        email: {
-          required: true,
-        },
-      },
-      allowGuestAccess: true,
-      passwordFormat: {
-        minLength: 8,
-        requireLowercase: true,
-        requireUppercase: true,
-        requireNumbers: true,
-        requireSpecialCharacters: true,
-      },
-    },
-  },
-})
 
 export interface AppContextProps {
   projectState: ProjectState;
@@ -65,8 +38,9 @@ export interface AppContextProps {
 
 export type THEME = 'night' | 'day';
 export type THEME_PREFERENCE = THEME | 'auto';
-
 export const AppContext = createContext({} as AppContextProps);
+
+setUpAmplify();
 
 const App = () => {
   const appContext: AppContextProps = useInitialization();
@@ -95,7 +69,7 @@ const App = () => {
       children: [
         {
           index: true,
-          element: <Navigate to="/projects" replace />,
+          element: <Navigate to="/projects" replace />
         },
         {
           path: '/alignment',
@@ -111,16 +85,16 @@ const App = () => {
             preferredTheme={preferredTheme}
             setPreferredTheme={setPreferredTheme}
           />
-        },
+        }
       ]
-    },
-  ])
+    }
+  ]);
 
   return (
     <>
       <AppContext.Provider value={appContext}>
         <Provider store={store}>
-            <RouterProvider router={router}/>
+          <RouterProvider router={router} />
         </Provider>
         <CustomSnackbar />
       </AppContext.Provider>
