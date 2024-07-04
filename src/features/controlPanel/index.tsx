@@ -38,7 +38,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const {saveLink, dialog} = useSaveLink();
+  const {saveLink} = useSaveLink();
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
@@ -80,6 +80,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const createLink = () => {
+    console.log("inProgressLink: ", inProgressLink)
     inProgressLink && saveLink(inProgressLink);
     dispatch(resetTextSegments());
   }
@@ -172,7 +173,6 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
           </Tooltip>
         </ButtonGroup>
       </Stack>
-      {dialog}
     </>
   );
 };

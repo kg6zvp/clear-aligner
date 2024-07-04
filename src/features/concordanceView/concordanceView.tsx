@@ -117,7 +117,7 @@ export const AlignmentTableControlPanel = ({
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
 
-  const {saveLink, dialog} = useSaveLink();
+  const {saveLink} = useSaveLink();
 
   const handleClose = () => {
     setIsDialogOpen(false)
@@ -277,7 +277,6 @@ export const AlignmentTableControlPanel = ({
           </Box>
         </Dialog>
       </Stack>
-      {dialog}
     </>
   );
 };

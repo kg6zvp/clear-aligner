@@ -43,7 +43,7 @@ export const useSyncAlignments = (): SyncState => {
     const journalEntries = (await dbApi.getAll(projectId!, JournalEntryTableName))
       .map(mapJournalEntryEntityToJournalEntryDTOHelper);
     try {
-      const requestPath = `/api/projects/${projectId}/alignment_links`;
+      const requestPath = `/api/projects/${projectId}/alignment_links/`;
       if (OverrideCaApiEndpoint) {
         await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
           signal,
@@ -80,11 +80,14 @@ export const useSyncAlignments = (): SyncState => {
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
     let response;
     try {
-      const requestPath = `/api/projects/${projectId}/alignment_links`;
+      const requestPath = `/api/projects/${projectId}/alignment_links/`;
       if (OverrideCaApiEndpoint) {
         response = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
           signal,
-          headers: { accept: 'application/json' }
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
         })).json();
       } else {
         const responseOperation = get({

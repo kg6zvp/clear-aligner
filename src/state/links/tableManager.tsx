@@ -478,7 +478,7 @@ export const useSaveLink = () => {
     });
   }, [projects, projectState]);
 
-  return { status, dialog: undefined, saveLink };
+  return { status, saveLink, progress };
 };
 
 /**
@@ -859,7 +859,7 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = false).
  */
 export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
-  const { projectState } = React.useContext(AppContext);
+  const { projectState, projects, preferences } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
   }>({});
@@ -879,6 +879,11 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
           ...status,
           result
         };
+        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
+        if(currentProject) {
+          currentProject.lastUpdated = DateTime.now().toMillis();
+          projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
+        }
         setStatus(endStatus);
         databaseHookDebug('useRemoveLink(): endStatus', endStatus);
       });
