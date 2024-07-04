@@ -1230,16 +1230,16 @@ export class ProjectRepository extends BaseRepository {
 
   corporaGetPivotWords = async (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem) => {
     const em = (await this.getDataSource(sourceName)).manager;
-    return await em.query(`select normalized_text t,
-                                  language_id     l,
-                                  count(1)        c
-                           from words_or_parts w
-                               ${filter === 'aligned' ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j
-                                    on w.id = j.word_id inner join links l
-                           on l.id = j.link_id
-                           where l.status <> 'rejected'
-                           and w.side = '${side}' ` : ''}
-                           group by t ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
+    const joins = filter === 'aligned'
+      ? `inner join links__${side === 'sources' ? 'source' : 'target'}_words j on w.id = j.word_id inner join links l on l.id = j.link_id`
+      : '';
+    // If we are viewing aligned pivotWords, then don't count rejected links in the total
+    const alignmentFilter =  filter === 'aligned' ? `and l.status <> 'rejected'` : '';
+    return await em.query(`select normalized_text t, language_id l, count(1) c
+        from words_or_parts w
+        ${joins}
+        where w.side = '${ side }' ${alignmentFilter}
+        group by t ${this._buildOrderBy(sort, { frequency: 'c', normalizedText: 't' })};`);
   };
 
   languageFindByIds = async (sourceName: string, languageIds: string[]) => {

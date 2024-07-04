@@ -14,7 +14,7 @@ import { AppContext } from '../../App';
 import { UserPreference } from 'state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import _ from 'lodash';
-import { useAppDispatch } from '../../app';
+import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { Stack } from '@mui/material';
 
