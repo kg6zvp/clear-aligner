@@ -12,6 +12,7 @@ import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 
@@ -216,9 +217,17 @@ export class LinksTable extends VirtualTable {
           table: LinkTableName,
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
-          disableJournaling
+          disableJournaling: true
         });
         progressCtr += chunk.length;
+        /*
+         * create bulk insert journal entry
+         */
+        await dbApi.createBulkInsertJournalEntry({
+          sourceName: this.getSourceName(),
+          links: chunk.map(mapLinkEntityToServerAlignmentLink)
+        });
+
         this.setDatabaseBusyProgress(progressCtr, progressMax);
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -528,53 +537,7 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
         setStatus(endStatus);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate]);
-
-  return { ...status };
-};
-
-/**
- * Save links hook.
- *<p>
- * Key parameters are used to control operations that may be destructive or time-consuming
- * on re-render. A constant value will ensure an operation only happens once, and a UUID
- * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
- * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param links Links to save (optional; undefined = no save).
- * @param saveKey Unique key to control save operation (optional; undefined = no save).
- * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
- */
-export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpdate: boolean = true) => {
-  const { projectState } = React.useContext(AppContext);
-  const [status, setStatus] = useState<{
-    isPending: boolean;
-  }>({ isPending: false });
-  const prevSaveKey = useRef<string | undefined>();
-
-  useEffect(() => {
-    if (!links
-      || !saveKey
-      || prevSaveKey.current === saveKey) {
-      return;
-    }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    prevSaveKey.current = saveKey;
-    databaseHookDebug('useSaveAllLinks(): startStatus', startStatus);
-    projectState?.linksTable.saveAll(links, suppressOnUpdate)
-      .then(() => {
-        const endStatus = {
-          ...startStatus,
-          isPending: false
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useSaveAllLinks(): endStatus', endStatus);
-      });
-  }, [projectState?.linksTable, prevSaveKey, links, saveKey, status, suppressOnUpdate]);
+  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, disableJournaling]);
 
   return { ...status };
 };

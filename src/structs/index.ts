@@ -4,6 +4,7 @@
  */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { z } from 'zod';
+import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
 
 /**
  * Parameters common to Project Repository functions
@@ -18,6 +19,11 @@ interface ProjectRepositoryBaseParams {
  */
 interface MutatingOperationParams extends ProjectRepositoryBaseParams {
   disableJournaling?: boolean;
+}
+
+export interface CreateBulkJournalEntryParams {
+  sourceName: string;
+  links: ServerAlignmentLinkDTO[];
 }
 
 /**

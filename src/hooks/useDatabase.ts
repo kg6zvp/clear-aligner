@@ -5,6 +5,7 @@
 import {
   AlignmentSide,
   Corpus,
+  CreateBulkJournalEntryParams,
   DeleteByIdParams,
   DeleteParams,
   InsertParams,
@@ -17,6 +18,7 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { useMemo } from 'react';
 import { UserPreferenceDto } from '../state/preferences/tableManager';
 import { ProjectEntity } from '../common/data/project/project';
+import { JournalEntryDTO } from '../common/data/journalEntryDTO';
 
 export interface ListedProjectDto {
   id: string;
@@ -26,6 +28,13 @@ export interface ListedProjectDto {
 export interface DatabaseApi {
   getPreferences: (requery: boolean) => Promise<UserPreferenceDto|undefined>;
   createOrUpdatePreferences: (preferences: UserPreferenceDto) => Promise<void>;
+  createBulkInsertJournalEntry: ({ sourceName, links }: CreateBulkJournalEntryParams) => Promise<void>;
+  /**
+   * Get the first chunk of journal entries sorted by date
+   * @param sourceName source to retrieve journal entries for
+   */
+  getFirstJournalEntryUploadChunk: (sourceName: string) => Promise<JournalEntryDTO[]>;
+  getCount: (sourceName: string, tableName: string) => Promise<number>;
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
   getProjects: () => Promise<ProjectEntity[]|undefined>;
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{

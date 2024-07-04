@@ -6,6 +6,7 @@ import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import {
   AlignmentSide,
+  CreateBulkJournalEntryParams,
   DeleteByIdParams,
   DeleteParams,
   InsertParams,
@@ -25,9 +26,15 @@ import { AddLinkStatus1715305810421 } from '../typeorm-migrations/project/171530
 import { AddJournalLinkTable1718060579447 } from '../typeorm-migrations/project/1718060579447-add-journal-link-table';
 import uuid from 'uuid-random';
 import { createPatch, Operation } from 'rfc6902';
-import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
-import { JournalEntryType } from '../../common/data/journalEntryDTO';
+import { mapLinkEntityToServerAlignmentLink, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import {
+  JournalEntryDTO,
+  JournalEntryType,
+  mapJournalEntryEntityToJournalEntryDTO
+} from '../../common/data/journalEntryDTO';
 import { generateJsonString } from '../../common/generateJsonString';
+import { AddBulkInserts1720060108764 } from '../typeorm-migrations/project/1720060108764-add-bulk-inserts';
+import { SERVER_TRANSMISSION_CHUNK_SIZE } from '../../common/constants';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -36,6 +43,7 @@ export const LinksToSourceWordsName = 'links__source_words';
 export const LinksToTargetWordsName = 'links__target_words';
 export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
 export const ProjectDatabaseDirectory = 'projects';
+export const JournalEntryDirectory = 'journal_entries';
 export const JournalEntryTableName = 'journal_entries';
 
 /**
@@ -45,14 +53,16 @@ export const JournalEntryTableName = 'journal_entries';
 export class JournalEntryEntity {
   @PrimaryColumn({ type: 'text' })
   id?: string;
-  @Column({ type: 'text', nullable: false })
-  linkId: string;
+  @Column({ type: 'text', nullable: true })
+  linkId?: string;
   @Column({ type: 'text', nullable: false })
   type: JournalEntryType;
   @Column({ type: 'datetime' })
   date: Date;
-  @Column({ nullable: false })
-  diff: string;
+  @Column({ nullable: true })
+  diff?: string;
+  @Column({ name: 'bulk_insert_file', nullable: true })
+  bulkInsertFile?: string;
 
   constructor() {
     this.id = '';
@@ -60,6 +70,7 @@ export class JournalEntryEntity {
     this.type = JournalEntryType.CREATE;
     this.date = new Date();
     this.diff = '';
+    this.bulkInsertFile = undefined;
   }
 }
 
@@ -300,6 +311,9 @@ export class ProjectRepository extends BaseRepository {
     super();
     this.isLoggingTime = true;
     this.dataSources = new Map();
+    if (!fs.existsSync(path.join(this.getDataDirectory(), JournalEntryDirectory))) {
+      fs.mkdirSync(path.join(this.getDataDirectory(), JournalEntryDirectory));
+    }
     this.getDataSource = async (sourceName: string) =>
       await this.getDataSourceWithEntities(sourceName || DefaultProjectName,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
@@ -336,7 +350,8 @@ export class ProjectRepository extends BaseRepository {
   getMigrations = async (): any[] => {
     return [
       AddLinkStatus1715305810421,
-      AddJournalLinkTable1718060579447
+      AddJournalLinkTable1718060579447,
+      AddBulkInserts1720060108764
     ];
   }
 
@@ -1341,4 +1356,56 @@ export class ProjectRepository extends BaseRepository {
     if (!sort || !sort.field || !sort.sort) return '';
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
+
+  createBulkInsertJournalEntry = async ({ sourceName, links }: CreateBulkJournalEntryParams): Promise<void> => {
+    const dataSource = (await this.getDataSource(sourceName))!;
+    const repo = dataSource.getRepository<JournalEntryEntity>(JournalEntryTableName);
+    for (const chunk of _.chunk(links, SERVER_TRANSMISSION_CHUNK_SIZE)) {
+      const journalEntry: JournalEntryEntity = {
+        id: uuid(),
+        linkId: undefined,
+        type: JournalEntryType.BULK_INSERT,
+        date: new Date(),
+        diff: undefined
+      };
+      journalEntry.bulkInsertFile = `bulk_insert_${journalEntry.id}.json`;
+      const jsonOutputFile = path.join(this.getDataDirectory(), JournalEntryDirectory, journalEntry.bulkInsertFile);
+      fs.writeFileSync(jsonOutputFile, generateJsonString(chunk));
+      await repo.insert(journalEntry);
+    }
+  }
+
+  getFirstJournalEntryUploadChunk = async (sourceName: string): Promise<JournalEntryDTO[]> => {
+    const dataSource = (await this.getDataSource(sourceName))!;
+    const repo = dataSource.getRepository<JournalEntryEntity>(JournalEntryTableName);
+    const journalEntries = await repo.find({
+      order: {
+        diff: 'ASC'
+      },
+      take: SERVER_TRANSMISSION_CHUNK_SIZE
+    });
+    const firstBulkInsertIndex = journalEntries.findIndex((value) => value.type === JournalEntryType.BULK_INSERT);
+    if (firstBulkInsertIndex === -1) { // if there are no bulk inserts, simply return all the entries
+      return journalEntries.map(mapJournalEntryEntityToJournalEntryDTO);
+    } else if (firstBulkInsertIndex === 0) {
+      const bulkEntry = journalEntries[0];
+      if (bulkEntry.type !== JournalEntryType.BULK_INSERT) throw new Error(`Expected bulk insert but encountered ${generateJsonString(bulkEntry)}`);
+      return [
+        {
+          id: bulkEntry.id,
+          linkId: undefined,
+          type: bulkEntry.type,
+          date: bulkEntry.date,
+          body: JSON.parse(fs.readFileSync(path.join(this.getDataDirectory(), JournalEntryDirectory, bulkEntry.bulkInsertFile), 'utf8')) as ServerAlignmentLinkDTO[]
+        }
+      ];
+    }
+    return journalEntries.slice(0, firstBulkInsertIndex-1).map(mapJournalEntryEntityToJournalEntryDTO);
+  }
+
+  getCount = async (sourceName: string, tableName: string): Promise<number> => {
+    const dataSource = (await this.getDataSource(sourceName))!;
+    const repo = dataSource.getRepository(tableName);
+    return await repo.count();
+  }
 }

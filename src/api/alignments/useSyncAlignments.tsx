@@ -49,41 +49,45 @@ export const useSyncAlignments = (): SyncState => {
 
   const sendJournal = useCallback(async (signal: AbortSignal, projectId?: string) => {
     try {
-      const journalEntriesToUpload =
-        (await dbApi.getAll(projectId!, JournalEntryTableName))
-          .map(mapJournalEntryEntityToJournalEntryDTOHelper);
-      const requestPath = `/api/projects/${projectId}/alignment_links`;
-      if (OverrideCaApiEndpoint) {
-        (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
-          signal,
-          method: 'PATCH',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: generateJsonString(journalEntriesToUpload)
-        }));
-      } else {
-        for (const journalEntryChunk of _.chunk(journalEntriesToUpload, JournalEntryUploadChunkSize)) {
-          const requestOperation = patch({
-            apiName: ClearAlignerApi,
-            path: requestPath,
-            options: getApiOptionsWithAuth(journalEntryChunk)
-          });
-          if (signal.aborted) {
-            requestOperation.cancel();
-            break;
-          }
-          await requestOperation.response;
-          if (signal.aborted) {
-            break;
+        const journalEntriesToUpload =
+          (await dbApi.getAll(projectId!, JournalEntryTableName))
+            .map(mapJournalEntryEntityToJournalEntryDTOHelper);
+        const requestPath = `/api/projects/${projectId}/alignment_links`;
+        if (OverrideCaApiEndpoint) {
+          (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+            signal,
+            method: 'PATCH',
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: generateJsonString(journalEntriesToUpload)
+          }));
+        } else {
+          let remainingJournalEntries = await dbApi.getCount(projectId!, JournalEntryTableName);
+          while (remainingJournalEntries > 0) {
+            const journalEntryChunk = (await dbApi.getFirstJournalEntryUploadChunk(projectId!));
+            const requestOperation = patch({
+              apiName: ClearAlignerApi,
+              path: requestPath,
+              options: getApiOptionsWithAuth(journalEntryChunk)
+            });
+            if (signal.aborted) {
+              requestOperation.cancel();
+              break;
+            }
+            await requestOperation.response;
+            if (signal.aborted) {
+              break;
+            }
+            await dbApi.deleteByIds({
+              sourceName: projectId!,
+              table: JournalEntryTableName,
+              itemIdOrIds: journalEntryChunk.map((journalEntry) => journalEntry.id!)
+            });
+            remainingJournalEntries = await dbApi.getCount(projectId!, JournalEntryTableName);
           }
         }
-      }
-      await dbApi.deleteAll({
-        sourceName: projectId!,
-        table: JournalEntryTableName
-      });
     } catch (x) {
       cleanupRequest();
       throw new Error('Aborted');

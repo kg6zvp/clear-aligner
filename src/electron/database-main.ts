@@ -45,6 +45,9 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:corporaGetLinksByAlignedWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetLinksByAlignedWord(...args));
     ipcMain.handle(`${ChannelPrefix}:updateSourceFromProject`, async (event, ...args) => {return await ProjectRepositoryInstance.updateSourceFromProject(...args);});
     ipcMain.handle(`${ChannelPrefix}:removeSource`, async (event, ...args) => {return await ProjectRepositoryInstance.removeSource(...args);});
+    ipcMain.handle(`${ChannelPrefix}:createBulkInsertJournalEntry`, async (event, ...args) => await ProjectRepositoryInstance.createBulkInsertJournalEntry(...args));
+    ipcMain.handle(`${ChannelPrefix}:getFirstJournalEntryUploadChunk`, async (event, ...args) => await ProjectRepositoryInstance.getFirstJournalEntryUploadChunk(...args));
+    ipcMain.handle(`${ChannelPrefix}:getCount`, async (event, ...args) => await ProjectRepositoryInstance.getCount(...args));
     //@ts-ignore
     ipcMain.handle(`${ChannelPrefix}:getDataSources`, async (event, ...args) => {return await ProjectRepositoryInstance.getDataSources(...args);});
     ipcMain.handle(`${ChannelPrefix}:createSourceFromProject`, async (event, ...args) => {return await ProjectRepositoryInstance.createSourceFromProject(...args);});
