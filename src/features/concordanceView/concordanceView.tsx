@@ -31,6 +31,7 @@ import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } f
 import { useSaveLink } from '../../state/links/tableManager';
 import uuid from 'uuid-random';
 import useConfirm from '../../hooks/useConfirm';
+import { DateTime } from 'luxon';
 
 /**
  * PivotWordFilter type
@@ -116,7 +117,7 @@ export const AlignmentTableControlPanel = ({
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
 
-  const {saveLink} = useSaveLink();
+  const {saveLink, dialog} = useSaveLink();
 
   const handleClose = () => {
     setIsDialogOpen(false)
@@ -161,7 +162,7 @@ export const AlignmentTableControlPanel = ({
   }
 
   // Take the map, transform it to an array, then pass it to the save function
-  const handleSave = () => {
+  const handleSave = async () => {
     const linksToSave = [...linksPendingUpdate.values()];
     saveLink(linksToSave);
     // reset things back to empty and 0
@@ -276,6 +277,7 @@ export const AlignmentTableControlPanel = ({
           </Box>
         </Dialog>
       </Stack>
+      {dialog}
     </>
   );
 };

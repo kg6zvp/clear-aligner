@@ -43,7 +43,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, file } = useSyncAlignments();
   const {deleteProject} = useDeleteProject();
-  const { projectState, projects } = useContext(AppContext);
+  const { projectState, projects, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const abortController = useRef<AbortController | undefined>();
@@ -98,13 +98,22 @@ export const useSyncProject = (): SyncState => {
         if(cancelToken.canceled) return;
         setProgress(SyncProgress.SYNCING_ALIGNMENTS);
         await syncAlignments(project.id);
+      } else {
+        setSnackBarMessage(
+          ((await res.json()).message ?? "").includes("duplicate key")
+            ? "Failed to sync project. Project name already exists"
+            : "Failed to sync project."
+        );
+        setIsSnackBarOpen(true);
+        cleanupRequest();
+        return;
       }
       project.lastSyncTime = syncTime;
       project.location = ProjectLocation.SYNCED;
       await projectState.projectTable?.sync?.(project);
       if(cancelToken.canceled) return;
       // Update project state to Published.
-      publishProject(project, ProjectState.PUBLISHED);
+      await publishProject(project, ProjectState.PUBLISHED);
 
       setProgress(SyncProgress.SUCCESS);
       return res;

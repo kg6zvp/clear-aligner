@@ -13,6 +13,10 @@ import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { DateTime } from 'luxon';
+import { Progress } from '../../api/ApiModels';
+import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
+import { ProjectState } from '../../common/data/project/project';
+import useBusyDialog from '../../utils/useBusyDialog';
 
 const DatabaseInsertChunkSize = 10_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
@@ -66,7 +70,7 @@ export class LinksTable extends VirtualTable {
     this.logDatabaseTime('save()');
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
-      const [ linksToPersist, linksToUpdate ]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
+      const [linksToPersist, linksToUpdate]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
       let allResult = false;
 
       const linkIds = linksToUpdate.map(({ id }) => id!);
@@ -213,7 +217,7 @@ export class LinksTable extends VirtualTable {
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
           disableJournaling
-      });
+        });
         progressCtr += chunk.length;
         this.setDatabaseBusyProgress(progressCtr, progressMax);
 
@@ -441,6 +445,7 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  */
 export const useSaveLink = () => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
+  const [progress, setProgress] = React.useState<Progress>(Progress.IDLE);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
   }>({});
@@ -453,11 +458,12 @@ export const useSaveLink = () => {
     projectState?.linksTable.save(linkOrLinks)
       .then(result => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
-        if(currentProject) {
-          console.log("1")
+        if (currentProject) {
+          if(currentProject.lastUpdated === currentProject.lastSyncTime) {
+            setProgress(Progress.IN_PROGRESS);
+          }
           currentProject.lastUpdated = DateTime.now().toMillis();
           projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
-          console.log("2")
         }
         const endStatus = {
           ...status,
@@ -465,10 +471,14 @@ export const useSaveLink = () => {
         };
         setStatus(endStatus);
         databaseHookDebug('useSaveLink(): endStatus', endStatus);
-      });
+        setTimeout(() => setProgress(Progress.IDLE), 1000);
+      }).catch(() => {
+        setProgress(Progress.FAILED);
+        setTimeout(() => setProgress(Progress.IDLE), 5000);
+    });
   }, [projects, projectState]);
 
-  return { status, saveLink };
+  return { status, dialog: undefined, saveLink };
 };
 
 /**

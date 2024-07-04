@@ -3,7 +3,7 @@
  */
 import { VirtualTable } from '../databaseManagement';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
-import { EmptyWordId, LinksTable } from '../links/tableManager';
+import { DefaultProjectName, EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
@@ -79,25 +79,24 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
-  update = (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => new Promise((res) => {
+  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
 
       // @ts-ignore
-      window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project)).then(updatedProject => {
-        this.sync(project).catch(console.error);
-        updateWordsOrParts && this.insertWordsOrParts(project).catch(console.error);
-        this.projects.set(updatedProject, updatedProject);
-        this.decrDatabaseBusyCtr();
-        res(updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined);
-      });
+      const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+      this.sync(project).catch(console.error);
+      updateWordsOrParts && this.insertWordsOrParts(project).catch(console.error);
+      this.projects.set(project.id, project);
+      this.decrDatabaseBusyCtr();
+      return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
     } catch (e) {
       console.error('Error updating project: ', e);
     } finally {
       this._onUpdate(suppressOnUpdate).catch(console.error);
     }
-  });
+  };
 
   sync = async (project: Project): Promise<boolean> => {
     try {
@@ -200,6 +199,7 @@ export class ProjectTable extends VirtualTable {
           return [p.id, {
             ...p,
             ...(entity ?? {}),
+            name: p.id === DefaultProjectName ? p.name : entity?.name ?? p.name
           }]
         }));
       }

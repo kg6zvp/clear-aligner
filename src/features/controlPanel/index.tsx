@@ -38,7 +38,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const {saveLink} = useSaveLink();
+  const {saveLink, dialog} = useSaveLink();
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
@@ -90,15 +90,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useHotkeys('shift+esc', () => dispatch(resetTextSegments()))
 
   return (
-    <Stack
-      direction="row"
-      spacing={2}
-      justifyContent="center"
-      alignItems="baseline"
-      style={{ marginTop: '16px', marginBottom: '16px' }}
-    >
-      <ButtonGroup>
-        <Tooltip title="Toggle Glosses" arrow describeChild>
+    <>
+      <Stack
+        direction="row"
+        spacing={2}
+        justifyContent="center"
+        alignItems="baseline"
+        style={{ marginTop: '16px', marginBottom: '16px' }}
+      >
+        <ButtonGroup>
+          <Tooltip title="Toggle Glosses" arrow describeChild>
           <span>
             <Button
               variant={preferences?.showGloss ? 'contained' : 'outlined'}
@@ -114,10 +115,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <Translate />
             </Button>
           </span>
-        </Tooltip>
-        <Tooltip
-          title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
-          arrow describeChild>
+          </Tooltip>
+          <Tooltip
+            title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
+            arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -130,11 +131,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               }
             </Button>
           </span>
-        </Tooltip>
-      </ButtonGroup>
+          </Tooltip>
+        </ButtonGroup>
 
-      <ButtonGroup>
-        <Tooltip title="Create Link" arrow describeChild>
+        <ButtonGroup>
+          <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -144,8 +145,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <AddLink />
             </Button>
           </span>
-        </Tooltip>
-        <Tooltip title="Delete Link" arrow describeChild>
+          </Tooltip>
+          <Tooltip title="Delete Link" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -155,8 +156,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <LinkOff />
             </Button>
           </span>
-        </Tooltip>
-        <Tooltip title="Reset" arrow describeChild>
+          </Tooltip>
+          <Tooltip title="Reset" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -168,9 +169,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <RestartAlt />
             </Button>
           </span>
-        </Tooltip>
-      </ButtonGroup>
-    </Stack>
+          </Tooltip>
+        </ButtonGroup>
+      </Stack>
+      {dialog}
+    </>
   );
 };
 

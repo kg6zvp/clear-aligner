@@ -47,8 +47,13 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           project.sourceCorpora = undefined;
           const localProject: Project = localProjects.get(project.id);
           if (localProject && localProject.targetCorpora?.corpora?.[0]) {
-            project.lastSyncTime = DateTime.now().toMillis();
-            project.lastUpdated = DateTime.now().toMillis();
+            const projectInUpdatedState = !!project.lastSyncTime && !!project.lastUpdated
+              && project.lastSyncTime !== project.lastUpdated;
+            const syncTime = DateTime.now().toMillis();
+            project.lastSyncTime = syncTime;
+            if(!projectInUpdatedState) {
+              project.lastUpdated = syncTime;
+            }
             project.location = ProjectLocation.SYNCED;
             await projectState.projectTable?.update?.(project, false);
           } else {
