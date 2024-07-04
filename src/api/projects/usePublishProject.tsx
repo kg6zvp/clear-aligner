@@ -21,7 +21,7 @@ export interface PublishState {
 export const usePublishProject = (): PublishState => {
   const {cancel, cancelToken, reset} = useCancelTask();
   const {deleteProject} = useDeleteProject();
-  const { projectState, projects, setProjects } = useContext(AppContext);
+  const { projectState, setProjects } = useContext(AppContext);
   const [publishState, setPublishState] = React.useState<ProjectState>();
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController | undefined>();
@@ -31,36 +31,35 @@ export const usePublishProject = (): PublishState => {
     abortController.current = undefined;
     setPublishState(undefined);
     reset();
-  }, [projectState.projectTable, reset]);
+  }, [reset]);
 
   const publishProject = useCallback(async (project: Project, state: ProjectState, cancelToken: CancelToken) => {
     setPublishState(state);
     try {
       setProgress(Progress.IN_PROGRESS);
       if(cancelToken.canceled) return;
+      // Update project state to Published.
+      await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/state`, {
+        signal: abortController.current?.signal,
+        method: 'POST',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(state)
+      });
+      project.state = state;
       if(state === ProjectState.PUBLISHED) {
-        // Update project state to Published.
-        await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/state`, {
-          signal: abortController.current?.signal,
-          method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(state)
-        });
         const syncTime = DateTime.now().toMillis();
         project.location = ProjectLocation.SYNCED;
-        project.state = ProjectState.PUBLISHED;
         project.lastUpdated = syncTime;
         project.lastSyncTime = syncTime;
-        projectState?.projectTable?.update(project, false);
+        await projectState?.projectTable?.update(project, false);
       } else {
         await deleteProject(project.id);
         project.location = ProjectLocation.LOCAL;
-        project.state = ProjectState.DRAFT;
         project.lastSyncTime = 0;
-        projectState?.projectTable?.update(project, false);
+        await projectState?.projectTable?.update(project, false);
       }
       const updatedProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
       setProjects(p => Array.from(updatedProjects.values() ?? p));
@@ -72,7 +71,7 @@ export const usePublishProject = (): PublishState => {
         setProgress(Progress.IDLE);
       }, 5000);
     }
-  }, [progress, projects, projectState]);
+  }, [projectState, cleanupRequest, deleteProject, setProjects]);
 
   React.useEffect(() => {
     if(progress === Progress.CANCELED) {
@@ -80,7 +79,7 @@ export const usePublishProject = (): PublishState => {
       abortController.current?.abort?.();
       cleanupRequest();
     }
-  }, [progress]);
+  }, [progress, cleanupRequest, cancel]);
 
   const onCancel = React.useCallback(() => {
     setProgress(Progress.CANCELED);
@@ -107,7 +106,7 @@ export const usePublishProject = (): PublishState => {
         </Grid>
       </Dialog>
     );
-  }, [progress]);
+  }, [progress, onCancel, publishState]);
 
 
   return {

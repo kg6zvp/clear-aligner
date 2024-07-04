@@ -43,7 +43,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, file } = useSyncAlignments();
   const {deleteProject} = useDeleteProject();
-  const { projectState, projects, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
+  const { projectState, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const abortController = useRef<AbortController | undefined>();
@@ -126,7 +126,8 @@ export const useSyncProject = (): SyncState => {
     } finally {
       setInitialProjectState(undefined);
     }
-  }, [progress, projects, projectState]);
+  }, [projectState, cleanupRequest, publishProject,
+    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts]);
 
   React.useEffect(() => {
     if(progress === SyncProgress.CANCELED) {
@@ -134,7 +135,7 @@ export const useSyncProject = (): SyncState => {
       abortController.current?.abort?.();
       cleanupRequest();
     }
-  }, [progress]);
+  }, [progress, cancel, cleanupRequest]);
 
   const onCancel = React.useCallback(() => {
     setProgress(SyncProgress.CANCELED);
@@ -176,7 +177,7 @@ export const useSyncProject = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress]);
+  }, [progress, onCancel]);
 
 
   return {

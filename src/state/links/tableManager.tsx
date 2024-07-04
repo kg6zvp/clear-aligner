@@ -14,9 +14,6 @@ import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
-import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
-import { ProjectState } from '../../common/data/project/project';
-import useBusyDialog from '../../utils/useBusyDialog';
 
 const DatabaseInsertChunkSize = 10_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
@@ -476,7 +473,7 @@ export const useSaveLink = () => {
         setProgress(Progress.FAILED);
         setTimeout(() => setProgress(Progress.IDLE), 5000);
     });
-  }, [projects, projectState]);
+  }, [projects, projectState, preferences, status]);
 
   return { status, saveLink, progress };
 };
@@ -887,7 +884,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
         setStatus(endStatus);
         databaseHookDebug('useRemoveLink(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate]);
+  }, [projectState, projects, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate, preferences]);
 
   return { ...status };
 };

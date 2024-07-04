@@ -81,7 +81,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     projectState.projectTable?.getProjects?.()?.then?.(res => {
       setCurrentProject(Array.from(res?.values?.() ?? []).find(p => p.id === projectId))
     })?.catch?.(console.error);
-  }, [projectState]);
+  }, [projectState, projectId]);
 
   return (
     <span>

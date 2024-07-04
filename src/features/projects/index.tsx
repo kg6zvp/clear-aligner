@@ -13,7 +13,7 @@ import {
   Select, Theme,
   Typography
 } from '@mui/material';
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -224,7 +224,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid>
         );
     }
-  }, [project, syncLocalProjectWithServer, syncingProject]);
+  }, [project, syncLocalProjectWithServer, syncingProject, downloadProject]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {

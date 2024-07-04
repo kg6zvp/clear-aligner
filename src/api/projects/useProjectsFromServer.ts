@@ -3,7 +3,6 @@ import {
   ProjectLocation, ProjectState
 } from '../../common/data/project/project';
 import { useCallback, useContext, useEffect, useState } from 'react';
-import { SERVER_URL } from '../../common';
 import { AppContext } from '../../App';
 import { Progress } from '../ApiModels';
 import { Project } from '../../state/projects/tableManager';
@@ -11,10 +10,8 @@ import { DateTime } from 'luxon';
 import {
   ClearAlignerApi,
   getApiOptionsWithAuth,
-  JournalEntryUploadChunkSize,
   OverrideCaApiEndpoint
 } from '../../server/amplifySetup';
-import _ from 'lodash';
 import { get } from 'aws-amplify/api';
 
 export interface UseProjectsFromServerProps {

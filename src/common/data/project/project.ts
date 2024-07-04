@@ -10,7 +10,7 @@ import {
 import { LanguageDTO } from './language';
 import { Project } from '../../../state/projects/tableManager';
 import { DateTime } from 'luxon';
-import { mapWordOrPartDtoToWordOrPart, WordOrPartDTO } from './wordsOrParts';
+import { mapWordOrPartDtoToWordOrPart } from './wordsOrParts';
 
 export const ProjectTableName = "project";
 

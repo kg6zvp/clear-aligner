@@ -1,5 +1,5 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import React, { useCallback, useContext, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -75,7 +75,7 @@ export const useSyncAlignments = (): SyncState => {
       cleanupRequest();
       throw new Error('Aborted');
     }
-  }, []);
+  }, [cleanupRequest, dbApi]);
 
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
     let response;
@@ -123,7 +123,7 @@ export const useSyncAlignments = (): SyncState => {
     };
     setFile(tmpFile);
     cleanupRequest();
-  }, []);
+  }, [cleanupRequest]);
 
   const syncLinks = useCallback(async (alignmentProjectId?: string, controller?: AbortController) => {
     const signal = (controller ?? new AbortController()).signal;
@@ -133,7 +133,7 @@ export const useSyncAlignments = (): SyncState => {
       return true;
     } catch (x) {
     }
-  }, []);
+  }, [sendJournal, fetchLinks]);
 
   const dialog = React.useMemo(() => {
     return (
@@ -157,7 +157,7 @@ export const useSyncAlignments = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress]);
+  }, [progress, cleanupRequest]);
 
   return {
     file,

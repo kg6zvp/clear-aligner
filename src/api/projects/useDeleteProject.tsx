@@ -27,7 +27,7 @@ export const useDeleteProject = (): DeleteState => {
     cancel();
     abortController.current?.abort?.();
     abortController.current = undefined;
-  }, []);
+  }, [cancel]);
 
   const deleteProject = async (projectId: string, cancelToken: CancelToken) => {
     try {
@@ -89,7 +89,7 @@ export const useDeleteProject = (): DeleteState => {
         <Button variant="text" sx={{textTransform: 'none', ml: 2}} onClick={cleanupRequest}>Cancel</Button>
       </Grid>
     </Dialog>
-  ), [progress]);
+  ), [progress, cleanupRequest]);
 
 
 

@@ -29,9 +29,7 @@ import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
-import uuid from 'uuid-random';
 import useConfirm from '../../hooks/useConfirm';
-import { DateTime } from 'luxon';
 
 /**
  * PivotWordFilter type
