@@ -206,16 +206,24 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   }, [project, syncProject]);
 
   const cloudSyncInfo = useMemo(() => {
+    const signedOutIcon = (
+      <Grid container justifyContent="flex-end" alignItems="center">
+        <Button variant="text" disabled sx={{ textTransform: 'none' }}>
+          <span style={{color: 'grey'}}>Unavailable</span>
+          <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
+        </Button>
+      </Grid>
+    );
     switch (project.location) {
       case ProjectLocation.LOCAL:
         return (
-          <Grid container justifyContent="flex-end" alignItems="center">
+          isSignedIn ? <Grid container justifyContent="flex-end" alignItems="center">
             <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
                     sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
               Upload Project
               <Computer sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
             </Button>
-          </Grid>
+          </Grid> : signedOutIcon
         );
       case ProjectLocation.REMOTE:
         return isSignedIn ? (
@@ -226,12 +234,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
               <CloudDownload sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
             </Button>
           </Grid>
-        ) : <Grid container justifyContent="flex-end" alignItems="center">
-          <Button variant="text" disabled sx={{ textTransform: 'none' }}>
-            <span style={{color: 'grey'}}>Unavailable</span>
-            <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
-          </Button>
-        </Grid>;
+        ) : signedOutIcon;
       case ProjectLocation.SYNCED:
       default:
         return (

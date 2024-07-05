@@ -334,7 +334,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
             <Grid container alignItems="center" sx={{width: 'fit-content'}}>
               {
-                (projectId && allowDelete && project.location !== ProjectLocation.REMOTE)
+                (projectId && allowDelete)
                   ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
                             onClick={() => setOpenConfirmDelete(true)}
                             startIcon={<DeleteOutline />}
