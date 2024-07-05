@@ -135,7 +135,7 @@ export class ProjectTable extends VirtualTable {
       progressMax
     });
 
-    for (const chunk of _.chunk(wordsOrParts, 10000).slice(0,1)) {
+    for (const chunk of _.chunk(wordsOrParts, 10000)) {
       // @ts-ignore
       await window.databaseApi.insert({
         sourceName: project.id,
