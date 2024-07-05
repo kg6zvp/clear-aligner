@@ -69,7 +69,7 @@ export class ProjectTable extends VirtualTable {
       // @ts-ignore Remove the local project database.
       await window.databaseApi.removeSource(projectId);
       // @ts-ignore Remove the project from the user database.
-      await window.databaseApi.projectRemove(projectId);
+      const res = await window.databaseApi.projectRemove(projectId);
       this.projects.delete(projectId);
       this.decrDatabaseBusyCtr();
     } catch (e) {
@@ -195,7 +195,7 @@ export class ProjectTable extends VirtualTable {
       const dataSources = await this.getDataSourcesAsProjects();
       if (dataSources) {
         const projectEntities = await this.getProjectTableData();
-        this.projects = new Map<string, Project>(dataSources.filter(Boolean).map(p => {
+        this.projects = new Map<string, Project>(dataSources.filter(p => p?.targetCorpora?.corpora?.length).map(p => {
           const entity = projectEntities.find(e => e.id === p.id);
           return [p.id, {
             ...p,
