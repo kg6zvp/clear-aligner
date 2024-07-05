@@ -17,6 +17,7 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:getPreferences`, async (event, ...args) => {return await UserRepositoryInstance.getPreferences(...args);});
     ipcMain.handle(`${ChannelPrefix}:createOrUpdatePreferences`, async (event, ...args) => {return await UserRepositoryInstance.createOrUpdatePreferences(...args);});
     ipcMain.handle(`${ChannelPrefix}:projectSave`, async (event, ...args) => {return await UserRepositoryInstance.projectSave(...args);});
+    ipcMain.handle(`${ChannelPrefix}:projectRemove`, async (event, ...args) => {return await UserRepositoryInstance.projectRemove(...args);});
     ipcMain.handle(`${ChannelPrefix}:getProjects`, async (event, ...args) => {return await UserRepositoryInstance.getProjects(...args);});
 
     // Project Database methods

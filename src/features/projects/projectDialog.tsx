@@ -33,7 +33,6 @@ import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { DateTime } from 'luxon';
-import { useDeleteProject } from '../../api/projects/useDeleteProject';
 import { ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { usePublishProject } from '../../api/projects/usePublishProject';
 
@@ -64,12 +63,12 @@ const getInitialProjectState = (): Project => ({
 const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
   const dispatch = useAppDispatch();
   const {publishProject, dialog: publishDialog} = usePublishProject();
-  const {deleteProject, dialog: deleteDialog} = useDeleteProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = React.useState<Project>(initialProjectState);
   const [uploadErrors, setUploadErrors] = React.useState<string[]>([]);
   const [openConfirmDelete, setOpenConfirmDelete] = React.useState(false);
+  const [openConfirmUnpublish, setOpenConfirmUnpublish] = React.useState(false);
   const [fileContent, setFileContent] = React.useState('');
   const [projectUpdated, setProjectUpdated] = React.useState(false);
   const languageOptions = useMemo(() =>
@@ -176,7 +175,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
       await projectState.projectTable?.remove?.(projectId);
-      await deleteProject(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
         setPreferences((p: UserPreference | undefined) => ({
@@ -188,7 +186,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [deleteProject, projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
+  }, [projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
 
   const setInitialProjectState = React.useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
@@ -343,7 +341,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               {
                 (project && allowDelete && project.location === ProjectLocation.SYNCED)
                   ? <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
-                            onClick={() => publishProject(project, ProjectState.DRAFT).then(() => handleClose())}
+                            onClick={() => setOpenConfirmUnpublish(true)}
                             startIcon={<Unpublished />}
                   >Unpublish</Button>
                   : <Box />
@@ -384,7 +382,28 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           </Grid>
         </DialogContent>
       </Dialog>
-      {deleteDialog}
+      <Dialog
+        maxWidth="xl"
+        open={openConfirmUnpublish}
+        onClose={() => setOpenConfirmUnpublish(false)}
+      >
+        <DialogContent sx={{ width: 650 }}>
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Typography variant="subtitle1">Are you sure you want to unpublish this project?</Typography>
+            <Grid item>
+              <Grid container>
+                <Button variant="text" onClick={() => setOpenConfirmUnpublish(false)} sx={{ textTransform: 'none' }}>
+                  Go Back
+                </Button>
+                <Button variant="contained" onClick={() => {
+                  setOpenConfirmUnpublish(false);
+                  publishProject(project, ProjectState.DRAFT).then(() => handleClose());
+                }} sx={{ ml: 2, textTransform: 'none' }}>Unpublish</Button>
+              </Grid>
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
       {publishDialog}
     </>
   );

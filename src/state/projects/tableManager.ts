@@ -66,12 +66,15 @@ export class ProjectTable extends VirtualTable {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore
+      // @ts-ignore Remove the local project database.
       await window.databaseApi.removeSource(projectId);
+      // @ts-ignore Remove the project from the user database.
+      await window.databaseApi.projectRemove(projectId);
       this.projects.delete(projectId);
       this.decrDatabaseBusyCtr();
     } catch (e) {
       console.error('Error deleting project: ', e);
+      this.decrDatabaseBusyCtr();
     } finally {
       await this._onUpdate(suppressOnUpdate);
     }

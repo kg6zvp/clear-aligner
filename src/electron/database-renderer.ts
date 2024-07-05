@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   getPreferences: () => ipcRenderer.invoke(`${ChannelPrefix}:getPreferences`),
   createOrUpdatePreferences: (preferences) => ipcRenderer.invoke(`${ChannelPrefix}:createOrUpdatePreferences`, preferences),
   projectSave: (project) => ipcRenderer.invoke(`${ChannelPrefix}:projectSave`, project),
+  projectRemove: (projectId) => ipcRenderer.invoke(`${ChannelPrefix}:projectRemove`, projectId),
   getProjects: () => ipcRenderer.invoke(`${ChannelPrefix}:getProjects`),
   // Projects
   getDataSources: () => ipcRenderer.invoke(`${ChannelPrefix}:getDataSources`),

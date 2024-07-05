@@ -121,6 +121,15 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
     return await repo.save(p);
   };
 
+  projectRemove = async (projectId: string): Promise<ProjectEntity | null> => {
+    const repo: Repository<ProjectEntity> = (await this.getDataSource()).getRepository(ProjectEntity);
+    const project = await repo.findOneBy({ id: projectId });
+    if (project) {
+      return await repo.remove(project);
+    }
+    return null;
+  };
+
   getPreferences = async () => {
     const preferences = await (await this.getDataSource())
       .getRepository('preference')
