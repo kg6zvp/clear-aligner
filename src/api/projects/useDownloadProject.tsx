@@ -112,7 +112,7 @@ export const useDownloadProject = (): SyncState => {
           : await projectState.projectTable?.save?.(project, true);
 
 
-        const alignmentResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/alignment_links/`, {
+        const alignmentResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/alignment_links`, {
           signal: abortController.current?.signal,
           headers: { accept: 'application/json' }
         });
