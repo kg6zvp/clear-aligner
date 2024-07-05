@@ -177,10 +177,9 @@ export const useSyncProject = (): SyncState => {
         open={![
           SyncProgress.IDLE,
           SyncProgress.SUCCESS,
-          SyncProgress.FAILED,
-          SyncProgress.CANCELED
+          SyncProgress.FAILED
         ].includes(progress)}
-        onClose={onCancel}
+        onClose={() => progress !== SyncProgress.CANCELED && onCancel()}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
