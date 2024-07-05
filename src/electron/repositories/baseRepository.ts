@@ -81,6 +81,10 @@ export class BaseRepository implements RepositoryWithMigrations {
       : path.dirname(app.getPath('exe'))), 'sql');
   };
 
+  removeDataSource = (sourceName) => {
+    this.dataSources.delete(sourceName);
+  }
+
   getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
     if (!sourceName || sourceName.length < 1) {
       throw new Error('sourceName cannot be empty or undefined!');

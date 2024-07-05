@@ -442,6 +442,7 @@ export class ProjectRepository extends BaseRepository {
   };
 
   removeSource = async (projectId: string) => {
+    this.removeDataSource(projectId);
     fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
       if (err) {
         console.error('There was an error removing the data source: ', err);

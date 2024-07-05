@@ -270,7 +270,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
             <Grid item>
               {currentProjectIndicator}
             </Grid>
-            <Grid item>
+            <Grid container alignItems="center" sx={{height: 75, width: 'fit-content'}}>
               {project.location !== ProjectLocation.REMOTE ?
                 <UploadAlignmentGroup
                   projectId={project.id}
@@ -280,8 +280,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
                     ...(project.targetCorpora ? [project.targetCorpora] : [])
                   ]}
                   allowImport={isCurrentProject}
-                />
-                : <></>}
+                /> : <></>}
             </Grid>
           </Grid>
           {
