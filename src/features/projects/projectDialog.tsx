@@ -177,6 +177,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       await projectState.projectTable?.remove?.(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
+        projectState.linksTable.reset().catch(console.error);
+        projectState.linksTable.setSourceName(DefaultProjectName);
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
           currentProject: DefaultProjectName,
