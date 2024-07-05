@@ -14,11 +14,22 @@ import {
 } from '../../server/amplifySetup';
 import { get } from 'aws-amplify/api';
 
+/**
+ * Interface used to define the properties of the useProjectsFromServer hook.
+ */
 export interface UseProjectsFromServerProps {
   syncProjectsKey?: string;
   enabled?: boolean;
 }
 
+/**
+ * Custom hook used to query remote projects and optionally persist those in the local database.
+ * When refetch is called with persist = true, remote projects are queried and added to the project table. Remote corpora
+ * are added in a new project database to populate additional project information.
+ *
+ * @param syncProjectsKey Used to requery project information when updated in the component that invokes this hook.
+ * @param enabled Prevents automatically requerying remote projects when set to false.
+ */
 export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UseProjectsFromServerProps): {
   refetch: (args?: { persist: boolean; currentProjects: any }) => Promise<ProjectDTO[] | undefined>,
   progress: Progress
@@ -72,7 +83,8 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           if(!projectInUpdatedState) {
             project.lastUpdated = syncTime;
           }
-          if (localProject && localProject.targetCorpora?.corpora?.[0]) {
+          // Update valid projects stored locally that are local or synced.
+          if (localProject && localProject.targetCorpora?.corpora?.[0] && localProject.location !== ProjectLocation.REMOTE) {
             project.lastSyncTime = syncTime;
             project.location = ProjectLocation.SYNCED;
             await projectState.projectTable?.update?.(project, false);
