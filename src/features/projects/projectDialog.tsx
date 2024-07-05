@@ -47,6 +47,7 @@ interface ProjectDialogProps {
   closeCallback: () => void;
   projectId: string | null;
   unavailableProjectNames?: string[];
+  isSignedIn: boolean;
 }
 
 const getInitialProjectState = (): Project => ({
@@ -60,7 +61,7 @@ const getInitialProjectState = (): Project => ({
   location: ProjectLocation.LOCAL
 });
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
+const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, isSignedIn, unavailableProjectNames = [] }) => {
   const dispatch = useAppDispatch();
   const {publishProject, dialog: publishDialog} = usePublishProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
@@ -341,7 +342,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                   : <Box />
               }
               {
-                (project && allowDelete && project.location === ProjectLocation.SYNCED)
+                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn)
                   ? <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
                             onClick={() => setOpenConfirmUnpublish(true)}
                             startIcon={<Unpublished />}

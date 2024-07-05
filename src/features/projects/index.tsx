@@ -10,7 +10,8 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  Select, Theme,
+  Select,
+  Theme,
   Typography
 } from '@mui/material';
 import React, { useContext, useMemo } from 'react';
@@ -24,13 +25,14 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
 import { Box } from '@mui/system';
-import { CloudDownload, CloudSync, Computer, Refresh } from '@mui/icons-material';
+import { CloudDownload, CloudOff, CloudSync, Computer, Refresh } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectLocation } from '../../common/data/project/project';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
+import { userState } from '../profileAvatar/profileAvatar';
 
 interface ProjectsViewProps {
   preferredTheme: "night" | "day" | "auto";
@@ -52,10 +54,14 @@ const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
 
 const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferredTheme}) => {
   useContext(LayoutContext);
-  const { preferences, projects: initialProjects } = React.useContext(AppContext);
+  const { preferences, projects: initialProjects, userStatus } = React.useContext(AppContext);
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
     enabled: false // Prevents immediate and useEffect-based requerying
   });
+
+  const isSignedIn = React.useMemo(() => (
+    userStatus === userState.LoggedIn
+  ), [userStatus]);
 
 
   const projects = React.useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
@@ -88,26 +94,30 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferred
             >Create New</Button>
           </Grid>
           <Grid item sx={{ px: 2 }}>
-            <Button variant="text" onClick={() => refetchRemoteProjects({persist: true, currentProjects: projects})}>
-              <Grid container alignItems="center">
-                <Refresh sx={theme => ({
-                  mr: 1,
-                  mb: .5,
-                  ...(remoteFetchProgress === Progress.IN_PROGRESS ? {
-                    '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
-                    animation: '2s linear infinite rotation',
-                    fill: getPaletteFromProgress(remoteFetchProgress, theme)
-                  } : {})
-                })} />
-                <Typography variant="subtitle2" sx={theme => ({
-                  textTransform: 'none',
-                  fontWeight: 'bold',
-                  color: getPaletteFromProgress(remoteFetchProgress, theme)
-                })}>
-                  {remoteFetchProgress === Progress.IN_PROGRESS ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
-                </Typography>
-              </Grid>
-            </Button>
+            {
+              isSignedIn && (
+                <Button variant="text" onClick={() => refetchRemoteProjects({persist: true, currentProjects: projects})}>
+                  <Grid container alignItems="center">
+                    <Refresh sx={theme => ({
+                      mr: 1,
+                      mb: .5,
+                      ...(remoteFetchProgress === Progress.IN_PROGRESS ? {
+                        '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                        animation: '2s linear infinite rotation',
+                        fill: getPaletteFromProgress(remoteFetchProgress, theme)
+                      } : {})
+                    })} />
+                    <Typography variant="subtitle2" sx={theme => ({
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                      color: getPaletteFromProgress(remoteFetchProgress, theme)
+                    })}>
+                      {remoteFetchProgress === Progress.IN_PROGRESS ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                    </Typography>
+                  </Grid>
+                </Button>
+              )
+            }
           </Grid>
         </Grid>
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
@@ -157,6 +167,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferred
           setSelectedProjectId(null);
         }}
         unavailableProjectNames={unavailableProjectNames}
+        isSignedIn={isSignedIn}
       />
     </>
   );
@@ -174,8 +185,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const {downloadProject, dialog: downloadProjectDialog} = useDownloadProject();
   const { sync: syncProject, progress: syncingProject, dialog: syncDialog } = useSyncProject();
 
-  const { setPreferences, projectState, preferences } = React.useContext(AppContext);
+  const { setPreferences, projectState, preferences, userStatus } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
+
+  const isSignedIn = React.useMemo(() => userStatus === userState.LoggedIn, [userStatus]);
 
   const updateCurrentProject = React.useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
@@ -205,7 +218,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid>
         );
       case ProjectLocation.REMOTE:
-        return (
+        return isSignedIn ? (
           <Grid container justifyContent="flex-end" alignItems="center">
             <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
                     sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
@@ -213,7 +226,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
               <CloudDownload sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
             </Button>
           </Grid>
-        );
+        ) : <Grid container justifyContent="flex-end" alignItems="center">
+          <Button variant="text" disabled sx={{ textTransform: 'none' }}>
+            <span style={{color: 'grey'}}>Unavailable</span>
+            <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
+          </Button>
+        </Grid>;
       case ProjectLocation.SYNCED:
       default:
         return (
@@ -280,6 +298,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
                     ...(project.targetCorpora ? [project.targetCorpora] : [])
                   ]}
                   allowImport={isCurrentProject}
+                  isSignedIn={isSignedIn}
                 /> : <></>}
             </Grid>
           </Grid>

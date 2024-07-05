@@ -19,11 +19,12 @@ import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
 
 
-const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
+const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn }: {
   projectId?: string,
   containers: CorpusContainer[],
   size?: string,
   allowImport?: boolean;
+  isSignedIn?: boolean;
 }) => {
   const {projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
@@ -90,14 +91,14 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
         <>
           <RemovableTooltip
             removed={alignmentFileErrors?.showDialog}
-            title="Sync Project"
+            title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
             describeChild
             arrow>
           <span>
 
                 <Button
                   size={size as 'medium' | 'small' | undefined}
-                  disabled={containers.length === 0 || !allowImport || inProgress
+                  disabled={!isSignedIn || containers.length === 0 || !allowImport || inProgress
                     || (
                       !!currentProject?.lastSyncTime
                       && !!currentProject.lastUpdated
