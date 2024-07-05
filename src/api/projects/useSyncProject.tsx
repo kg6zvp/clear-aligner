@@ -69,7 +69,7 @@ export const useSyncProject = (): SyncState => {
     setInitialProjectState(undefined);
     setSyncTime(0);
     abortController.current = undefined;
-  }, [initialProjectState, deleteProject, projectState.projectTable]);
+  }, [initialProjectState, deleteProject, projectState.projectTable, getProjects]);
 
   const onCancel = React.useCallback(() => {
     setProgress(SyncProgress.CANCELED);
@@ -78,6 +78,8 @@ export const useSyncProject = (): SyncState => {
   const syncProject = useCallback(async () => {
     const project = {...(initialProjectState ?? {})} as Project;
     try {
+      // Fallthrough cases are intentional
+      /* eslint-disable no-fallthrough */
       switch (progress) {
         case SyncProgress.CANCELED:
           setCanceled(true);
@@ -143,7 +145,8 @@ export const useSyncProject = (): SyncState => {
       setProgress(SyncProgress.FAILED);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
-    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts]);
+    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    initialProjectState, syncTime]);
 
   useEffect(() => {
     if(syncTime && initialProjectState && !canceled) {
@@ -151,6 +154,9 @@ export const useSyncProject = (): SyncState => {
     } else if (canceled) {
       setProgress(SyncProgress.IDLE);
     }
+    // The useEffect should only be called on progress changes,
+    // allowing the single threaded process to be cancelable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
   const dialog = React.useMemo(() => {
