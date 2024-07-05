@@ -8,6 +8,7 @@ import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../c
 import {
   ClearAlignerApi,
   getApiOptionsWithAuth,
+  JournalEntryDownloadChunkSize,
   JournalEntryUploadChunkSize,
   OverrideCaApiEndpoint
 } from '../../server/amplifySetup';
@@ -40,31 +41,36 @@ export const useSyncAlignments = (): SyncState => {
   }, []);
 
   const sendJournal = useCallback(async (signal: AbortSignal, projectId?: string) => {
-    const journalEntries = (await dbApi.getAll(projectId!, JournalEntryTableName))
-      .map(mapJournalEntryEntityToJournalEntryDTOHelper);
     try {
+      const journalEntriesToUpload =
+        (await dbApi.getAll(projectId!, JournalEntryTableName))
+          .map(mapJournalEntryEntityToJournalEntryDTOHelper);
       const requestPath = `/api/projects/${projectId}/alignment_links`;
       if (OverrideCaApiEndpoint) {
-        await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+        (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
           signal,
           method: 'PATCH',
           headers: {
             accept: 'application/json',
             'Content-Type': 'application/json'
           },
-          body: generateJsonString(journalEntries)
-        });
+          body: generateJsonString(journalEntriesToUpload)
+        }));
       } else {
-        for (const journalEntryChunk of _.chunk(journalEntries, JournalEntryUploadChunkSize)) {
-          const responseOperation = patch({
+        for (const journalEntryChunk of _.chunk(journalEntriesToUpload, JournalEntryUploadChunkSize)) {
+          const requestOperation = patch({
             apiName: ClearAlignerApi,
             path: requestPath,
             options: getApiOptionsWithAuth(journalEntryChunk)
           });
-          signal.onabort = () => {
-            responseOperation.cancel();
-          };
-          await responseOperation.response;
+          if (signal.aborted) {
+            requestOperation.cancel();
+            break;
+          }
+          await requestOperation.response;
+          if (signal.aborted) {
+            break;
+          }
         }
       }
       await dbApi.deleteAll({
@@ -78,39 +84,64 @@ export const useSyncAlignments = (): SyncState => {
   }, [cleanupRequest, dbApi]);
 
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
-    let response;
+    const resultLinks: ServerAlignmentLinkDTO[] = [];
     try {
       const requestPath = `/api/projects/${projectId}/alignment_links`;
       if (OverrideCaApiEndpoint) {
-        response = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+        const responsePromise = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
           signal,
           headers: {
             accept: 'application/json',
             'Content-Type': 'application/json'
-          },
+          }
         })).json();
+        const responseLinks: {
+          links: ServerAlignmentLinkDTO[]
+        } = (await responsePromise);
+        resultLinks.push(...responseLinks.links);
       } else {
-        const responseOperation = get({
-          apiName: ClearAlignerApi,
-          path: requestPath,
-          options: getApiOptionsWithAuth()
-        });
-        signal.onabort = () => {
-          responseOperation.cancel();
-        };
-        response = (await responseOperation.response).body.json();
+        let pageCtr = 0;
+        while (true) {
+          const requestOperation = get({
+            apiName: ClearAlignerApi,
+            path: requestPath,
+            options: {
+              queryParams: {
+                page: String(pageCtr),
+                limit: String(JournalEntryDownloadChunkSize)
+              },
+              ...getApiOptionsWithAuth()
+            }
+          });
+          if (signal.aborted) {
+            requestOperation.cancel();
+            break;
+          }
+          const responsePromise = (await requestOperation.response).body.json();
+          if (signal.aborted) {
+            break;
+          }
+          const responseLinks: {
+            links: ServerAlignmentLinkDTO[]
+          } = (await responsePromise) as any;
+          if ((responseLinks?.links?.length ?? 0) === 0) {
+            break;
+          }
+          resultLinks.push(...responseLinks.links);
+          if (responseLinks.links.length < JournalEntryDownloadChunkSize) {
+            break;
+          }
+          pageCtr++;
+        }
       }
     } catch (x) {
       cleanupRequest();
       throw new Error('Aborted');
     }
-    const linksBody: {
-      links: ServerAlignmentLinkDTO[]
-    } = await response;
     const tmpFile = {
       type: 'translation',
       meta: { creator: 'api' },
-      records: linksBody.links
+      records: resultLinks
         .map(l => ({
           meta: {
             id: l.id,

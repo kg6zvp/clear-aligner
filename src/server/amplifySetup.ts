@@ -14,7 +14,10 @@ export const DefaultUserPoolId = 'us-east-1_63WiOrSMN';
 export const DefaultUserPoolClientId = 'jteqgoa1rgptil2tdi7b0nqjb';
 export const ClearAlignerApi = 'ClearAlignerApi';
 
-export const JournalEntryUploadChunkSize = 15_000;
+export const JournalEntryDownloadChunkSize = 5_000;
+export const JournalEntryUploadChunkSize = 5_000;
+export const TokenDownloadChunkSize = 5_000;
+export const TokenUploadChunkSize = 5_000;
 
 /**
  * One-time setup of AWS amplify capabilities.
