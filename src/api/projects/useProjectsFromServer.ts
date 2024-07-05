@@ -20,7 +20,7 @@ export interface UseProjectsFromServerProps {
 }
 
 export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UseProjectsFromServerProps): {
-  refetch: (args?: { persist: boolean; currentProjects: any }) => Promise<void>,
+  refetch: (args?: { persist: boolean; currentProjects: any }) => Promise<Project[] | undefined>,
   progress: Progress
 } => {
   const { projectState, setProjects } = useContext(AppContext);
@@ -93,6 +93,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
       const updatedProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
       setProjects(p => Array.from(updatedProjects.values() ?? p));
       setProgress(Progress.SUCCESS);
+      return projects;
     } catch (x) {
       console.error(x);
       setProgress(Progress.FAILED);

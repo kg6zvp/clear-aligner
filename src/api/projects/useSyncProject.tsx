@@ -1,18 +1,18 @@
-import React, { useCallback, useContext, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { generateJsonString } from '../../common/generateJsonString';
 import { SERVER_URL } from '../../common';
 import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
 import { AppContext } from '../../App';
-import { DateTime } from 'luxon';
 import { useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { getCorpusFromDatabase } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
-import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { AlignmentSide } from '../../structs';
 import { usePublishProject } from './usePublishProject';
+import { DateTime } from 'luxon';
+import { useProjectsFromServer } from './useProjectsFromServer';
 
 export enum SyncProgress {
   IDLE,
@@ -22,13 +22,14 @@ export enum SyncProgress {
   SYNCING_PROJECT,
   SYNCING_TOKENS,
   SYNCING_ALIGNMENTS,
+  UPDATING_PROJECT,
   SUCCESS,
   FAILED,
   CANCELED
 }
 
 export interface SyncState {
-  sync: (project: Project) => Promise<unknown>;
+  sync: (project: Project) => void;
   progress: SyncProgress;
   dialog: any;
   file: any;
@@ -39,107 +40,118 @@ export interface SyncState {
  */
 export const useSyncProject = (): SyncState => {
   const {publishProject} = usePublishProject();
-  const {cancel, cancelToken, reset} = useCancelTask();
+  const {refetch: getProjects} = useProjectsFromServer({enabled: false});
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, file } = useSyncAlignments();
   const {deleteProject} = useDeleteProject();
   const { projectState, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
+  const [syncTime, setSyncTime] = useState<number>(0);
+  const [canceled, setCanceled] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
 
-  const cleanupRequest = useCallback(() => {
-    setProgress(SyncProgress.IDLE);
+  const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
-      if(initialProjectState.location === ProjectLocation.LOCAL) {
-        initialProjectState.lastSyncTime = 0;
-        void deleteProject(initialProjectState.id);
-      }
-      projectState.projectTable?.update?.(initialProjectState, false);
-      projectState.projectTable?.sync(initialProjectState);
-    }
-    abortController.current = undefined;
-    reset();
-  }, [initialProjectState, deleteProject, projectState.projectTable, reset]);
-
-  const syncProject = useCallback(async (project: Project, cancelToken: CancelToken) => {
-    setInitialProjectState({...project});
-    try {
-      const syncTime = DateTime.now().toUTC().toMillis();
-      if(cancelToken.canceled) return;
-
-      setProgress(SyncProgress.RETRIEVING_TOKENS);
-      for (const container of [project.targetCorpora, project.sourceCorpora]) {
-        for (const corpus of (container?.corpora ?? [])) {
-          if(cancelToken.canceled) return;
-          const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
-          corpus.words = corpusFromDB.words;
-          corpus.wordsByVerse = corpusFromDB.wordsByVerse;
+      const project = {...initialProjectState};
+      if(project.location === ProjectLocation.LOCAL) {
+        project.lastSyncTime = 0;
+        // Remove the remote project if it exists on the server.
+        const remoteProjects = await getProjects();
+        if((remoteProjects ?? []).some(p => p.id === project.id)) {
+          await deleteProject(project.id);
         }
       }
-
-      if(cancelToken.canceled) return;
-      setProgress(SyncProgress.SYNCING_PROJECT);
-      project.lastUpdated = syncTime;
-      const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
-        signal: abortController.current?.signal,
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: generateJsonString(mapProjectEntityToProjectDTO(project))
-      });
-      // If the project request was successful, update the alignments for the project.
-      if (res.ok) {
-        if(cancelToken.canceled) return;
-        setProgress(SyncProgress.SYNCING_TOKENS);
-        await syncWordsOrParts(project, project.location === ProjectLocation.SYNCED ? AlignmentSide.TARGET : undefined);
-        if(cancelToken.canceled) return;
-        setProgress(SyncProgress.SYNCING_ALIGNMENTS);
-        await syncAlignments(project.id);
-      } else {
-        setSnackBarMessage(
-          ((await res.json()).message ?? "").includes("duplicate key")
-            ? "Failed to sync project. Project name already exists"
-            : "Failed to sync project."
-        );
-        setIsSnackBarOpen(true);
-        cleanupRequest();
-        return;
-      }
-      project.lastSyncTime = syncTime;
-      project.location = ProjectLocation.SYNCED;
-      await projectState.projectTable?.sync?.(project);
-      if(cancelToken.canceled) return;
-      // Update project state to Published.
-      await publishProject(project, ProjectState.PUBLISHED);
-
-      setProgress(SyncProgress.SUCCESS);
-      return res;
-    } catch (x) {
-      cleanupRequest();
-      setProgress(SyncProgress.FAILED);
-      setTimeout(() => {
-        setProgress(SyncProgress.IDLE);
-      }, 5000);
-    } finally {
-      setInitialProjectState(undefined);
+      await projectState.projectTable?.update?.(project, false);
+      await projectState.projectTable?.sync(project);
     }
-  }, [projectState, cleanupRequest, publishProject,
-    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts]);
-
-  React.useEffect(() => {
-    if(progress === SyncProgress.CANCELED) {
-      cancel();
-      abortController.current?.abort?.();
-      cleanupRequest();
-    }
-  }, [progress, cancel, cleanupRequest]);
+    setProgress(SyncProgress.IDLE);
+    setInitialProjectState(undefined);
+    setSyncTime(0);
+    abortController.current = undefined;
+  }, [initialProjectState, deleteProject, projectState.projectTable]);
 
   const onCancel = React.useCallback(() => {
     setProgress(SyncProgress.CANCELED);
   }, []);
+
+  const syncProject = useCallback(async () => {
+    const project = {...(initialProjectState ?? {})} as Project;
+    try {
+      switch (progress) {
+        case SyncProgress.CANCELED:
+          setCanceled(true);
+        case SyncProgress.FAILED: {
+          abortController.current?.abort?.();
+          await cleanupRequest();
+          break;
+        }
+        case SyncProgress.RETRIEVING_TOKENS:
+          for (const container of [project.targetCorpora, project.sourceCorpora]) {
+            for (const corpus of (container?.corpora ?? [])) {
+              const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
+              corpus.words = corpusFromDB.words;
+              corpus.wordsByVerse = corpusFromDB.wordsByVerse;
+            }
+          }
+          setProgress(SyncProgress.SYNCING_PROJECT);
+          break;
+        case SyncProgress.SYNCING_PROJECT: {
+          const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
+            signal: abortController.current?.signal,
+            method: 'POST',
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: generateJsonString(mapProjectEntityToProjectDTO(project))
+          });
+          if(res.ok) {
+            setProgress(SyncProgress.SYNCING_TOKENS);
+          } else {
+            setSnackBarMessage(
+              ((await res.json()).message ?? "").includes("duplicate key")
+                ? "Failed to sync project. Project name already exists"
+                : "Failed to sync project."
+            );
+            setIsSnackBarOpen(true);
+            setProgress(SyncProgress.FAILED);
+          }
+          break;
+        }
+        case SyncProgress.SYNCING_TOKENS: {
+          await syncWordsOrParts(project, project.location === ProjectLocation.SYNCED ? AlignmentSide.TARGET : undefined);
+          setProgress(SyncProgress.SYNCING_ALIGNMENTS);
+          break;
+        }
+        case SyncProgress.SYNCING_ALIGNMENTS: {
+          await syncAlignments(project.id);
+          setProgress(SyncProgress.UPDATING_PROJECT);
+          break;
+        }
+        case SyncProgress.UPDATING_PROJECT: {
+          project.lastSyncTime = syncTime;
+          project.location = ProjectLocation.SYNCED;
+          await projectState.projectTable?.sync?.(project);
+          // Update project state to Published.
+          await publishProject(project, ProjectState.PUBLISHED);
+          setProgress(SyncProgress.IDLE);
+          break;
+        }
+      }
+    } catch (x) {
+      setProgress(SyncProgress.FAILED);
+    }
+  }, [progress, projectState, cleanupRequest, publishProject,
+    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts]);
+
+  useEffect(() => {
+    if(syncTime && initialProjectState && !canceled) {
+      syncProject().catch(console.error);
+    } else if (canceled) {
+      setProgress(SyncProgress.IDLE);
+    }
+  }, [progress]);
 
   const dialog = React.useMemo(() => {
     let dialogMessage = 'Loading...';
@@ -155,6 +167,8 @@ export const useSyncProject = (): SyncState => {
       case SyncProgress.SYNCING_ALIGNMENTS:
         dialogMessage = 'Syncing with the server...';
         break;
+      case SyncProgress.CANCELED:
+        dialogMessage = 'Resetting project changes...'
     }
 
     return (
@@ -171,19 +185,27 @@ export const useSyncProject = (): SyncState => {
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
           <Typography variant="subtitle1">
-            {dialogMessage}
+            {canceled ? 'Resetting project changes...' : dialogMessage}
           </Typography>
-          <Button variant="text" sx={{textTransform: 'none', ml: 2}} onClick={onCancel}>Cancel</Button>
+          {
+            progress !== SyncProgress.CANCELED && !canceled
+              ? <Button variant="text" sx={{textTransform: 'none', ml: 2}} onClick={onCancel}>Cancel</Button>
+              : <Grid />
+          }
         </Grid>
       </Dialog>
     );
-  }, [progress, onCancel]);
-
+  }, [progress, onCancel, canceled]);
 
   return {
-    sync: project => new Promise(res => setTimeout(() => res(syncProject(project, cancelToken)), 2000)),
+    sync: project => {
+      setCanceled(false);
+      setInitialProjectState(project);
+      setSyncTime(DateTime.now().toMillis());
+      setProgress(SyncProgress.RETRIEVING_TOKENS);
+    },
     progress,
-    dialog,
+    dialog: dialog,
     file
   };
 };

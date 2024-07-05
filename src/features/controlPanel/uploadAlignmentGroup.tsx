@@ -109,7 +109,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
                     marginBottom: '.2em'
                   }}
                   onClick={async () => {
-                    currentProject && await syncProject(currentProject);
+                    currentProject && syncProject(currentProject);
                   }}
                 >
                   <Sync sx={theme => ({

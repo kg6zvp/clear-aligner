@@ -189,7 +189,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
   const syncLocalProjectWithServer = React.useCallback(() => {
-    syncProject(project).catch(console.error);
+    syncProject(project);
   }, [project, syncProject]);
 
   const cloudSyncInfo = useMemo(() => {
