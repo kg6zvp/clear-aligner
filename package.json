@@ -13,6 +13,8 @@
     "@mui/x-data-grid": "^6.18.2",
     "@reduxjs/toolkit": "^1.8.1",
     "@rgrove/parse-xml": "^3.0.0",
+    "@types/luxon": "^3.4.2",
+    "luxon": "^3.4.2",
     "@uidotdev/usehooks": "^2.4.1",
     "aws-amplify": "^6.3.8",
     "better-sqlite3": "^9.4.3",
@@ -144,8 +146,8 @@
     },
     "extraFiles": [
       {
-        "from": "sql/projects/clear-aligner-default.sqlite",
-        "to": "sql/projects/clear-aligner-default.sqlite"
+        "from": "sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite",
+        "to": "sql/projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite"
       },
       {
         "from": "sql/clear-aligner-template.sqlite",

@@ -13,10 +13,10 @@ import saveAlignmentFile from '../../helpers/alignmentFile';
 import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
-import { SyncProgress, useSyncAlignments } from '../../state/links/useSyncAlignments';
-import { SyncProgressDialog } from './syncProgressDialog';
+import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { AppContext } from '../../App';
-import { userState } from '../profileAvatar/profileAvatar';
+import { Project } from '../../state/projects/tableManager';
+import { ProjectLocation } from '../../common/data/project/project';
 
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
@@ -25,6 +25,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
   size?: string,
   allowImport?: boolean;
 }) => {
+  const {projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -33,7 +34,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     saveKey?: string
   }>();
 
-  const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
+  const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
     errors?: ZodError<AlignmentFile>,
     showDialog?: boolean
   }>();
@@ -41,16 +42,15 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
   useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
-  const [ syncLinksKey, setSyncLinksKey ] = useState<string|undefined>(undefined);
-  const [ cancelSyncKey, setCancelSyncKey ] = useState<string|undefined>(undefined);
-  const syncState = useSyncAlignments(projectId, syncLinksKey, cancelSyncKey);
-  const [ getAllLinksKey, setGetAllLinksKey ] = useState<string>();
+  const { sync: syncProject, progress, dialog, file } = useSyncProject();
+  const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
+
   useEffect(() => {
     saveAlignmentFile(allLinks);
   }, [allLinks]);
   useEffect(() => {
-    if (!syncState.file) {
+    if (!file) {
       return;
     }
     // clear errors, if any
@@ -60,47 +60,77 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
     });
     // import/save file
     setAlignmentFileSaveState({
-      alignmentFile: syncState.file,
+      alignmentFile: file,
       saveKey: uuid()
     });
-  }, [ syncState.file, setAlignmentFileSaveState ]);
-  const showSyncProgressDialog = useMemo<boolean>(() => syncState.progress === SyncProgress.IN_PROGRESS, [ syncState.progress ]);
-  const { userStatus } = useContext(AppContext);
+  }, [file, setAlignmentFileSaveState]);
+
+  const inProgress = useMemo(() => (
+    [
+      SyncProgress.IN_PROGRESS,
+      SyncProgress.SYNCING_LOCAL,
+      SyncProgress.RETRIEVING_TOKENS,
+      SyncProgress.SYNCING_PROJECT,
+      SyncProgress.SYNCING_TOKENS,
+      SyncProgress.SYNCING_ALIGNMENTS,
+    ].includes(progress)
+  ), [progress]);
+
+  const [currentProject, setCurrentProject] = useState<Project>();
+  useEffect(() => {
+    projectState.projectTable?.getProjects?.()?.then?.(res => {
+      setCurrentProject(Array.from(res?.values?.() ?? []).find(p => p.id === projectId))
+    })?.catch?.(console.error);
+  }, [projectState, projectId]);
 
   return (
     <span>
-      <RemovableTooltip
-        removed={alignmentFileErrors?.showDialog}
-        title="Sync Alignments"
-        describeChild
-        arrow>
-        <span>
-          <SyncProgressDialog
-            showDialog={showSyncProgressDialog}
-            onCancel={() => setCancelSyncKey(uuid())}
-          />
-          <Button
-            size={size as 'medium' | 'small' | undefined}
-            disabled={containers.length === 0 || !allowImport || (userStatus !== userState.LoggedIn) }
-            variant="contained"
-            sx={{
-              minWidth: '100%',
-              marginBottom: '.2em'
-            }}
-            onClick={() => {
-              setSyncLinksKey(uuid());
-            }} >
-            <Sync />
-          </Button>
-        </span>
-      </RemovableTooltip>
-      <br/>
+      {
+        currentProject?.location !== ProjectLocation.LOCAL && (
+        <>
+          <RemovableTooltip
+            removed={alignmentFileErrors?.showDialog}
+            title="Sync Project"
+            describeChild
+            arrow>
+          <span>
+
+                <Button
+                  size={size as 'medium' | 'small' | undefined}
+                  disabled={containers.length === 0 || !allowImport || inProgress
+                    || (
+                      !!currentProject?.lastSyncTime
+                      && !!currentProject.lastUpdated
+                      && currentProject.lastSyncTime === currentProject.lastUpdated
+                    )}
+                  variant="contained"
+                  sx={{
+                    minWidth: '100%',
+                    marginBottom: '.2em'
+                  }}
+                  onClick={async () => {
+                    currentProject && syncProject(currentProject);
+                  }}
+                >
+                  <Sync sx={theme => ({
+                    ...(inProgress ? {
+                      '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                      animation: '2s linear infinite rotation reverse',
+                      fill: inProgress ? theme.palette.text.secondary : 'white'
+                    } : {})
+                  })} />
+                </Button>
+          </span>
+          </RemovableTooltip>
+          <br/>
+        </>
+      )}
       <ButtonGroup>
         <RemovableTooltip
           removed={alignmentFileErrors?.showDialog}
           title="Load Alignment Data"
           describeChild
-          arrow >
+          arrow>
             <span>
               <ZodErrorDialog
                 showDialog={alignmentFileErrors?.showDialog}
@@ -140,7 +170,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
               />
               <Button
                 size={size as 'medium' | 'small' | undefined}
-                disabled={containers.length === 0 || !allowImport}
+                disabled={containers.length === 0 || !allowImport || inProgress}
                 variant="contained"
                 onClick={() => {
                   // delegate file loading to regular file input
@@ -160,7 +190,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
             <span>
               <Button
                 size={size as 'medium' | 'small' | undefined}
-                disabled={containers.length === 0}
+                disabled={containers.length === 0 || inProgress}
                 variant="contained"
                 onClick={() => new Promise<undefined>((resolve) => {
                   setTimeout(async () => {
@@ -174,6 +204,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport }: {
             </span>
         </RemovableTooltip>
       </ButtonGroup>
+      {dialog}
     </span>
   );
 };

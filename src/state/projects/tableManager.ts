@@ -3,10 +3,11 @@
  */
 import { VirtualTable } from '../databaseManagement';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
-import { EmptyWordId, LinksTable } from '../links/tableManager';
+import { DefaultProjectName, EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
@@ -20,6 +21,10 @@ export interface Project {
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
+  lastSyncTime?: number;
+  lastUpdated?: number;
+  location: ProjectLocation;
+  state?: ProjectState;
 }
 
 export interface ProjectDto {
@@ -29,7 +34,6 @@ export interface ProjectDto {
 }
 
 const DatabaseInsertChunkSize = 2_000;
-const UIInsertChunkSize = DatabaseInsertChunkSize * 8;
 
 export class ProjectTable extends VirtualTable {
   private projects: Map<string, Project>;
@@ -41,14 +45,15 @@ export class ProjectTable extends VirtualTable {
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
     try {
-      if (this.isDatabaseBusy()) return;
+      if(this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+      await this.sync(project);
       updateWordsOrParts && await this.insertWordsOrParts(project);
-      this.projects.set(createdProject.id, createdProject);
+      createdProject && this.projects.set(createdProject.id, createdProject);
       this.decrDatabaseBusyCtr();
-      return createdProject?.[0] ? ProjectTable.convertDataSourceToProject(createdProject?.[0]) : undefined;
+      return createdProject ? ProjectTable.convertDataSourceToProject(createdProject) : undefined;
     } catch (e) {
       console.error('Error creating project: ', e);
       return undefined;
@@ -76,16 +81,39 @@ export class ProjectTable extends VirtualTable {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
+
       // @ts-ignore
       const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
-      updateWordsOrParts && await this.insertWordsOrParts(project);
-      this.projects.set(updatedProject, updatedProject);
+      await this.sync(project).catch(console.error);
+      updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
+      this.projects.set(project.id, project);
       this.decrDatabaseBusyCtr();
       return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
     } catch (e) {
       console.error('Error updating project: ', e);
     } finally {
-      await this._onUpdate(suppressOnUpdate);
+      this._onUpdate(suppressOnUpdate).catch(console.error);
+    }
+  };
+
+  sync = async (project: Project): Promise<boolean> => {
+    try {
+      this.incrDatabaseBusyCtr();
+      const projectEntity: ProjectEntity = {
+        id: project.id,
+        name: project.name,
+        location: project.location ?? ProjectLocation.LOCAL,
+        serverState: project.state ?? ProjectState.DRAFT,
+        lastSyncTime: project.lastSyncTime,
+        lastUpdated: project.lastUpdated
+      };
+      // @ts-ignore
+      await window.databaseApi.projectSave(projectEntity);
+      this.decrDatabaseBusyCtr();
+      return true;
+    } catch (e) {
+      console.error('Error syncing project: ', e);
+      return false;
     }
   };
 
@@ -106,9 +134,15 @@ export class ProjectTable extends VirtualTable {
       progressCtr,
       progressMax
     });
-    for (const chunk of _.chunk(wordsOrParts, UIInsertChunkSize)) {
+
+    for (const chunk of _.chunk(wordsOrParts, 10000)) {
       // @ts-ignore
-      await window.databaseApi.insert(project.id, 'words_or_parts', chunk, DatabaseInsertChunkSize).catch(console.error);
+      await window.databaseApi.insert({
+        sourceName: project.id,
+        table: 'words_or_parts',
+        itemOrItems: chunk,
+        chunkSize: DatabaseInsertChunkSize
+      }).catch(console.error);
       progressCtr += chunk.length;
       this.setDatabaseBusyProgress(progressCtr, progressMax);
 
@@ -118,6 +152,7 @@ export class ProjectTable extends VirtualTable {
         ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
         : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
 
+      break;
     }
     this.setDatabaseBusyText('Finishing project creation...');
     this.decrDatabaseBusyCtr();
@@ -143,11 +178,28 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
+  getProjectTableData = async (): Promise<ProjectEntity[]> => {
+    try {
+      return (await dbApi.getProjects()) ?? [];
+    } catch (ex) {
+      console.error('Unable to convert data source to project: ', ex);
+      return [];
+    }
+  }
+
   getProjects = async (requery = false): Promise<Map<string, Project> | undefined> => {
     if (requery) {
-      const projects = await this.getDataSourcesAsProjects();
-      if (projects) {
-        this.projects = new Map<string, Project>(projects.filter(p => p).map(p => [p.id, p]));
+      const dataSources = await this.getDataSourcesAsProjects();
+      if (dataSources) {
+        const projectEntities = await this.getProjectTableData();
+        this.projects = new Map<string, Project>(dataSources.filter(Boolean).map(p => {
+          const entity = projectEntities.find(e => e.id === p.id);
+          return [p.id, {
+            ...p,
+            ...(entity ?? {}),
+            name: p.id === DefaultProjectName ? p.name : entity?.name ?? p.name
+          }]
+        }));
       }
     }
     return this.projects;

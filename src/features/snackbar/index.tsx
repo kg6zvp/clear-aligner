@@ -5,7 +5,6 @@ import React, { useContext } from 'react';
 import Snackbar from '@mui/material/Snackbar';
 import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { useNetworkState } from '@uidotdev/usehooks';
 import { AppContext } from '../../App';
 
 /**

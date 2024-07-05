@@ -34,7 +34,7 @@ export const CorporaTableName = 'corpora';
 export const LanguageTableName = 'language';
 export const LinksToSourceWordsName = 'links__source_words';
 export const LinksToTargetWordsName = 'links__target_words';
-export const DefaultProjectName = 'default';
+export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
 export const ProjectDatabaseDirectory = 'projects';
 export const JournalEntryTableName = 'journal_entries';
 
@@ -201,7 +201,7 @@ const corporaSchema = new EntitySchema({
       type: 'text'
     }, language_id: {
       type: 'text'
-    }
+    },
   }
 });
 
@@ -304,7 +304,7 @@ export class ProjectRepository extends BaseRepository {
       await this.getDataSourceWithEntities(sourceName || DefaultProjectName,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
         path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName
-          ? 'projects/clear-aligner-default.sqlite'
+          ? 'projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
   }
@@ -379,8 +379,12 @@ export class ProjectRepository extends BaseRepository {
       // Creates the data source
       const projectDataSource = await this.getDataSource(project.id);
       // Inserts corpora to the {project.id} data source
-      const corpora = [...project.corpora];
-      await this.insert(project.id, CorporaTableName, corpora);
+      const corpora = [...project.corpora].filter(Boolean);
+      await this.insert({
+        sourceName: project.id,
+        table: CorporaTableName,
+        itemOrItems: corpora
+      });
       const sources = await projectDataSource.getRepository(CorporaTableName)
         .createQueryBuilder(CorporaTableName)
         .getMany();
@@ -509,6 +513,9 @@ export class ProjectRepository extends BaseRepository {
   };
 
   insert = async <T,> ({ sourceName, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => {
+    if(!table || !sourceName || !itemOrItems) {
+      return false;
+    }
     this.logDatabaseTime('insert()');
     try {
       await (await this.getDataSource(sourceName))
@@ -564,7 +571,7 @@ export class ProjectRepository extends BaseRepository {
         });
       return true;
     } catch (ex) {
-      console.error('insert()', ex);
+      console.error('insert()', ex, itemOrItems);
       return false;
     } finally {
       this.logDatabaseTimeEnd('insert()');
@@ -950,7 +957,7 @@ export class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('getAllCorpora()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = (await entityManager.query(`select c.id             as id,
+      const results = (await entityManager.query(`select c.id       as id,
                                                          c.name           as name,
                                                          c.full_name      as fullName,
                                                          c.file_name      as fileName,

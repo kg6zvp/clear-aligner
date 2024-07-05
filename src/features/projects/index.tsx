@@ -10,10 +10,10 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  Select,
+  Select, Theme,
   Typography
 } from '@mui/material';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -24,39 +24,98 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { InitializationStates } from '../../workbench/query';
 import { LayoutContext } from '../../AppLayout';
 import { Box } from '@mui/system';
+import { CloudDownload, CloudSync, Computer, Refresh } from '@mui/icons-material';
+import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
+import { ProjectLocation } from '../../common/data/project/project';
+import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
+import { DateTime } from 'luxon';
+import { Progress } from '../../api/ApiModels';
+import { useDownloadProject } from '../../api/projects/useDownloadProject';
 
 interface ProjectsViewProps {
   preferredTheme: "night" | "day" | "auto";
   setPreferredTheme: Function;
 }
 
-const ProjectsView: React.FC<ProjectsViewProps> = (
-  {preferredTheme, setPreferredTheme}) => {
-  const { projects, preferences  } = React.useContext(AppContext);
+const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
+  switch (progress) {
+    case Progress.FAILED:
+      return theme.palette.error.main;
+    case Progress.IN_PROGRESS:
+      return theme.palette.text.secondary;
+    case Progress.IDLE:
+    case Progress.SUCCESS:
+    default:
+      return theme.palette.primary.main;
+  }
+};
+
+const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferredTheme}) => {
+  useContext(LayoutContext);
+  const { preferences, projects: initialProjects } = React.useContext(AppContext);
+  const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
+    enabled: false // Prevents immediate and useEffect-based requerying
+  });
+
+
+  const projects = React.useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
+
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
-  const selectProject = React.useCallback((projectId: string) => {
-    setSelectedProjectId(projectId);
-    setOpenProjectDialog(true);
+
+  const selectProject = React.useCallback((project: Project) => {
+    if (project) {
+      setSelectedProjectId(project.id);
+      setOpenProjectDialog(true);
+    }
   }, [setSelectedProjectId, setOpenProjectDialog]);
-  useContext(LayoutContext);
+  const unavailableProjectNames: string[] = React.useMemo(() => (
+    projects.map(p => (p.name || '').trim())
+  ), [projects]);
+
   return (
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
-            sx={{ height: '100%', width: '100%', paddingTop: '2.1rem', overflow: 'hidden' }}>
-        <Grid container sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
-          <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
-          <Button
-            variant="contained"
-            onClick={() => setOpenProjectDialog(true)}
-            sx={{ textTransform: 'none', fontWeight: 'bold' }}
-          >Create New</Button>
+            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+        <Grid container justifyContent="space-between" alignItems="center"
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
+          <Grid container sx={{ width: 'fit-content' }}>
+            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+            <Button
+              variant="contained"
+              onClick={() => setOpenProjectDialog(true)}
+              sx={{ textTransform: 'none', fontWeight: 'bold' }}
+            >Create New</Button>
+          </Grid>
+          <Grid item sx={{ px: 2 }}>
+            <Button variant="text" onClick={() => refetchRemoteProjects({persist: true, currentProjects: projects})}>
+              <Grid container alignItems="center">
+                <Refresh sx={theme => ({
+                  mr: 1,
+                  mb: .5,
+                  ...(remoteFetchProgress === Progress.IN_PROGRESS ? {
+                    '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                    animation: '2s linear infinite rotation',
+                    fill: getPaletteFromProgress(remoteFetchProgress, theme)
+                  } : {})
+                })} />
+                <Typography variant="subtitle2" sx={theme => ({
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  color: getPaletteFromProgress(remoteFetchProgress, theme)
+                })}>
+                  {remoteFetchProgress === Progress.IN_PROGRESS ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                </Typography>
+              </Grid>
+            </Button>
+          </Grid>
         </Grid>
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
-          {projects.sort((p1: Project) => p1.id === DefaultProjectName ? -1 : projects.indexOf(p1))
+          {projects
+            .sort((p1: Project) => p1?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
               <ProjectCard
-                key={project.id ?? project.name}
+                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.lastUpdated}`}
                 project={project}
                 onClick={selectProject}
                 currentProject={projects.find((p: Project) =>
@@ -97,6 +156,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = (
           setOpenProjectDialog(false);
           setSelectedProjectId(null);
         }}
+        unavailableProjectNames={unavailableProjectNames}
       />
     </>
   );
@@ -105,11 +165,15 @@ const ProjectsView: React.FC<ProjectsViewProps> = (
 interface ProjectCardProps {
   project: Project;
   currentProject: Project | undefined;
-  onClick: (id: string) => void;
+  onClick: (project: Project) => void;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
   useCorpusContainers();
+
+  const {downloadProject, dialog: downloadProjectDialog} = useDownloadProject();
+  const { sync: syncProject, progress: syncingProject, dialog: syncDialog } = useSyncProject();
+
   const { setPreferences, projectState, preferences } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
@@ -124,54 +188,122 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
+  const syncLocalProjectWithServer = React.useCallback(() => {
+    syncProject(project);
+  }, [project, syncProject]);
+
+  const cloudSyncInfo = useMemo(() => {
+    switch (project.location) {
+      case ProjectLocation.LOCAL:
+        return (
+          <Grid container justifyContent="flex-end" alignItems="center">
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+                    sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
+              Upload Project
+              <Computer sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
+            </Button>
+          </Grid>
+        );
+      case ProjectLocation.REMOTE:
+        return (
+          <Grid container justifyContent="flex-end" alignItems="center">
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+                    sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
+              Download Project
+              <CloudDownload sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
+            </Button>
+          </Grid>
+        );
+      case ProjectLocation.SYNCED:
+      default:
+        return (
+          <Grid container flexDirection="column">
+            <Grid container justifyContent="flex-end" alignItems="center">
+              <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary})} />
+            </Grid>
+          </Grid>
+        );
+    }
+  }, [project, syncLocalProjectWithServer, syncingProject, downloadProject]);
+
+  const currentProjectIndicator = useMemo(() => {
+    if (isCurrentProject) {
+      return (<Typography variant="subtitle2">Current Project</Typography>);
+    } else if(project.location !== ProjectLocation.REMOTE ) {
+      return (
+        <Button variant="text" size="small" sx={{ textTransform: 'none' }}
+                      onClick={e => {
+                        e.preventDefault();
+                        updateCurrentProject();
+                      }}
+        >Open</Button>
+      );
+    } else {
+      return <></>
+    }
+  }, [isCurrentProject, project, updateCurrentProject]);
+
   return (
-    <Card sx={theme => ({
-      height: 250, width: 250, m: 2.5, '&:hover': {
-        boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
-          ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
-          : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-      }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' }
-    })}>
-      <CardContent sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        height: '100%'
-      }}>
-        <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
-              onClick={() => onClick(project.id)}>
-          <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>{project.name}</Typography>
-        </Grid>
-        <Grid container justifyContent="space-between" alignItems="center">
-          <Grid item>
-            {
-              isCurrentProject ? (
-                <Typography variant="subtitle2">Current Project</Typography>
-              ) : (
-                <Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                        onClick={e => {
-                          e.preventDefault();
-                          updateCurrentProject();
-                        }}
-                >Open</Button>
-              )
-            }
+    <>
+      <Card sx={theme => ({
+        height: 250, width: 250, m: 2.5, '&:hover': {
+          boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
+            ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
+            : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
+        }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' },
+        position: 'relative'
+      })}>
+        <CardContent sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          height: '100%'
+        }}>
+          {cloudSyncInfo}
+          <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
+                onClick={() => onClick(project)}>
+            <Typography variant="h6"
+                        sx={{ textAlign: 'center', mt: 4 }}>{project.name}</Typography>
           </Grid>
-          <Grid item>
-            <UploadAlignmentGroup
-              projectId={project.id}
-              size="small"
-              containers={[
-                ...(project.sourceCorpora ? [project.sourceCorpora] : []),
-                ...(project.targetCorpora ? [project.targetCorpora] : [])
-              ]}
-              allowImport={isCurrentProject}
-            />
+          <Grid container justifyContent="space-between" alignItems="center">
+            <Grid item>
+              {currentProjectIndicator}
+            </Grid>
+            <Grid item>
+              {project.location !== ProjectLocation.REMOTE ?
+                <UploadAlignmentGroup
+                  projectId={project.id}
+                  size="small"
+                  containers={[
+                    ...(project.sourceCorpora ? [project.sourceCorpora] : []),
+                    ...(project.targetCorpora ? [project.targetCorpora] : [])
+                  ]}
+                  allowImport={isCurrentProject}
+                />
+                : <></>}
+            </Grid>
           </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+          {
+            (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
+              <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
+                <span style={{fontWeight: 'bold'}}>Last sync:</span>
+                &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
+              </Typography>
+            )
+          }
+          {
+            syncingProject === SyncProgress.FAILED && (
+              <Typography variant="caption" color="error" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
+                There was an error uploading this project.
+              </Typography>
+            )
+          }
+        </CardContent>
+      </Card>
+      {syncDialog}
+      {downloadProjectDialog}
+    </>
   );
 };
 

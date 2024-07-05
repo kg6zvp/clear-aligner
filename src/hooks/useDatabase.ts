@@ -16,6 +16,7 @@ import { PivotWordFilter } from '../features/concordanceView/concordanceView';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useMemo } from 'react';
 import { UserPreferenceDto } from '../state/preferences/tableManager';
+import { ProjectEntity } from '../common/data/project/project';
 
 export interface ListedProjectDto {
   id: string;
@@ -26,6 +27,7 @@ export interface DatabaseApi {
   getPreferences: (requery: boolean) => Promise<UserPreferenceDto|undefined>;
   createOrUpdatePreferences: (preferences: UserPreferenceDto) => Promise<void>;
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
+  getProjects: () => Promise<ProjectEntity[]|undefined>;
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
     t: string, // normalized text
     l: string, // language id

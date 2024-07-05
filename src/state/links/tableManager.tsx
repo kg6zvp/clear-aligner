@@ -12,6 +12,8 @@ import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { DateTime } from 'luxon';
+import { Progress } from '../../api/ApiModels';
 
 const DatabaseInsertChunkSize = 10_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
@@ -20,7 +22,7 @@ const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 export const EmptyWordId = '00000000000';
-export const DefaultProjectName = 'default';
+export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
 export const LinkTableName = 'links';
 export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
@@ -65,7 +67,7 @@ export class LinksTable extends VirtualTable {
     this.logDatabaseTime('save()');
     try {
       const links = Array.isArray(linkOrLinks) ? linkOrLinks : [linkOrLinks];
-      const [ linksToPersist, linksToUpdate ]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
+      const [linksToPersist, linksToUpdate]: Link[][] = _.partition(links, (l) => !l.id || l.id.trim().length < 1);
       let allResult = false;
 
       const linkIds = linksToUpdate.map(({ id }) => id!);
@@ -212,7 +214,7 @@ export class LinksTable extends VirtualTable {
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
           disableJournaling
-      });
+        });
         progressCtr += chunk.length;
         this.setDatabaseBusyProgress(progressCtr, progressMax);
 
@@ -437,37 +439,43 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * on re-render. A constant value will ensure an operation only happens once, and a UUID
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param linkOrLinks Link to save (optional; undefined = no save).
- * @param saveKey Unique key to control save operation (optional; undefined = no save).
  */
-export const useSaveLink = (linkOrLinks?: Link | Link[], saveKey?: string) => {
-  const { projectState } = React.useContext(AppContext);
+export const useSaveLink = () => {
+  const { projectState, preferences, projects } = React.useContext(AppContext);
+  const [progress, setProgress] = React.useState<Progress>(Progress.IDLE);
   const [status, setStatus] = useState<{
     result?: boolean | undefined;
   }>({});
-  const prevSaveKey = useRef<string | undefined>();
 
-  useEffect(() => {
-    if (!linkOrLinks
-      || !saveKey
-      || prevSaveKey.current === saveKey) {
+  const saveLink = React.useCallback((linkOrLinks?: Link | Link[]) => {
+    if (!linkOrLinks) {
       return;
     }
-    prevSaveKey.current = saveKey;
     databaseHookDebug('useSaveLink(): status', status);
     projectState?.linksTable.save(linkOrLinks)
       .then(result => {
+        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
+        if (currentProject) {
+          if(currentProject.lastUpdated === currentProject.lastSyncTime) {
+            setProgress(Progress.IN_PROGRESS);
+          }
+          currentProject.lastUpdated = DateTime.now().toMillis();
+          projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
+        }
         const endStatus = {
           ...status,
           result
         };
         setStatus(endStatus);
         databaseHookDebug('useSaveLink(): endStatus', endStatus);
-      });
-  }, [projectState?.linksTable, prevSaveKey, linkOrLinks, saveKey, status]);
+        setTimeout(() => setProgress(Progress.IDLE), 1000);
+      }).catch(() => {
+        setProgress(Progress.FAILED);
+        setTimeout(() => setProgress(Progress.IDLE), 5000);
+    });
+  }, [projects, projectState, preferences, status]);
 
-  return { ...status };
+  return { status, saveLink, progress };
 };
 
 /**
@@ -848,7 +856,7 @@ export const useGetLink = (linkId?: string, getKey?: string) => {
  * @param suppressOnUpdate Suppress table update notifications (optional; undefined = false).
  */
 export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpdate: boolean = false) => {
-  const { projectState } = React.useContext(AppContext);
+  const { projectState, projects, preferences } = React.useContext(AppContext);
   const [status, setStatus] = useState<{
     result?: boolean;
   }>({});
@@ -868,10 +876,15 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
           ...status,
           result
         };
+        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
+        if(currentProject) {
+          currentProject.lastUpdated = DateTime.now().toMillis();
+          projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
+        }
         setStatus(endStatus);
         databaseHookDebug('useRemoveLink(): endStatus', endStatus);
       });
-  }, [projectState?.linksTable, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate]);
+  }, [projectState, projects, prevRemoveKey, linkId, removeKey, status, suppressOnUpdate, preferences]);
 
   return { ...status };
 };

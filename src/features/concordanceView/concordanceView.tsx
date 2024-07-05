@@ -29,7 +29,6 @@ import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
-import uuid from 'uuid-random';
 import useConfirm from '../../hooks/useConfirm';
 
 /**
@@ -115,12 +114,8 @@ export const AlignmentTableControlPanel = ({
                                            }: AlignmentTableControlPanelProps) => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [isButtonGroupDisabled, setIsButtonGroupDisabled ] = React.useState(true);
-  const [linkSaveState, setLinkSaveState] = useState<{
-    link?: Link[],
-    saveKey?: string,
-  }>();
 
-  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  const {saveLink} = useSaveLink();
 
   const handleClose = () => {
     setIsDialogOpen(false)
@@ -165,13 +160,9 @@ export const AlignmentTableControlPanel = ({
   }
 
   // Take the map, transform it to an array, then pass it to the save function
-  const handleSave = () => {
+  const handleSave = async () => {
     const linksToSave = [...linksPendingUpdate.values()];
-    setLinkSaveState({
-      link: linksToSave,
-      saveKey: uuid()
-    });
-
+    saveLink(linksToSave);
     // reset things back to empty and 0
     setRowSelectionModel([])
     setSelectedRows([]);

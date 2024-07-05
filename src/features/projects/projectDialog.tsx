@@ -20,7 +20,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Close, DeleteOutline } from '@mui/icons-material';
+import { Close, DeleteOutline, Unpublished } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
@@ -32,6 +32,10 @@ import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { AppContext } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
+import { DateTime } from 'luxon';
+import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { usePublishProject } from '../../api/projects/usePublishProject';
 
 
 enum TextDirection {
@@ -43,6 +47,7 @@ interface ProjectDialogProps {
   open: boolean;
   closeCallback: () => void;
   projectId: string | null;
+  unavailableProjectNames?: string[];
 }
 
 const getInitialProjectState = (): Project => ({
@@ -52,11 +57,14 @@ const getInitialProjectState = (): Project => ({
   languageCode: 'eng',
   textDirection: 'ltr',
   fileName: '',
-  linksTable: new LinksTable()
+  linksTable: new LinksTable(),
+  location: ProjectLocation.LOCAL
 });
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId }) => {
+const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, unavailableProjectNames = [] }) => {
   const dispatch = useAppDispatch();
+  const {publishProject, dialog: publishDialog} = usePublishProject();
+  const {deleteProject, dialog: deleteDialog} = useDeleteProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = React.useState<Project>(initialProjectState);
@@ -82,15 +90,24 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     closeCallback();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
+  const invalidProjectName = React.useMemo(() => {
+    const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
+    return (
+      unavailableProjectNames.filter(name => name !== foundProject?.name).includes((project.name || '').trim())
+      && !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
+    );
+  }, [unavailableProjectNames, projectState, projectId, projects, project]);
+
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
     && (project.fileName || '').length
     && (project.name || '').length
+    && !invalidProjectName
     && (project.abbreviation || '').length
     && (project.languageCode || '').length
     && Object.keys(TextDirection).includes((project.textDirection || '').toUpperCase())
     && projectUpdated
-  ), [uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
+  ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
   const handleSubmit = React.useCallback(async (type: 'create'|'update', e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
@@ -106,7 +123,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           };
 
           const targetCorpus = {
-            id: project.id,
+            id: uuidv4(),
             name: project.abbreviation,
             fullName: project.name,
             fileName: project.fileName,
@@ -118,7 +135,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             wordsByVerse: {},
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
-            side: AlignmentSide.TARGET
+            side: AlignmentSide.TARGET,
           } as Corpus;
 
           if (fileContent) {
@@ -134,13 +151,12 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
-
+          projectToUpdate.lastUpdated = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
-            setProjects((p: Project[]) => [...p, projectToUpdate]);
+            projectToUpdate.lastSyncTime = 0;
             await projectState.projectTable?.save?.(projectToUpdate, !!fileContent);
           } else {
-            setProjects((project: Project[]) => project.map(p => p.id === projectId ? projectToUpdate : p));
             await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           }
           if (type === 'update') {
@@ -149,6 +165,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               initialized: InitializationStates.UNINITIALIZED
             }));
           }
+          const updatedProjects = await projectState.projectTable?.getProjects(true);
+          setProjects(p => Array.from(updatedProjects?.values?.() ?? p));
           resolve(undefined);
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
@@ -158,6 +176,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const handleDelete = React.useCallback(async () => {
     if (projectId) {
       await projectState.projectTable?.remove?.(projectId);
+      await deleteProject(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
         setPreferences((p: UserPreference | undefined) => ({
@@ -169,7 +188,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
+  }, [deleteProject, projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
 
   const setInitialProjectState = React.useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
@@ -205,12 +224,17 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               <FormControl>
                 <Typography variant="subtitle2">Name</Typography>
                 <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.name}
+                           disabled={project.location === ProjectLocation.REMOTE}
                            onChange={({ target: { value: name } }) =>
-                             handleUpdate({ name })} />
+                             handleUpdate({ name })}
+                          error={invalidProjectName}
+                         helperText={invalidProjectName ? 'Project name already in use.' : ''}
+                />
               </FormControl>
               <FormControl>
                 <Typography variant="subtitle2">Abbreviation</Typography>
                 <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.abbreviation}
+                           disabled={project.location === ProjectLocation.REMOTE}
                            onChange={({ target: { value: abbreviation } }) =>
                              handleUpdate({ abbreviation })}
                 />
@@ -228,6 +252,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                     }
                   }}
                   sx={{ mb: 2 }}
+                  disabled={project.location === ProjectLocation.REMOTE}
                   value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
                   onChange={(_, language) =>
                     handleUpdate({
@@ -239,6 +264,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               <FormControl>
                 <Typography variant="subtitle2">Text Direction</Typography>
                 <Select size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.textDirection}
+                        disabled={project.location === ProjectLocation.REMOTE}
                         onChange={({ target: { value: textDirection } }) =>
                           handleUpdate({ textDirection: textDirection as string })
                         }>
@@ -252,7 +278,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                 </Select>
               </FormControl>
 
-              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }}>
+              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }} disabled={project.location === ProjectLocation.REMOTE}>
                 Upload File
                 <input type="file" hidden
                        onClick={(event) => {
@@ -305,18 +331,28 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         </DialogContent>
         <DialogActions>
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
-            {
-              projectId && allowDelete
-                ? <Button variant="text" color="error" sx={{ textTransform: 'none' }}
-                          onClick={() => setOpenConfirmDelete(true)}
-                          startIcon={<DeleteOutline />}
-                >Delete</Button>
-                : <Box />
-            }
+            <Grid container alignItems="center" sx={{width: 'fit-content'}}>
+              {
+                (projectId && allowDelete && project.location !== ProjectLocation.REMOTE)
+                  ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
+                            onClick={() => setOpenConfirmDelete(true)}
+                            startIcon={<DeleteOutline />}
+                  >Delete</Button>
+                  : <Box />
+              }
+              {
+                (project && allowDelete && project.location === ProjectLocation.SYNCED)
+                  ? <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
+                            onClick={() => publishProject(project, ProjectState.DRAFT).then(() => handleClose())}
+                            startIcon={<Unpublished />}
+                  >Unpublish</Button>
+                  : <Box />
+              }
+            </Grid>
             <Button
               variant="contained"
               sx={{ textTransform: 'none' }}
-              disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy()}
+              disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
               onClick={e => {
                 handleSubmit(projectId ? 'update' : 'create', e).then(() => {
                   // handleClose() in the .then() ensures dialog doesn't close prematurely
@@ -348,6 +384,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
           </Grid>
         </DialogContent>
       </Dialog>
+      {deleteDialog}
+      {publishDialog}
     </>
   );
 };

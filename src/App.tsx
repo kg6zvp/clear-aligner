@@ -34,6 +34,7 @@ export interface AppContextProps {
   setIsSnackBarOpen: Function;
   snackBarMessage: string;
   setSnackBarMessage: Function;
+  setContainers: React.Dispatch<React.SetStateAction<Containers>>;
 }
 
 export type THEME = 'night' | 'day';

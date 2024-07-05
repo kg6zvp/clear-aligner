@@ -10,14 +10,14 @@ CREATE TABLE language
 );
 CREATE TABLE IF NOT EXISTS "corpora"
 (
-    id          TEXT
+    id             TEXT
         constraint id
             primary key,
-    side        TEXT not null,
-    name        TEXT not null,
-    full_name   TEXT not null,
-    file_name   TEXT not null,
-    language_id TEXT not null
+    side           TEXT not null,
+    name           TEXT not null,
+    full_name      TEXT not null,
+    file_name      TEXT not null,
+    language_id    TEXT not null
 );
 CREATE TABLE links
 (

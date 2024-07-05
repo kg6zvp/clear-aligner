@@ -7,7 +7,7 @@ import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt, SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
-import { CorpusContainer, Link } from '../../structs';
+import { CorpusContainer } from '../../structs';
 import { AppContext } from '../../App';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -25,10 +25,6 @@ interface ControlPanelProps {
 export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useDebug('ControlPanel');
   const dispatch = useAppDispatch();
-  const [linkSaveState, setLinkSaveState] = useState<{
-    link?: Link,
-    saveKey?: string,
-  }>();
   const [linkRemoveState, setLinkRemoveState] = useState<{
     linkId?: string,
     removeKey?: string,
@@ -42,7 +38,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  useSaveLink(linkSaveState?.link, linkSaveState?.saveKey);
+  const {saveLink} = useSaveLink();
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
@@ -84,10 +80,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   }
 
   const createLink = () => {
-    setLinkSaveState({
-      link: inProgressLink ?? undefined,
-      saveKey: uuid()
-    });
+    inProgressLink && saveLink(inProgressLink);
     dispatch(resetTextSegments());
   }
 
@@ -97,15 +90,16 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   useHotkeys('shift+esc', () => dispatch(resetTextSegments()))
 
   return (
-    <Stack
-      direction="row"
-      spacing={2}
-      justifyContent="center"
-      alignItems="baseline"
-      style={{ marginTop: '16px', marginBottom: '16px' }}
-    >
-      <ButtonGroup>
-        <Tooltip title="Toggle Glosses" arrow describeChild>
+    <>
+      <Stack
+        direction="row"
+        spacing={2}
+        justifyContent="center"
+        alignItems="baseline"
+        style={{ marginTop: '16px', marginBottom: '16px' }}
+      >
+        <ButtonGroup>
+          <Tooltip title="Toggle Glosses" arrow describeChild>
           <span>
             <Button
               variant={preferences?.showGloss ? 'contained' : 'outlined'}
@@ -121,10 +115,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <Translate />
             </Button>
           </span>
-        </Tooltip>
-        <Tooltip
-          title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
-          arrow describeChild>
+          </Tooltip>
+          <Tooltip
+            title={`Swap to ${preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'horizontal' : 'vertical'} view mode`}
+            arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -137,11 +131,11 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               }
             </Button>
           </span>
-        </Tooltip>
-      </ButtonGroup>
+          </Tooltip>
+        </ButtonGroup>
 
-      <ButtonGroup>
-        <Tooltip title="Create Link" arrow describeChild>
+        <ButtonGroup>
+          <Tooltip title="Create Link" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -151,8 +145,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <AddLink />
             </Button>
           </span>
-        </Tooltip>
-        <Tooltip title="Delete Link" arrow describeChild>
+          </Tooltip>
+          <Tooltip title="Delete Link" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -162,8 +156,8 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <LinkOff />
             </Button>
           </span>
-        </Tooltip>
-        <Tooltip title="Reset" arrow describeChild>
+          </Tooltip>
+          <Tooltip title="Reset" arrow describeChild>
           <span>
             <Button
               variant="contained"
@@ -175,9 +169,10 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
               <RestartAlt />
             </Button>
           </span>
-        </Tooltip>
-      </ButtonGroup>
-    </Stack>
+          </Tooltip>
+        </ButtonGroup>
+      </Stack>
+    </>
   );
 };
 
