@@ -137,7 +137,6 @@ export class ProjectTable extends VirtualTable {
       progressCtr,
       progressMax
     });
-
     for (const chunk of _.chunk(wordsOrParts, 10000)) {
       // @ts-ignore
       await window.databaseApi.insert({
@@ -154,8 +153,6 @@ export class ProjectTable extends VirtualTable {
       this.setDatabaseBusyText(chunk.length === progressMax
         ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
         : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
-
-      break;
     }
     this.setDatabaseBusyText('Finishing project creation...');
     this.decrDatabaseBusyCtr();
