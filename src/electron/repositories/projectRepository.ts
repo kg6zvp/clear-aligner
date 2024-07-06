@@ -41,7 +41,7 @@ export const CorporaTableName = 'corpora';
 export const LanguageTableName = 'language';
 export const LinksToSourceWordsName = 'links__source_words';
 export const LinksToTargetWordsName = 'links__target_words';
-export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
+export const DefaultProjectId = '00000000-0000-4000-8000-000000000000';
 export const ProjectDatabaseDirectory = 'projects';
 export const JournalEntryDirectory = 'journal_entries';
 export const JournalEntryTableName = 'journal_entries';
@@ -315,9 +315,9 @@ export class ProjectRepository extends BaseRepository {
       fs.mkdirSync(path.join(this.getDataDirectory(), JournalEntryDirectory));
     }
     this.getDataSource = async (sourceName: string) =>
-      await this.getDataSourceWithEntities(sourceName || DefaultProjectName,
+      await this.getDataSourceWithEntities(sourceName || DefaultProjectId,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
-        path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName
+        path.join(this.getTemplatesDirectory(), DefaultProjectId === sourceName
           ? 'projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));

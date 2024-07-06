@@ -18,7 +18,7 @@ import React, { useContext, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
-import { DefaultProjectName } from '../../state/links/tableManager';
+import { DefaultProjectId } from '../../state/links/tableManager';
 import { AppContext, THEME_PREFERENCE } from '../../App';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
@@ -126,7 +126,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         </Grid>
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects
-            .sort((p1: Project) => p1?.id === DefaultProjectName ? -1 : projects.indexOf(p1))
+            .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
               <ProjectCard
                 key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.lastUpdated}`}

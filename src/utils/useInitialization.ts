@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
+import { DefaultProjectId, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
@@ -114,11 +114,11 @@ const useInitialization = () => {
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject
               ?? projects?.[0]?.id
-              ?? DefaultProjectName
+              ?? DefaultProjectId
           });
           currLinksTable.setSourceName(res?.currentProject
             ?? projects?.[0]?.id
-            ?? DefaultProjectName);
+            ?? DefaultProjectId);
         });
       });
       initializeProject().catch(console.error);

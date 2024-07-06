@@ -1,5 +1,5 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -177,7 +177,7 @@ export const useSyncAlignments = (): SyncState => {
     }
   }, [sendJournal, fetchLinks]);
 
-  const dialog = React.useMemo(() => {
+  const dialog = useMemo(() => {
     return (
       <Dialog
         scroll="paper"

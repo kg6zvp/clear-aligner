@@ -3,7 +3,7 @@
  */
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
-import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
+import { DefaultProjectId, EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 
@@ -174,7 +174,7 @@ export const getCorpusFromDatabase = async (
   while (true) {
     // @ts-ignore
     const words = ((await window.databaseApi.getAllWordsByCorpus(
-      sourceName ?? DefaultProjectName,
+      sourceName ?? DefaultProjectId,
       inputCorpus.side,
       inputCorpus.id,
       WordQueryBatchSize, offset)) as Word[]);

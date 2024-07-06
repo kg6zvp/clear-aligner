@@ -3,7 +3,7 @@
  */
 import { VirtualTable } from '../databaseManagement';
 import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
-import { DefaultProjectName, EmptyWordId, LinksTable } from '../links/tableManager';
+import { DefaultProjectId, EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
@@ -197,7 +197,7 @@ export class ProjectTable extends VirtualTable {
           return [p.id, {
             ...p,
             ...(entity ?? {}),
-            name: p.id === DefaultProjectName ? p.name : entity?.name ?? p.name
+            name: p.id === DefaultProjectId ? p.name : entity?.name ?? p.name
           }]
         }));
       }

@@ -5,7 +5,7 @@
 import { PivotWord } from './structs';
 import { AlignmentSide } from '../../structs';
 import { useContext, useEffect, useState } from 'react';
-import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
+import { DefaultProjectId, useDataLastUpdated } from '../../state/links/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
 import { GridSortItem } from '@mui/x-data-grid';
 import { PivotWordFilter } from './concordanceView';
@@ -26,7 +26,7 @@ export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort
     const load = async () => {
       console.time(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
       const pivotWordList = (await databaseApi.corporaGetPivotWords(
-        preferences?.currentProject ?? DefaultProjectName,
+        preferences?.currentProject ?? DefaultProjectId,
         side, filter, sort));
       console.timeEnd(`usePivotWords(side: '${side}', filter: '${filter}', sort: ${JSON.stringify(sort)})`);
 

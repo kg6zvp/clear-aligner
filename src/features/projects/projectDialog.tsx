@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { Close, DeleteOutline, Unpublished } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
-import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
+import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
 import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
@@ -75,7 +75,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
-  const allowDelete = React.useMemo(() => projectId !== DefaultProjectName, [projectId]);
+  const allowDelete = React.useMemo(() => projectId !== DefaultProjectId, [projectId]);
   const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
     if (!projectUpdated) {
       setProjectUpdated(true);
@@ -178,10 +178,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
         projectState.linksTable.reset().catch(console.error);
-        projectState.linksTable.setSourceName(DefaultProjectName);
+        projectState.linksTable.setSourceName(DefaultProjectId);
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
-          currentProject: DefaultProjectName,
+          currentProject: DefaultProjectId,
           initialized: InitializationStates.UNINITIALIZED
         }));
       }

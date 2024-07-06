@@ -23,7 +23,7 @@ const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 export const EmptyWordId = '00000000000';
-export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
+export const DefaultProjectId = '00000000-0000-4000-8000-000000000000';
 export const LinkTableName = 'links';
 export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
@@ -55,10 +55,10 @@ export class LinksTable extends VirtualTable {
   }
 
   setSourceName = (sourceName?: string) => {
-    this.sourceName = sourceName ?? this.sourceName ?? DefaultProjectName;
+    this.sourceName = sourceName ?? this.sourceName ?? DefaultProjectId;
   };
 
-  getSourceName = () => this.sourceName ?? DefaultProjectName;
+  getSourceName = () => this.sourceName ?? DefaultProjectId;
 
   save = async (linkOrLinks: Link | Link[], suppressOnUpdate = false, isForced = false): Promise<boolean> => {
     if (!isForced && this.isDatabaseBusy()) {

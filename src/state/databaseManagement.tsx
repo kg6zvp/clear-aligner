@@ -2,7 +2,7 @@
  * This file contains the VirtualTable class which contains methods for
  * interacting with the database.
  */
-import { LinksTable } from './links/tableManager';
+import { DefaultProjectId, LinksTable } from './links/tableManager';
 import { UserPreferenceTable } from './preferences/tableManager';
 import { ProjectTable } from './projects/tableManager';
 import _ from 'lodash';
@@ -150,7 +150,7 @@ export abstract class VirtualTable {
     loadState.isLoading = true;
     try {
       // @ts-ignore
-      await window.databaseApi.createDataSource(this.sourceName ?? DefaultProjectName);
+      await window.databaseApi.createDataSource(this.sourceName ?? DefaultProjectId);
       loadState.isLoaded = true;
 
       return true;

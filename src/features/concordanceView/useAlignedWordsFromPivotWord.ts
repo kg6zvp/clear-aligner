@@ -5,7 +5,7 @@
 import { AlignedWord, PivotWord } from './structs';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useDatabase } from '../../hooks/useDatabase';
-import { DefaultProjectName, useDataLastUpdated } from '../../state/links/tableManager';
+import { DefaultProjectId, useDataLastUpdated } from '../../state/links/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import { useLanguages } from '../../hooks/useLanguages';
 import { AppContext } from '../../App';
@@ -27,7 +27,7 @@ export const useAlignedWordsFromPivotWord = (pivotWord?: PivotWord, sort?: GridS
     const load = async () => {
       console.time(`useAlignedWordsFromPivotWord('${pivotWord.normalizedText}')`);
       const alignedWords = (await db.corporaGetAlignedWordsByPivotWord(
-        preferences?.currentProject ?? DefaultProjectName,
+        preferences?.currentProject ?? DefaultProjectId,
         pivotWord.side,
         pivotWord.normalizedText,
         sort))
