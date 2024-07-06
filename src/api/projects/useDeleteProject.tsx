@@ -2,12 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { Progress } from '../ApiModels';
 import useCancelTask, { CancelToken } from '../useCancelTask';
-import {
-  ClearAlignerApi,
-  getApiOptionsWithAuth,
-  OverrideCaApiEndpoint
-} from '../../server/amplifySetup';
-import { del } from 'aws-amplify/api';
+import { ApiUtils } from '../utils';
 
 export interface DeleteState {
   deleteProject: (projectId: string) => Promise<unknown>;
@@ -33,38 +28,13 @@ export const useDeleteProject = (): DeleteState => {
     try {
       if(cancelToken.canceled) return;
       setProgress(Progress.IN_PROGRESS);
-
-      let res;
-      let syncProgress = Progress.FAILED;
-      const requestPath = `/api/projects/${projectId}`;
-      if (OverrideCaApiEndpoint) {
-        res = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
-          signal: abortController.current?.signal,
-          method: 'DELETE',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        // If the project request was successful, update the alignments for the project.
-        if(res.ok) {
-          syncProgress = Progress.SUCCESS;
-        }
-      } else {
-        const responseOperation = del({
-          apiName: ClearAlignerApi,
-          path: requestPath,
-          options: getApiOptionsWithAuth()
-        });
-        await responseOperation.response;
-        if(abortController.current?.signal) {
-          abortController.current.signal.onabort = () => {
-            responseOperation.cancel();
-          };
-        }
-      }
+      const res = await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${projectId}`,
+        requestType: ApiUtils.RequestType.DELETE,
+        signal: abortController.current?.signal
+      });
       if(cancelToken.canceled) return;
-      setProgress(syncProgress);
+      setProgress(res.success ? Progress.SUCCESS : Progress.FAILED);
       return res;
     } catch (x) {
       cleanupRequest();

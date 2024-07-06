@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { SERVER_URL } from '../../common';
 import { ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { AppContext } from '../../App';
@@ -8,6 +7,8 @@ import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { Progress } from '../ApiModels';
 import { DateTime } from 'luxon';
+import { ClearAlignerApi, getApiOptionsWithAuth, OverrideCaApiEndpoint } from '../../server/amplifySetup';
+import { post } from 'aws-amplify/api';
 
 export interface PublishState {
   publishProject: (project: Project, state: ProjectState) => Promise<unknown>;
@@ -38,16 +39,27 @@ export const usePublishProject = (): PublishState => {
     try {
       setProgress(Progress.IN_PROGRESS);
       if(cancelToken.canceled) return;
-      // Update project state to Published.
-      await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/state`, {
-        signal: abortController.current?.signal,
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(state)
-      });
+      const requestPath = `/api/projects/${project.id}/state`;
+      if (OverrideCaApiEndpoint) {
+        // Update project state to Published.
+        await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+          signal: abortController.current?.signal,
+          method: 'POST',
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(state)
+        });
+      } else {
+        const responseOperation = post({
+          apiName: ClearAlignerApi,
+          path: requestPath,
+          options: getApiOptionsWithAuth(state)
+        });
+        const response = await responseOperation.response;
+      }
+
       project.state = state;
       if(state === ProjectState.PUBLISHED) {
         const syncTime = DateTime.now().toMillis();
