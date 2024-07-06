@@ -14,19 +14,16 @@ export interface DeleteState {
  * hook to delete a specified project from the server.
  */
 export const useDeleteProject = (): DeleteState => {
-  const {cancel, cancelToken} = useCancelTask();
   const [ progress, setProgress ] = useState<Progress>(Progress.IDLE);
   const abortController = useRef<AbortController|undefined>();
 
   const cleanupRequest = useCallback(() => {
-    cancel();
     abortController.current?.abort?.();
     abortController.current = undefined;
-  }, [cancel]);
+  }, []);
 
-  const deleteProject = async (projectId: string, cancelToken: CancelToken) => {
+  const deleteProject = async (projectId: string) => {
     try {
-      if(cancelToken.canceled) return;
       setProgress(Progress.IN_PROGRESS);
       const res = await ApiUtils.generateRequest({
         requestPath: `/api/projects/${projectId}`,
@@ -64,9 +61,7 @@ export const useDeleteProject = (): DeleteState => {
 
 
   return {
-    deleteProject: projectId => new Promise(res =>
-      setTimeout(() => res(deleteProject(projectId, cancelToken)), 2000)
-    ),
+    deleteProject,
     progress,
     dialog
   };

@@ -7,8 +7,8 @@ import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { Progress } from '../ApiModels';
 import { DateTime } from 'luxon';
-import { ClearAlignerApi, getApiOptionsWithAuth, OverrideCaApiEndpoint } from '../../server/amplifySetup';
-import { post } from 'aws-amplify/api';
+import { ApiUtils } from '../utils';
+import RequestType = ApiUtils.RequestType;
 
 export interface PublishState {
   publishProject: (project: Project, state: ProjectState) => Promise<unknown>;
@@ -39,27 +39,11 @@ export const usePublishProject = (): PublishState => {
     try {
       setProgress(Progress.IN_PROGRESS);
       if(cancelToken.canceled) return;
-      const requestPath = `/api/projects/${project.id}/state`;
-      if (OverrideCaApiEndpoint) {
-        // Update project state to Published.
-        await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
-          signal: abortController.current?.signal,
-          method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(state)
-        });
-      } else {
-        const responseOperation = post({
-          apiName: ClearAlignerApi,
-          path: requestPath,
-          options: getApiOptionsWithAuth(state)
-        });
-        const response = await responseOperation.response;
-      }
-
+      await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${project.id}/state`,
+        requestType: RequestType.POST,
+        payload: state
+      });
       project.state = state;
       if(state === ProjectState.PUBLISHED) {
         const syncTime = DateTime.now().toMillis();
