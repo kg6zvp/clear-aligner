@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { Progress } from '../ApiModels';
-import useCancelTask, { CancelToken } from '../useCancelTask';
 import { ApiUtils } from '../utils';
 
 export interface DeleteState {
@@ -30,7 +29,6 @@ export const useDeleteProject = (): DeleteState => {
         requestType: ApiUtils.RequestType.DELETE,
         signal: abortController.current?.signal
       });
-      if(cancelToken.canceled) return;
       setProgress(res.success ? Progress.SUCCESS : Progress.FAILED);
       return res;
     } catch (x) {
