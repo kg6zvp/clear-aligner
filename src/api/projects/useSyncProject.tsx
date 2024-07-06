@@ -1,6 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { generateJsonString } from '../../common/generateJsonString';
-import { SERVER_URL } from '../../common';
 import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
@@ -13,6 +12,12 @@ import { AlignmentSide } from '../../structs';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
+import {
+  ClearAlignerApi,
+  getApiOptionsWithAuth,
+  OverrideCaApiEndpoint
+} from '../../server/amplifySetup';
+import { post } from 'aws-amplify/api';
 
 export enum SyncProgress {
   IDLE,
@@ -102,26 +107,42 @@ export const useSyncProject = (): SyncState => {
           setProgress(SyncProgress.SYNCING_PROJECT);
           break;
         case SyncProgress.SYNCING_PROJECT: {
-          const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
-            signal: abortController.current?.signal,
-            method: 'POST',
-            headers: {
-              accept: 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: generateJsonString(mapProjectEntityToProjectDTO(project))
-          });
-          if(res.ok) {
-            setProgress(SyncProgress.SYNCING_TOKENS);
+          const requestPath = '/api/projects';
+          let res;
+          if (OverrideCaApiEndpoint) {
+            res = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+              signal: abortController.current?.signal,
+              method: 'POST',
+              headers: {
+                accept: 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: generateJsonString(mapProjectEntityToProjectDTO(project))
+            });
+            if(res.ok) {
+              setProgress(SyncProgress.SYNCING_TOKENS);
+            } else {
+              setSnackBarMessage(
+                ((await res.json()).message ?? "").includes("duplicate key")
+                  ? "Failed to sync project. Project name already exists"
+                  : "Failed to sync project."
+              );
+              setIsSnackBarOpen(true);
+              setUniqueNameError(true);
+              setProgress(SyncProgress.FAILED);
+            }
           } else {
-            setSnackBarMessage(
-              ((await res.json()).message ?? "").includes("duplicate key")
-                ? "Failed to sync project. Project name already exists"
-                : "Failed to sync project."
-            );
-            setIsSnackBarOpen(true);
-            setUniqueNameError(true);
-            setProgress(SyncProgress.FAILED);
+            const responseOperation = post({
+              apiName: ClearAlignerApi,
+              path: requestPath,
+              options: getApiOptionsWithAuth(mapProjectEntityToProjectDTO(project))
+            });
+            if(abortController.current?.signal) {
+              abortController.current.signal.onabort = () => {
+                responseOperation.cancel();
+              };
+            }
+            await responseOperation.response;
           }
           break;
         }

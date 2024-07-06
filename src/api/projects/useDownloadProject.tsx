@@ -91,8 +91,8 @@ export const useDownloadProject = (): SyncState => {
           headers: {
             accept: 'application/json'
           }
-        })).json();
-        resultTokens.push(...((await responsePromise) ?? []));
+        }))?.json?.();
+        resultTokens.push(...((await responsePromise)?.tokens ?? []));
       } else {
         let pageCtr = 0;
         while (true) {
@@ -122,7 +122,6 @@ export const useDownloadProject = (): SyncState => {
           pageCtr++;
         }
       }
-
       if (projectResponse.ok) {
         const projectData: ProjectDTO = await projectResponse.json();
         if (cancelToken.canceled) return;
@@ -168,6 +167,7 @@ export const useDownloadProject = (): SyncState => {
       setProgress(ProjectDownloadProgress.SUCCESS);
       return projectResponse;
     } catch (x) {
+      console.error("Unable to download project: ", x);
       cleanupRequest().catch(console.error);
       setProgress(ProjectDownloadProgress.FAILED);
       setTimeout(() => {
