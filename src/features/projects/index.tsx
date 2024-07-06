@@ -35,7 +35,7 @@ import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { userState } from '../profileAvatar/profileAvatar';
 
 interface ProjectsViewProps {
-  preferredTheme: "night" | "day" | "auto";
+  preferredTheme: 'night' | 'day' | 'auto';
   setPreferredTheme: Function;
 }
 
@@ -52,7 +52,7 @@ const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
   }
 };
 
-const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferredTheme}) => {
+const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferredTheme }) => {
   useContext(LayoutContext);
   const { preferences, projects: initialProjects, userStatus } = React.useContext(AppContext);
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
@@ -96,13 +96,17 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferred
           <Grid item sx={{ px: 2 }}>
             {
               isSignedIn && (
-                <Button variant="text" onClick={() => refetchRemoteProjects({persist: true, currentProjects: projects})}>
+                <Button variant="text"
+                        onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
                   <Grid container alignItems="center">
                     <Refresh sx={theme => ({
                       mr: 1,
                       mb: .5,
                       ...(remoteFetchProgress === Progress.IN_PROGRESS ? {
-                        '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                        '@keyframes rotation': {
+                          from: { transform: 'rotate(0deg)' },
+                          to: { transform: 'rotate(360deg)' }
+                        },
                         animation: '2s linear infinite rotation',
                         fill: getPaletteFromProgress(remoteFetchProgress, theme)
                       } : {})
@@ -130,16 +134,18 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferred
                 onClick={selectProject}
                 currentProject={projects.find((p: Project) =>
                   p.id === preferences?.currentProject) ?? projects?.[0]}
+                unavailableProjectNames={unavailableProjectNames}
               />
             ))}
         </Grid>
-        <Box sx={{ display: 'flex',
+        <Box sx={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
           paddingTop: '5rem',
           paddingLeft: '2.3rem'
         }}>
-          <FormControl sx={{ width: 175 }} >
+          <FormControl sx={{ width: 175 }}>
             <InputLabel id={'theme-label'}>Theme</InputLabel>
             <Select
               labelId={'theme-label'}
@@ -166,7 +172,10 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({preferredTheme, setPreferred
           setOpenProjectDialog(false);
           setSelectedProjectId(null);
         }}
-        unavailableProjectNames={unavailableProjectNames}
+        unavailableProjectNames={
+          unavailableProjectNames.filter(name =>
+            name !== projects.find(p => p.id === selectedProjectId)?.name)
+        }
         isSignedIn={isSignedIn}
       />
     </>
@@ -177,13 +186,20 @@ interface ProjectCardProps {
   project: Project;
   currentProject: Project | undefined;
   onClick: (project: Project) => void;
+  unavailableProjectNames: string[];
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick, unavailableProjectNames }) => {
   useCorpusContainers();
 
-  const {downloadProject, dialog: downloadProjectDialog} = useDownloadProject();
-  const { sync: syncProject, progress: syncingProject, dialog: syncDialog } = useSyncProject();
+  const { downloadProject, dialog: downloadProjectDialog } = useDownloadProject();
+  const {
+    sync: syncProject,
+    progress: syncingProject,
+    dialog: syncDialog,
+    uniqueNameError,
+    setUniqueNameError
+  } = useSyncProject();
 
   const { setPreferences, projectState, preferences, userStatus } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
@@ -209,7 +225,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
     const signedOutIcon = (
       <Grid container justifyContent="flex-end" alignItems="center">
         <Button variant="text" disabled sx={{ textTransform: 'none' }}>
-          <span style={{color: 'grey'}}>Unavailable</span>
+          <span style={{ color: 'grey' }}>Unavailable</span>
           <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
         </Button>
       </Grid>
@@ -240,7 +256,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         return (
           <Grid container flexDirection="column">
             <Grid container justifyContent="flex-end" alignItems="center">
-              <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary})} />
+              <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
             </Grid>
           </Grid>
         );
@@ -250,17 +266,17 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
       return (<Typography variant="subtitle2">Current Project</Typography>);
-    } else if(project.location !== ProjectLocation.REMOTE ) {
+    } else if (project.location !== ProjectLocation.REMOTE) {
       return (
         <Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                      onClick={e => {
-                        e.preventDefault();
-                        updateCurrentProject();
-                      }}
+                onClick={e => {
+                  e.preventDefault();
+                  updateCurrentProject();
+                }}
         >Open</Button>
       );
     } else {
-      return <></>
+      return <></>;
     }
   }, [isCurrentProject, project, updateCurrentProject]);
 
@@ -291,7 +307,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
             <Grid item>
               {currentProjectIndicator}
             </Grid>
-            <Grid container alignItems="center" sx={{height: 75, width: 'fit-content'}}>
+            <Grid container alignItems="center" sx={{ height: 75, width: 'fit-content' }}>
               {project.location !== ProjectLocation.REMOTE ?
                 <UploadAlignmentGroup
                   projectId={project.id}
@@ -308,7 +324,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           {
             (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
               <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
-                <span style={{fontWeight: 'bold'}}>Last sync:</span>
+                <span style={{ fontWeight: 'bold' }}>Last sync:</span>
                 &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
               </Typography>
             )
@@ -324,6 +340,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
       </Card>
       {syncDialog}
       {downloadProjectDialog}
+      <ProjectDialog
+        open={uniqueNameError}
+        projectId={project.id}
+        closeCallback={() => setUniqueNameError(false)}
+        unavailableProjectNames={[project.name, ...unavailableProjectNames]}
+        isSignedIn={isSignedIn}
+      />
     </>
   );
 };

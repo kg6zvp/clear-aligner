@@ -91,9 +91,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
   const invalidProjectName = React.useMemo(() => {
-    const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
     return (
-      unavailableProjectNames.filter(name => name !== foundProject?.name).includes((project.name || '').trim())
+      unavailableProjectNames.includes((project.name || '').trim())
       && !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
     );
   }, [unavailableProjectNames, projectState, projectId, projects, project]);

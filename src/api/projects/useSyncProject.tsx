@@ -33,6 +33,8 @@ export interface SyncState {
   progress: SyncProgress;
   dialog: any;
   file: any;
+  uniqueNameError: boolean;
+  setUniqueNameError: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 /**
@@ -49,6 +51,7 @@ export const useSyncProject = (): SyncState => {
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
   const [canceled, setCanceled] = React.useState<boolean>(false);
+  const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
 
   const cleanupRequest = useCallback(async () => {
@@ -117,6 +120,7 @@ export const useSyncProject = (): SyncState => {
                 : "Failed to sync project."
             );
             setIsSnackBarOpen(true);
+            setUniqueNameError(true);
             setProgress(SyncProgress.FAILED);
           }
           break;
@@ -211,6 +215,8 @@ export const useSyncProject = (): SyncState => {
     },
     progress,
     dialog: dialog,
-    file
+    file,
+    uniqueNameError,
+    setUniqueNameError
   };
 };
