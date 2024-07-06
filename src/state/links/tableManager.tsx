@@ -467,10 +467,10 @@ export const useSaveLink = () => {
       .then(result => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if (currentProject) {
-          if(currentProject.lastUpdated === currentProject.lastSyncTime) {
+          if(currentProject.updatedAt === currentProject.lastSyncTime) {
             setProgress(Progress.IN_PROGRESS);
           }
-          currentProject.lastUpdated = DateTime.now().toMillis();
+          currentProject.updatedAt = DateTime.now().toMillis();
           projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
         }
         const endStatus = {
@@ -843,7 +843,7 @@ export const useRemoveLink = (linkId?: string, removeKey?: string, suppressOnUpd
         };
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if(currentProject) {
-          currentProject.lastUpdated = DateTime.now().toMillis();
+          currentProject.updatedAt = DateTime.now().toMillis();
           projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
         }
         setStatus(endStatus);

@@ -14,6 +14,9 @@ import { useInterval } from 'usehooks-ts';
 import { useNetworkState } from '@uidotdev/usehooks';
 import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { EnvironmentVariables } from '../structs/environmentVariables';
+
+const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -130,6 +133,10 @@ const useInitialization = () => {
   // Update UserStatus
   useEffect( () => {
     const getCurrentUserDetails = async () => {
+      if (environmentVariables.caApiEndpoint && network.online) {
+        setUserStatus(userState.CustomEndpoint);
+        return;
+      }
       try{
         await getCurrentUser();
         setUserStatus(userState.LoggedIn)

@@ -150,7 +150,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
-          projectToUpdate.lastUpdated = DateTime.now().toMillis();
+          projectToUpdate.updatedAt = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             projectToUpdate.lastSyncTime = 0;

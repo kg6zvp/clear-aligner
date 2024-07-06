@@ -4,6 +4,7 @@ import { RestApiOptionsBase } from '@aws-amplify/api-rest/src/types';
 import { EnvironmentVariables } from '../structs/environmentVariables';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
+console.log('environmentVariables', environmentVariables);
 
 export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;

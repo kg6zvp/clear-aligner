@@ -129,7 +129,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
               <ProjectCard
-                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.lastUpdated}`}
+                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
                 project={project}
                 onClick={selectProject}
                 currentProject={projects.find((p: Project) =>
@@ -204,7 +204,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const { setPreferences, projectState, preferences, userStatus } = React.useContext(AppContext);
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
-  const isSignedIn = React.useMemo(() => userStatus === userState.LoggedIn, [userStatus]);
+  const isSignedIn = React.useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
 
   const updateCurrentProject = React.useCallback(() => {
     projectState.linksTable.reset().catch(console.error);

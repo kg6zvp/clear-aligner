@@ -9,7 +9,6 @@ import { useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { getCorpusFromDatabase } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
-import { AlignmentSide } from '../../structs';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
@@ -20,7 +19,7 @@ export enum SyncProgress {
   SYNCING_LOCAL,
   RETRIEVING_TOKENS,
   SYNCING_PROJECT,
-  SYNCING_TOKENS,
+  SYNCING_CORPORA,
   SYNCING_ALIGNMENTS,
   UPDATING_PROJECT,
   SUCCESS,
@@ -102,6 +101,10 @@ export const useSyncProject = (): SyncState => {
           setProgress(SyncProgress.SYNCING_PROJECT);
           break;
         case SyncProgress.SYNCING_PROJECT: {
+          if (project.location === ProjectLocation.SYNCED) {
+            setProgress(SyncProgress.SYNCING_CORPORA);
+            break;
+          }
           const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
             signal: abortController.current?.signal,
             method: 'POST',
@@ -112,7 +115,7 @@ export const useSyncProject = (): SyncState => {
             body: generateJsonString(mapProjectEntityToProjectDTO(project))
           });
           if(res.ok) {
-            setProgress(SyncProgress.SYNCING_TOKENS);
+            setProgress(SyncProgress.SYNCING_CORPORA);
           } else {
             setSnackBarMessage(
               ((await res.json()).message ?? "").includes("duplicate key")
@@ -125,8 +128,8 @@ export const useSyncProject = (): SyncState => {
           }
           break;
         }
-        case SyncProgress.SYNCING_TOKENS: {
-          await syncWordsOrParts(project, project.location === ProjectLocation.SYNCED ? AlignmentSide.TARGET : undefined);
+        case SyncProgress.SYNCING_CORPORA: {
+          await syncWordsOrParts(project);
           setProgress(SyncProgress.SYNCING_ALIGNMENTS);
           break;
         }
@@ -173,7 +176,7 @@ export const useSyncProject = (): SyncState => {
         dialogMessage = 'Retrieving tokens from the local database...';
         break;
       case SyncProgress.SYNCING_PROJECT:
-      case SyncProgress.SYNCING_TOKENS:
+      case SyncProgress.SYNCING_CORPORA:
       case SyncProgress.SYNCING_ALIGNMENTS:
         dialogMessage = 'Syncing with the server...';
         break;

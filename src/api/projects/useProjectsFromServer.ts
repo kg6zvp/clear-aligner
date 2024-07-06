@@ -81,8 +81,8 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           // Update valid projects stored locally that are local or synced.
           if (localProject?.targetCorpora?.corpora?.[0]) {
             // Update last updated time if project is not in an updated state.
-            if((localProject.lastSyncTime ?? 0) === (localProject.lastUpdated ?? 0)) {
-              project.lastUpdated = syncTime;
+            if((localProject.lastSyncTime ?? 0) === (localProject.updatedAt ?? 0)) {
+              project.updatedAt = syncTime;
             }
             if(localProject.location !== ProjectLocation.REMOTE) {
               project.lastSyncTime = syncTime;
@@ -99,7 +99,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         for (const removedProject of removedProjects) {
           removedProject.location = ProjectLocation.LOCAL;
           removedProject.lastSyncTime = 0;
-          removedProject.lastUpdated = DateTime.now().toMillis();
+          removedProject.updatedAt = DateTime.now().toMillis();
           await projectState.projectTable?.update?.(removedProject, false);
         }
       }

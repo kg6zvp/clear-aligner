@@ -18,7 +18,6 @@ import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
 
-
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn }: {
   projectId?: string,
   containers: CorpusContainer[],
@@ -74,7 +73,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
       SyncProgress.SYNCING_LOCAL,
       SyncProgress.RETRIEVING_TOKENS,
       SyncProgress.SYNCING_PROJECT,
-      SyncProgress.SYNCING_TOKENS,
+      SyncProgress.SYNCING_CORPORA,
       SyncProgress.SYNCING_ALIGNMENTS,
     ].includes(progress)
   ), [progress]);
@@ -103,8 +102,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                   disabled={!isSignedIn || containers.length === 0 || !allowImport || inProgress
                     || (
                       !!currentProject?.lastSyncTime
-                      && !!currentProject.lastUpdated
-                      && currentProject.lastSyncTime === currentProject.lastUpdated
+                      && !!currentProject.updatedAt
+                      && currentProject.lastSyncTime === currentProject.updatedAt
                     )}
                   variant="contained"
                   sx={{

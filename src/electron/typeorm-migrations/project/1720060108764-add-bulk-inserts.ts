@@ -24,7 +24,7 @@ export class AddBulkInserts1720060108764 implements MigrationInterface {
         name: 'linkId',
         type: 'text',
         isNullable: true
-      }))
+      }));
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

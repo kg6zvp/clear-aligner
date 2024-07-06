@@ -57,7 +57,7 @@ export const useDownloadProject = (): SyncState => {
       if (savedProject) {
         await deleteProject(projectId);
         savedProject.lastSyncTime = 0;
-        savedProject.lastUpdated = DateTime.now().toMillis();
+        savedProject.updatedAt = DateTime.now().toMillis();
         savedProject.location = ProjectLocation.REMOTE;
         projectState.projectTable?.save(savedProject, false);
       }
@@ -134,7 +134,7 @@ export const useDownloadProject = (): SyncState => {
           } : c);
         });
         const currentTime = DateTime.now().toMillis();
-        projectData.lastUpdated = currentTime;
+        projectData.updatedAt = currentTime;
         projectData.lastSyncTime = currentTime;
         if (cancelToken.canceled) return;
         const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;

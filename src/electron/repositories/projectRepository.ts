@@ -35,6 +35,8 @@ import {
 import { generateJsonString } from '../../common/generateJsonString';
 import { AddBulkInserts1720060108764 } from '../typeorm-migrations/project/1720060108764-add-bulk-inserts';
 import { SERVER_TRANSMISSION_CHUNK_SIZE } from '../../common/constants';
+import { CorpusEntity } from '../../common/data/project/corpus';
+import { CorporaTimestamps1720241454613 } from '../typeorm-migrations/project/1720241454613-corpora-timestamps';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
@@ -157,31 +159,6 @@ class WordsOrParts {
 }
 
 /**
- * CorporaEntity class is used to define projects.
- * Both source and target corpora are used to define alignment data
- * If this.side === 'target', then it's used to define a project.
- */
-class CorporaEntity {
-  id?: string;
-  language_id?: string;
-  side?: string;
-  name?: string;
-  full_name?: string;
-  file_name?: string;
-  words?: string;
-
-  constructor() {
-    this.id = undefined;
-    this.language_id = undefined;
-    this.side = '';
-    this.name = '';
-    this.full_name = '';
-    this.file_name = '';
-    this.words = undefined;
-  }
-}
-
-/**
  * LanguageEntity class is used to define the text direction, language and the
  * font family for the corpora.
  */
@@ -197,22 +174,36 @@ class LanguageEntity {
   }
 }
 
-
 const corporaSchema = new EntitySchema({
-  name: 'corpora', tableName: 'corpora', target: CorporaEntity, columns: {
+  name: 'corpora', tableName: CorporaTableName, target: CorpusEntity, columns: {
     id: {
       primary: true, type: 'text', generated: false
-    }, side: {
-      type: 'text'
-    }, name: {
-      type: 'text'
-    }, full_name: {
-      type: 'text'
-    }, file_name: {
-      type: 'text'
-    }, language_id: {
+    },
+    side: {
       type: 'text'
     },
+    name: {
+      type: 'text'
+    },
+    full_name: {
+      type: 'text'
+    },
+    file_name: {
+      type: 'text'
+    },
+    language_id: {
+      type: 'text'
+    },
+    createdAt: {
+      name: 'created_at',
+      type: 'datetime',
+      nullable: true
+    },
+    updatedAt: {
+      name: 'updated_at',
+      type: 'datetime',
+      nullable: true
+    }
   }
 });
 
@@ -351,7 +342,8 @@ export class ProjectRepository extends BaseRepository {
     return [
       AddLinkStatus1715305810421,
       AddJournalLinkTable1718060579447,
-      AddBulkInserts1720060108764
+      AddBulkInserts1720060108764,
+      CorporaTimestamps1720241454613
     ];
   }
 
@@ -978,6 +970,8 @@ export class ProjectRepository extends BaseRepository {
                                                          c.full_name      as fullName,
                                                          c.file_name      as fileName,
                                                          c.side           as side,
+                                                         c.created_at     as created_at,
+                                                         c.updated_at     as updated_at,
                                                          l.code           as code,
                                                          l.text_direction as textDirection,
                                                          l.font_family    as fontFamily
@@ -992,6 +986,8 @@ export class ProjectRepository extends BaseRepository {
           fileName: result.fileName,
           fullName: result.fullName,
           side: result.side,
+          createdAt: new Date(result.created_at),
+          updatedAt: new Date(result.updated_at),
           language: {
             code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }
