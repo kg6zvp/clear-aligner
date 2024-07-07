@@ -91,7 +91,6 @@ export const usePublishProject = (): PublishState => {
           Progress.FAILED,
           Progress.CANCELED
         ].includes(progress) && !!publishState}
-        onClose={onCancel}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>

@@ -176,7 +176,6 @@ export const useSyncAlignments = (): SyncState => {
           Progress.FAILED,
           Progress.CANCELED
         ].includes(progress)}
-        onClose={cleanupRequest}
       >
         <Grid container alignItems="center" justifyContent="space-between"
               sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>

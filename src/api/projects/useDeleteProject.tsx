@@ -44,7 +44,6 @@ export const useDeleteProject = (): DeleteState => {
     <Dialog
       scroll="paper"
       open={progress === Progress.IN_PROGRESS}
-      onClose={cleanupRequest}
     >
       <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
         <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>

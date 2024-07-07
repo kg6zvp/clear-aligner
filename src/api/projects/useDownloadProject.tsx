@@ -212,7 +212,6 @@ export const useDownloadProject = (): SyncState => {
           ProjectDownloadProgress.FAILED,
           ProjectDownloadProgress.CANCELED
         ].includes(progress)}
-        onClose={onCancel}
       >
         <Grid container alignItems="center" justifyContent="space-between"
               sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>

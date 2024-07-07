@@ -15,7 +15,7 @@ export interface JournalEntryDTO {
   linkId: string;
   type: JournalEntryType;
   date: Date;
-  diff: ServerAlignmentLinkDTO | Operation[];
+  body: ServerAlignmentLinkDTO | Operation[];
 }
 
 /**
@@ -32,6 +32,6 @@ export const mapJournalEntryEntityToJournalEntryDTO = (je: {
   const parsed = JSON.parse(je.diff);
   return {
     ...je,
-    diff: Array.isArray(parsed) ? parsed as Operation[] : parsed as ServerAlignmentLinkDTO
+    body: Array.isArray(parsed) ? parsed as Operation[] : parsed as ServerAlignmentLinkDTO
   };
 };
