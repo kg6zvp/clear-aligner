@@ -71,7 +71,6 @@ export class LinksTable extends VirtualTable {
       let allResult = false;
 
       const linkIds = linksToUpdate.map(({ id }) => id!);
-
       await this.checkDatabase();
       if (linksToPersist.length > 0) {
         const insertResult = await dbApi.insert({
@@ -105,7 +104,7 @@ export class LinksTable extends VirtualTable {
         });
         allResult ||= saveResult;
       }
-      await dbApi.updateLinkText(this.getSourceName(), linkIds);
+      // await dbApi.updateLinkText(this.getSourceName(), linkIds);
       await this._onUpdate(suppressOnUpdate);
 
       return allResult;

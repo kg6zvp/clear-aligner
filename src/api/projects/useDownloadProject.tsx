@@ -81,7 +81,7 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens: WordOrPartDTO[] = [];
+      let resultTokens: WordOrPartDTO[] = [];
       const requestPath = `/api/projects/${projectId}/tokens`;
       if (OverrideCaApiEndpoint) {
         const responsePromise = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
@@ -92,7 +92,7 @@ export const useDownloadProject = (): SyncState => {
           }
         }))?.json?.();
         const tokens = (await responsePromise)?.tokens ?? [];
-        resultTokens.push(tokens);
+        resultTokens = tokens;
       } else {
         let pageCtr = 0;
         while (true) {
@@ -115,7 +115,7 @@ export const useDownloadProject = (): SyncState => {
           if ((responseTokens?.length ?? 0) === 0) {
             break;
           }
-          resultTokens.push(...responseTokens);
+          resultTokens = responseTokens;
           if (responseTokens.length < TokenDownloadChunkSize) {
             break;
           }
@@ -151,13 +151,15 @@ export const useDownloadProject = (): SyncState => {
           requestPath: `/api/projects/${project.id}/alignment_links`,
           requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal
-        })
+        });
 
         const linksBody: {
           links: ServerAlignmentLinkDTO[]
         } | undefined = alignmentResponse.response;
-        await projectState.linksTable?.save?.((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity));
-
+        const prevSourceName = projectState.linksTable.getSourceName();
+        projectState.linksTable.setSourceName(project.id);
+        await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), true, true);
+        projectState.linksTable.setSourceName(prevSourceName);
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
         const localProjects = await projectState.projectTable?.getProjects?.(true);
