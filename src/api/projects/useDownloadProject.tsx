@@ -91,7 +91,8 @@ export const useDownloadProject = (): SyncState => {
             accept: 'application/json'
           }
         }))?.json?.();
-        resultTokens.push(...((await responsePromise)?.tokens ?? []));
+        const tokens = (await responsePromise)?.tokens ?? [];
+        resultTokens.push(tokens);
       } else {
         let pageCtr = 0;
         while (true) {
