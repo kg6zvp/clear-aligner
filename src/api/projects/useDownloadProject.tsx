@@ -10,13 +10,6 @@ import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { AlignmentSide } from '../../structs';
 import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
-import {
-  ClearAlignerApi,
-  getApiOptionsWithAuth,
-  OverrideCaApiEndpoint,
-  TokenDownloadChunkSize
-} from '../../server/amplifySetup';
-import { get } from 'aws-amplify/api';
 import { ApiUtils } from '../utils';
 
 enum ProjectDownloadProgress {
@@ -81,47 +74,12 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      let resultTokens: WordOrPartDTO[] = [];
-      const requestPath = `/api/projects/${projectId}/tokens`;
-      if (OverrideCaApiEndpoint) {
-        const responsePromise = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
-          signal: abortController.current?.signal,
-          method: 'GET',
-          headers: {
-            accept: 'application/json'
-          }
-        }))?.json?.();
-        const tokens = (await responsePromise)?.tokens ?? [];
-        resultTokens = tokens;
-      } else {
-        let pageCtr = 0;
-        while (true) {
-          const requestOperation = get({
-            apiName: ClearAlignerApi,
-            path: requestPath,
-            options: {
-              queryParams: {
-                page: String(pageCtr),
-                limit: String(TokenDownloadChunkSize)
-              },
-              ...getApiOptionsWithAuth()
-            }
-          });
-          const responsePromise = (await requestOperation.response).body.json();
-          if (cancelToken.canceled) {
-            break;
-          }
-          const responseTokens = (((await responsePromise) as any) ?? []);
-          if ((responseTokens?.length ?? 0) === 0) {
-            break;
-          }
-          resultTokens = responseTokens;
-          if (responseTokens.length < TokenDownloadChunkSize) {
-            break;
-          }
-          pageCtr++;
-        }
-      }
+      const resultTokens: WordOrPartDTO[] = (await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${projectId}/tokens`,
+        requestType: ApiUtils.RequestType.GET,
+        signal: abortController.current?.signal,
+      })).response?.tokens ?? [];
+
       if (projectResponse.success) {
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
