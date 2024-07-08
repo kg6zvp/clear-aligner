@@ -142,6 +142,7 @@ export const useSyncProject = (): SyncState => {
       }
     } catch (x) {
       setProgress(SyncProgress.FAILED);
+      console.error("Failed to sync this project: ", x);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts,
