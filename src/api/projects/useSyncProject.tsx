@@ -45,7 +45,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, file } = useSyncAlignments();
   const {deleteProject} = useDeleteProject();
-  const { projectState, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
+  const { projectState, setSnackBarMessage } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
@@ -146,7 +146,7 @@ export const useSyncProject = (): SyncState => {
       console.error("Failed to sync this project: ", x);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
-    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    setSnackBarMessage, syncAlignments, syncWordsOrParts,
     initialProjectState, syncTime]);
 
   useEffect(() => {
