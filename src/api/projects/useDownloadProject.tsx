@@ -158,7 +158,7 @@ export const useDownloadProject = (): SyncState => {
         } | undefined = alignmentResponse.response;
         const prevSourceName = projectState.linksTable.getSourceName();
         projectState.linksTable.setSourceName(project.id);
-        await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), true, true);
+        await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
         projectState.linksTable.setSourceName(prevSourceName);
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);

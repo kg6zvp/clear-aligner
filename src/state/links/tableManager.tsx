@@ -104,7 +104,7 @@ export class LinksTable extends VirtualTable {
         });
         allResult ||= saveResult;
       }
-      // await dbApi.updateLinkText(this.getSourceName(), linkIds);
+      await dbApi.updateLinkText(this.getSourceName(), linkIds);
       await this._onUpdate(suppressOnUpdate);
 
       return allResult;
