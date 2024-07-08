@@ -344,7 +344,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
                             onClick={() => setOpenConfirmDelete(true)}
                             startIcon={<DeleteOutline />}
-                  >Delete</Button>
+                  >Delete Local Project</Button>
                   : <Box />
               }
               {
@@ -353,7 +353,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
                           onClick={() => setOpenConfirmUnpublish(true)}
                           startIcon={<Unpublished />}
-                  >Unpublish</Button>
+                  >Delete From Server</Button>
                   : <Box />
               }
             </Grid>
