@@ -225,13 +225,15 @@ export class LinksTable extends VirtualTable {
           disableJournaling: true
         });
         progressCtr += chunk.length;
-        /*
-         * create bulk insert journal entry
-         */
-        await dbApi.createBulkInsertJournalEntry({
-          sourceName: this.getSourceName(),
-          links: chunk.map(mapLinkEntityToServerAlignmentLink)
-        });
+        if (!disableJournaling) {
+          /*
+           * create bulk insert journal entry
+           */
+          await dbApi.createBulkInsertJournalEntry({
+            sourceName: this.getSourceName(),
+            links: chunk.map(mapLinkEntityToServerAlignmentLink)
+          });
+        }
 
         this.setDatabaseBusyProgress(progressCtr, progressMax);
 
@@ -498,8 +500,9 @@ export const useSaveLink = () => {
  * @param alignmentFile Alignment file to save (optional; undefined = no save).
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
+ * @param suppressJournaling Suppress journaling
  */
-export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
+export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, suppressJournaling?: boolean) => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
   const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [ projects, projectId ]);
   const [status, setStatus] = useState<{
@@ -526,7 +529,7 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, true)
+    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, suppressJournaling)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -536,7 +539,7 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
         project && projectState?.projectTable?.updateLastUpdated?.(project)?.catch?.(console.error);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, projects, preferences?.currentProject, projectState?.projectTable]);
+  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
 
   return { ...status };
 };

@@ -43,7 +43,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, alignmentFileSaveState?.suppressJournaling);
   const { sync: syncProject, progress, dialog, file } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
