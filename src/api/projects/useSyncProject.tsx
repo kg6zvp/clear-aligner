@@ -110,13 +110,12 @@ export const useSyncProject = (): SyncState => {
           if(res.success) {
             setProgress(SyncProgress.SYNCING_TOKENS);
           } else {
-            setSnackBarMessage(
-              (res.response?.message ?? "").includes("duplicate key")
-                ? "Failed to sync project. Project name already exists"
-                : "Failed to sync project."
-            );
-            setIsSnackBarOpen(true);
-            setUniqueNameError(true);
+            if((res.response?.message ?? "").includes("duplicate key")) {
+              setUniqueNameError(true);
+              setSnackBarMessage("Failed to sync project. Project name already exists");
+            } else {
+              setSnackBarMessage("Failed to sync project.");
+            }
             setProgress(SyncProgress.FAILED);
           }
           break;
