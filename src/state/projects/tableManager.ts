@@ -8,6 +8,8 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { DateTime } from 'luxon';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
@@ -81,7 +83,7 @@ export class ProjectTable extends VirtualTable {
   };
 
   updateLastUpdated = async (project: Project, lastUpdated?: number, suppressOnUpdate = false): Promise<Project | undefined> => {
-    project.lastUpdated = lastUpdated ?? DateTime.now().toMillis();
+    project.updatedAt = lastUpdated ?? DateTime.now().toMillis();
     return this.update(project, false, suppressOnUpdate);
   };
 
