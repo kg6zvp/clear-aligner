@@ -150,7 +150,7 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
   createOrUpdatePreferences = async (preferenceData: UserPreferenceDto) => {
     const preferenceRepository = (await this.getDataSource()).getRepository('preference');
     // Clear all rows to ensure no duplicates exist
-    preferenceRepository.clear();
+    await preferenceRepository.clear();
     const newPreference = preferenceRepository.create(preferenceData);
     return await preferenceRepository.save(newPreference);
   };

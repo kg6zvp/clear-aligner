@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { SERVER_URL } from '../../common';
 import { WordOrPartDTO } from '../../common/data/project/wordsOrParts';
 import { Project } from '../../state/projects/tableManager';
 import { mapProjectDtoToProject, ProjectDTO, ProjectLocation } from '../../common/data/project/project';
@@ -18,6 +17,7 @@ import {
 } from '../../server/amplifySetup';
 import { get } from 'aws-amplify/api';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { ApiUtils } from '../utils';
 
 enum ProjectDownloadProgress {
   IDLE,
@@ -71,18 +71,17 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_PROJECT);
 
-      const projectResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${projectId}`, {
-        signal: abortController.current?.signal,
-        method: 'GET',
-        headers: {
-          accept: 'application/json'
-        }
+      const projectResponse = await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${projectId}`,
+        requestType: ApiUtils.RequestType.GET,
+        signal: abortController.current?.signal
       });
+      const projectData = projectResponse.response as ProjectDTO;
 
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens: WordOrPartDTO[] = [];
+      let resultTokens: WordOrPartDTO[] = [];
       const requestPath = `/api/projects/${projectId}/tokens`;
       if (OverrideCaApiEndpoint) {
         const responsePromise = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
@@ -91,8 +90,9 @@ export const useDownloadProject = (): SyncState => {
           headers: {
             accept: 'application/json'
           }
-        })).json();
-        resultTokens.push(...((await responsePromise) ?? []));
+        }))?.json?.();
+        const tokens = (await responsePromise)?.tokens ?? [];
+        resultTokens = tokens;
       } else {
         let pageCtr = 0;
         while (true) {
@@ -115,16 +115,14 @@ export const useDownloadProject = (): SyncState => {
           if ((responseTokens?.length ?? 0) === 0) {
             break;
           }
-          resultTokens.push(...responseTokens);
+          resultTokens = responseTokens;
           if (responseTokens.length < TokenDownloadChunkSize) {
             break;
           }
           pageCtr++;
         }
       }
-
-      if (projectResponse.ok) {
-        const projectData: ProjectDTO = await projectResponse.json();
+      if (projectResponse.success) {
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
         resultTokens.filter((t: WordOrPartDTO) => t.side === AlignmentSide.TARGET).forEach((t: WordOrPartDTO) => {
@@ -149,15 +147,19 @@ export const useDownloadProject = (): SyncState => {
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
 
-        const alignmentResponse = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/alignment_links`, {
-          signal: abortController.current?.signal,
-          headers: { accept: 'application/json' }
+        const alignmentResponse = await ApiUtils.generateRequest({
+          requestPath: `/api/projects/${project.id}/alignment_links`,
+          requestType: ApiUtils.RequestType.GET,
+          signal: abortController.current?.signal
         });
+
         const linksBody: {
           links: ServerAlignmentLinkDTO[]
-        } | undefined = await alignmentResponse.json();
-        await projectState.linksTable?.save?.((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity));
-
+        } | undefined = alignmentResponse.response;
+        const prevSourceName = projectState.linksTable.getSourceName();
+        projectState.linksTable.setSourceName(project.id);
+        await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
+        projectState.linksTable.setSourceName(prevSourceName);
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
         const localProjects = await projectState.projectTable?.getProjects?.(true);
@@ -166,8 +168,9 @@ export const useDownloadProject = (): SyncState => {
       }
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.SUCCESS);
-      return projectResponse;
+      return projectData;
     } catch (x) {
+      console.error("Unable to download project: ", x);
       cleanupRequest().catch(console.error);
       setProgress(ProjectDownloadProgress.FAILED);
       setTimeout(() => {

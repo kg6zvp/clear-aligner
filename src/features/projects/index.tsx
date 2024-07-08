@@ -261,7 +261,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid>
         );
     }
-  }, [project, syncLocalProjectWithServer, syncingProject, downloadProject]);
+  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {

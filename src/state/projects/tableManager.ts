@@ -8,7 +8,6 @@ import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
-import { AlignmentSide } from '../../common/data/project/corpus';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
@@ -31,7 +30,7 @@ export interface Project {
 export interface ProjectDto {
   id?: string;
   name?: string;
-  corpora: Corpus[]
+  corpora: Corpus[];
 }
 
 const DatabaseInsertChunkSize = 2_000;
@@ -46,7 +45,7 @@ export class ProjectTable extends VirtualTable {
 
   save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
     try {
-      if(this.isDatabaseBusy()) return;
+      if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
       // @ts-ignore
       const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
@@ -70,7 +69,7 @@ export class ProjectTable extends VirtualTable {
       // @ts-ignore Remove the local project database.
       await window.databaseApi.removeSource(projectId);
       // @ts-ignore Remove the project from the user database.
-      const res = await window.databaseApi.projectRemove(projectId);
+      await window.databaseApi.projectRemove(projectId);
       this.projects.delete(projectId);
       this.decrDatabaseBusyCtr();
     } catch (e) {
@@ -79,6 +78,11 @@ export class ProjectTable extends VirtualTable {
     } finally {
       await this._onUpdate(suppressOnUpdate);
     }
+  };
+
+  updateLastUpdated = async (project: Project, lastUpdated?: number, suppressOnUpdate = false): Promise<Project | undefined> => {
+    project.lastUpdated = lastUpdated ?? DateTime.now().toMillis();
+    return this.update(project, false, suppressOnUpdate);
   };
 
   update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
@@ -186,7 +190,7 @@ export class ProjectTable extends VirtualTable {
       console.error('Unable to convert data source to project: ', ex);
       return [];
     }
-  }
+  };
 
   getProjects = async (requery = false): Promise<Map<string, Project> | undefined> => {
     if (requery) {

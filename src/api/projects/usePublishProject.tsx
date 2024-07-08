@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { SERVER_URL } from '../../common';
 import { ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { AppContext } from '../../App';
@@ -8,6 +7,8 @@ import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { Progress } from '../ApiModels';
 import { DateTime } from 'luxon';
+import { ApiUtils } from '../utils';
+import RequestType = ApiUtils.RequestType;
 
 export interface PublishState {
   publishProject: (project: Project, state: ProjectState) => Promise<unknown>;
@@ -38,15 +39,10 @@ export const usePublishProject = (): PublishState => {
     try {
       setProgress(Progress.IN_PROGRESS);
       if(cancelToken.canceled) return;
-      // Update project state to Published.
-      await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects/${project.id}/state`, {
-        signal: abortController.current?.signal,
-        method: 'POST',
-        headers: {
-          accept: 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(state)
+      await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${project.id}/state`,
+        requestType: RequestType.POST,
+        payload: state
       });
       project.state = state;
       if(state === ProjectState.PUBLISHED) {
@@ -95,7 +91,6 @@ export const usePublishProject = (): PublishState => {
           Progress.FAILED,
           Progress.CANCELED
         ].includes(progress) && !!publishState}
-        onClose={onCancel}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>

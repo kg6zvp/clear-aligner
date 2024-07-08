@@ -37,7 +37,7 @@ export const useSyncWordsOrParts = (): SyncState => {
       const corporaToUpdate: Corpus[] = [
         ...(project.sourceCorpora?.corpora ?? []),
         ...(project.targetCorpora?.corpora ?? [])
-      ].filter((corpus) => (corpus.updatedAt?.getTime() ?? 0) > (project.lastSyncTime ?? 0));
+      ].filter((corpus: Corpus) => (corpus.updatedAt?.getTime() ?? 0) > (project.lastSyncTime ?? 0));
       /*
        * remove tokens in corpora that require updates
        */

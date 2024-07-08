@@ -1,6 +1,4 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { generateJsonString } from '../../common/generateJsonString';
-import { SERVER_URL } from '../../common';
 import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
@@ -9,9 +7,11 @@ import { useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { getCorpusFromDatabase } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
+import { AlignmentSide } from '../../structs';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
+import { ApiUtils } from '../utils';
 
 export enum SyncProgress {
   IDLE,
@@ -45,7 +45,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, file } = useSyncAlignments();
   const {deleteProject} = useDeleteProject();
-  const { projectState, setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
+  const { projectState, setSnackBarMessage } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
@@ -102,29 +102,22 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
-          if (project.location === ProjectLocation.SYNCED) {
-            setProgress(SyncProgress.SYNCING_CORPORA);
-            break;
-          }
-          const res = await fetch(`${SERVER_URL ? SERVER_URL : 'http://localhost:8080'}/api/projects`, {
+          const res = await ApiUtils.generateRequest({
+            requestPath: '/api/projects',
+            requestType: ApiUtils.RequestType.POST,
             signal: abortController.current?.signal,
-            method: 'POST',
-            headers: {
-              accept: 'application/json',
-              'Content-Type': 'application/json'
-            },
-            body: generateJsonString(mapProjectEntityToProjectDTO(project))
+            payload: mapProjectEntityToProjectDTO(project)
           });
-          if(res.ok) {
+          if(res.success) {
             setProgress(SyncProgress.SYNCING_CORPORA);
           } else {
-            setSnackBarMessage(
-              ((await res.json()).message ?? "").includes("duplicate key")
-                ? "Failed to sync project. Project name already exists"
-                : "Failed to sync project."
-            );
-            setIsSnackBarOpen(true);
-            setUniqueNameError(true);
+            if((res.response?.message ?? "").includes("duplicate key")) {
+              setUniqueNameError(true);
+              setSnackBarMessage("Failed to sync project. Project name already exists");
+            } else {
+              setSnackBarMessage("Failed to sync project.");
+            }
+            console.error("Response failed: ", res.response);
             setProgress(SyncProgress.FAILED);
           }
           break;
@@ -151,9 +144,10 @@ export const useSyncProject = (): SyncState => {
       }
     } catch (x) {
       setProgress(SyncProgress.FAILED);
+      console.error("Failed to sync this project: ", x);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
-    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    setSnackBarMessage, syncAlignments, syncWordsOrParts,
     initialProjectState, syncTime]);
 
   useEffect(() => {
@@ -193,7 +187,6 @@ export const useSyncProject = (): SyncState => {
           SyncProgress.SUCCESS,
           SyncProgress.FAILED
         ].includes(progress)}
-        onClose={() => progress !== SyncProgress.CANCELED && onCancel()}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>

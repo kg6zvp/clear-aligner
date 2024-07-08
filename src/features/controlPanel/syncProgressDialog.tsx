@@ -16,7 +16,6 @@ export const SyncProgressDialog = ({ showDialog, onCancel }: SyncProgressDialogP
       fullWidth
       scroll={'paper'}
       open={!!showDialog}
-      onClose={onCancel}
     >
       <Box padding={'2em'}>
         <Stack direction={'row'} height={'fit-content'} alignItems={'center'} spacing={'.8em'}>

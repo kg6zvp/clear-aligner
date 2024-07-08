@@ -1,18 +1,11 @@
-import {
-  mapProjectDtoToProject, ProjectDTO,
-  ProjectLocation, ProjectState
-} from '../../common/data/project/project';
+import { mapProjectDtoToProject, ProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { useCallback, useContext, useEffect, useState } from 'react';
 import { AppContext } from '../../App';
 import { Progress } from '../ApiModels';
 import { Project } from '../../state/projects/tableManager';
 import { DateTime } from 'luxon';
-import {
-  ClearAlignerApi,
-  getApiOptionsWithAuth,
-  OverrideCaApiEndpoint
-} from '../../server/amplifySetup';
-import { get } from 'aws-amplify/api';
+import { ApiUtils } from '../utils';
+import RequestType = ApiUtils.RequestType;
 
 /**
  * Interface used to define the properties of the useProjectsFromServer hook.
@@ -41,26 +34,11 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
     try {
       setProgress(Progress.IN_PROGRESS);
 
-      let projectDtos: ProjectDTO[];
-      const requestPath = `/api/projects`;
-      if (OverrideCaApiEndpoint) {
-        const projectsResponse = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
-          method: 'GET',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        projectDtos = await projectsResponse.json();
-      } else {
-        const responseOperation = get({
-          apiName: ClearAlignerApi,
-          path: requestPath,
-          options: getApiOptionsWithAuth()
-        });
-        const response = await responseOperation.response;
-        projectDtos = (await response.body.json() as unknown as ProjectDTO[] | undefined) ?? [];
-      }
+      const projectsResponse = await ApiUtils.generateRequest({
+        requestPath: "/api/projects",
+        requestType: RequestType.GET
+      });
+      const projectDtos = (projectsResponse.response ?? []) as ProjectDTO[];
 
       const projects = (
         Array.isArray(projectDtos)
