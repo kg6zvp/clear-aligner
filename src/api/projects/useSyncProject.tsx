@@ -144,9 +144,7 @@ export const useSyncProject = (): SyncState => {
       setProgress(SyncProgress.FAILED);
       console.error("Failed to sync this project: ", x);
     }
-  }, [progress, projectState, cleanupRequest, publishProject,
-    setIsSnackBarOpen, setSnackBarMessage, syncAlignments, syncWordsOrParts,
-    initialProjectState, syncTime]);
+  }, [progress, projectState, cleanupRequest, publishProject, setSnackBarMessage, syncAlignments, syncWordsOrParts, initialProjectState, syncTime]);
 
   useEffect(() => {
     if(syncTime && initialProjectState && !canceled) {
