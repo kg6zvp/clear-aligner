@@ -116,6 +116,7 @@ export const useSyncProject = (): SyncState => {
             } else {
               setSnackBarMessage("Failed to sync project.");
             }
+            console.error("Response failed: ", res.response);
             setProgress(SyncProgress.FAILED);
           }
           break;
