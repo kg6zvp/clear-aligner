@@ -139,7 +139,7 @@ export class ProjectTable extends VirtualTable {
     let progressCtr = 0;
     let progressMax = wordsOrParts.length;
     this.setDatabaseBusyInfo({
-      userText: `Loading ${wordsOrParts.length.toLocaleString()} words and parts...`,
+      userText: `Loading ${wordsOrParts.length.toLocaleString()} tokens...`,
       progressCtr,
       progressMax
     });
@@ -157,8 +157,8 @@ export class ProjectTable extends VirtualTable {
       const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
       const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
       this.setDatabaseBusyText(chunk.length === progressMax
-        ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
-        : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
+        ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} tokens)...`
+        : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} tokens)...`);
     }
     this.setDatabaseBusyText('Finishing project creation...');
     this.decrDatabaseBusyCtr();

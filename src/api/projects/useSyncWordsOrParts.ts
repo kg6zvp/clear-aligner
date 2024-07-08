@@ -19,7 +19,7 @@ export interface SyncState {
 }
 
 /**
- * hook to sync words or parts for a specified project from the server.
+ * hook to sync tokens for a specified project from the server.
  */
 export const useSyncWordsOrParts = (): SyncState => {
 
