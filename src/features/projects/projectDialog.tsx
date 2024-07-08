@@ -61,9 +61,15 @@ const getInitialProjectState = (): Project => ({
   location: ProjectLocation.LOCAL
 });
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, projectId, isSignedIn, unavailableProjectNames = [] }) => {
+const ProjectDialog: React.FC<ProjectDialogProps> = ({
+                                                       open,
+                                                       closeCallback,
+                                                       projectId,
+                                                       isSignedIn,
+                                                       unavailableProjectNames = []
+                                                     }) => {
   const dispatch = useAppDispatch();
-  const {publishProject, dialog: publishDialog} = usePublishProject();
+  const { publishProject, dialog: publishDialog } = usePublishProject();
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = React.useState<Project>(initialProjectState);
@@ -95,7 +101,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       unavailableProjectNames.includes((project.name || '').trim())
       && !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
     );
-  }, [unavailableProjectNames, projectState, projectId, projects, project]);
+  }, [unavailableProjectNames, projectState, project]);
 
   const enableCreate = React.useMemo(() => (
     !uploadErrors.length
@@ -108,7 +114,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
     && projectUpdated
   ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
-  const handleSubmit = React.useCallback(async (type: 'create'|'update', e: any) => {
+  const handleSubmit = React.useCallback(async (type: 'create' | 'update', e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
       while (!projectState.projectTable?.isDatabaseBusy()) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -134,7 +140,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
             wordsByVerse: {},
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
-            side: AlignmentSide.TARGET,
+            side: AlignmentSide.TARGET
           } as Corpus;
 
           if (fileContent) {
@@ -188,7 +194,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
       setOpenConfirmDelete(false);
       handleClose();
     }
-  }, [projectId, projectState.projectTable, setProjects, preferences?.currentProject, handleClose, setPreferences, setOpenConfirmDelete]);
+  }, [projectId, projectState.projectTable, projectState.linksTable, setProjects, preferences?.currentProject, handleClose, setPreferences]);
 
   const setInitialProjectState = React.useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
@@ -227,8 +233,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                            disabled={project.location === ProjectLocation.REMOTE}
                            onChange={({ target: { value: name } }) =>
                              handleUpdate({ name })}
-                          error={invalidProjectName}
-                         helperText={invalidProjectName ? 'Project name already in use.' : ''}
+                           error={invalidProjectName}
+                           helperText={invalidProjectName ? 'Project name already in use.' : ''}
                 />
               </FormControl>
               <FormControl>
@@ -278,7 +284,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
                 </Select>
               </FormControl>
 
-              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }} disabled={project.location === ProjectLocation.REMOTE}>
+              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }}
+                      disabled={project.location === ProjectLocation.REMOTE}>
                 Upload File
                 <input type="file" hidden
                        onClick={(event) => {
@@ -331,7 +338,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
         </DialogContent>
         <DialogActions>
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
-            <Grid container alignItems="center" sx={{width: 'fit-content'}}>
+            <Grid container alignItems="center" sx={{ width: 'fit-content' }}>
               {
                 (projectId && allowDelete)
                   ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
@@ -342,9 +349,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({ open, closeCallback, proj
               }
               {
                 (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn)
-                  ? <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
-                            onClick={() => setOpenConfirmUnpublish(true)}
-                            startIcon={<Unpublished />}
+                  ?
+                  <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
+                          onClick={() => setOpenConfirmUnpublish(true)}
+                          startIcon={<Unpublished />}
                   >Unpublish</Button>
                   : <Box />
               }
