@@ -99,7 +99,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                 <Button
                   size={size as 'medium' | 'small' | undefined}
                   disabled={!isSignedIn || containers.length === 0 || !allowImport || inProgress
-                    || currentProject?.lastSyncTime === currentProject?.lastUpdated}
+                    || (
+                      !!currentProject?.lastSyncTime
+                      && !!currentProject.lastUpdated
+                      && currentProject.lastSyncTime === currentProject.lastUpdated
+                    )}
                   variant="contained"
                   sx={{
                     minWidth: '100%',
