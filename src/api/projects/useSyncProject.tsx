@@ -55,7 +55,12 @@ export const useSyncProject = (): SyncState => {
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
-      const project = {...initialProjectState};
+      const syncTime = DateTime.now().toMillis();
+      const project = {
+        ...initialProjectState,
+        lastUpdated: syncTime,
+        lastSyncTime: syncTime
+      };
       if(project.location === ProjectLocation.LOCAL) {
         project.lastSyncTime = 0;
         // Remove the remote project if it exists on the server.
