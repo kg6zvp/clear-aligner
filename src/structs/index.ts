@@ -5,6 +5,7 @@
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { z } from 'zod';
 import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
+import { AlignmentSide } from '../common/data/project/corpus';
 
 /**
  * Parameters common to Project Repository functions
@@ -118,7 +119,7 @@ export interface Corpus {
   name: string;
   fullName: string;
   language: LanguageInfo;
-  side: string;
+  side: AlignmentSide;
   words: Word[];
   wordsByVerse: Record<string, Verse>;
   wordLocation: Map<string, Set<BCVWP>>;
@@ -413,10 +414,6 @@ export class Link extends DatabaseRecord {
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
 
-export enum AlignmentSide {
-  SOURCE = 'sources',
-  TARGET = 'targets'
-}
 /**
  * Zod schema for {@link AlignmentSide}
  */

@@ -2,7 +2,8 @@
  * This file contains the removeSegmentFromLink helper function, which is not
  * currently used.
  */
-import { AlignmentSide, Link, Word } from 'structs';
+import { Link, Word } from 'structs';
+import { AlignmentSide } from '../common/data/project/corpus';
 
 const removeFromArray = (originArray: string[], id: string): string[] => {
   const _array = originArray.concat([]);

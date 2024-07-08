@@ -4,20 +4,15 @@ import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO
 import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from '../../state/links/tableManager';
-import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
 import {
   ClearAlignerApi,
   getApiOptionsWithAuth,
   JournalEntryDownloadChunkSize,
-  JournalEntryUploadChunkSize,
   OverrideCaApiEndpoint
 } from '../../server/amplifySetup';
 import { get, patch } from 'aws-amplify/api';
-import _ from 'lodash';
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
-
-const SERVER_URL = undefined;
 
 export enum SyncProgress {
   IDLE,
@@ -30,8 +25,6 @@ export interface SyncState {
   sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
   dialog: any;
 }
-
-const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): JournalEntryDTO => mapJournalEntryEntityToJournalEntryDTO(journalEntry);
 
 /**
  * hook to synchronize alignments. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
@@ -49,11 +42,9 @@ export const useSyncAlignments = (): SyncState => {
 
   const sendJournal = useCallback(async (signal: AbortSignal, projectId?: string) => {
     try {
-        const journalEntriesToUpload =
-          (await dbApi.getAll(projectId!, JournalEntryTableName))
-            .map(mapJournalEntryEntityToJournalEntryDTOHelper);
         const requestPath = `/api/projects/${projectId}/alignment_links`;
         if (OverrideCaApiEndpoint) {
+          const journalEntriesToUpload = await dbApi.getAllJournalEntries(projectId!);
           (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
             signal,
             method: 'PATCH',
@@ -63,6 +54,11 @@ export const useSyncAlignments = (): SyncState => {
             },
             body: generateJsonString(journalEntriesToUpload)
           }));
+          await dbApi.deleteByIds({
+            sourceName: projectId!,
+            table: JournalEntryTableName,
+            itemIdOrIds: journalEntriesToUpload.map((journalEntry) => journalEntry.id!)
+          });
         } else {
           let remainingJournalEntries = await dbApi.getCount(projectId!, JournalEntryTableName);
           while (remainingJournalEntries > 0) {

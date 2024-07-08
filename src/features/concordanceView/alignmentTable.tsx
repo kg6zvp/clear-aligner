@@ -2,7 +2,7 @@
  * This file contains the AlignmentTable component which is the third table
  * in the ConcordanceView component
  */
-import { AlignmentSide, Link, LinkStatus } from '../../structs';
+import { Link, LinkStatus } from '../../structs';
 import {
   DataGrid,
   GridColDef,
@@ -32,6 +32,7 @@ import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
 import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * Interface for the AlignmentTableContext Component

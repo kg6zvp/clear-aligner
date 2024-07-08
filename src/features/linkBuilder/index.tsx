@@ -6,13 +6,12 @@ import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
-
-import { AlignmentSide, CorpusContainer, Word } from 'structs';
+import { CorpusContainer, Word } from 'structs';
 import findWordById from 'helpers/findWord';
-
 import cssVar from 'styles/cssVar';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { WordDisplay } from '../wordDisplay';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface LinkBuilderProps {
   containers: CorpusContainer[];

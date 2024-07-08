@@ -3,7 +3,6 @@
  * words
  */
 import { PivotWord } from './structs';
-import { AlignmentSide } from '../../structs';
 import { useContext, useEffect, useState } from 'react';
 import { DefaultProjectId, useDataLastUpdated } from '../../state/links/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -11,6 +10,7 @@ import { GridSortItem } from '@mui/x-data-grid';
 import { PivotWordFilter } from './concordanceView';
 import { useLanguages } from '../../hooks/useLanguages';
 import { AppContext } from '../../App';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 export const usePivotWords = (side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null): {
   pivotWords: PivotWord[] | undefined;

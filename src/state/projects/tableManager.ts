@@ -2,12 +2,13 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
+import { Corpus, CorpusContainer, Word } from '../../structs';
 import { DefaultProjectId, EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 

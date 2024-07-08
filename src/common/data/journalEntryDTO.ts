@@ -28,9 +28,9 @@ export const mapJournalEntryEntityToJournalEntryDTO = (je: {
   linkId: string,
   type: JournalEntryType,
   date: Date,
-  diff: string
+  body: string
 }): JournalEntryDTO => {
-  const parsed = JSON.parse(je.diff);
+  const parsed = JSON.parse(je.body);
   return {
     ...je,
     body: Array.isArray(parsed) ? parsed as Operation[] : parsed as ServerAlignmentLinkDTO

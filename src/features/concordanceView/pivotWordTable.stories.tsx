@@ -8,7 +8,8 @@ import { useState } from 'react';
 import { PivotWord } from './structs';
 import { Paper } from '@mui/material';
 import { GridSortItem } from '@mui/x-data-grid';
-import { AlignmentSide, TextDirection } from '../../structs';
+import { TextDirection } from '../../structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const meta: Meta<typeof PivotWordTable> = {
   title: 'Concordance View/PivotWordTable',

@@ -4,13 +4,14 @@ import { WordOrPartDTO } from './wordsOrParts';
 export const CORPORA_TABLE_NAME: string = 'corpora';
 
 export enum AlignmentSide {
-  sources,
-  targets
+  SOURCE = 'sources',
+  TARGET = 'targets'
 }
+
 export interface CorpusDTO {
   id: string; // uuid
   name: string;
-  side: string;
+  side: AlignmentSide;
   fullName: string;
   fileName: string;
   language: LanguageDTO;

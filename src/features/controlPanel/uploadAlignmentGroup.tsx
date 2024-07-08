@@ -17,6 +17,7 @@ import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject'
 import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
+import _ from 'lodash';
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn }: {
   projectId?: string,
@@ -25,7 +26,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
   allowImport?: boolean;
   isSignedIn?: boolean;
 }) => {
-  const {projectState} = useContext(AppContext);
+  const { projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -104,6 +105,9 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                       !!currentProject?.lastSyncTime
                       && !!currentProject.updatedAt
                       && currentProject.lastSyncTime === currentProject.updatedAt
+                      && (_.max([ ...(currentProject.sourceCorpora?.corpora ?? []), ...(currentProject.targetCorpora?.corpora ?? []) ]
+                        .map((corpus) => corpus.updatedAt?.getTime())
+                        .filter((v) => !!v)) ?? 0) < currentProject.lastSyncTime
                     )}
                   variant="contained"
                   sx={{

@@ -1,6 +1,5 @@
-import { CorpusDTO } from './corpus';
+import { AlignmentSide, CorpusDTO } from './corpus';
 import {
-  AlignmentSide,
   Corpus,
   CorpusContainer,
   CorpusViewType,
@@ -103,7 +102,7 @@ export const mapCorpusDTOToCorpusEntity = (dto: CorpusDTO): Corpus => {
     name: dto.name,
     fullName: dto.fullName,
     language: mapLanguageDTOToLanguageEntity(dto.language),
-    side: String(dto.side),
+    side: dto.side,
     words: (dto.words || []).map(mapWordOrPartDtoToWordOrPart),
     wordsByVerse: {},
     wordLocation: new Map(),

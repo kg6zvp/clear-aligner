@@ -28,6 +28,7 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:existsById`, async (event, ...args) => await ProjectRepositoryInstance.existsById(...args));
     ipcMain.handle(`${ChannelPrefix}:findByIds`, async (event, ...args) => await ProjectRepositoryInstance.findByIds(...args));
     ipcMain.handle(`${ChannelPrefix}:getAll`, async (event, ...args) => await ProjectRepositoryInstance.getAll(...args));
+    ipcMain.handle(`${ChannelPrefix}:getAllJournalEntries`, async (event, ...args) => await ProjectRepositoryInstance.getAllJournalEntries(...args));
     ipcMain.handle(`${ChannelPrefix}:findOneById`, async (event, ...args) => await ProjectRepositoryInstance.findOneById(...args));
     ipcMain.handle(`${ChannelPrefix}:deleteByIds`, async (event, ...args) => await ProjectRepositoryInstance.deleteByIds(...args));
     ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => await ProjectRepositoryInstance.findBetweenIds(...args));

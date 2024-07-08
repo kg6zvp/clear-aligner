@@ -1,7 +1,7 @@
 /**
  * This file contains the LinksTable Class and supporting functions.
  */
-import { AlignmentSide, Link } from '../../structs';
+import { Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
@@ -15,6 +15,8 @@ import { DatabaseApi } from '../../hooks/useDatabase';
 import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
+import { AlignmentSide } from '../../common/data/project/corpus';
+import { Project } from '../projects/tableManager';
 
 const DatabaseInsertChunkSize = 10_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize / 2;
@@ -503,7 +505,8 @@ export const useSaveLink = () => {
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  */
 export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, disableJournaling?: boolean) => {
-  const { projectState } = React.useContext(AppContext);
+  const { projectState, projects } = React.useContext(AppContext);
+  const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [ projects, projectId ]);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -536,6 +539,8 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
         };
         setStatus(endStatus);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
+        project.updatedAt = DateTime.now().toMillis();
+        projectState?.projectTable?.update(project, false)?.catch?.(console.error);
       });
   }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, disableJournaling]);
 

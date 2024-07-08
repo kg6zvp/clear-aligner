@@ -90,7 +90,7 @@ export const useSyncProject = (): SyncState => {
           await cleanupRequest();
           break;
         }
-        case SyncProgress.RETRIEVING_TOKENS:
+        case SyncProgress.RETRIEVING_TOKENS: {
           for (const container of [project.targetCorpora, project.sourceCorpora]) {
             for (const corpus of (container?.corpora ?? [])) {
               const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
@@ -100,6 +100,7 @@ export const useSyncProject = (): SyncState => {
           }
           setProgress(SyncProgress.SYNCING_PROJECT);
           break;
+        }
         case SyncProgress.SYNCING_PROJECT: {
           if (project.location === ProjectLocation.SYNCED) {
             setProgress(SyncProgress.SYNCING_CORPORA);

@@ -9,7 +9,6 @@ import { getAvailableCorporaContainers } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
-import { AlignmentSide } from '../../structs';
 import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import {
   ClearAlignerApi,
@@ -18,6 +17,7 @@ import {
   TokenDownloadChunkSize
 } from '../../server/amplifySetup';
 import { get } from 'aws-amplify/api';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 enum ProjectDownloadProgress {
   IDLE,

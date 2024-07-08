@@ -3,7 +3,7 @@ import { generateJsonString } from '../../common/generateJsonString';
 import { mapWordOrPartToWordOrPartDTO } from '../../common/data/project/wordsOrParts';
 import { Project } from 'state/projects/tableManager';
 import { Progress } from 'api/ApiModels';
-import { AlignmentSide, Corpus } from '../../structs';
+import { Corpus } from '../../structs';
 import {
   ClearAlignerApi,
   getApiOptionsWithAuth,
@@ -12,6 +12,7 @@ import {
 } from '../../server/amplifySetup';
 import _ from 'lodash';
 import { post, del } from 'aws-amplify/api';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 export interface SyncState {
   sync: (project: Project, side?: AlignmentSide) => Promise<unknown>;

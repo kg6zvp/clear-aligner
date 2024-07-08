@@ -25,7 +25,7 @@ import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
-import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
+import { Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
 import { InitializationStates, parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app/index';
@@ -35,6 +35,7 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { DateTime } from 'luxon';
 import { ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { usePublishProject } from '../../api/projects/usePublishProject';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 
 enum TextDirection {
