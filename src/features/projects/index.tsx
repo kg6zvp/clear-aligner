@@ -14,7 +14,7 @@ import {
   Theme,
   Typography
 } from '@mui/material';
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
@@ -58,6 +58,16 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
     enabled: false // Prevents immediate and useEffect-based requerying
   });
+  const [disableProjectButtons, setDisableProjectButtons] = React.useState(false);
+
+  useEffect(()=>{
+    if(remoteFetchProgress === 0 ){
+      setDisableProjectButtons(false)
+    }
+    else{
+      setDisableProjectButtons(true)
+    }
+  },[remoteFetchProgress])
 
   const isSignedIn = React.useMemo(() => (
     userStatus === userState.LoggedIn
@@ -93,32 +103,35 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
               variant="contained"
               onClick={() => setOpenProjectDialog(true)}
               sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              disabled={disableProjectButtons}
             >Create New</Button>
           </Grid>
           <Grid item sx={{ px: 2 }}>
             {
               (isSignedIn || usingCustomEndpoint) && (
                 <Button variant="text"
+                        disabled={disableProjectButtons}
                         onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
                   <Grid container alignItems="center">
                     <Refresh sx={theme => ({
                       mr: 1,
                       mb: .5,
-                      ...(remoteFetchProgress === Progress.IN_PROGRESS ? {
+                      ...(disableProjectButtons ? {
                         '@keyframes rotation': {
                           from: { transform: 'rotate(0deg)' },
                           to: { transform: 'rotate(360deg)' }
                         },
                         animation: '2s linear infinite rotation',
-                        fill: getPaletteFromProgress(remoteFetchProgress, theme)
+                        fill: theme.palette.text.secondary
                       } : {})
                     })} />
                     <Typography variant="subtitle2" sx={theme => ({
                       textTransform: 'none',
                       fontWeight: 'bold',
-                      color: getPaletteFromProgress(remoteFetchProgress, theme)
+                      color: disableProjectButtons ? theme.palette.text.secondary
+                        : getPaletteFromProgress(remoteFetchProgress, theme)
                     })}>
-                      {remoteFetchProgress === Progress.IN_PROGRESS ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                      {disableProjectButtons ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
                     </Typography>
                   </Grid>
                 </Button>
@@ -133,10 +146,11 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
               <ProjectCard
                 key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
                 project={project}
-                onClick={selectProject}
+                onClick={disableProjectButtons ? () => {} : selectProject}
                 currentProject={projects.find((p: Project) =>
                   p.id === preferences?.currentProject) ?? projects?.[0]}
                 unavailableProjectNames={unavailableProjectNames}
+                disableProjectButtons={disableProjectButtons}
               />
             ))}
         </Grid>
@@ -189,9 +203,15 @@ interface ProjectCardProps {
   currentProject: Project | undefined;
   onClick: (project: Project) => void;
   unavailableProjectNames: string[];
+  disableProjectButtons: boolean;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onClick, unavailableProjectNames }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project,
+                                                   currentProject,
+                                                   onClick,
+                                                   unavailableProjectNames,
+                                                   disableProjectButtons
+                                                 }) => {
   useCorpusContainers();
 
   const { downloadProject, dialog: downloadProjectDialog } = useDownloadProject();
@@ -237,20 +257,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
       case ProjectLocation.LOCAL:
         return (
           (isSignedIn || usingCustomEndpoint) ? <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
                     sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
               Upload Project
-              <Computer sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
+              <Computer sx={theme => ({ fill: disableProjectButtons ? theme.palette.text.secondary
+                  : theme.palette.primary.main, mb: .5, ml: .5})} />
             </Button>
           </Grid> : signedOutIcon
         );
       case ProjectLocation.REMOTE:
         return (isSignedIn || usingCustomEndpoint) ? (
           <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
+            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
                     sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
               Download Project
-              <CloudDownload sx={theme => ({ fill: theme.palette.primary.main, mb: .5, ml: .5 })} />
+              <CloudDownload sx={theme => ({ fill: disableProjectButtons ? theme.palette.text.secondary
+                  : theme.palette.primary.main, mb: .5, ml: .5 })} />
             </Button>
           </Grid>
         ) : signedOutIcon;
@@ -264,7 +286,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid>
         );
     }
-  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject, usingCustomEndpoint]);
+  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject, disableProjectButtons, usingCustomEndpoint]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
@@ -272,6 +294,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
     } else if (project.location !== ProjectLocation.REMOTE) {
       return (
         <Button variant="text" size="small" sx={{ textTransform: 'none' }}
+                disabled={disableProjectButtons}
                 onClick={e => {
                   e.preventDefault();
                   updateCurrentProject();
@@ -281,7 +304,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
     } else {
       return <></>;
     }
-  }, [isCurrentProject, project, updateCurrentProject]);
+  }, [isCurrentProject, project, updateCurrentProject, disableProjectButtons]);
 
   return (
     <>
@@ -290,7 +313,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
             : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-        }, transition: 'box-shadow 0.25s ease', '*': { cursor: 'pointer' },
+        }, transition: 'box-shadow 0.25s ease', '*': { cursor: disableProjectButtons ? 'default'  : 'pointer' },
         position: 'relative'
       })}>
         <CardContent sx={{
@@ -321,6 +344,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
                   ]}
                   allowImport={isCurrentProject}
                   isSignedIn={isSignedIn}
+                  disableProjectButtons={disableProjectButtons}
                 /> : <></>}
             </Grid>
           </Grid>

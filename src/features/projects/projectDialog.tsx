@@ -345,7 +345,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
                             onClick={() => setOpenConfirmDelete(true)}
                             startIcon={<DeleteOutline />}
-                  >Delete</Button>
+                  >Delete Local Project</Button>
                   : <Box />
               }
               {
@@ -354,7 +354,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
                           onClick={() => setOpenConfirmUnpublish(true)}
                           startIcon={<Unpublished />}
-                  >Unpublish</Button>
+                  >Delete From Server</Button>
                   : <Box />
               }
             </Grid>
@@ -400,7 +400,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
       >
         <DialogContent sx={{ width: 650 }}>
           <Grid container justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle1">Are you sure you want to unpublish this project?</Typography>
+            <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
             <Grid item>
               <Grid container>
                 <Button variant="text" onClick={() => setOpenConfirmUnpublish(false)} sx={{ textTransform: 'none' }}>
@@ -409,7 +409,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                 <Button variant="contained" onClick={() => {
                   setOpenConfirmUnpublish(false);
                   publishProject(project, ProjectState.DRAFT).then(() => handleClose());
-                }} sx={{ ml: 2, textTransform: 'none' }}>Unpublish</Button>
+                }} sx={{ ml: 2, textTransform: 'none' }}>Delete</Button>
               </Grid>
             </Grid>
           </Grid>
