@@ -63,6 +63,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
     userStatus === userState.LoggedIn
   ), [userStatus]);
 
+  const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
+
 
   const projects = React.useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
 
@@ -95,7 +97,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           </Grid>
           <Grid item sx={{ px: 2 }}>
             {
-              isSignedIn && (
+              (isSignedIn || usingCustomEndpoint) && (
                 <Button variant="text"
                         onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
                   <Grid container alignItems="center">
@@ -205,6 +207,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
   const isSignedIn = React.useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
+  const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
 
   const updateCurrentProject = React.useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
@@ -233,7 +236,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
     switch (project.location) {
       case ProjectLocation.LOCAL:
         return (
-          isSignedIn ? <Grid container justifyContent="flex-end" alignItems="center">
+          (isSignedIn || usingCustomEndpoint) ? <Grid container justifyContent="flex-end" alignItems="center">
             <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
                     sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
               Upload Project
@@ -242,7 +245,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid> : signedOutIcon
         );
       case ProjectLocation.REMOTE:
-        return isSignedIn ? (
+        return (isSignedIn || usingCustomEndpoint) ? (
           <Grid container justifyContent="flex-end" alignItems="center">
             <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject)}
                     sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
@@ -261,7 +264,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
           </Grid>
         );
     }
-  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject]);
+  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject, usingCustomEndpoint]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
