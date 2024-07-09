@@ -10,6 +10,7 @@ import { ProjectEntity } from '../../common/data/project/project';
 import { UserRepositoryIFace } from '../../common/repositories/userRepository';
 import uuid from 'uuid-random';
 import { AddProjectSync1719514157111 } from '../typeorm-migrations/user/1719514157111-add-project-sync';
+import { ProjectsUpdatedAt1720240767826 } from '../typeorm-migrations/user/1720240767826-projects-updated-at';
 
 export const ProjectTableName = 'project';
 
@@ -69,11 +70,18 @@ const projectEntitySchema = new EntitySchema<ProjectEntity>({
     },
     lastSyncTime: {
       name: 'last_sync_time',
-      type: 'bigint'
+      type: 'bigint',
+      nullable: true
     },
-    lastUpdated: {
-      name: 'last_updated',
-      type: 'bigint'
+    createdAt: {
+      name: 'created_at',
+      type: 'datetime',
+      nullable: true
+    },
+    updatedAt: {
+      name: 'updated_at',
+      type: 'bigint',
+      nullable: true
     }
   }
 })
@@ -89,7 +97,8 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
 
   getMigrations = async (): Promise<any[]> => ([
     AddProjectsTable1718861542573,
-    AddProjectSync1719514157111
+    AddProjectSync1719514157111,
+    ProjectsUpdatedAt1720240767826
   ]);
 
   constructor() {

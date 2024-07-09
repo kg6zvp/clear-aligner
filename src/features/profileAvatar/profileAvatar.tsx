@@ -25,9 +25,13 @@ export const userState = {
     color: 'red',
     label: 'Logged Out',
   },
-  Offline:{
+  Offline: {
     color: 'grey',
     label: 'Offline'
+  },
+  CustomEndpoint: {
+    color: 'blue',
+    label: 'Custom Server'
   }
 }
 

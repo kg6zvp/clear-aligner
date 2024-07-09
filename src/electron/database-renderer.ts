@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('databaseApi', {
   getFirstBcvFromSource: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:getFirstBcvFromSource`, sourceName),
   hasBcvInSource: (sourceName, bcvId) => ipcRenderer.invoke(`${ChannelPrefix}:hasBcvInSource`, sourceName, bcvId),
 
+  getFirstJournalEntryUploadChunk: (sourceName) => ipcRenderer.invoke(`${ChannelPrefix}:getFirstJournalEntryUploadChunk`, sourceName),
+  createBulkInsertJournalEntry: (paramObject) => ipcRenderer.invoke(`${ChannelPrefix}:createBulkInsertJournalEntry`, paramObject),
+  getCount: (sourceName: string, tableName: string) => ipcRenderer.invoke(`${ChannelPrefix}:getCount`, sourceName, tableName),
   createDataSource: (database) => ipcRenderer.invoke(`${ChannelPrefix}:createDataSource`, database),
   insert: (args) => ipcRenderer.invoke(`${ChannelPrefix}:insert`, args),
   deleteAll: (args) => ipcRenderer.invoke(`${ChannelPrefix}:deleteAll`, args),
@@ -34,6 +37,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
   existsById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:existsById`, database, table, itemId),
   findByIds: (database, table, itemIds) => ipcRenderer.invoke(`${ChannelPrefix}:findByIds`, database, table, itemIds),
   getAll: (database, table, linkLimit, linkSkip) => ipcRenderer.invoke(`${ChannelPrefix}:getAll`, database, table, linkLimit, linkSkip),
+  getAllJournalEntries: (projectId: string, itemLimit?: number, itemSkip?: number) => ipcRenderer.invoke(`${ChannelPrefix}:getAllJournalEntries`, projectId, itemLimit, itemSkip),
   findOneById: (database, table, itemId) => ipcRenderer.invoke(`${ChannelPrefix}:findOneById`, database, table, itemId),
   deleteByIds: (args) => ipcRenderer.invoke(`${ChannelPrefix}:deleteByIds`, args),
   findBetweenIds: (database, table, fromId, toId) => ipcRenderer.invoke(`${ChannelPrefix}:findBetweenIds`, database, table, fromId, toId),

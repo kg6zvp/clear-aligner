@@ -17,7 +17,7 @@ import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject'
 import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
-
+import _ from 'lodash';
 
 const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn }: {
   projectId?: string,
@@ -26,23 +26,24 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
   allowImport?: boolean;
   isSignedIn?: boolean;
 }) => {
-  const {projectState} = useContext(AppContext);
+  const { projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
     alignmentFile?: AlignmentFile,
-    saveKey?: string
+    saveKey?: string,
+    suppressJournaling?: boolean
   }>();
 
-  const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
+  const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
     errors?: ZodError<AlignmentFile>,
     showDialog?: boolean
   }>();
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey);
+  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, alignmentFileSaveState?.suppressJournaling);
   const { sync: syncProject, progress, dialog, file } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
@@ -62,7 +63,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     // import/save file
     setAlignmentFileSaveState({
       alignmentFile: file,
-      saveKey: uuid()
+      saveKey: uuid(),
+      suppressJournaling: true
     });
   }, [file, setAlignmentFileSaveState]);
 
@@ -72,7 +74,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
       SyncProgress.SYNCING_LOCAL,
       SyncProgress.RETRIEVING_TOKENS,
       SyncProgress.SYNCING_PROJECT,
-      SyncProgress.SYNCING_TOKENS,
+      SyncProgress.SYNCING_CORPORA,
       SyncProgress.SYNCING_ALIGNMENTS,
     ].includes(progress)
   ), [progress]);
@@ -101,8 +103,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                   disabled={!isSignedIn || containers.length === 0 || !allowImport || inProgress
                     || (
                       !!currentProject?.lastSyncTime
-                      && !!currentProject.lastUpdated
-                      && currentProject.lastSyncTime === currentProject.lastUpdated
+                      && !!currentProject.updatedAt
+                      && currentProject.lastSyncTime === currentProject.updatedAt
+                      && (_.max([ ...(currentProject.sourceCorpora?.corpora ?? []), ...(currentProject.targetCorpora?.corpora ?? []) ]
+                        .map((corpus) => corpus.updatedAt?.getTime())
+                        .filter((v) => !!v)) ?? 0) < currentProject.lastSyncTime
                     )}
                   variant="contained"
                   sx={{
@@ -165,7 +170,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
                   setAlignmentFileSaveState({
                     alignmentFile: fileData.success ? fileData.data : undefined,
-                    saveKey: uuid()
+                    saveKey: uuid(),
+                    suppressJournaling: false
                   });
                 }}
               />

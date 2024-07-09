@@ -8,12 +8,13 @@ import { Box, Card, Grid, Stack } from '@mui/material';
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import { AlignmentSide, CorpusContainer, CorpusViewport } from 'structs';
+import { CorpusContainer, CorpusViewport } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
 import { ControlPanelFormat } from '../../state/preferences/tableManager';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface PolyglotProps {
   containers: CorpusContainer[];

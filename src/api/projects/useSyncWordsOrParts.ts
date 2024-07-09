@@ -3,7 +3,7 @@ import { generateJsonString } from '../../common/generateJsonString';
 import { mapWordOrPartToWordOrPartDTO } from '../../common/data/project/wordsOrParts';
 import { Project } from 'state/projects/tableManager';
 import { Progress } from 'api/ApiModels';
-import { AlignmentSide } from '../../structs';
+import { Corpus } from '../../structs';
 import {
   ClearAlignerApi,
   getApiOptionsWithAuth,
@@ -11,7 +11,8 @@ import {
   TokenUploadChunkSize
 } from '../../server/amplifySetup';
 import _ from 'lodash';
-import { post } from 'aws-amplify/api';
+import { post, del } from 'aws-amplify/api';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 export interface SyncState {
   sync: (project: Project, side?: AlignmentSide) => Promise<unknown>;
@@ -30,33 +31,32 @@ export const useSyncWordsOrParts = (): SyncState => {
     abortController.current = undefined;
   }, []);
 
-  const syncWordsOrParts = async (project: Project, side?: AlignmentSide) => {
+  const syncWordsOrParts = async (project: Project) => {
     try {
       setProgress(Progress.IN_PROGRESS);
-      const tokensToUpload = [
-        ...(side === AlignmentSide.TARGET ? [] : (project.sourceCorpora?.corpora ?? [])),
-        ...(side === AlignmentSide.SOURCE ? [] : (project.targetCorpora?.corpora ?? []))
-      ].flatMap(c => c.words)
-        .map(mapWordOrPartToWordOrPartDTO);
-      const requestPath = `/api/projects/${project.id}/tokens`;
-      let lastProgress = Progress.SUCCESS;
-      if (OverrideCaApiEndpoint) {
-        const response = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
-          signal: abortController.current?.signal,
-          method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: generateJsonString(tokensToUpload)
-        }));
-        lastProgress = response.ok ? Progress.SUCCESS : Progress.FAILED;
-      } else {
-        for (const tokenChunk of _.chunk(tokensToUpload, TokenUploadChunkSize)) {
-          const requestOperation = post({
+      const corporaToUpdate: Corpus[] = [
+        ...(project.sourceCorpora?.corpora ?? []),
+        ...(project.targetCorpora?.corpora ?? [])
+      ].filter((corpus: Corpus) => (corpus.updatedAt?.getTime() ?? 0) > (project.lastSyncTime ?? 0));
+      /*
+       * remove tokens in corpora that require updates
+       */
+      for (const corpusToUpdate of corporaToUpdate) {
+        const requestPath = `/api/projects/${project.id}/tokens/${corpusToUpdate.id}/tokens`;
+        if (OverrideCaApiEndpoint) {
+          const response = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+            signal: abortController.current?.signal,
+            method: 'DELETE',
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+        } else { // AWS
+          const requestOperation = del({
             apiName: ClearAlignerApi,
             path: requestPath,
-            options: getApiOptionsWithAuth(tokenChunk)
+            options: getApiOptionsWithAuth()
           });
           if (abortController.current?.signal?.aborted) {
             requestOperation.cancel();
@@ -65,6 +65,43 @@ export const useSyncWordsOrParts = (): SyncState => {
           await requestOperation.response;
           if (abortController.current?.signal?.aborted) {
             break;
+          }
+        }
+      }
+
+      const tokensToUpload = corporaToUpdate
+        .flatMap(c => c.words)
+        .map(mapWordOrPartToWordOrPartDTO);
+
+      let lastProgress = Progress.SUCCESS;
+      if (tokensToUpload.length > 0) {
+        const requestPath = `/api/projects/${project.id}/tokens`;
+        if (OverrideCaApiEndpoint) {
+          const response = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+            signal: abortController.current?.signal,
+            method: 'POST',
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: generateJsonString(tokensToUpload)
+          }));
+          lastProgress = response.ok ? Progress.SUCCESS : Progress.FAILED;
+        } else {
+          for (const tokenChunk of _.chunk(tokensToUpload, TokenUploadChunkSize)) {
+            const requestOperation = post({
+              apiName: ClearAlignerApi,
+              path: requestPath,
+              options: getApiOptionsWithAuth(tokenChunk)
+            });
+            if (abortController.current?.signal?.aborted) {
+              requestOperation.cancel();
+              break;
+            }
+            await requestOperation.response;
+            if (abortController.current?.signal?.aborted) {
+              break;
+            }
           }
         }
       }

@@ -22,10 +22,10 @@ import {
 } from '@mui/material';
 import { Close, DeleteOutline, Unpublished } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
-import { DefaultProjectName, LinksTable } from '../../state/links/tableManager';
+import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
 import { v4 as uuidv4 } from 'uuid';
-import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
+import { Corpus, CorpusContainer, CorpusFileFormat } from '../../structs';
 import { InitializationStates, parseTsv, putVersesInCorpus } from '../../workbench/query';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { useAppDispatch } from '../../app/index';
@@ -35,6 +35,7 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { DateTime } from 'luxon';
 import { ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { usePublishProject } from '../../api/projects/usePublishProject';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 
 enum TextDirection {
@@ -81,7 +82,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
-  const allowDelete = React.useMemo(() => projectId !== DefaultProjectName, [projectId]);
+  const allowDelete = React.useMemo(() => projectId !== DefaultProjectId, [projectId]);
   const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
     if (!projectUpdated) {
       setProjectUpdated(true);
@@ -156,7 +157,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
               id: projectToUpdate.targetCorpora?.corpora?.[0]?.id ?? project.id
             }]);
           }
-          projectToUpdate.lastUpdated = DateTime.now().toMillis();
+          projectToUpdate.updatedAt = DateTime.now().toMillis();
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             projectToUpdate.lastSyncTime = 0;
@@ -184,10 +185,10 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
       if (preferences?.currentProject === projectId) {
         projectState.linksTable.reset().catch(console.error);
-        projectState.linksTable.setSourceName(DefaultProjectName);
+        projectState.linksTable.setSourceName(DefaultProjectId);
         setPreferences((p: UserPreference | undefined) => ({
           ...(p ?? {}) as UserPreference,
-          currentProject: DefaultProjectName,
+          currentProject: DefaultProjectId,
           initialized: InitializationStates.UNINITIALIZED
         }));
       }
