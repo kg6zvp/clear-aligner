@@ -310,13 +310,17 @@ export class ProjectRepository extends BaseRepository {
     if (!fs.existsSync(path.join(this.getDataDirectory(), JournalEntryDirectory))) {
       fs.mkdirSync(path.join(this.getDataDirectory(), JournalEntryDirectory));
     }
-    this.getDataSource = async (sourceName: string) =>
-      await this.getDataSourceWithEntities(sourceName || DefaultProjectId,
+    this.getDataSource = async (projectId: string) => {
+      if (!fs.existsSync(path.join(this.getDataDirectory(), JournalEntryDirectory, projectId))) {
+        fs.mkdirSync(path.join(this.getDataDirectory(), JournalEntryDirectory, projectId));
+      }
+      return await this.getDataSourceWithEntities(projectId || DefaultProjectId,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
-        path.join(this.getTemplatesDirectory(), DefaultProjectId === sourceName
+        path.join(this.getTemplatesDirectory(), DefaultProjectId === projectId
           ? 'projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
+    };
   }
 
   convertCorpusToDataSource = (corpus: any) => ({
@@ -394,7 +398,7 @@ export class ProjectRepository extends BaseRepository {
       // Inserts corpora to the {project.id} data source
       const corpora = [...project.corpora].filter(Boolean);
       await this.insert({
-        sourceName: project.id,
+        projectId: project.id,
         table: CorporaTableName,
         itemOrItems: corpora
       });
@@ -526,13 +530,13 @@ export class ProjectRepository extends BaseRepository {
     return result;
   };
 
-  insert = async <T,> ({ sourceName, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => {
-    if(!table || !sourceName || !itemOrItems) {
+  insert = async <T,> ({ projectId, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => {
+    if(!table || !projectId || !itemOrItems) {
       return false;
     }
     this.logDatabaseTime('insert()');
     try {
-      await (await this.getDataSource(sourceName))
+      await (await this.getDataSource(projectId))
         .transaction(async (entityManager) => {
           const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
           const chunks = chunkSize ? _.chunk(items, chunkSize) : [items];
@@ -580,7 +584,7 @@ export class ProjectRepository extends BaseRepository {
           }
           await Promise.all(promises);
           this.logDatabaseTimeLog('insert()',
-            sourceName, table, itemOrItems?.length ?? itemOrItems,
+            projectId, table, itemOrItems?.length ?? itemOrItems,
             chunkSize, chunks?.length, promises?.length);
         });
       return true;
@@ -592,10 +596,10 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  deleteAll = async ({ sourceName, table }: DeleteParams) => {
+  deleteAll = async ({ projectId, table }: DeleteParams) => {
     this.logDatabaseTime('deleteAll()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = await this.getDataSource(projectId);
       switch (table) {
         case LinkTableName:
           await dataSource.getRepository(LinksToSourceWordsName)
@@ -610,7 +614,7 @@ export class ProjectRepository extends BaseRepository {
             .clear();
           break;
       }
-      this.logDatabaseTimeLog('deleteAll()', sourceName, table);
+      this.logDatabaseTimeLog('deleteAll()', projectId, table);
       return true;
     } catch (ex) {
       console.error('deleteAll()', ex);
@@ -627,10 +631,10 @@ export class ProjectRepository extends BaseRepository {
    */
   generateLinkDiff = (pastLink: Link, currentLink: Link): Operation[] => createPatch(mapLinkEntityToServerAlignmentLink(pastLink), mapLinkEntityToServerAlignmentLink(currentLink));
 
-  save = async <T,> ({ sourceName, table, itemOrItems, disableJournaling }: SaveParams<T>) => {
+  save = async <T,> ({ projectId, table, itemOrItems, disableJournaling }: SaveParams<T>) => {
     this.logDatabaseTime('save()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = await this.getDataSource(projectId);
       switch (table) {
         case LinkTableName:
           const links = (Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems]) as Link[];
@@ -644,7 +648,7 @@ export class ProjectRepository extends BaseRepository {
           }
           const linksToDelete = links.map(({ id }) => id!);
           await this.deleteByIds({
-            sourceName,
+            projectId: projectId,
             table,
             itemIdOrIds: linksToDelete,
             disableJournaling: true
@@ -685,7 +689,7 @@ export class ProjectRepository extends BaseRepository {
             .save(itemOrItems);
           break;
       }
-      this.logDatabaseTimeLog('save()', sourceName, table);
+      this.logDatabaseTimeLog('save()', projectId, table);
       return true;
     } catch (ex) {
       console.error('save()', ex);
@@ -1007,14 +1011,14 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  getJournalEntryDTOFromJournalEntryEntity = (journalEntryEntity: JournalEntryEntity): JournalEntryDTO => {
+  getJournalEntryDTOFromJournalEntryEntity = (projectId: string, journalEntryEntity: JournalEntryEntity): JournalEntryDTO => {
     if (journalEntryEntity.type !== JournalEntryType.BULK_INSERT) return mapJournalEntryEntityToJournalEntryDTO(journalEntryEntity);
     return {
       id: journalEntryEntity.id,
       linkId: undefined,
       type: journalEntryEntity.type,
       date: journalEntryEntity.date,
-      body: JSON.parse(fs.readFileSync(path.join(this.getDataDirectory(), JournalEntryDirectory, journalEntryEntity.bulkInsertFile), 'utf8')) as ServerAlignmentLinkDTO[]
+      body: JSON.parse(fs.readFileSync(this.getBulkInsertFilePath(projectId, journalEntryEntity.bulkInsertFile), 'utf8')) as ServerAlignmentLinkDTO[]
     };
   }
 
@@ -1030,7 +1034,7 @@ export class ProjectRepository extends BaseRepository {
     if (itemSkip) queryBuilder.skip(itemSkip);
     return (await queryBuilder.getMany())
       .filter(Boolean)
-      .map(this.getJournalEntryDTOFromJournalEntryEntity);
+      .map((journalEntry) => this.getJournalEntryDTOFromJournalEntryEntity(projectId, journalEntry));
   }
 
   getAllLinks = async (dataSource: DataSource|undefined, itemLimit: number, itemSkip: number) => await this.createLinksFromRows(dataSource, (await dataSource.manager.query(`select q.link_id, MAX(q.sources) as sources, MAX(q.targets) as targets
@@ -1209,15 +1213,15 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  deleteByIds = async ({ sourceName, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
+  deleteByIds = async ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
     this.logDatabaseTime('deleteByIds()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = await this.getDataSource(projectId);
       switch (table) {
         case LinkTableName:
           const linkIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
           if (!disableJournaling) {
-            const pastLinks = await this.findByIds(sourceName, table, linkIds);
+            const pastLinks = await this.findByIds(projectId, table, linkIds);
             await dataSource
               .getRepository(JournalEntryTableName)
               .insert(pastLinks.map((link): JournalEntryEntity => ({
@@ -1238,13 +1242,31 @@ export class ProjectRepository extends BaseRepository {
             .getRepository(LinkTableName)
             .delete(linkIds);
           break;
+        case JournalEntryTableName:
+          const journalEntryIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [ itemIdOrIds ];
+          const journalEntryRepository = dataSource?.getRepository(JournalEntryTableName);
+          const journalEntriesToDelete: JournalEntryEntity[] = [];
+          for (const journalEntryId of journalEntryIds) {
+            journalEntriesToDelete.push(await journalEntryRepository?.findOneById(journalEntryId));
+          }
+          for (const journalEntry of journalEntriesToDelete) {
+            switch (journalEntry.type) {
+              case JournalEntryType.BULK_INSERT:
+                fs.rmSync(this.getBulkInsertFilePath(projectId, journalEntry.bulkInsertFile));
+              /* eslint-disable no-fallthrough */
+              default:
+                await journalEntryRepository?.delete(journalEntry.id);
+                break;
+            }
+          }
+          break;
         default:
           await dataSource
             .getRepository(table)
             .delete(itemIdOrIds);
           break;
       }
-      this.logDatabaseTimeLog('deleteByIds()', sourceName, table, itemIdOrIds?.length ?? itemIdOrIds);
+      this.logDatabaseTimeLog('deleteByIds()', projectId, table, itemIdOrIds?.length ?? itemIdOrIds);
       return true;
     } catch (ex) {
       console.error('deleteByIds()', ex);
@@ -1386,8 +1408,10 @@ export class ProjectRepository extends BaseRepository {
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
 
-  createBulkInsertJournalEntry = async ({ sourceName, links }: CreateBulkJournalEntryParams): Promise<void> => {
-    const dataSource = (await this.getDataSource(sourceName))!;
+  getBulkInsertFilePath = (projectId: string, fileName?: string) => path.join(this.getDataDirectory(), JournalEntryDirectory, projectId, fileName);
+
+  createBulkInsertJournalEntry = async ({ projectId, links }: CreateBulkJournalEntryParams): Promise<void> => {
+    const dataSource = (await this.getDataSource(projectId))!;
     const repo = dataSource.getRepository<JournalEntryEntity>(JournalEntryTableName);
     for (const chunk of _.chunk(links, SERVER_TRANSMISSION_CHUNK_SIZE)) {
       const journalEntry: JournalEntryEntity = {
@@ -1398,7 +1422,7 @@ export class ProjectRepository extends BaseRepository {
         body: undefined
       };
       journalEntry.bulkInsertFile = `bulk_insert_${journalEntry.id}.json`;
-      const jsonOutputFile = path.join(this.getDataDirectory(), JournalEntryDirectory, journalEntry.bulkInsertFile);
+      const jsonOutputFile = this.getBulkInsertFilePath(projectId, journalEntry.bulkInsertFile);
       fs.writeFileSync(jsonOutputFile, generateJsonString(chunk));
       await repo.insert(journalEntry);
     }

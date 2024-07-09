@@ -11,7 +11,7 @@ import { AlignmentSide } from '../common/data/project/corpus';
  * Parameters common to Project Repository functions
  */
 interface ProjectRepositoryBaseParams {
-  sourceName: string;
+  projectId: string;
   table: string;
 }
 
@@ -23,7 +23,7 @@ interface MutatingOperationParams extends ProjectRepositoryBaseParams {
 }
 
 export interface CreateBulkJournalEntryParams {
-  sourceName: string;
+  projectId: string;
   links: ServerAlignmentLinkDTO[];
 }
 

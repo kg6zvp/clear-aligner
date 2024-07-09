@@ -28,7 +28,7 @@ export interface ListedProjectDto {
 export interface DatabaseApi {
   getPreferences: (requery: boolean) => Promise<UserPreferenceDto|undefined>;
   createOrUpdatePreferences: (preferences: UserPreferenceDto) => Promise<void>;
-  createBulkInsertJournalEntry: ({ sourceName, links }: CreateBulkJournalEntryParams) => Promise<void>;
+  createBulkInsertJournalEntry: ({ projectId, links }: CreateBulkJournalEntryParams) => Promise<void>;
   /**
    * Get the first chunk of journal entries sorted by date
    * @param sourceName source to retrieve journal entries for
@@ -52,16 +52,16 @@ export interface DatabaseApi {
     c: number // frequency
   }[]>;
   removeTargetWordsOrParts: (sourceName: string) => Promise<void>;
-  insert: <T,>({ sourceName, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => Promise<boolean>;
-  deleteAll: ({ sourceName, table }: DeleteParams) => Promise<boolean>;
-  deleteByIds: ({ sourceName, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => Promise<boolean>;
+  insert: <T,>({ projectId, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => Promise<boolean>;
+  deleteAll: ({ projectId, table }: DeleteParams) => Promise<boolean>;
+  deleteByIds: ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => Promise<boolean>;
   /**
    * Persist/update an entity (or entities) in a database
-   * @param sourceName datasource name to be accessed
+   * @param projectId datasource name to be accessed
    * @param table table to save into
    * @param itemOrItems entities to persist
    */
-  save: <T,>({ sourceName, table, itemOrItems, disableJournaling }: SaveParams<T>) => Promise<boolean>;
+  save: <T,>({ projectId, table, itemOrItems, disableJournaling }: SaveParams<T>) => Promise<boolean>;
   getAll: <T,>(sourceName: string, table: string, itemLimit?: number, itemSkip?: number) => Promise<T[]>;
   /**
    * Call to trigger an update to the `sources_text` and `targets_text` fields

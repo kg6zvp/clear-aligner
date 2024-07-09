@@ -55,7 +55,7 @@ export const useSyncAlignments = (): SyncState => {
             body: generateJsonString(journalEntriesToUpload)
           }));
           await dbApi.deleteByIds({
-            sourceName: projectId!,
+            projectId: projectId!,
             table: JournalEntryTableName,
             itemIdOrIds: journalEntriesToUpload.map((journalEntry) => journalEntry.id!)
           });
@@ -77,7 +77,7 @@ export const useSyncAlignments = (): SyncState => {
               break;
             }
             await dbApi.deleteByIds({
-              sourceName: projectId!,
+              projectId: projectId!,
               table: JournalEntryTableName,
               itemIdOrIds: journalEntryChunk.map((journalEntry) => journalEntry.id!)
             });

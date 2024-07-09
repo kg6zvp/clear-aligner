@@ -78,7 +78,7 @@ export class LinksTable extends VirtualTable {
       await this.checkDatabase();
       if (linksToPersist.length > 0) {
         const insertResult = await dbApi.insert({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: LinkTableName,
           itemOrItems: linksToPersist.map((link) => {
             const id = uuid();
@@ -96,7 +96,7 @@ export class LinksTable extends VirtualTable {
       }
       if (linksToUpdate.length > 0) {
         const saveResult = await dbApi.save({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: LinkTableName,
           itemOrItems: linksToUpdate.map((link) => ({
             id: link.id,
@@ -138,13 +138,13 @@ export class LinksTable extends VirtualTable {
       if (!disableJournaling) {
         this.logDatabaseTime('removeAll(): deleted journal');
         await dbApi.deleteAll({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: JournalEntryTableName
         });
         this.logDatabaseTimeEnd('removeAll(): deleted journal');
       }
       const result = await dbApi.deleteAll({
-        sourceName: this.getSourceName(),
+        projectId: this.getSourceName(),
         table: LinkTableName,
         disableJournaling: true
       });
@@ -218,7 +218,7 @@ export class LinksTable extends VirtualTable {
       });
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
         await dbApi.insert({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: LinkTableName,
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
@@ -230,7 +230,7 @@ export class LinksTable extends VirtualTable {
            * create bulk insert journal entry
            */
           await dbApi.createBulkInsertJournalEntry({
-            sourceName: this.getSourceName(),
+            projectId: this.getSourceName(),
             links: chunk.map(mapLinkEntityToServerAlignmentLink)
           });
         }
@@ -352,7 +352,7 @@ export class LinksTable extends VirtualTable {
     try {
       await this.checkDatabase();
       const result = await dbApi.deleteByIds({
-        sourceName: this.getSourceName(),
+        projectId: this.getSourceName(),
         table: LinkTableName,
         itemIdOrIds: itemIdOrIds ?? ''
       });

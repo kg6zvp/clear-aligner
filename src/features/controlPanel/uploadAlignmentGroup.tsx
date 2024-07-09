@@ -170,7 +170,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
                   setAlignmentFileSaveState({
                     alignmentFile: fileData.success ? fileData.data : undefined,
-                    saveKey: uuid()
+                    saveKey: uuid(),
+                    suppressJournaling: false
                   });
                 }}
               />
