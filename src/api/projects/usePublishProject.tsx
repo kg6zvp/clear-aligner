@@ -95,7 +95,7 @@ export const usePublishProject = (): PublishState => {
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
           <Typography variant="subtitle1">
-            {publishState === ProjectState.PUBLISHED ? "Publishing project..." : "Unpublishing project..."}
+            {publishState === ProjectState.PUBLISHED ? "Publishing project..." : "Deleting project..."}
           </Typography>
           <Button variant="text" sx={{textTransform: 'none', ml: 2}} onClick={onCancel}>Cancel</Button>
         </Grid>

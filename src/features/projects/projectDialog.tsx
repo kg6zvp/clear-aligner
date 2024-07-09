@@ -399,7 +399,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
       >
         <DialogContent sx={{ width: 650 }}>
           <Grid container justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle1">Are you sure you want to unpublish this project?</Typography>
+            <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
             <Grid item>
               <Grid container>
                 <Button variant="text" onClick={() => setOpenConfirmUnpublish(false)} sx={{ textTransform: 'none' }}>
@@ -408,7 +408,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                 <Button variant="contained" onClick={() => {
                   setOpenConfirmUnpublish(false);
                   publishProject(project, ProjectState.DRAFT).then(() => handleClose());
-                }} sx={{ ml: 2, textTransform: 'none' }}>Unpublish</Button>
+                }} sx={{ ml: 2, textTransform: 'none' }}>Delete</Button>
               </Grid>
             </Grid>
           </Grid>
