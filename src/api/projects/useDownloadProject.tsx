@@ -8,8 +8,15 @@ import { getAvailableCorporaContainers } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
-import { AlignmentSide } from '../../structs';
 import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import {
+  ClearAlignerApi,
+  getApiOptionsWithAuth,
+  OverrideCaApiEndpoint,
+  TokenDownloadChunkSize
+} from '../../server/amplifySetup';
+import { get } from 'aws-amplify/api';
+import { AlignmentSide } from '../../common/data/project/corpus';
 import { ApiUtils } from '../utils';
 
 enum ProjectDownloadProgress {
@@ -50,7 +57,7 @@ export const useDownloadProject = (): SyncState => {
       if (savedProject) {
         await deleteProject(projectId);
         savedProject.lastSyncTime = 0;
-        savedProject.lastUpdated = DateTime.now().toMillis();
+        savedProject.updatedAt = DateTime.now().toMillis();
         savedProject.location = ProjectLocation.REMOTE;
         projectState.projectTable?.save(savedProject, false);
       }
@@ -74,12 +81,47 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens: WordOrPartDTO[] = (await ApiUtils.generateRequest({
-        requestPath: `/api/projects/${projectId}/tokens`,
-        requestType: ApiUtils.RequestType.GET,
-        signal: abortController.current?.signal,
-      })).response?.tokens ?? [];
-
+      let resultTokens: WordOrPartDTO[] = [];
+      const requestPath = `/api/projects/${projectId}/tokens`;
+      if (OverrideCaApiEndpoint) {
+        const responsePromise = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+          signal: abortController.current?.signal,
+          method: 'GET',
+          headers: {
+            accept: 'application/json'
+          }
+        }))?.json?.();
+        const tokens = (await responsePromise)?.tokens ?? [];
+        resultTokens = tokens;
+      } else {
+        let pageCtr = 0;
+        while (true) {
+          const requestOperation = get({
+            apiName: ClearAlignerApi,
+            path: requestPath,
+            options: {
+              queryParams: {
+                page: String(pageCtr),
+                limit: String(TokenDownloadChunkSize)
+              },
+              ...getApiOptionsWithAuth()
+            }
+          });
+          const responsePromise = (await requestOperation.response).body.json();
+          if (cancelToken.canceled) {
+            break;
+          }
+          const responseTokens = (((await responsePromise) as any) ?? []);
+          if ((responseTokens?.length ?? 0) === 0) {
+            break;
+          }
+          resultTokens = responseTokens;
+          if (responseTokens.length < TokenDownloadChunkSize) {
+            break;
+          }
+          pageCtr++;
+        }
+      }
       if (projectResponse.success) {
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
@@ -90,7 +132,7 @@ export const useDownloadProject = (): SyncState => {
           } : c);
         });
         const currentTime = DateTime.now().toMillis();
-        projectData.lastUpdated = currentTime;
+        projectData.updatedAt = currentTime;
         projectData.lastSyncTime = currentTime;
         if (cancelToken.canceled) return;
         const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;
@@ -175,6 +217,7 @@ export const useDownloadProject = (): SyncState => {
           ProjectDownloadProgress.FAILED,
           ProjectDownloadProgress.CANCELED
         ].includes(progress)}
+        onClose={onCancel}
       >
         <Grid container alignItems="center" justifyContent="space-between"
               sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>

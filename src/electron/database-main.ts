@@ -28,6 +28,7 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:existsById`, async (event, ...args) => await ProjectRepositoryInstance.existsById(...args));
     ipcMain.handle(`${ChannelPrefix}:findByIds`, async (event, ...args) => await ProjectRepositoryInstance.findByIds(...args));
     ipcMain.handle(`${ChannelPrefix}:getAll`, async (event, ...args) => await ProjectRepositoryInstance.getAll(...args));
+    ipcMain.handle(`${ChannelPrefix}:getAllJournalEntries`, async (event, ...args) => await ProjectRepositoryInstance.getAllJournalEntries(...args));
     ipcMain.handle(`${ChannelPrefix}:findOneById`, async (event, ...args) => await ProjectRepositoryInstance.findOneById(...args));
     ipcMain.handle(`${ChannelPrefix}:deleteByIds`, async (event, ...args) => await ProjectRepositoryInstance.deleteByIds(...args));
     ipcMain.handle(`${ChannelPrefix}:findBetweenIds`, async (event, ...args) => await ProjectRepositoryInstance.findBetweenIds(...args));
@@ -45,6 +46,9 @@ export const setUpIpcMain = (): void => {
     ipcMain.handle(`${ChannelPrefix}:corporaGetLinksByAlignedWord`, async (event, ...args) => await ProjectRepositoryInstance.corporaGetLinksByAlignedWord(...args));
     ipcMain.handle(`${ChannelPrefix}:updateSourceFromProject`, async (event, ...args) => {return await ProjectRepositoryInstance.updateSourceFromProject(...args);});
     ipcMain.handle(`${ChannelPrefix}:removeSource`, async (event, ...args) => {return await ProjectRepositoryInstance.removeSource(...args);});
+    ipcMain.handle(`${ChannelPrefix}:createBulkInsertJournalEntry`, async (event, ...args) => await ProjectRepositoryInstance.createBulkInsertJournalEntry(...args));
+    ipcMain.handle(`${ChannelPrefix}:getFirstJournalEntryUploadChunk`, async (event, ...args) => await ProjectRepositoryInstance.getFirstJournalEntryUploadChunk(...args));
+    ipcMain.handle(`${ChannelPrefix}:getCount`, async (event, ...args) => await ProjectRepositoryInstance.getCount(...args));
     //@ts-ignore
     ipcMain.handle(`${ChannelPrefix}:getDataSources`, async (event, ...args) => {return await ProjectRepositoryInstance.getDataSources(...args);});
     ipcMain.handle(`${ChannelPrefix}:createSourceFromProject`, async (event, ...args) => {return await ProjectRepositoryInstance.createSourceFromProject(...args);});

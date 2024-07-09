@@ -53,8 +53,8 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         const localProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
         for (const project of projects.filter(p => p?.targetCorpora?.corpora?.length)) {
           project.sourceCorpora = undefined;
-          const localProject: Project = localProjects.get(project.id);
 
+          const localProject: Project = localProjects.get(project.id);
           const syncTime = DateTime.now().toMillis();
           // Update valid projects stored locally that are local or synced.
           if (localProject?.targetCorpora?.corpora?.[0]) {
@@ -73,7 +73,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         for (const removedProject of removedProjects) {
           removedProject.location = ProjectLocation.LOCAL;
           removedProject.lastSyncTime = 0;
-          removedProject.lastUpdated = DateTime.now().toMillis();
+          removedProject.updatedAt = DateTime.now().toMillis();
           await projectState.projectTable?.update?.(removedProject, false);
         }
       }
@@ -84,7 +84,6 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
     } catch (x) {
       console.error(x);
       setProgress(Progress.FAILED);
-      return [];
     } finally {
       setTimeout(() => setProgress(Progress.IDLE), 5000);
     }

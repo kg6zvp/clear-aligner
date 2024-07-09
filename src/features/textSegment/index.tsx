@@ -9,7 +9,7 @@ import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { AlignmentSide, LanguageInfo, Link, Word } from 'structs';
+import { LanguageInfo, Link, Word } from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -17,6 +17,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;

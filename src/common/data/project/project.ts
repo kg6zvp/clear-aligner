@@ -1,6 +1,5 @@
-import { CorpusDTO } from './corpus';
+import { AlignmentSide, CorpusDTO } from './corpus';
 import {
-  AlignmentSide,
   Corpus,
   CorpusContainer,
   CorpusViewType,
@@ -24,7 +23,7 @@ export interface ProjectDTO {
   name: string;
   state?: ProjectState;
   corpora: CorpusDTO[];
-  lastUpdated?: number;
+  updatedAt?: number;
   lastSyncTime?: number;
 }
 
@@ -40,7 +39,8 @@ export class ProjectEntity {
   location: ProjectLocation;
   serverState?: ProjectState;
   lastSyncTime?: number;
-  lastUpdated?: number;
+  createdAt?: Date;
+  updatedAt?: number;
   corpora?: Corpus[];
   constructor() {
     this.name = '';
@@ -56,7 +56,7 @@ export const mapProjectEntityToProjectDTO = (project: Project): ProjectDTO => ({
     .map(mapCorpusEntityToCorpusDTO)
     .filter(Boolean) as CorpusDTO[],
   lastSyncTime: project.lastSyncTime,
-  lastUpdated: project.lastUpdated
+  updatedAt: project.updatedAt
 });
 
 export const mapProjectDtoToProject = (projectEntity: ProjectDTO, location: ProjectLocation): Project | undefined => {
@@ -71,7 +71,7 @@ export const mapProjectDtoToProject = (projectEntity: ProjectDTO, location: Proj
     languageCode: targetCorpus.language.code,
     textDirection: targetCorpus.language.textDirection as unknown as TextDirection,
     location: location,
-    lastUpdated: projectEntity.lastUpdated ?? currentTime,
+    updatedAt: projectEntity.updatedAt ?? currentTime,
     lastSyncTime: projectEntity.lastSyncTime ?? 0,
     targetCorpora: CorpusContainer.fromIdAndCorpora(
       AlignmentSide.TARGET,
@@ -102,7 +102,7 @@ export const mapCorpusDTOToCorpusEntity = (dto: CorpusDTO): Corpus => {
     name: dto.name,
     fullName: dto.fullName,
     language: mapLanguageDTOToLanguageEntity(dto.language),
-    side: String(dto.side),
+    side: dto.side,
     words: (dto.words || []).map(mapWordOrPartDtoToWordOrPart),
     wordsByVerse: {},
     wordLocation: new Map(),

@@ -1,12 +1,23 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import { generateJsonString } from '../../common/generateJsonString';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from '../../state/links/tableManager';
-import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
+import {
+  ClearAlignerApi,
+  getApiOptionsWithAuth,
+  JournalEntryDownloadChunkSize,
+  OverrideCaApiEndpoint
+} from '../../server/amplifySetup';
+import { get, patch } from 'aws-amplify/api';
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
-import { ApiUtils } from '../utils';
+
+export enum SyncProgress {
+  IDLE,
+  IN_PROGRESS
+}
 
 export interface SyncState {
   file?: AlignmentFile;
@@ -14,8 +25,6 @@ export interface SyncState {
   sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
   dialog: any;
 }
-
-const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): JournalEntryDTO => mapJournalEntryEntityToJournalEntryDTO(journalEntry);
 
 /**
  * hook to synchronize alignments. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
@@ -26,26 +35,55 @@ export const useSyncAlignments = (): SyncState => {
   const abortController = useRef<AbortController | undefined>();
   const dbApi = useDatabase();
 
-  const cleanupRequest = React.useCallback(() => {
+  const cleanupRequest = useCallback(() => {
     setProgress(Progress.CANCELED);
     abortController.current?.abort?.();
   }, []);
 
   const sendJournal = useCallback(async (signal: AbortSignal, projectId?: string) => {
     try {
-      const journalEntriesToUpload =
-        (await dbApi.getAll(projectId!, JournalEntryTableName))
-          .map(mapJournalEntryEntityToJournalEntryDTOHelper);
-      await ApiUtils.generateRequest({
-        requestPath: `/api/projects/${projectId}/alignment_links`,
-        requestType: ApiUtils.RequestType.PATCH,
-        signal,
-        payload: journalEntriesToUpload
-      });
-      await dbApi.deleteAll({
-        sourceName: projectId!,
-        table: JournalEntryTableName
-      });
+        const requestPath = `/api/projects/${projectId}/alignment_links`;
+        if (OverrideCaApiEndpoint) {
+          const journalEntriesToUpload = await dbApi.getAllJournalEntries(projectId!);
+          (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+            signal,
+            method: 'PATCH',
+            headers: {
+              accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: generateJsonString(journalEntriesToUpload)
+          }));
+          await dbApi.deleteByIds({
+            projectId: projectId!,
+            table: JournalEntryTableName,
+            itemIdOrIds: journalEntriesToUpload.map((journalEntry) => journalEntry.id!)
+          });
+        } else {
+          let remainingJournalEntries = await dbApi.getCount(projectId!, JournalEntryTableName);
+          while (remainingJournalEntries > 0) {
+            const journalEntryChunk = (await dbApi.getFirstJournalEntryUploadChunk(projectId!));
+            const requestOperation = patch({
+              apiName: ClearAlignerApi,
+              path: requestPath,
+              options: getApiOptionsWithAuth(journalEntryChunk)
+            });
+            if (signal.aborted) {
+              requestOperation.cancel();
+              break;
+            }
+            await requestOperation.response;
+            if (signal.aborted) {
+              break;
+            }
+            await dbApi.deleteByIds({
+              projectId: projectId!,
+              table: JournalEntryTableName,
+              itemIdOrIds: journalEntryChunk.map((journalEntry) => journalEntry.id!)
+            });
+            remainingJournalEntries = await dbApi.getCount(projectId!, JournalEntryTableName);
+          }
+        }
     } catch (x) {
       cleanupRequest();
       throw new Error('Aborted');
@@ -53,14 +91,56 @@ export const useSyncAlignments = (): SyncState => {
   }, [cleanupRequest, dbApi]);
 
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
-    let resultLinks: ServerAlignmentLinkDTO[] = [];
+    const resultLinks: ServerAlignmentLinkDTO[] = [];
     try {
-      const alignmentLinkResponse = await ApiUtils.generateRequest({
-        requestPath: `/api/projects/${projectId}/alignment_links`,
-        requestType: ApiUtils.RequestType.GET,
-        signal: abortController.current?.signal
-      });
-      resultLinks = alignmentLinkResponse.response?.links ?? [];
+      const requestPath = `/api/projects/${projectId}/alignment_links`;
+      if (OverrideCaApiEndpoint) {
+        const responsePromise = (await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+          signal,
+          headers: {
+            accept: 'application/json',
+            'Content-Type': 'application/json'
+          }
+        })).json();
+        const responseLinks: {
+          links: ServerAlignmentLinkDTO[]
+        } = (await responsePromise);
+        resultLinks.push(...responseLinks.links);
+      } else {
+        let pageCtr = 0;
+        while (true) {
+          const requestOperation = get({
+            apiName: ClearAlignerApi,
+            path: requestPath,
+            options: {
+              queryParams: {
+                page: String(pageCtr),
+                limit: String(JournalEntryDownloadChunkSize)
+              },
+              ...getApiOptionsWithAuth()
+            }
+          });
+          if (signal.aborted) {
+            requestOperation.cancel();
+            break;
+          }
+          const responsePromise = (await requestOperation.response).body.json();
+          if (signal.aborted) {
+            break;
+          }
+          const responseLinks: {
+            links: ServerAlignmentLinkDTO[]
+          } = (await responsePromise) as any;
+          if ((responseLinks?.links?.length ?? 0) === 0) {
+            break;
+          }
+          resultLinks.push(...responseLinks.links);
+          if (responseLinks.links.length < JournalEntryDownloadChunkSize) {
+            break;
+          }
+          pageCtr++;
+        }
+      }
     } catch (x) {
       cleanupRequest();
       throw new Error('Aborted');
@@ -93,7 +173,7 @@ export const useSyncAlignments = (): SyncState => {
     }
   }, [sendJournal, fetchLinks]);
 
-  const dialog = React.useMemo(() => {
+  const dialog = useMemo(() => {
     return (
       <Dialog
         scroll="paper"

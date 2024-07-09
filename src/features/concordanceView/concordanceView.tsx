@@ -3,7 +3,7 @@
  * modes of the CA application
  */
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { AlignmentSide, Link, LinkStatus } from '../../structs';
+import { Link, LinkStatus } from '../../structs';
 import {
   Button,
   ButtonGroup,
@@ -30,6 +30,7 @@ import { useAppDispatch } from '../../app/index';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import useConfirm from '../../hooks/useConfirm';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * PivotWordFilter type
