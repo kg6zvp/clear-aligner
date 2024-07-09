@@ -6,6 +6,7 @@ import { ProjectDto } from '../../state/projects/tableManager';
 import { GridSortItem } from '@mui/x-data-grid';
 import {
   AlignmentSide,
+  CreateBulkJournalEntryParams,
   DeleteByIdParams,
   DeleteParams,
   InsertParams,
@@ -25,17 +26,29 @@ import { AddLinkStatus1715305810421 } from '../typeorm-migrations/project/171530
 import { AddJournalLinkTable1718060579447 } from '../typeorm-migrations/project/1718060579447-add-journal-link-table';
 import uuid from 'uuid-random';
 import { createPatch, Operation } from 'rfc6902';
-import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
-import { JournalEntryType } from '../../common/data/journalEntryDTO';
+import { mapLinkEntityToServerAlignmentLink, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import {
+  JournalEntryDTO,
+  JournalEntryType,
+  mapJournalEntryEntityToJournalEntryDTO
+} from '../../common/data/journalEntryDTO';
 import { generateJsonString } from '../../common/generateJsonString';
+import { AddBulkInserts1720060108764 } from '../typeorm-migrations/project/1720060108764-add-bulk-inserts';
+import { SERVER_TRANSMISSION_CHUNK_SIZE } from '../../common/constants';
+import { CorpusEntity } from '../../common/data/project/corpus';
+import { CorporaTimestamps1720241454613 } from '../typeorm-migrations/project/1720241454613-corpora-timestamps';
+import {
+  JournalEntriesDiffToBody1720419515419
+} from '../typeorm-migrations/project/1720419515419-journal-entries-diff-to-body';
 
 export const LinkTableName = 'links';
 export const CorporaTableName = 'corpora';
 export const LanguageTableName = 'language';
 export const LinksToSourceWordsName = 'links__source_words';
 export const LinksToTargetWordsName = 'links__target_words';
-export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
+export const DefaultProjectId = '00000000-0000-4000-8000-000000000000';
 export const ProjectDatabaseDirectory = 'projects';
+export const JournalEntryDirectory = 'journal_entries';
 export const JournalEntryTableName = 'journal_entries';
 
 /**
@@ -45,21 +58,24 @@ export const JournalEntryTableName = 'journal_entries';
 export class JournalEntryEntity {
   @PrimaryColumn({ type: 'text' })
   id?: string;
-  @Column({ type: 'text', nullable: false })
-  linkId: string;
+  @Column({ type: 'text', nullable: true })
+  linkId?: string;
   @Column({ type: 'text', nullable: false })
   type: JournalEntryType;
   @Column({ type: 'datetime' })
   date: Date;
-  @Column({ nullable: false })
-  diff: string;
+  @Column({ nullable: true })
+  body?: string;
+  @Column({ name: 'bulk_insert_file', nullable: true })
+  bulkInsertFile?: string;
 
   constructor() {
     this.id = '';
     this.linkId = '';
     this.type = JournalEntryType.CREATE;
     this.date = new Date();
-    this.diff = '';
+    this.body = '';
+    this.bulkInsertFile = undefined;
   }
 }
 
@@ -146,31 +162,6 @@ class WordsOrParts {
 }
 
 /**
- * CorporaEntity class is used to define projects.
- * Both source and target corpora are used to define alignment data
- * If this.side === 'target', then it's used to define a project.
- */
-class CorporaEntity {
-  id?: string;
-  language_id?: string;
-  side?: string;
-  name?: string;
-  full_name?: string;
-  file_name?: string;
-  words?: string;
-
-  constructor() {
-    this.id = undefined;
-    this.language_id = undefined;
-    this.side = '';
-    this.name = '';
-    this.full_name = '';
-    this.file_name = '';
-    this.words = undefined;
-  }
-}
-
-/**
  * LanguageEntity class is used to define the text direction, language and the
  * font family for the corpora.
  */
@@ -186,22 +177,38 @@ class LanguageEntity {
   }
 }
 
-
 const corporaSchema = new EntitySchema({
-  name: 'corpora', tableName: 'corpora', target: CorporaEntity, columns: {
+  name: 'corpora', tableName: CorporaTableName, target: CorpusEntity, columns: {
     id: {
       primary: true, type: 'text', generated: false
-    }, side: {
-      type: 'text'
-    }, name: {
-      type: 'text'
-    }, full_name: {
-      type: 'text'
-    }, file_name: {
-      type: 'text'
-    }, language_id: {
+    },
+    side: {
       type: 'text'
     },
+    name: {
+      type: 'text'
+    },
+    full_name: {
+      type: 'text'
+    },
+    file_name: {
+      type: 'text'
+    },
+    language_id: {
+      type: 'text'
+    },
+    createdAt: {
+      name: 'created_at',
+      type: 'datetime',
+      createDate: true,
+      nullable: true
+    },
+    updatedAt: {
+      name: 'updated_at',
+      type: 'datetime',
+      updateDate: true,
+      nullable: true
+    }
   }
 });
 
@@ -300,13 +307,20 @@ export class ProjectRepository extends BaseRepository {
     super();
     this.isLoggingTime = true;
     this.dataSources = new Map();
-    this.getDataSource = async (sourceName: string) =>
-      await this.getDataSourceWithEntities(sourceName || DefaultProjectName,
+    if (!fs.existsSync(path.join(this.getDataDirectory(), JournalEntryDirectory))) {
+      fs.mkdirSync(path.join(this.getDataDirectory(), JournalEntryDirectory));
+    }
+    this.getDataSource = async (projectId: string) => {
+      if (!fs.existsSync(path.join(this.getDataDirectory(), JournalEntryDirectory, projectId))) {
+        fs.mkdirSync(path.join(this.getDataDirectory(), JournalEntryDirectory, projectId));
+      }
+      return await this.getDataSourceWithEntities(projectId || DefaultProjectId,
         [corporaSchema, linkSchema, wordsOrPartsSchema, linksToSourceWordsSchema, linksToTargetWordsSchema, languageSchema, JournalEntryEntity],
-        path.join(this.getTemplatesDirectory(), DefaultProjectName === sourceName
+        path.join(this.getTemplatesDirectory(), DefaultProjectId === projectId
           ? 'projects/clear-aligner-00000000-0000-4000-8000-000000000000.sqlite'
           : 'clear-aligner-template.sqlite'),
         path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
+    };
   }
 
   convertCorpusToDataSource = (corpus: any) => ({
@@ -336,7 +350,10 @@ export class ProjectRepository extends BaseRepository {
   getMigrations = async (): any[] => {
     return [
       AddLinkStatus1715305810421,
-      AddJournalLinkTable1718060579447
+      AddJournalLinkTable1718060579447,
+      AddBulkInserts1720060108764,
+      CorporaTimestamps1720241454613,
+      JournalEntriesDiffToBody1720419515419
     ];
   }
 
@@ -381,7 +398,7 @@ export class ProjectRepository extends BaseRepository {
       // Inserts corpora to the {project.id} data source
       const corpora = [...project.corpora].filter(Boolean);
       await this.insert({
-        sourceName: project.id,
+        projectId: project.id,
         table: CorporaTableName,
         itemOrItems: corpora
       });
@@ -513,13 +530,13 @@ export class ProjectRepository extends BaseRepository {
     return result;
   };
 
-  insert = async <T,> ({ sourceName, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => {
-    if(!table || !sourceName || !itemOrItems) {
+  insert = async <T,> ({ projectId, table, itemOrItems, chunkSize, disableJournaling }: InsertParams<T>) => {
+    if(!table || !projectId || !itemOrItems) {
       return false;
     }
     this.logDatabaseTime('insert()');
     try {
-      await (await this.getDataSource(sourceName))
+      await (await this.getDataSource(projectId))
         .transaction(async (entityManager) => {
           const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
           const chunks = chunkSize ? _.chunk(items, chunkSize) : [items];
@@ -540,12 +557,12 @@ export class ProjectRepository extends BaseRepository {
                     .insert(this.createLinksToTarget(chunk)),
                   disableJournaling ? undefined :
                     entityManager.getRepository(JournalEntryTableName)
-                      .insert((chunk as Link[]).map((link) => ({
+                      .insert((chunk as Link[]).map((link): JournalEntryEntity => ({
                           id: uuid(),
                           linkId: link.id,
                           type: JournalEntryType.CREATE,
                           date: new Date(),
-                          diff: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
+                          body: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
                         } as JournalEntryEntity))));
                 break;
               case CorporaTableName:
@@ -567,7 +584,7 @@ export class ProjectRepository extends BaseRepository {
           }
           await Promise.all(promises);
           this.logDatabaseTimeLog('insert()',
-            sourceName, table, itemOrItems?.length ?? itemOrItems,
+            projectId, table, itemOrItems?.length ?? itemOrItems,
             chunkSize, chunks?.length, promises?.length);
         });
       return true;
@@ -579,10 +596,10 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  deleteAll = async ({ sourceName, table }: DeleteParams) => {
+  deleteAll = async ({ projectId, table }: DeleteParams) => {
     this.logDatabaseTime('deleteAll()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = await this.getDataSource(projectId);
       switch (table) {
         case LinkTableName:
           await dataSource.getRepository(LinksToSourceWordsName)
@@ -597,7 +614,7 @@ export class ProjectRepository extends BaseRepository {
             .clear();
           break;
       }
-      this.logDatabaseTimeLog('deleteAll()', sourceName, table);
+      this.logDatabaseTimeLog('deleteAll()', projectId, table);
       return true;
     } catch (ex) {
       console.error('deleteAll()', ex);
@@ -614,10 +631,10 @@ export class ProjectRepository extends BaseRepository {
    */
   generateLinkDiff = (pastLink: Link, currentLink: Link): Operation[] => createPatch(mapLinkEntityToServerAlignmentLink(pastLink), mapLinkEntityToServerAlignmentLink(currentLink));
 
-  save = async <T,> ({ sourceName, table, itemOrItems, disableJournaling }: SaveParams<T>) => {
+  save = async <T,> ({ projectId, table, itemOrItems, disableJournaling }: SaveParams<T>) => {
     this.logDatabaseTime('save()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = await this.getDataSource(projectId);
       switch (table) {
         case LinkTableName:
           const links = (Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems]) as Link[];
@@ -631,7 +648,7 @@ export class ProjectRepository extends BaseRepository {
           }
           const linksToDelete = links.map(({ id }) => id!);
           await this.deleteByIds({
-            sourceName,
+            projectId: projectId,
             table,
             itemIdOrIds: linksToDelete,
             disableJournaling: true
@@ -660,7 +677,7 @@ export class ProjectRepository extends BaseRepository {
                     linkId: link.id,
                     type: JournalEntryType.UPDATE,
                     date: new Date(),
-                    diff: generateJsonString(linkDiff)
+                    body: generateJsonString(linkDiff)
                   } as JournalEntryEntity);
                 })
                 .filter((entry) => !!entry)
@@ -672,7 +689,7 @@ export class ProjectRepository extends BaseRepository {
             .save(itemOrItems);
           break;
       }
-      this.logDatabaseTimeLog('save()', sourceName, table);
+      this.logDatabaseTimeLog('save()', projectId, table);
       return true;
     } catch (ex) {
       console.error('save()', ex);
@@ -964,6 +981,8 @@ export class ProjectRepository extends BaseRepository {
                                                          c.full_name      as fullName,
                                                          c.file_name      as fileName,
                                                          c.side           as side,
+                                                         c.created_at     as created_at,
+                                                         c.updated_at     as updated_at,
                                                          l.code           as code,
                                                          l.text_direction as textDirection,
                                                          l.font_family    as fontFamily
@@ -978,6 +997,8 @@ export class ProjectRepository extends BaseRepository {
           fileName: result.fileName,
           fullName: result.fullName,
           side: result.side,
+          createdAt: new Date(result.created_at),
+          updatedAt: new Date(result.updated_at),
           language: {
             code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }
@@ -989,6 +1010,32 @@ export class ProjectRepository extends BaseRepository {
       this.logDatabaseTimeEnd('getAllCorpora()');
     }
   };
+
+  getJournalEntryDTOFromJournalEntryEntity = (projectId: string, journalEntryEntity: JournalEntryEntity): JournalEntryDTO => {
+    if (journalEntryEntity.type !== JournalEntryType.BULK_INSERT) return mapJournalEntryEntityToJournalEntryDTO(journalEntryEntity);
+    return {
+      id: journalEntryEntity.id,
+      linkId: undefined,
+      type: journalEntryEntity.type,
+      date: journalEntryEntity.date,
+      body: JSON.parse(fs.readFileSync(this.getBulkInsertFilePath(projectId, journalEntryEntity.bulkInsertFile), 'utf8')) as ServerAlignmentLinkDTO[]
+    };
+  }
+
+  getAllJournalEntries = async (projectId: string, itemLimit?: number, itemSkip?: number): Promise<JournalEntryDTO[]> => {
+    const src = (await this.getDataSource(projectId))!;
+    const queryBuilder = src
+      .getRepository<JournalEntryEntity>(JournalEntryTableName)
+      .createQueryBuilder();
+    queryBuilder.orderBy({
+      date: 'ASC'
+    });
+    if (itemLimit) queryBuilder.take(itemLimit);
+    if (itemSkip) queryBuilder.skip(itemSkip);
+    return (await queryBuilder.getMany())
+      .filter(Boolean)
+      .map((journalEntry) => this.getJournalEntryDTOFromJournalEntryEntity(projectId, journalEntry));
+  }
 
   getAllLinks = async (dataSource: DataSource|undefined, itemLimit: number, itemSkip: number) => await this.createLinksFromRows(dataSource, (await dataSource.manager.query(`select q.link_id, MAX(q.sources) as sources, MAX(q.targets) as targets
                                                                                                                                   from (select lsw.link_id                                             as link_id,
@@ -1166,23 +1213,23 @@ export class ProjectRepository extends BaseRepository {
     }
   };
 
-  deleteByIds = async ({ sourceName, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
+  deleteByIds = async ({ projectId, table, itemIdOrIds, disableJournaling }: DeleteByIdParams) => {
     this.logDatabaseTime('deleteByIds()');
     try {
-      const dataSource = await this.getDataSource(sourceName);
+      const dataSource = await this.getDataSource(projectId);
       switch (table) {
         case LinkTableName:
           const linkIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [itemIdOrIds];
           if (!disableJournaling) {
-            const pastLinks = await this.findByIds(sourceName, table, linkIds);
+            const pastLinks = await this.findByIds(projectId, table, linkIds);
             await dataSource
               .getRepository(JournalEntryTableName)
-              .insert(pastLinks.map((link) => ({
+              .insert(pastLinks.map((link): JournalEntryEntity => ({
                 id: uuid(),
                 linkId: link.id,
                 type: JournalEntryType.DELETE,
                 date: new Date(),
-                diff: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
+                body: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
               } as JournalEntryEntity)));
           }
           await dataSource
@@ -1195,13 +1242,31 @@ export class ProjectRepository extends BaseRepository {
             .getRepository(LinkTableName)
             .delete(linkIds);
           break;
+        case JournalEntryTableName:
+          const journalEntryIds = Array.isArray(itemIdOrIds) ? itemIdOrIds : [ itemIdOrIds ];
+          const journalEntryRepository = dataSource?.getRepository(JournalEntryTableName);
+          const journalEntriesToDelete: JournalEntryEntity[] = [];
+          for (const journalEntryId of journalEntryIds) {
+            journalEntriesToDelete.push(await journalEntryRepository?.findOneById(journalEntryId));
+          }
+          for (const journalEntry of journalEntriesToDelete) {
+            switch (journalEntry.type) {
+              case JournalEntryType.BULK_INSERT:
+                fs.rmSync(this.getBulkInsertFilePath(projectId, journalEntry.bulkInsertFile));
+              /* eslint-disable no-fallthrough */
+              default:
+                await journalEntryRepository?.delete(journalEntry.id);
+                break;
+            }
+          }
+          break;
         default:
           await dataSource
             .getRepository(table)
             .delete(itemIdOrIds);
           break;
       }
-      this.logDatabaseTimeLog('deleteByIds()', sourceName, table, itemIdOrIds?.length ?? itemIdOrIds);
+      this.logDatabaseTimeLog('deleteByIds()', projectId, table, itemIdOrIds?.length ?? itemIdOrIds);
       return true;
     } catch (ex) {
       console.error('deleteByIds()', ex);
@@ -1342,4 +1407,52 @@ export class ProjectRepository extends BaseRepository {
     if (!sort || !sort.field || !sort.sort) return '';
     return `ORDER BY ${fieldMap && fieldMap[sort.field] ? fieldMap[sort.field] : sort.field} ${sort.sort}`;
   };
+
+  getBulkInsertFilePath = (projectId: string, fileName?: string) => path.join(this.getDataDirectory(), JournalEntryDirectory, projectId, fileName);
+
+  createBulkInsertJournalEntry = async ({ projectId, links }: CreateBulkJournalEntryParams): Promise<void> => {
+    const dataSource = (await this.getDataSource(projectId))!;
+    const repo = dataSource.getRepository<JournalEntryEntity>(JournalEntryTableName);
+    for (const chunk of _.chunk(links, SERVER_TRANSMISSION_CHUNK_SIZE)) {
+      const journalEntry: JournalEntryEntity = {
+        id: uuid(),
+        linkId: undefined,
+        type: JournalEntryType.BULK_INSERT,
+        date: new Date(),
+        body: undefined
+      };
+      journalEntry.bulkInsertFile = `bulk_insert_${journalEntry.id}.json`;
+      const jsonOutputFile = this.getBulkInsertFilePath(projectId, journalEntry.bulkInsertFile);
+      fs.writeFileSync(jsonOutputFile, generateJsonString(chunk));
+      await repo.insert(journalEntry);
+    }
+  }
+
+  getFirstJournalEntryUploadChunk = async (sourceName: string): Promise<JournalEntryDTO[]> => {
+    const dataSource = (await this.getDataSource(sourceName))!;
+    const repo = dataSource.getRepository<JournalEntryEntity>(JournalEntryTableName);
+    const journalEntries = await repo.find({
+      order: {
+        date: 'ASC'
+      },
+      take: SERVER_TRANSMISSION_CHUNK_SIZE
+    });
+    const firstBulkInsertIndex = journalEntries.findIndex((value) => value.type === JournalEntryType.BULK_INSERT);
+    if (firstBulkInsertIndex === -1) { // if there are no bulk inserts, simply return all the entries
+      return journalEntries.map(mapJournalEntryEntityToJournalEntryDTO);
+    } else if (firstBulkInsertIndex === 0) {
+      const bulkEntry = journalEntries[0];
+      if (bulkEntry.type !== JournalEntryType.BULK_INSERT) throw new Error(`Expected bulk insert but encountered ${generateJsonString(bulkEntry)}`);
+      return [
+        this.getJournalEntryDTOFromJournalEntryEntity(bulkEntry)
+      ];
+    }
+    return journalEntries.slice(0, firstBulkInsertIndex-1).map(mapJournalEntryEntityToJournalEntryDTO);
+  }
+
+  getCount = async (sourceName: string, tableName: string): Promise<number> => {
+    const dataSource = (await this.getDataSource(sourceName))!;
+    const repo = dataSource.getRepository(tableName);
+    return await repo.count();
+  }
 }

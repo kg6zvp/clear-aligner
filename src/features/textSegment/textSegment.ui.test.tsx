@@ -4,7 +4,8 @@
 import { renderWithProvider, RootState } from 'test/harness';
 import preloadedState from 'test/preloadedState';
 import TextSegment from 'features/textSegment';
-import { AlignmentSide, LinkOriginManual, LinkStatus } from '../../structs';
+import { LinkOriginManual, LinkStatus } from '../../structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const testState: RootState = {
   ...preloadedState,

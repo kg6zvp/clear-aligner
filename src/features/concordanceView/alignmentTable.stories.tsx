@@ -5,10 +5,11 @@
 import { Meta } from '@storybook/react';
 import { AlignmentTable, AlignmentTableProps } from './alignmentTable';
 import BCVWP from '../bcvwp/BCVWPSupport';
-import { AlignmentSide, Link, LinkStatus, TextDirection } from '../../structs';
+import { Link, LinkStatus, TextDirection } from '../../structs';
 import { AppContext, AppContextProps } from '../../App';
 import { useEffect } from 'react';
 import { ProjectState } from '../../state/databaseManagement';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const meta: Meta<typeof AlignmentTable> = {
   title: 'Concordance View/AlignmentTable',

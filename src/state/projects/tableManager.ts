@@ -2,13 +2,14 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
-import { DefaultProjectName, EmptyWordId, LinksTable } from '../links/tableManager';
+import { Corpus, CorpusContainer, Word } from '../../structs';
+import { DefaultProjectId, EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
 import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { DateTime } from 'luxon';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
@@ -23,7 +24,7 @@ export interface Project {
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
-  lastUpdated?: number;
+  updatedAt?: number;
   location: ProjectLocation;
   state?: ProjectState;
 }
@@ -82,7 +83,7 @@ export class ProjectTable extends VirtualTable {
   };
 
   updateLastUpdated = async (project: Project, lastUpdated?: number, suppressOnUpdate = false): Promise<Project | undefined> => {
-    project.lastUpdated = lastUpdated ?? DateTime.now().toMillis();
+    project.updatedAt = lastUpdated ?? DateTime.now().toMillis();
     return this.update(project, false, suppressOnUpdate);
   };
 
@@ -114,7 +115,7 @@ export class ProjectTable extends VirtualTable {
         location: project.location ?? ProjectLocation.LOCAL,
         serverState: project.state ?? ProjectState.DRAFT,
         lastSyncTime: project.lastSyncTime,
-        lastUpdated: project.lastUpdated
+        updatedAt: project.updatedAt
       };
       // @ts-ignore
       await window.databaseApi.projectSave(projectEntity);
@@ -203,8 +204,8 @@ export class ProjectTable extends VirtualTable {
           return [p.id, {
             ...p,
             ...(entity ?? {}),
-            name: p.id === DefaultProjectName ? p.name : entity?.name ?? p.name
-          }];
+            name: p.id === DefaultProjectId ? p.name : entity?.name ?? p.name
+          }]
         }));
       }
     }
@@ -219,7 +220,8 @@ export class ProjectTable extends VirtualTable {
   static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {
     const corpora = dataSource?.corpora || [];
     const sourceCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.SOURCE);
-    const targetCorpus = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET)[0];
+    const targetCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET);
+    const targetCorpus = targetCorpora[0];
 
     return {
       id: dataSource.id,
@@ -229,7 +231,7 @@ export class ProjectTable extends VirtualTable {
       textDirection: targetCorpus?.language.textDirection,
       fileName: targetCorpus?.fileName ?? '',
       sourceCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE, sourceCorpora),
-      targetCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [targetCorpus])
+      targetCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, targetCorpora)
     } as Project;
   };
 

@@ -8,7 +8,6 @@ import { getAvailableCorporaContainers } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
-import { AlignmentSide } from '../../structs';
 import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import {
   ClearAlignerApi,
@@ -17,6 +16,7 @@ import {
   TokenDownloadChunkSize
 } from '../../server/amplifySetup';
 import { get } from 'aws-amplify/api';
+import { AlignmentSide } from '../../common/data/project/corpus';
 import { ApiUtils } from '../utils';
 
 enum ProjectDownloadProgress {
@@ -57,7 +57,7 @@ export const useDownloadProject = (): SyncState => {
       if (savedProject) {
         await deleteProject(projectId);
         savedProject.lastSyncTime = 0;
-        savedProject.lastUpdated = DateTime.now().toMillis();
+        savedProject.updatedAt = DateTime.now().toMillis();
         savedProject.location = ProjectLocation.REMOTE;
         projectState.projectTable?.save(savedProject, false);
       }
@@ -132,7 +132,7 @@ export const useDownloadProject = (): SyncState => {
           } : c);
         });
         const currentTime = DateTime.now().toMillis();
-        projectData.lastUpdated = currentTime;
+        projectData.updatedAt = currentTime;
         projectData.lastSyncTime = currentTime;
         if (cancelToken.canceled) return;
         const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;
@@ -165,6 +165,8 @@ export const useDownloadProject = (): SyncState => {
         const localProjects = await projectState.projectTable?.getProjects?.(true);
         setProjects(p => Array.from(localProjects?.values?.() ?? p));
         appCtx.setContainers((await getAvailableCorporaContainers({ projectState, setProjects, ...appCtx })));
+      } else {
+        throw new Error("Failed to retrieve project data.");
       }
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.SUCCESS);
@@ -215,6 +217,7 @@ export const useDownloadProject = (): SyncState => {
           ProjectDownloadProgress.FAILED,
           ProjectDownloadProgress.CANCELED
         ].includes(progress)}
+        onClose={onCancel}
       >
         <Grid container alignItems="center" justifyContent="space-between"
               sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>

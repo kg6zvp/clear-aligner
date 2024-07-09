@@ -3,6 +3,7 @@ import { Operation } from 'rfc6902';
 
 export enum JournalEntryType {
   CREATE = 'CREATE',
+  BULK_INSERT = 'BULK_INSERT',
   UPDATE = 'UPDATE',
   DELETE = 'DELETE'
 }
@@ -12,10 +13,10 @@ export enum JournalEntryType {
  */
 export interface JournalEntryDTO {
   id?: string;
-  linkId: string;
+  linkId?: string;
   type: JournalEntryType;
   date: Date;
-  body: ServerAlignmentLinkDTO | Operation[];
+  body: ServerAlignmentLinkDTO | ServerAlignmentLinkDTO[] | Operation[];
 }
 
 /**
@@ -27,9 +28,9 @@ export const mapJournalEntryEntityToJournalEntryDTO = (je: {
   linkId: string,
   type: JournalEntryType,
   date: Date,
-  diff: string
+  body: string
 }): JournalEntryDTO => {
-  const parsed = JSON.parse(je.diff);
+  const parsed = JSON.parse(je.body);
   return {
     ...je,
     body: Array.isArray(parsed) ? parsed as Operation[] : parsed as ServerAlignmentLinkDTO

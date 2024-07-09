@@ -1,11 +1,13 @@
 /**
  * This file contains helper functions for interacting with the Corpus
  */
-import { AlignmentSide, Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
+import { Corpus, CorpusContainer, CorpusFileFormat, Verse, Word } from 'structs';
 import BCVWP from '../features/bcvwp/BCVWPSupport';
-import { DefaultProjectName, EmptyWordId } from 'state/links/tableManager';
+import { DefaultProjectId, EmptyWordId } from 'state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
+import { DatabaseApi } from '../hooks/useDatabase';
+import { AlignmentSide } from '../common/data/project/corpus';
 
 export enum InitializationStates {
   UNINITIALIZED,
@@ -14,6 +16,9 @@ export enum InitializationStates {
 }
 
 let IsLoadingAnyCorpora = false;
+
+// @ts-ignore
+const dbApi = window.databaseApi as DatabaseApi;
 
 export const isLoadingAnyCorpora = () => IsLoadingAnyCorpora;
 
@@ -166,15 +171,14 @@ const WordQueryBatchSize = 100_000;
 
 export const getCorpusFromDatabase = async (
   inputCorpus: Corpus,
-  sourceName?: string
+  projectId?: string
 ): Promise<Corpus> => {
   inputCorpus.wordsByVerse = {} as Record<string, Verse>;
   inputCorpus.words = [];
   let offset = 0;
   while (true) {
-    // @ts-ignore
-    const words = ((await window.databaseApi.getAllWordsByCorpus(
-      sourceName ?? DefaultProjectName,
+    const words = ((await dbApi.getAllWordsByCorpus(
+      projectId ?? DefaultProjectId,
       inputCorpus.side,
       inputCorpus.id,
       WordQueryBatchSize, offset)) as Word[]);

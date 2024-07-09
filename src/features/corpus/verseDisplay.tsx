@@ -2,11 +2,12 @@
  * This file contains the VerseDisplay component which is used inside the
  * CorpusComponent
  */
-import { AlignmentSide, Corpus, Link, Verse, Word } from '../../structs';
+import { Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
 import { WordDisplay } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display

@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
+import { DefaultProjectId, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
@@ -14,6 +14,9 @@ import { useInterval } from 'usehooks-ts';
 import { useNetworkState } from '@uidotdev/usehooks';
 import { userState } from '../features/profileAvatar/profileAvatar';
 import { getCurrentUser } from 'aws-amplify/auth';
+import { EnvironmentVariables } from '../structs/environmentVariables';
+
+const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
 const useInitialization = () => {
   const isLoaded = React.useRef(false);
@@ -115,11 +118,11 @@ const useInitialization = () => {
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject
               ?? projects?.[0]?.id
-              ?? DefaultProjectName
+              ?? DefaultProjectId
           });
           currLinksTable.setSourceName(res?.currentProject
             ?? projects?.[0]?.id
-            ?? DefaultProjectName);
+            ?? DefaultProjectId);
         });
       });
       initializeProject().catch(console.error);
@@ -131,6 +134,10 @@ const useInitialization = () => {
   // Update UserStatus
   useEffect( () => {
     const getCurrentUserDetails = async () => {
+      if (environmentVariables.caApiEndpoint && network.online) {
+        setUserStatus(userState.CustomEndpoint);
+        return;
+      }
       try{
         await getCurrentUser();
         setUserStatus(userState.LoggedIn)

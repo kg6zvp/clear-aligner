@@ -2,7 +2,8 @@
  * This file contains a collection of interfaces to support the
  * ConcordanceView component
  */
-import { AlignmentSide, LanguageInfo, Link, Word } from '../../structs';
+import { LanguageInfo, Link, Word } from '../../structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * represents rows displayed in the pivot word table in the concordance view

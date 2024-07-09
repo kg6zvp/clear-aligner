@@ -5,7 +5,7 @@
 import { VirtualTable } from '../databaseManagement';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import uuid from 'uuid-random';
-import { DefaultProjectName } from '../links/tableManager';
+import { DefaultProjectId } from '../links/tableManager';
 import { InitializationStates } from '../../workbench/query';
 
 export enum ControlPanelFormat {
@@ -38,7 +38,7 @@ const initialPreferences = {
   alignmentDirection: ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
   page: '',
   showGloss: false,
-  currentProject: DefaultProjectName
+  currentProject: DefaultProjectId
 };
 
 export class UserPreferenceTable extends VirtualTable {
@@ -73,7 +73,7 @@ export class UserPreferenceTable extends VirtualTable {
           page: preferences?.page,
           showGloss: preferences?.show_gloss,
           alignmentDirection: preferences?.alignment_view,
-          currentProject: preferences?.current_project ?? DefaultProjectName,
+          currentProject: preferences?.current_project ?? DefaultProjectId,
           bcv: preferences?.bcv ? BCVWP.parseFromString(preferences.bcv.trim()) : null
         };
       }
@@ -100,7 +100,7 @@ export class UserPreferenceTable extends VirtualTable {
       id: userPreference.id ?? uuid(),
       bcv: (userPreference.bcv?.toReferenceString() ?? '').trim(),
       alignment_view: userPreference.alignmentDirection ?? ControlPanelFormat[ControlPanelFormat.HORIZONTAL],
-      current_project: userPreference.currentProject ?? DefaultProjectName,
+      current_project: userPreference.currentProject ?? DefaultProjectId,
       page: userPreference.page,
       show_gloss: !!userPreference.showGloss
     };

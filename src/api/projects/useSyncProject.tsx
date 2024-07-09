@@ -7,11 +7,11 @@ import { useSyncWordsOrParts } from './useSyncWordsOrParts';
 import { getCorpusFromDatabase } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
-import { AlignmentSide } from '../../structs';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
+import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 
 export enum SyncProgress {
   IDLE,
@@ -19,7 +19,7 @@ export enum SyncProgress {
   SYNCING_LOCAL,
   RETRIEVING_TOKENS,
   SYNCING_PROJECT,
-  SYNCING_TOKENS,
+  SYNCING_CORPORA,
   SYNCING_ALIGNMENTS,
   UPDATING_PROJECT,
   SUCCESS,
@@ -91,7 +91,7 @@ export const useSyncProject = (): SyncState => {
           await cleanupRequest();
           break;
         }
-        case SyncProgress.RETRIEVING_TOKENS:
+        case SyncProgress.RETRIEVING_TOKENS: {
           for (const container of [project.targetCorpora, project.sourceCorpora]) {
             for (const corpus of (container?.corpora ?? [])) {
               const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
@@ -101,6 +101,7 @@ export const useSyncProject = (): SyncState => {
           }
           setProgress(SyncProgress.SYNCING_PROJECT);
           break;
+        }
         case SyncProgress.SYNCING_PROJECT: {
           const res = await ApiUtils.generateRequest({
             requestPath: '/api/projects',
@@ -109,7 +110,7 @@ export const useSyncProject = (): SyncState => {
             payload: mapProjectEntityToProjectDTO(project)
           });
           if(res.success) {
-            setProgress(SyncProgress.SYNCING_TOKENS);
+            setProgress(SyncProgress.SYNCING_CORPORA);
           } else {
             if((res.response?.message ?? "").includes("duplicate key")) {
               setUniqueNameError(true);
@@ -122,8 +123,8 @@ export const useSyncProject = (): SyncState => {
           }
           break;
         }
-        case SyncProgress.SYNCING_TOKENS: {
-          await syncWordsOrParts(project, project.location === ProjectLocation.SYNCED ? AlignmentSide.TARGET : undefined);
+        case SyncProgress.SYNCING_CORPORA: {
+          await syncWordsOrParts(project);
           setProgress(SyncProgress.SYNCING_ALIGNMENTS);
           break;
         }
@@ -133,6 +134,16 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
+          const alignmentResponse = await ApiUtils.generateRequest({
+            requestPath: `/api/projects/${project.id}/alignment_links`,
+            requestType: ApiUtils.RequestType.GET,
+            signal: abortController.current?.signal
+          });
+          const linksBody: {
+            links: ServerAlignmentLinkDTO[]
+          } | undefined = alignmentResponse.response;
+          await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
+
           project.lastSyncTime = syncTime;
           project.location = ProjectLocation.SYNCED;
           await projectState.projectTable?.sync?.(project);
@@ -181,7 +192,7 @@ export const useSyncProject = (): SyncState => {
         dialogMessage = 'Retrieving tokens from the local database...';
         break;
       case SyncProgress.SYNCING_PROJECT:
-      case SyncProgress.SYNCING_TOKENS:
+      case SyncProgress.SYNCING_CORPORA:
       case SyncProgress.SYNCING_ALIGNMENTS:
         dialogMessage = 'Syncing with the server...';
         break;
