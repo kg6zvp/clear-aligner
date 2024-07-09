@@ -58,10 +58,6 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           const syncTime = DateTime.now().toMillis();
           // Update valid projects stored locally that are local or synced.
           if (localProject?.targetCorpora?.corpora?.[0]) {
-            // Update last updated time if project is not in an updated state.
-            if((localProject.lastSyncTime ?? 0) === (localProject.updatedAt ?? 0)) {
-              project.updatedAt = syncTime;
-            }
             if(localProject.location !== ProjectLocation.REMOTE) {
               project.lastSyncTime = syncTime;
               project.location = ProjectLocation.SYNCED;

@@ -165,6 +165,8 @@ export const useDownloadProject = (): SyncState => {
         const localProjects = await projectState.projectTable?.getProjects?.(true);
         setProjects(p => Array.from(localProjects?.values?.() ?? p));
         appCtx.setContainers((await getAvailableCorporaContainers({ projectState, setProjects, ...appCtx })));
+      } else {
+        throw new Error("Failed to retrieve project data.");
       }
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.SUCCESS);

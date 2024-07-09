@@ -11,6 +11,7 @@ import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
+import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 
 export enum SyncProgress {
   IDLE,
@@ -132,6 +133,16 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
+          const alignmentResponse = await ApiUtils.generateRequest({
+            requestPath: `/api/projects/${project.id}/alignment_links`,
+            requestType: ApiUtils.RequestType.GET,
+            signal: abortController.current?.signal
+          });
+          const linksBody: {
+            links: ServerAlignmentLinkDTO[]
+          } | undefined = alignmentResponse.response;
+          await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
+
           project.lastSyncTime = syncTime;
           project.location = ProjectLocation.SYNCED;
           await projectState.projectTable?.sync?.(project);
