@@ -25,6 +25,7 @@ const useInitialization = () => {
   const network = useNetworkState();
   const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
 
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
@@ -174,7 +175,9 @@ const useInitialization = () => {
     isSnackBarOpen,
     setIsSnackBarOpen,
     snackBarMessage,
-    setSnackBarMessage
+    setSnackBarMessage,
+    isProjectDialogOpen,
+    setIsProjectDialogOpen
   } as AppContextProps;
 };
 
