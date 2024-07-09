@@ -9,7 +9,8 @@ export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;
 export const OverrideUserPoolClientId = environmentVariables.userPoolClientId;
 
-export const DefaultCaApiEndpoint = 'https://4fcbxzw8m0.execute-api.us-east-1.amazonaws.com/development';
+//export const DefaultCaApiEndpoint = 'https://4fcbxzw8m0.execute-api.us-east-1.amazonaws.com/development';
+export const DefaultCaApiEndpoint = 'http://localhost:8080';
 export const DefaultUserPoolId = 'us-east-1_63WiOrSMN';
 export const DefaultUserPoolClientId = 'jteqgoa1rgptil2tdi7b0nqjb';
 export const ClearAlignerApi = 'ClearAlignerApi';
@@ -70,8 +71,8 @@ export const setUpAmplify = () => {
 export const getAuthorizationToken = (): string => {
   for (const key in localStorage) {
     if (key.startsWith('CognitoIdentityServiceProvider.')
-      && key.endsWith('.idToken')) {
-      return localStorage[key];
+      && key.endsWith('.accessToken')) {
+      return `Bearer ${localStorage[key]}`;
     }
   }
   return '';
