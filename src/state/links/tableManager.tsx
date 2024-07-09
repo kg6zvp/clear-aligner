@@ -1,7 +1,7 @@
 /**
  * This file contains the LinksTable Class and supporting functions.
  */
-import { AlignmentSide, Link } from '../../structs';
+import { Link } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
@@ -12,8 +12,11 @@ import { createCache, MemoryCache, memoryStore } from 'cache-manager';
 import { AppContext } from 'App';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { mapLinkEntityToServerAlignmentLink } from '../../common/data/serverAlignmentLinkDTO';
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
+import { AlignmentSide } from '../../common/data/project/corpus';
+import { Project } from '../projects/tableManager';
 
 const DatabaseInsertChunkSize = 10_000;
 const UIInsertChunkSize = DatabaseInsertChunkSize / 2;
@@ -22,7 +25,7 @@ const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
 const DatabaseCacheMaxSize = 1_000;
 export const EmptyWordId = '00000000000';
-export const DefaultProjectName = '00000000-0000-4000-8000-000000000000';
+export const DefaultProjectId = '00000000-0000-4000-8000-000000000000';
 export const LinkTableName = 'links';
 export const JournalEntryTableName = 'journal_entries';
 const LogDatabaseHooks = true;
@@ -54,10 +57,10 @@ export class LinksTable extends VirtualTable {
   }
 
   setSourceName = (sourceName?: string) => {
-    this.sourceName = sourceName ?? this.sourceName ?? DefaultProjectName;
+    this.sourceName = sourceName ?? this.sourceName ?? DefaultProjectId;
   };
 
-  getSourceName = () => this.sourceName ?? DefaultProjectName;
+  getSourceName = () => this.sourceName ?? DefaultProjectId;
 
   save = async (linkOrLinks: Link | Link[],
                 suppressOnUpdate = false,
@@ -75,7 +78,7 @@ export class LinksTable extends VirtualTable {
       await this.checkDatabase();
       if (linksToPersist.length > 0) {
         const insertResult = await dbApi.insert({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: LinkTableName,
           itemOrItems: linksToPersist.map((link) => {
             const id = uuid();
@@ -93,7 +96,7 @@ export class LinksTable extends VirtualTable {
       }
       if (linksToUpdate.length > 0) {
         const saveResult = await dbApi.save({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: LinkTableName,
           itemOrItems: linksToUpdate.map((link) => ({
             id: link.id,
@@ -135,13 +138,13 @@ export class LinksTable extends VirtualTable {
       if (!disableJournaling) {
         this.logDatabaseTime('removeAll(): deleted journal');
         await dbApi.deleteAll({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: JournalEntryTableName
         });
         this.logDatabaseTimeEnd('removeAll(): deleted journal');
       }
       const result = await dbApi.deleteAll({
-        sourceName: this.getSourceName(),
+        projectId: this.getSourceName(),
         table: LinkTableName,
         disableJournaling: true
       });
@@ -157,9 +160,9 @@ export class LinksTable extends VirtualTable {
   };
 
   saveAlignmentFile = async (alignmentFile: AlignmentFile,
-                             suppressOnUpdate = false,
-                             isForced = false,
-                             disableJournaling = false) => {
+                             suppressOnUpdate: boolean = false,
+                             isForced: boolean = false,
+                             disableJournaling: boolean = false) => {
     await this.saveAll(alignmentFile.records.map(
       (record) =>
         ({
@@ -215,13 +218,23 @@ export class LinksTable extends VirtualTable {
       });
       for (const chunk of _.chunk(outputLinks, UIInsertChunkSize)) {
         await dbApi.insert({
-          sourceName: this.getSourceName(),
+          projectId: this.getSourceName(),
           table: LinkTableName,
           itemOrItems: chunk,
           chunkSize: DatabaseInsertChunkSize,
-          disableJournaling
+          disableJournaling: true
         });
         progressCtr += chunk.length;
+        if (!disableJournaling) {
+          /*
+           * create bulk insert journal entry
+           */
+          await dbApi.createBulkInsertJournalEntry({
+            projectId: this.getSourceName(),
+            links: chunk.map(mapLinkEntityToServerAlignmentLink)
+          });
+        }
+
         this.setDatabaseBusyProgress(progressCtr, progressMax);
 
         const fromLinkTitle = LinksTable.createLinkTitle(chunk[0]);
@@ -339,7 +352,7 @@ export class LinksTable extends VirtualTable {
     try {
       await this.checkDatabase();
       const result = await dbApi.deleteByIds({
-        sourceName: this.getSourceName(),
+        projectId: this.getSourceName(),
         table: LinkTableName,
         itemIdOrIds: itemIdOrIds ?? ''
       });
@@ -453,10 +466,10 @@ export const useSaveLink = () => {
       .then(result => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if (currentProject) {
-          if (currentProject.lastUpdated === currentProject.lastSyncTime) {
+          if(currentProject.updatedAt === currentProject.lastSyncTime) {
             setProgress(Progress.IN_PROGRESS);
           }
-          currentProject.lastUpdated = DateTime.now().toMillis();
+          currentProject.updatedAt = DateTime.now().toMillis();
           projectState?.projectTable?.update?.(currentProject, false)?.catch?.(console.error);
         }
         const endStatus = {
@@ -487,9 +500,11 @@ export const useSaveLink = () => {
  * @param alignmentFile Alignment file to save (optional; undefined = no save).
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
+ * @param suppressJournaling Suppress journaling
  */
-export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false) => {
+export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, suppressJournaling?: boolean) => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
+  const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [ projects, projectId ]);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -514,66 +529,17 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate)
+    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, suppressJournaling)
       .then(() => {
-        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
-        currentProject && projectState?.projectTable?.updateLastUpdated?.(currentProject)?.catch?.(console.error);
         const endStatus = {
           ...startStatus,
           isPending: false
         };
         setStatus(endStatus);
+        project && projectState?.projectTable?.updateLastUpdated?.(project)?.catch?.(console.error);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, projects, preferences?.currentProject, projectState?.projectTable]);
-
-  return { ...status };
-};
-
-/**
- * Save links hook.
- *<p>
- * Key parameters are used to control operations that may be destructive or time-consuming
- * on re-render. A constant value will ensure an operation only happens once, and a UUID
- * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
- * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
- *<p>
- * @param links Links to save (optional; undefined = no save).
- * @param saveKey Unique key to control save operation (optional; undefined = no save).
- * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
- */
-export const useSaveAllLinks = (links?: Link[], saveKey?: string, suppressOnUpdate: boolean = true) => {
-  const { projectState, preferences, projects } = React.useContext(AppContext);
-  const [status, setStatus] = useState<{
-    isPending: boolean;
-  }>({ isPending: false });
-  const prevSaveKey = useRef<string | undefined>();
-
-  useEffect(() => {
-    if (!links
-      || !saveKey
-      || prevSaveKey.current === saveKey) {
-      return;
-    }
-    const startStatus = {
-      ...status,
-      isPending: true
-    };
-    setStatus(startStatus);
-    prevSaveKey.current = saveKey;
-    databaseHookDebug('useSaveAllLinks(): startStatus', startStatus);
-    projectState?.linksTable.saveAll(links, suppressOnUpdate)
-      .then(() => {
-        const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
-        currentProject && projectState?.projectTable?.updateLastUpdated?.(currentProject)?.catch?.(console.error);
-        const endStatus = {
-          ...startStatus,
-          isPending: false
-        };
-        setStatus(endStatus);
-        databaseHookDebug('useSaveAllLinks(): endStatus', endStatus);
-      });
-  }, [projectState?.linksTable, prevSaveKey, links, saveKey, status, suppressOnUpdate, projectState?.projectTable, projects, preferences?.currentProject]);
+  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
 
   return { ...status };
 };

@@ -1,4 +1,5 @@
-import { AlignmentSide, Word } from '../../../structs';
+import { Word } from '../../../structs';
+import { AlignmentSide } from './corpus';
 
 export interface WordOrPartDTO {
   id: string;

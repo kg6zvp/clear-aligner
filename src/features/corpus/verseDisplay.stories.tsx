@@ -4,8 +4,9 @@
  */
 import { Meta } from '@storybook/react';
 import { VerseDisplay, VerseDisplayProps } from './verseDisplay';
-import { AlignmentSide, Corpus, TextDirection, Verse } from '../../structs';
+import { Corpus, TextDirection, Verse } from '../../structs';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const meta: Meta<typeof VerseDisplay> = {
   title: 'VerseDisplay',

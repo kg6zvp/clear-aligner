@@ -5,7 +5,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { LanguageInfo } from '../structs';
 import { useDatabase } from './useDatabase';
-import { DefaultProjectName } from '../state/links/tableManager';
+import { DefaultProjectId } from '../state/links/tableManager';
 import { AppContext } from '../App';
 
 /**
@@ -20,7 +20,7 @@ export const useLanguages = (): Map<string, LanguageInfo>|undefined => {
     const load = () => {
       return new Promise<void>((resolve) => {
         setTimeout(async () => {
-          const languages = await db.languageGetAll(preferences?.currentProject ?? DefaultProjectName);
+          const languages = await db.languageGetAll(preferences?.currentProject ?? DefaultProjectId);
           const langMap = new Map<string, LanguageInfo>();
           languages.forEach((l) => langMap.set(l.code, l));
           setLanguagesMap(langMap);

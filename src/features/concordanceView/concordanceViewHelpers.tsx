@@ -1,9 +1,10 @@
 /**
  * This file contains helpers for the ConcordanceView component
  */
-import { AlignmentSide, Word } from '../../structs';
+import { Word } from '../../structs';
 import { FullyResolvedLink } from './structs';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * generate list (alphabetical) of word texts from alignment link, container and side directive

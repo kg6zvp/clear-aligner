@@ -48,7 +48,7 @@ export const usePublishProject = (): PublishState => {
       if(state === ProjectState.PUBLISHED) {
         const syncTime = DateTime.now().toMillis();
         project.location = ProjectLocation.SYNCED;
-        project.lastUpdated = syncTime;
+        project.updatedAt = syncTime;
         project.lastSyncTime = syncTime;
         await projectState?.projectTable?.update(project, false);
       } else {
