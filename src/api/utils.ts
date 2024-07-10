@@ -30,7 +30,10 @@ export module ApiUtils {
   }
 
   const getResponseObject = async (response: Response) => {
-    return await response.json();
+    if (response.bodyUsed) {
+      return await response.json();
+    }
+    return {};
   }
 
   const validateStatusCode = (statusCode: number, requestType: RequestType, expectedStatusCode?: number) => {

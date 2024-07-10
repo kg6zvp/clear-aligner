@@ -44,8 +44,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, alignmentFileSaveState?.suppressJournaling);
-  const { sync: syncProject, progress, dialog, file } = useSyncProject();
+  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling);
+  const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
 
@@ -53,7 +53,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     saveAlignmentFile(allLinks);
   }, [allLinks]);
   useEffect(() => {
-    if (!file) {
+    if (!alignmentFileFromServer) {
       return;
     }
     // clear errors, if any
@@ -63,11 +63,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     });
     // import/save file
     setAlignmentFileSaveState({
-      alignmentFile: file,
+      alignmentFile: alignmentFileFromServer,
       saveKey: uuid(),
       suppressJournaling: true
     });
-  }, [file, setAlignmentFileSaveState]);
+  }, [alignmentFileFromServer, setAlignmentFileSaveState]);
 
   const inProgress = useMemo(() => (
     [

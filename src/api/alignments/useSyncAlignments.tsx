@@ -34,9 +34,7 @@ export const useSyncAlignments = (): SyncState => {
 
   const sendJournal = useCallback(async (signal: AbortSignal, projectId?: string) => {
     try {
-      const journalEntriesToUpload =
-        (await dbApi.getAll(projectId!, JournalEntryTableName) as JournalEntry[])
-          .map(mapJournalEntryEntityToJournalEntryDTO);
+      const journalEntriesToUpload = await dbApi.getAllJournalEntries(projectId!);
       await ApiUtils.generateRequest({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.PATCH,
