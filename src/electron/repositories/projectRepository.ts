@@ -538,54 +538,54 @@ export class ProjectRepository extends BaseRepository {
     try {
       await (await this.getDataSource(projectId))
         .transaction(async (entityManager) => {
-          const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
-          const chunks = chunkSize ? _.chunk(items, chunkSize) : [items];
-          const promises = [];
-          for (const chunk of chunks) {
-            switch (table) {
-              case LinkTableName:
-                promises.push(
-                  entityManager.getRepository(LinkTableName)
-                    .insert(chunk.map((link): LinkEntity => ({
-                      id: link.id,
-                      origin: link.metadata.origin,
-                      status: link.metadata.status
-                    }))),
-                  entityManager.getRepository(LinksToSourceWordsName)
-                    .insert(this.createLinksToSource(chunk)),
-                  entityManager.getRepository(LinksToTargetWordsName)
-                    .insert(this.createLinksToTarget(chunk)),
-                  disableJournaling ? undefined :
-                    entityManager.getRepository(JournalEntryTableName)
-                      .insert((chunk as Link[]).map((link): JournalEntryEntity => ({
-                          id: uuid(),
-                          linkId: link.id,
-                          type: JournalEntryType.CREATE,
-                          date: new Date(),
-                          body: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
-                        } as JournalEntryEntity))));
-                break;
-              case CorporaTableName:
-                promises.push(
-                  entityManager.getRepository(LanguageTableName)
-                    .upsert(chunk.filter(c => c.language).map(c => ({
-                      code: c.language.code,
-                      text_direction: c.language.textDirection,
-                      font_family: c.language.fontFamily
-                    })), ['code']),
-                  entityManager.getRepository(CorporaTableName)
-                    .insert(chunk.map(this.convertCorpusToDataSource)));
-                break;
-              default:
-                promises.push(entityManager.getRepository(table)
-                  .insert(chunk));
-                break;
-            }
-          }
-          await Promise.all(promises);
-          this.logDatabaseTimeLog('insert()',
-            projectId, table, itemOrItems?.length ?? itemOrItems,
-            chunkSize, chunks?.length, promises?.length);
+      const items = Array.isArray(itemOrItems) ? itemOrItems : [itemOrItems];
+      const chunks = chunkSize ? _.chunk(items, chunkSize) : [items];
+      const promises = [];
+      for (const chunk of chunks) {
+        switch (table) {
+          case LinkTableName:
+            promises.push(
+              entityManager.getRepository(LinkTableName)
+                .insert(chunk.map((link): LinkEntity => ({
+                  id: link.id,
+                  origin: link.metadata.origin,
+                  status: link.metadata.status
+                }))),
+              entityManager.getRepository(LinksToSourceWordsName)
+                .insert(this.createLinksToSource(chunk)),
+              entityManager.getRepository(LinksToTargetWordsName)
+                .insert(this.createLinksToTarget(chunk)),
+              disableJournaling ? undefined :
+                entityManager.getRepository(JournalEntryTableName)
+                  .insert((chunk as Link[]).map((link): JournalEntryEntity => ({
+                    id: uuid(),
+                    linkId: link.id,
+                    type: JournalEntryType.CREATE,
+                    date: new Date(),
+                    body: generateJsonString(mapLinkEntityToServerAlignmentLink(link))
+                  } as JournalEntryEntity))));
+            break;
+          case CorporaTableName:
+            promises.push(
+              entityManager.getRepository(LanguageTableName)
+                .upsert(chunk.filter(c => c.language).map(c => ({
+                  code: c.language.code,
+                  text_direction: c.language.textDirection,
+                  font_family: c.language.fontFamily
+                })), ['code']),
+              entityManager.getRepository(CorporaTableName)
+                .insert(chunk.map(this.convertCorpusToDataSource)));
+            break;
+          default:
+            promises.push(entityManager.getRepository(table)
+              .insert(chunk));
+            break;
+        }
+      }
+      await Promise.all(promises);
+      this.logDatabaseTimeLog('insert()',
+        projectId, table, itemOrItems?.length ?? itemOrItems,
+        chunkSize, chunks?.length, promises?.length);
         });
       return true;
     } catch (ex) {

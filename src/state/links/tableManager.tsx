@@ -539,7 +539,8 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
         project && projectState?.projectTable?.updateLastUpdated?.(project)?.catch?.(console.error);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
-  }, [linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate, projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
+  }, [project, linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate,
+    projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
 
   return { ...status };
 };

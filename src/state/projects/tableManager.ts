@@ -128,41 +128,45 @@ export class ProjectTable extends VirtualTable {
   };
 
   insertWordsOrParts = async (project: Project) => {
-    this.incrDatabaseBusyCtr();
-    const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-      .flatMap(corpus => (corpus.words ?? [])
-        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
-        .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
+    try {
+      this.incrDatabaseBusyCtr();
+      const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+        .flatMap(corpus => (corpus.words ?? [])
+          .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
+          .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-    // @ts-ignore
-    await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
-
-    let progressCtr = 0;
-    let progressMax = wordsOrParts.length;
-    this.setDatabaseBusyInfo({
-      userText: `Loading ${wordsOrParts.length.toLocaleString()} tokens...`,
-      progressCtr,
-      progressMax
-    });
-    for (const chunk of _.chunk(wordsOrParts, 10000)) {
       // @ts-ignore
-      await window.databaseApi.insert({
-        sourceName: project.id,
-        table: 'words_or_parts',
-        itemOrItems: chunk,
-        chunkSize: DatabaseInsertChunkSize
-      }).catch(console.error);
-      progressCtr += chunk.length;
-      this.setDatabaseBusyProgress(progressCtr, progressMax);
+      await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
-      const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
-      const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
-      this.setDatabaseBusyText(chunk.length === progressMax
-        ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} tokens)...`
-        : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} tokens)...`);
+      let progressCtr = 0;
+      let progressMax = wordsOrParts.length;
+      this.setDatabaseBusyInfo({
+        userText: `Loading ${wordsOrParts.length.toLocaleString()} tokens...`,
+        progressCtr,
+        progressMax
+      });
+      for (const chunk of _.chunk(wordsOrParts, DatabaseInsertChunkSize)) {
+        // @ts-ignore
+        await window.databaseApi.insert({
+          projectId: project.id,
+          table: 'words_or_parts',
+          itemOrItems: chunk,
+          chunkSize: DatabaseInsertChunkSize
+        }).catch(console.error);
+        progressCtr += chunk.length;
+        this.setDatabaseBusyProgress(progressCtr, progressMax);
+
+        const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
+        const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
+        this.setDatabaseBusyText(chunk.length === progressMax
+          ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
+          : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
+      }
+      this.setDatabaseBusyText('Finishing project creation...');
+      this.decrDatabaseBusyCtr();
+    } catch (e) {
+      console.error("Failed to insert tokens: ", e);
     }
-    this.setDatabaseBusyText('Finishing project creation...');
-    this.decrDatabaseBusyCtr();
   };
 
   static createWordsOrPartsTitle = (word: { id: string }) => {
