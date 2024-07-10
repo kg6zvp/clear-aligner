@@ -1,8 +1,8 @@
-import React, { createContext, useMemo } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import Themed from './features/themed';
 import { Outlet } from 'react-router-dom';
 import useTrackLocation from './utils/useTrackLocation';
-import { THEME } from './App';
+import { AppContext, THEME } from './App';
 import useBusyDialog from './utils/useBusyDialog';
 import { MiniDrawer } from './features/miniDrawer/miniDrawer';
 import { Box } from '@mui/system';
@@ -29,10 +29,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
     }),
     []
   );
+
+  // Ensure we don't show the busyDialog concurrently
+  // with one of the project dialogs
+  const { isProjectDialogOpen } = useContext(AppContext);
+
   return (
     <LayoutContext.Provider value={layoutContext}>
       <Themed theme={theme}>
-        {busyDialog}
+        {!isProjectDialogOpen ? busyDialog : null}
         <div style={{
           display: 'flex',
           flexDirection: 'column',

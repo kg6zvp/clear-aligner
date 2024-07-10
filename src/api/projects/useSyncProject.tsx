@@ -52,6 +52,7 @@ export const useSyncProject = (): SyncState => {
   const [canceled, setCanceled] = React.useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
+  const { setIsProjectDialogOpen } = useContext(AppContext);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -171,6 +172,16 @@ export const useSyncProject = (): SyncState => {
     // allowing the single threaded process to be cancelable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
+
+  React.useEffect(() =>{
+    // Prevent the Database busyDialog from showing concurrently
+    // with this project dialog
+    setIsProjectDialogOpen(![
+      SyncProgress.IDLE,
+      SyncProgress.SUCCESS,
+      SyncProgress.FAILED
+    ].includes(progress))
+  }, [progress, setIsProjectDialogOpen])
 
   const dialog = React.useMemo(() => {
     let dialogMessage = 'Loading...';

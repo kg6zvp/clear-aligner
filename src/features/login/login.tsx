@@ -43,7 +43,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       })
       setUserStatus(userState.LoggedIn);
       setShowLoginError(false)
-      setSnackBarMessage("Signed into ClearAligner Sync.")
+      setSnackBarMessage("Signed in to ClearAligner Sync.")
       setIsSnackBarOpen(true);
     }
     catch (error){

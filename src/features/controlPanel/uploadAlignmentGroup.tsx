@@ -19,12 +19,13 @@ import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
 import _ from 'lodash';
 
-const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn }: {
+const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn, disableProjectButtons }: {
   projectId?: string,
   containers: CorpusContainer[],
   size?: string,
   allowImport?: boolean;
   isSignedIn?: boolean;
+  disableProjectButtons: boolean
 }) => {
   const { projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
@@ -92,7 +93,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
         currentProject?.location !== ProjectLocation.LOCAL && (
         <>
           <RemovableTooltip
-            removed={alignmentFileErrors?.showDialog}
+            removed={alignmentFileErrors?.showDialog || disableProjectButtons}
             title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
             describeChild
             arrow>
@@ -108,7 +109,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                       && (_.max([ ...(currentProject.sourceCorpora?.corpora ?? []), ...(currentProject.targetCorpora?.corpora ?? []) ]
                         .map((corpus) => corpus.updatedAt?.getTime())
                         .filter((v) => !!v)) ?? 0) < currentProject.lastSyncTime
-                    )}
+                    ) || disableProjectButtons}
                   variant="contained"
                   sx={{
                     minWidth: '100%',
@@ -131,9 +132,11 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
           <br/>
         </>
       )}
-      <ButtonGroup>
+      <ButtonGroup
+        disabled={disableProjectButtons}
+      >
         <RemovableTooltip
-          removed={alignmentFileErrors?.showDialog}
+          removed={alignmentFileErrors?.showDialog || disableProjectButtons}
           title="Load Alignment Data"
           describeChild
           arrow>
@@ -190,7 +193,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
           </RemovableTooltip>
 
         <RemovableTooltip
-          removed={alignmentFileErrors?.showDialog}
+          removed={alignmentFileErrors?.showDialog || disableProjectButtons}
           title="Save Alignment Data"
           describeChild
           arrow>

@@ -141,7 +141,7 @@ export class ProjectTable extends VirtualTable {
       let progressCtr = 0;
       let progressMax = wordsOrParts.length;
       this.setDatabaseBusyInfo({
-        userText: `Loading ${wordsOrParts.length.toLocaleString()} words and parts...`,
+        userText: `Loading ${wordsOrParts.length.toLocaleString()} tokens...`,
         progressCtr,
         progressMax
       });
