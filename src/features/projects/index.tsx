@@ -61,14 +61,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   });
   const [disableProjectButtons, setDisableProjectButtons] = React.useState(false);
 
-  useEffect(()=>{
-    if(remoteFetchProgress === 0 ){
-      setDisableProjectButtons(false)
+  useEffect(() => {
+    if (remoteFetchProgress === 0) {
+      setDisableProjectButtons(false);
+    } else {
+      setDisableProjectButtons(true);
     }
-    else{
-      setDisableProjectButtons(true)
-    }
-  },[remoteFetchProgress])
+  }, [remoteFetchProgress]);
 
   const isSignedIn = React.useMemo(() => (
     userStatus === userState.LoggedIn
