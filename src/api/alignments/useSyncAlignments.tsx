@@ -1,5 +1,5 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
-import React, { useCallback, useRef, useState } from 'react';
+import { useMemo, useCallback, useRef, useState } from 'react';
 import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from '../../state/links/tableManager';
@@ -26,7 +26,7 @@ export const useSyncAlignments = (): SyncState => {
   const abortController = useRef<AbortController | undefined>();
   const dbApi = useDatabase();
 
-  const cleanupRequest = React.useCallback(() => {
+  const cleanupRequest = useCallback(() => {
     setProgress(Progress.CANCELED);
     abortController.current?.abort?.();
   }, []);
@@ -94,7 +94,7 @@ export const useSyncAlignments = (): SyncState => {
     }
   }, [sendJournal, fetchLinks]);
 
-  const dialog = React.useMemo(() => {
+  const dialog = useMemo(() => {
     return (
       <Dialog
         scroll="paper"
