@@ -144,6 +144,7 @@ export const useSyncProject = (): SyncState => {
           await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
 
           project.lastSyncTime = syncTime;
+          project.updatedAt = syncTime;
           project.location = ProjectLocation.SYNCED;
           await projectState.projectTable?.sync?.(project);
           // Update project state to Published.

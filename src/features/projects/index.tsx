@@ -12,6 +12,7 @@ import {
   MenuItem,
   Select,
   Theme,
+  Tooltip,
   Typography
 } from '@mui/material';
 import React, { useContext, useMemo } from 'react';
@@ -227,10 +228,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
   const cloudSyncInfo = useMemo(() => {
     const signedOutIcon = (
       <Grid container justifyContent="flex-end" alignItems="center">
+        <Tooltip title="Sign in to connect to manage remote projects">
         <Button variant="text" disabled sx={{ textTransform: 'none' }}>
           <span style={{ color: 'grey' }}>Unavailable</span>
           <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
         </Button>
+        </Tooltip>
       </Grid>
     );
     switch (project.location) {
@@ -259,12 +262,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, currentProject, onCl
         return (
           <Grid container flexDirection="column">
             <Grid container justifyContent="flex-end" alignItems="center">
+                <Tooltip title="Synced with remote project">
               <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
+                </Tooltip>
             </Grid>
           </Grid>
         );
     }
-  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject, usingCustomEndpoint]);
+  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject]);
 
   const currentProjectIndicator = useMemo(() => {
     if (isCurrentProject) {
