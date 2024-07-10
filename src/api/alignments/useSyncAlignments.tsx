@@ -3,7 +3,10 @@ import { useMemo, useCallback, useRef, useState } from 'react';
 import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName } from '../../state/links/tableManager';
-import { JournalEntryDTO, mapJournalEntryEntityToJournalEntryDTO } from '../../common/data/journalEntryDTO';
+import {
+  JournalEntry,
+  mapJournalEntryEntityToJournalEntryDTO
+} from '../../common/data/journalEntryDTO';
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { ApiUtils } from '../utils';
@@ -14,8 +17,6 @@ export interface SyncState {
   sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
   dialog: any;
 }
-
-const mapJournalEntryEntityToJournalEntryDTOHelper = (journalEntry: any): JournalEntryDTO => mapJournalEntryEntityToJournalEntryDTO(journalEntry);
 
 /**
  * hook to synchronize alignments. Updating the syncLinksKey or cancelSyncKey will perform that action as in our other hooks.
@@ -34,8 +35,8 @@ export const useSyncAlignments = (): SyncState => {
   const sendJournal = useCallback(async (signal: AbortSignal, projectId?: string) => {
     try {
       const journalEntriesToUpload =
-        (await dbApi.getAll(projectId!, JournalEntryTableName))
-          .map(mapJournalEntryEntityToJournalEntryDTOHelper);
+        (await dbApi.getAll(projectId!, JournalEntryTableName) as JournalEntry[])
+          .map(mapJournalEntryEntityToJournalEntryDTO);
       await ApiUtils.generateRequest({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.PATCH,

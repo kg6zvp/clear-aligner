@@ -19,17 +19,18 @@ export interface JournalEntryDTO {
   body: ServerAlignmentLinkDTO | ServerAlignmentLinkDTO[] | Operation[];
 }
 
-/**
- * convert a journal entry entity into a dto
- * @param je entity object
- */
-export const mapJournalEntryEntityToJournalEntryDTO = (je: {
+export interface JournalEntry {
   id: string,
   linkId: string,
   type: JournalEntryType,
   date: Date,
   body: string
-}): JournalEntryDTO => {
+}
+/**
+ * convert a journal entry entity into a dto
+ * @param je entity object
+ */
+export const mapJournalEntryEntityToJournalEntryDTO = (je: JournalEntry): JournalEntryDTO => {
   const parsed = JSON.parse(je.body);
   return {
     ...je,
