@@ -3,7 +3,7 @@ import { AlignmentSide } from './corpus';
 
 export interface WordOrPartDTO {
   id: string;
-  side: string;
+  side: AlignmentSide;
   corpusId: string;
   text: string;
   after: string;

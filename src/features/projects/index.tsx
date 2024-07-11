@@ -283,9 +283,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
         return (
           <Grid container flexDirection="column">
             <Grid container justifyContent="flex-end" alignItems="center">
-                <Tooltip title="Synced with remote project">
-              <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
-                </Tooltip>
+              <Tooltip title="Synced with remote project">
+                <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
+              </Tooltip>
             </Grid>
           </Grid>
         );
