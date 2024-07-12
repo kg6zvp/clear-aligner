@@ -3,12 +3,12 @@ import { AlignmentSide } from './corpus';
 
 export interface WordOrPartDTO {
   id: string;
-  side: string;
+  side: AlignmentSide;
   corpusId: string;
   text: string;
-  after: string;
-  gloss: string;
-  sourceVerseBcv: string;
+  after?: string;
+  gloss?: string;
+  sourceVerseBcv?: string;
 }
 
 export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO => ({
@@ -16,9 +16,9 @@ export const mapWordOrPartToWordOrPartDTO = (wordOrPart: Word): WordOrPartDTO =>
   side: wordOrPart.side,
   corpusId: wordOrPart.corpusId,
   text: wordOrPart.text,
-  after: wordOrPart.after ?? "",
-  gloss: wordOrPart.gloss ?? "",
-  sourceVerseBcv: wordOrPart.sourceVerse ?? "",
+  after: wordOrPart.after,
+  gloss: wordOrPart.gloss,
+  sourceVerseBcv: wordOrPart.sourceVerse,
 });
 
 export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word => ({
@@ -30,5 +30,5 @@ export const mapWordOrPartDtoToWordOrPart = (wordOrPart: WordOrPartDTO): Word =>
   gloss: wordOrPart.gloss,
   sourceVerse: wordOrPart.sourceVerseBcv,
   position: 0,
-  normalizedText: ''
+  normalizedText: wordOrPart.text?.toLowerCase() ?? ''
 });

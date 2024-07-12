@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { WordOrPartDTO } from '../../common/data/project/wordsOrParts';
+import { mapWordOrPartDtoToWordOrPart, WordOrPartDTO } from '../../common/data/project/wordsOrParts';
 import { Project } from '../../state/projects/tableManager';
 import { mapProjectDtoToProject, ProjectDTO, ProjectLocation } from '../../common/data/project/project';
 import { AppContext } from '../../App';
@@ -9,8 +9,10 @@ import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/materia
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
-import { AlignmentSide } from '../../common/data/project/corpus';
+import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { ApiUtils } from '../utils';
+import { useDatabase } from '../../hooks/useDatabase';
+import _ from 'lodash';
 
 enum ProjectDownloadProgress {
   IDLE,
@@ -40,6 +42,8 @@ export const useDownloadProject = (): SyncState => {
   const [progress, setProgress] = useState<ProjectDownloadProgress>(ProjectDownloadProgress.IDLE);
   const [projectId, setProjectId] = useState<string>();
   const abortController = useRef<AbortController | undefined>();
+
+  const dbApi = useDatabase();
 
   const cleanupRequest = useCallback(async () => {
     abortController.current = undefined;
@@ -74,21 +78,29 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens: WordOrPartDTO[] = (await ApiUtils.generateRequest({
-        requestPath: `/api/projects/${projectId}/tokens`,
+      const resultTokens = ((await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${projectId}/tokens?side=targets`,
         requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal,
-      })).response?.tokens ?? [];
+      })).response?.tokens ?? []) as WordOrPartDTO[];
 
       if (projectResponse.success) {
         if (cancelToken.canceled) return;
-        setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
-        resultTokens.filter((t: WordOrPartDTO) => t.side === AlignmentSide.TARGET).forEach((t: WordOrPartDTO) => {
-          projectData.corpora = (projectData.corpora || []).map(c => c.id === t.corpusId ? {
-            ...c,
-            words: [...(c.words || []).filter(w => w.id !== t.id), t]
-          } : c);
+        const targetCorpora = projectData.corpora
+          .filter((c) => c.side === AlignmentSide.TARGET);
+        await dbApi.insert({
+          projectId,
+          table: CORPORA_TABLE_NAME,
+          itemOrItems: targetCorpora
         });
+        targetCorpora.forEach((c) => c.words = []);
+        const targetCorporaMap = new Map(targetCorpora.map(c => [c.id, c]));
+        setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
+        for (const chunk of _.chunk(resultTokens, 2_000)) {
+          chunk
+            .map(mapWordOrPartDtoToWordOrPart)
+            .forEach((w) => targetCorporaMap.get(w.corpusId)?.words!.push(w));
+        }
         const currentTime = DateTime.now().toMillis();
         projectData.updatedAt = currentTime;
         projectData.lastSyncTime = currentTime;
@@ -116,7 +128,7 @@ export const useDownloadProject = (): SyncState => {
         } | undefined = alignmentResponse.response;
         const prevSourceName = projectState.linksTable.getSourceName();
         projectState.linksTable.setSourceName(project.id);
-        await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
+        await projectState.linksTable.saveAll( (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true, true);
         projectState.linksTable.setSourceName(prevSourceName);
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);

@@ -134,16 +134,6 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
-          const alignmentResponse = await ApiUtils.generateRequest({
-            requestPath: `/api/projects/${project.id}/alignment_links`,
-            requestType: ApiUtils.RequestType.GET,
-            signal: abortController.current?.signal
-          });
-          const linksBody: {
-            links: ServerAlignmentLinkDTO[]
-          } | undefined = alignmentResponse.response;
-          await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
-
           project.lastSyncTime = syncTime;
           project.updatedAt = syncTime;
           project.location = ProjectLocation.SYNCED;
@@ -157,6 +147,7 @@ export const useSyncProject = (): SyncState => {
     } catch (x) {
       setProgress(SyncProgress.FAILED);
       console.error("Failed to sync this project: ", x);
+      await publishProject(project, ProjectState.PUBLISHED);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,

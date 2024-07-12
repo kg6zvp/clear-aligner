@@ -159,8 +159,8 @@ export class ProjectTable extends VirtualTable {
         const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
         const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
         this.setDatabaseBusyText(chunk.length === progressMax
-          ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
-          : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
+          ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} tokens)...`
+          : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} tokens)...`);
       }
       this.setDatabaseBusyText('Finishing project creation...');
       this.decrDatabaseBusyCtr();
