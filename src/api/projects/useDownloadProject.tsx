@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { WordOrPartDTO } from '../../common/data/project/wordsOrParts';
+import { mapWordOrPartDtoToWordOrPart, WordOrPartDTO } from '../../common/data/project/wordsOrParts';
 import { Project } from '../../state/projects/tableManager';
 import { mapProjectDtoToProject, ProjectDTO, ProjectLocation } from '../../common/data/project/project';
 import { AppContext } from '../../App';
@@ -98,6 +98,7 @@ export const useDownloadProject = (): SyncState => {
         setProgress(ProjectDownloadProgress.FORMATTING_RESPONSE);
         for (const chunk of _.chunk(resultTokens, 2_000)) {
           chunk
+            .map(mapWordOrPartDtoToWordOrPart)
             .forEach((w) => targetCorporaMap.get(w.corpusId)?.words!.push(w));
         }
         const currentTime = DateTime.now().toMillis();
@@ -127,7 +128,7 @@ export const useDownloadProject = (): SyncState => {
         } | undefined = alignmentResponse.response;
         const prevSourceName = projectState.linksTable.getSourceName();
         projectState.linksTable.setSourceName(project.id);
-        await projectState.linksTable.save((linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true);
+        await projectState.linksTable.saveAll( (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true, true);
         projectState.linksTable.setSourceName(prevSourceName);
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
