@@ -60,7 +60,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       anchorEl={popOverAnchorEl}
       anchorOrigin={{
         vertical: 'bottom',
-        horizontal: 'left',
+        horizontal: 'center',
       }}
       transformOrigin={{
         vertical: 'top',

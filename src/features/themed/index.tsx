@@ -67,6 +67,23 @@ const lightTheme = createTheme({
         }
       }
     },
+    MuiToolbar:{
+      styleOverrides:{
+        root: {
+          paddingLeft: "12px !important",
+          paddingTop: "12px",
+          paddingRight: "12px !important",
+          paddingBottom: "6px",
+        }
+      }
+    },
+    MuiBadge:{
+      styleOverrides:{
+        root: {
+          marginRight: "0px !important"
+        }
+      }
+    },
     MuiAppBar:{
       styleOverrides:{
         root: ({theme}) => ({

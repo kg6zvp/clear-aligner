@@ -34,7 +34,6 @@ import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { ProfileAvatar, userState } from '../profileAvatar/profileAvatar';
-import TopAppBar from '../topAppBar';
 import AppBar from '@mui/material/AppBar';
 
 interface ProjectsViewProps {
@@ -95,64 +94,56 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 
   return (
     <>
-      <Box sx={{ flexGrow: 1 }}>
-        <AppBar
-          position="static"
-        >
-          <Toolbar>
-            <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
-              Projects
-            </Typography>
-            <ProfileAvatar/>
-          </Toolbar>
-        </AppBar>
-      </Box>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
-        <Grid container justifyContent="space-between" alignItems="center"
-              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
-          <Grid container sx={{ width: 'fit-content' }}>
-            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
-            <Button
-              variant="contained"
-              onClick={() => setOpenProjectDialog(true)}
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              disabled={disableProjectButtons}
-            >Create New</Button>
-          </Grid>
-          <Grid item sx={{ px: 2 }}>
-            {
-              (isSignedIn || usingCustomEndpoint) && (
-                <Button variant="text"
-                        disabled={disableProjectButtons}
-                        onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
-                  <Grid container alignItems="center">
-                    <Refresh sx={theme => ({
-                      mr: 1,
-                      mb: .5,
-                      ...(disableProjectButtons ? {
-                        '@keyframes rotation': {
-                          from: { transform: 'rotate(0deg)' },
-                          to: { transform: 'rotate(360deg)' }
-                        },
-                        animation: '2s linear infinite rotation',
-                        fill: theme.palette.text.secondary
-                      } : {})
-                    })} />
-                    <Typography variant="subtitle2" sx={theme => ({
-                      textTransform: 'none',
-                      fontWeight: 'bold',
-                      color: disableProjectButtons ? theme.palette.text.secondary
-                        : getPaletteFromProgress(remoteFetchProgress, theme)
-                    })}>
-                      {disableProjectButtons ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
-                    </Typography>
-                  </Grid>
-                </Button>
-              )
-            }
-          </Grid>
-        </Grid>
+
+        {/*App Bar*/}
+        <Box sx={{ flexGrow: 1 }}>
+          <AppBar
+            position="static"
+          >
+            <Toolbar>
+              <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
+                Projects
+              </Typography>
+              <Grid item sx={{ px: 2 }}>
+                {
+                  (isSignedIn || usingCustomEndpoint) && (
+                    <Button variant="text"
+                            disabled={disableProjectButtons}
+                            onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
+                      <Grid container alignItems="center">
+                        <Refresh sx={theme => ({
+                          mr: 1,
+                          mb: .5,
+                          ...(disableProjectButtons ? {
+                            '@keyframes rotation': {
+                              from: { transform: 'rotate(0deg)' },
+                              to: { transform: 'rotate(360deg)' }
+                            },
+                            animation: '2s linear infinite rotation',
+                            fill: theme.palette.text.secondary
+                          } : {})
+                        })} />
+                        <Typography variant="subtitle2" sx={theme => ({
+                          textTransform: 'none',
+                          fontWeight: 'bold',
+                          color: disableProjectButtons ? theme.palette.text.secondary
+                            : getPaletteFromProgress(remoteFetchProgress, theme)
+                        })}>
+                          {disableProjectButtons ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                        </Typography>
+                      </Grid>
+                    </Button>
+                  )
+                }
+              </Grid>
+              <ProfileAvatar/>
+            </Toolbar>
+          </AppBar>
+        </Box>
+
+        {/*Projects Grid*/}
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
@@ -175,6 +166,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           paddingTop: '5rem',
           paddingLeft: '2.3rem'
         }}>
+
+          {/*Theme Preference Dropdown*/}
           <FormControl sx={{ width: 175 }}>
             <InputLabel id={'theme-label'}>Theme</InputLabel>
             <Select

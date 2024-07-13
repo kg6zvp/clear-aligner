@@ -103,7 +103,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
         }}
         anchorOrigin={{
           vertical: 'bottom',
-          horizontal: 'left',
+          horizontal: 'center',
         }}
         transformOrigin={{
           vertical: 'top',
