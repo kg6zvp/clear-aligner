@@ -95,7 +95,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   return (
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
-            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+            sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
 
         {/*App Bar*/}
         <Box sx={{ flexGrow: 1 }}>

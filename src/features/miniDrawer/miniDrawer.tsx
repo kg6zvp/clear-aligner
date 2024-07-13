@@ -10,8 +10,6 @@ import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
-import { ProfileAvatar } from '../profileAvatar/profileAvatar';
-
 
 
 /**

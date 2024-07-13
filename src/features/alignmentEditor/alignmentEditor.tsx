@@ -16,7 +16,10 @@ import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import _ from 'lodash';
 import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
-import { Stack } from '@mui/material';
+import { Stack, Toolbar, Typography } from '@mui/material';
+import { Box } from '@mui/system';
+import AppBar from '@mui/material/AppBar';
+import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -71,6 +74,20 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
 
   return (
     <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
+      {/*App Bar*/}
+      <Box sx={{ flexGrow: 1 }}>
+        <AppBar
+          position="static"
+        >
+          <Toolbar>
+            <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
+              Alignment Editor
+            </Typography>
+
+            <ProfileAvatar/>
+          </Toolbar>
+        </AppBar>
+      </Box>
       {
         showNavigation && (
           <div style={{ display: 'grid', justifyContent: 'center' }}>
