@@ -130,11 +130,6 @@ export const MiniDrawer = () => {
               </Tooltip>
             </ListItem>
           </Stack>
-          <Stack>
-            <ListItem key={"5"} sx={{ display: "block", px: 0, pb: 3 }}>
-              <ProfileAvatar/>
-            </ListItem>
-          </Stack>
         </Stack>
       </Drawer>
     )

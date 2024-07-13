@@ -11,7 +11,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Theme,
+  Theme, Toolbar,
   Tooltip,
   Typography
 } from '@mui/material';
@@ -33,7 +33,9 @@ import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject'
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
-import { userState } from '../profileAvatar/profileAvatar';
+import { ProfileAvatar, userState } from '../profileAvatar/profileAvatar';
+import TopAppBar from '../topAppBar';
+import AppBar from '@mui/material/AppBar';
 
 interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -93,6 +95,18 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 
   return (
     <>
+      <Box sx={{ flexGrow: 1 }}>
+        <AppBar
+          position="static"
+        >
+          <Toolbar>
+            <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
+              Projects
+            </Typography>
+            <ProfileAvatar/>
+          </Toolbar>
+        </AppBar>
+      </Box>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
         <Grid container justifyContent="space-between" alignItems="center"

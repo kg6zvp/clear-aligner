@@ -66,6 +66,17 @@ const lightTheme = createTheme({
           backgroundColor: '#eeeeee'
         }
       }
+    },
+    MuiAppBar:{
+      styleOverrides:{
+        root: ({theme}) => ({
+          boxShadow: "none",
+          color: theme.palette.primary.main,
+        }),
+        colorPrimary:{
+          backgroundColor: "white"
+        }
+      }
     }
   }
 });
