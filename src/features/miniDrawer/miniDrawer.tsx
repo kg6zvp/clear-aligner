@@ -19,7 +19,7 @@ import { ProfileAvatar } from '../profileAvatar/profileAvatar';
  */
 export const MiniDrawer = () => {
   const [selectedIndex, setSelectedIndex] = React.useState("");
-  const drawerWidth = 50;
+  const drawerWidth = 49;
   const theme = useTheme();
 
   const ListItems = {
