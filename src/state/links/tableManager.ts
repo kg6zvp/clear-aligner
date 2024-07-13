@@ -14,7 +14,7 @@ import { useInterval } from 'usehooks-ts';
 import { DatabaseApi } from '../../hooks/useDatabase';
 
 const DatabaseInsertChunkSize = 10_000;
-const UIInsertChunkSize = DatabaseInsertChunkSize * 2;
+const UIInsertChunkSize = DatabaseInsertChunkSize / 2;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
