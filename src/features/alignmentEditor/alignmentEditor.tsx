@@ -140,33 +140,33 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                 </span>
               </Tooltip>
             </ButtonGroup>
+            {
+              showNavigation && (
+                <div style={{ display: 'grid', justifyContent: 'center' }}>
+                  <br />
+                  <BCVNavigation
+                    horizontal
+                    disabled={!availableWords || availableWords.length < 1}
+                    words={availableWords}
+                    currentPosition={currentPosition}
+                    onNavigate={bcv => {
+                      if (!_.isEqual(bcv, currentPosition)) {
+                        appCtx.setPreferences((previousState): UserPreference => {
+                          return {
+                            ...previousState as UserPreference,
+                            bcv
+                          };
+                        });
+                      }
+                    }}
+                  />
+                </div>
+              )
+            }
             <ProfileAvatar />
           </Toolbar>
         </AppBar>
       </Box>
-      {
-        showNavigation && (
-          <div style={{ display: 'grid', justifyContent: 'center' }}>
-            <br />
-            <BCVNavigation
-              horizontal
-              disabled={!availableWords || availableWords.length < 1}
-              words={availableWords}
-              currentPosition={currentPosition}
-              onNavigate={bcv => {
-                if (!_.isEqual(bcv, currentPosition)) {
-                  appCtx.setPreferences((previousState): UserPreference => {
-                    return {
-                      ...previousState as UserPreference,
-                      bcv
-                    };
-                  });
-                }
-              }}
-            />
-          </div>
-        )
-      }
       <Workbench
         corpora={selectedCorporaContainers}
         currentPosition={currentPosition}
