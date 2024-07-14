@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
-import { ArrowBackIos, ArrowForwardIos } from '@mui/icons-material';
+import { ArrowBackIos, ArrowForward, ArrowForwardIos } from '@mui/icons-material';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import {
@@ -231,7 +231,7 @@ const BCVNavigation = ({
         value={selectedVerse}
         onChange={(_, value) => setSelectedVerse(value)}
         renderInput={(params) => (
-          <TextField label={'Verse'} {...params} variant={'standard'} />
+          <TextField label={'Verse'} {...params} />
         )}
       />
     ),
@@ -299,7 +299,7 @@ const BCVNavigation = ({
         value={selectedBook}
         onChange={(_, value) => handleSetBook(value)}
         renderInput={(params) => (
-          <TextField {...params} label={'Book'} variant={'standard'} />
+          <TextField {...params} label={'Book'} />
         )}
       />
       <Autocomplete
@@ -316,7 +316,7 @@ const BCVNavigation = ({
         value={selectedChapter}
         onChange={(_, value) => handleSetChapter(value)}
         renderInput={(params) => (
-          <TextField label={'Chapter'} {...params} variant={'standard'} />
+          <TextField label={'Chapter'} {...params} />
         )}
       />
       {horizontal ? (
@@ -339,16 +339,19 @@ const BCVNavigation = ({
       )}
       <Button
         sx={{
-          ...(horizontal ? { marginTop: '.85em' } : {})
+          ...(horizontal ? { marginTop: '.85em' } : {}),
+          borderRadius: 10,
         }}
-        variant={'text'}
+        variant={'contained'}
         color={'primary'}
         disabled={
           disabled || !selectedBook || !selectedChapter || !selectedVerse
         }
         onClick={() => handleNavigation()}
+        endIcon={<ArrowForward/>}
       >
-        Navigate
+        GO
+
       </Button>
     </Box>
   );
