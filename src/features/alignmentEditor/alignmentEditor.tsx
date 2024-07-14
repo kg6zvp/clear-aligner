@@ -4,22 +4,23 @@
  * Workbench components
  */
 
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { LayoutContext } from '../../AppLayout';
 import { CorpusContainer, Word } from '../../structs';
 import Workbench from '../../workbench';
 import BCVNavigation from '../bcvNavigation/BCVNavigation';
 import { AppContext } from '../../App';
-import { UserPreference } from 'state/preferences/tableManager';
+import { ControlPanelFormat, UserPreference } from 'state/preferences/tableManager';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import _ from 'lodash';
 import { useAppDispatch } from '../../app/index';
 import { resetTextSegments } from '../../state/alignment.slice';
-import { Stack, Toolbar, Typography } from '@mui/material';
+import { Button, ButtonGroup, Stack, Toolbar, Tooltip } from '@mui/material';
 import { Box } from '@mui/system';
 import AppBar from '@mui/material/AppBar';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
+import { SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 
 const defaultDocumentTitle = 'ClearAligner';
 
@@ -36,11 +37,11 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
   );
   const appCtx = useContext(AppContext);
   const dispatch = useAppDispatch();
-  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1,1,1), [appCtx.preferences?.bcv]);
+  const currentPosition = useMemo<BCVWP>(() => appCtx.preferences?.bcv ?? new BCVWP(1, 1, 1), [appCtx.preferences?.bcv]);
 
   useEffect(() => {
     if (sourceContainer && targetContainer)
-      setSelectedCorporaContainers([ sourceContainer, targetContainer ]);
+      setSelectedCorporaContainers([sourceContainer, targetContainer]);
   }, [sourceContainer, targetContainer]);
 
   useEffect(() => {
@@ -69,8 +70,20 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
 
   // reset selected tokens when the book, chapter or verse changes
   useEffect(() => {
-    dispatch(resetTextSegments())
-  }, [appCtx.preferences?.bcv, dispatch])
+    dispatch(resetTextSegments());
+  }, [appCtx.preferences?.bcv, dispatch]);
+
+  const saveControlPanelFormat = useCallback(async () => {
+    const alignmentDirection = appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
+      ? ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
+      : ControlPanelFormat[ControlPanelFormat.VERTICAL];
+    const updatedPreferences = {
+      ...appCtx.preferences,
+      alignmentDirection
+    } as UserPreference;
+    appCtx.projectState.userPreferenceTable?.saveOrUpdate(updatedPreferences);
+    appCtx.setPreferences(updatedPreferences);
+  }, [appCtx]);
 
   return (
     <Stack direction={'column'} minWidth={'100%'} height={'100%'}>
@@ -80,11 +93,54 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
           position="static"
         >
           <Toolbar>
-            <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
-              Alignment Editor
-            </Typography>
-
-            <ProfileAvatar/>
+            <ButtonGroup>
+              <Tooltip
+                title={`Swap to horizontal view mode`}
+                arrow describeChild>
+                <span>
+                  <Button
+                    variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? 'outlined' : 'contained'}
+                    disabled={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? true : false}
+                    onClick={() => void saveControlPanelFormat()}
+                  >
+                        <SwapHoriz />
+                  </Button>
+                </span>
+              </Tooltip>
+              <Tooltip
+                title={`Swap to vertical view mode`}
+                arrow describeChild>
+                <span>
+                  <Button
+                    variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'outlined' : 'contained'}
+                    disabled={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? true : false}
+                    onClick={() => void saveControlPanelFormat()}
+                  >
+                        <SwapVert />
+                  </Button>
+                </span>
+              </Tooltip>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Tooltip title="Toggle Glosses" arrow describeChild>
+                <span>
+                  <Button
+                    variant={appCtx.preferences?.showGloss ? 'contained' : 'outlined'}
+                    disabled={!selectedCorporaContainers.some(container => container.corpusAtReferenceString(currentPosition?.toReferenceString?.() ?? '')?.hasGloss)}
+                    onClick={() => {
+                      const updatedPreferences = {
+                        ...((appCtx.preferences ?? {}) as UserPreference),
+                        showGloss: !appCtx.preferences?.showGloss
+                      };
+                      appCtx.setPreferences(updatedPreferences);
+                    }}
+                  >
+                    <Translate />
+                  </Button>
+                </span>
+              </Tooltip>
+            </ButtonGroup>
+            <ProfileAvatar />
           </Toolbar>
         </AppBar>
       </Box>
