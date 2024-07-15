@@ -277,7 +277,8 @@ const BCVNavigation = ({
       }
       className={BCVNavigation.name}
     >
-      {horizontal && backButton}
+      {horizontal && backButton }
+      {horizontal && forwardButton }
       <Autocomplete
         disabled={disabled}
         disablePortal
@@ -322,7 +323,6 @@ const BCVNavigation = ({
       {horizontal ? (
         <>
           {verseSelection}
-          {forwardButton}
         </>
       ) : (
         <Box
@@ -333,8 +333,8 @@ const BCVNavigation = ({
           }}
         >
           {backButton}
-          {verseSelection}
           {forwardButton}
+          {verseSelection}
         </Box>
       )}
       <Button
