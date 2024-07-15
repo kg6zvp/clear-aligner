@@ -146,7 +146,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
             </ButtonGroup>
             {
               showNavigation && (
-                <div style={{ display: 'grid', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <br />
                   <BCVNavigation
                     horizontal

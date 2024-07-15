@@ -31,7 +31,6 @@ export interface BCVNavigationProps {
   onNavigate?: (selection: BCVWP) => void;
 }
 
-const ICON_BTN_VERT_MARGIN = '.5em';
 
 /**
  * BCVNavigation component for use in React
@@ -153,7 +152,6 @@ const BCVNavigation = ({
       >
         <IconButton
           color={'primary'}
-          sx={{ marginTop: ICON_BTN_VERT_MARGIN }}
           disabled={disabled || !navigateBack}
           onClick={navigateBack ?? undefined}
         >
@@ -201,7 +199,6 @@ const BCVNavigation = ({
       >
         <IconButton
           color={'primary'}
-          sx={{ marginTop: ICON_BTN_VERT_MARGIN }}
           disabled={disabled || !navigateForward}
           onClick={navigateForward ?? undefined}
         >
