@@ -497,34 +497,6 @@ export const ConcordanceView = () => {
               marginTop: '1em'
             }}
           >
-            <SingleSelectButtonGroup
-              value={wordSource}
-              items={[
-                {
-                  value: 'sources',
-                  label: 'Source'
-                },
-                {
-                  value: 'targets',
-                  label: 'Target'
-                }
-              ]}
-              onSelect={(value) => setWordSource(value as AlignmentSide)}
-            />
-            <SingleSelectButtonGroup
-              value={wordFilter}
-              items={[
-                {
-                  value: 'aligned',
-                  label: 'Aligned'
-                },
-                {
-                  value: 'all',
-                  label: 'All'
-                }
-              ]}
-              onSelect={(value) => setWordFilter(value as PivotWordFilter)}
-            />
             <Paper
               sx={{
                 display: 'flex',
