@@ -31,6 +31,7 @@ export interface BCVNavigationProps {
   onNavigate?: (selection: BCVWP) => void;
 }
 
+const AUTOCOMPLETE_VERT_MARGIN = '.15em';
 
 /**
  * BCVNavigation component for use in React
@@ -218,7 +219,8 @@ const BCVNavigation = ({
         size="small"
         sx={{
           display: 'inline-flex',
-          width: horizontal ? '6em' : '100%'
+          width: horizontal ? '6em' : '100%',
+          marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         getOptionLabel={(option) =>
           option?.reference ? String(option.reference) : ''
@@ -283,7 +285,8 @@ const BCVNavigation = ({
         size="small"
         sx={{
           width: horizontal ? '12em' : '100%',
-          display: 'inline-flex'
+          display: 'inline-flex',
+          marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         options={availableBooks ?? ([] as NavigableBook[])}
         typeof={'select'}
@@ -306,7 +309,8 @@ const BCVNavigation = ({
         size="small"
         sx={{
           width: horizontal ? '6em' : '100%',
-          display: 'inline-flex'
+          display: 'inline-flex',
+          marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         options={availableChapters}
         typeof={'select'}
@@ -336,7 +340,6 @@ const BCVNavigation = ({
       )}
       <Button
         sx={{
-          ...(horizontal ? { marginTop: '.85em' } : {}),
           borderRadius: 10,
         }}
         variant={'contained'}
