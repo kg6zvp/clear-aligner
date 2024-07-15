@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
-import { ArrowBackIos, ArrowForward, ArrowForwardIos } from '@mui/icons-material';
+import { ArrowBackIosNew, ArrowForward, ArrowForwardIos } from '@mui/icons-material';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import {
@@ -157,7 +157,7 @@ const BCVNavigation = ({
           disabled={disabled || !navigateBack}
           onClick={navigateBack ?? undefined}
         >
-          <ArrowBackIos/>
+          <ArrowBackIosNew/>
         </IconButton>
       </Tooltip>
     ),
