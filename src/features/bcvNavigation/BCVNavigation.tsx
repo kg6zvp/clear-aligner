@@ -267,7 +267,7 @@ const BCVNavigation = ({
           ...(horizontal
             ? {
               flexWrap: 'wrap',
-              gap: '.50em'
+              gap: '6px'
             }
             : {
               alignItems: 'center'
@@ -341,6 +341,7 @@ const BCVNavigation = ({
       <Button
         sx={{
           borderRadius: 10,
+          marginRight: '258px'
         }}
         variant={'contained'}
         color={'primary'}

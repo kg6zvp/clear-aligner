@@ -74,6 +74,8 @@ const lightTheme = createTheme({
           paddingTop: "12px",
           paddingRight: "12px !important",
           paddingBottom: "6px",
+          maxHeight: "58px !important",
+          minHeight: "58px !important"
         }
       }
     },

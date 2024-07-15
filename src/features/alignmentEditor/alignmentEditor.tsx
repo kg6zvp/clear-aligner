@@ -91,7 +91,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
         >
           <Toolbar>
             <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center'}}>
-              <ButtonGroup>
+              <ButtonGroup sx={{ marginRight: '6px'}}>
                 <Tooltip
                   title={`Swap to horizontal view mode`}
                   arrow describeChild>
@@ -123,6 +123,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                     <Button
                       variant={appCtx.preferences?.showGloss ? 'contained' : 'outlined'}
                       disabled={!selectedCorporaContainers.some(container => container.corpusAtReferenceString(currentPosition?.toReferenceString?.() ?? '')?.hasGloss)}
+                      sx={{ marginRight: '151px'}}
                       onClick={() => {
                         const updatedPreferences = {
                           ...((appCtx.preferences ?? {}) as UserPreference),
