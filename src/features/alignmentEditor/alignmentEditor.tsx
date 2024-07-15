@@ -73,10 +73,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
     dispatch(resetTextSegments());
   }, [appCtx.preferences?.bcv, dispatch]);
 
-  const saveControlPanelFormat = useCallback(async () => {
-    const alignmentDirection = appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL]
-      ? ControlPanelFormat[ControlPanelFormat.HORIZONTAL]
-      : ControlPanelFormat[ControlPanelFormat.VERTICAL];
+  const saveControlPanelFormat = useCallback(async (alignmentDirection: 'VERTICAL' | 'HORIZONTAL') => {
     const updatedPreferences = {
       ...appCtx.preferences,
       alignmentDirection
@@ -99,9 +96,8 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                 arrow describeChild>
                 <span>
                   <Button
-                    variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? 'outlined' : 'contained'}
-                    disabled={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? true : false}
-                    onClick={() => void saveControlPanelFormat()}
+                    variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? 'contained' : 'outlined' }
+                    onClick={() => void saveControlPanelFormat('HORIZONTAL')}
                   >
                         <SwapHoriz />
                   </Button>
@@ -112,9 +108,8 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                 arrow describeChild>
                 <span>
                   <Button
-                    variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'outlined' : 'contained'}
-                    disabled={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? true : false}
-                    onClick={() => void saveControlPanelFormat()}
+                    variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'contained' : 'outlined'}
+                    onClick={() => void saveControlPanelFormat('VERTICAL')}
                   >
                         <SwapVert />
                   </Button>
