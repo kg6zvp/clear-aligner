@@ -351,7 +351,6 @@ const BCVNavigation = ({
         endIcon={<ArrowForward/>}
       >
         GO
-
       </Button>
     </Box>
   );

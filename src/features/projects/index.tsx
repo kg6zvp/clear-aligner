@@ -98,7 +98,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
 
         {/*App Bar*/}
-        <Box sx={{ flexGrow: 1 }}>
+        <Box>
           <AppBar
             position="static"
           >
