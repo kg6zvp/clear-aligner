@@ -320,7 +320,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
   return (
     <>
       <Card sx={theme => ({
-        height: 250, width: 250, m: 2.5, '&:hover': {
+        height: 250, width: 250, m: 2, '&:hover': {
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
             : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'

@@ -24,7 +24,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
               display: 'flex',
               justifyContent: 'center',
               margin: 'auto',
-              marginTop: '1rem',
+              marginTop: '0',
               marginBottom: '0',
               minWidth: '100%',
               flexGrow: 1,
