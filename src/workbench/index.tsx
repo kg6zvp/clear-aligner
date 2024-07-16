@@ -23,12 +23,11 @@ const Workbench: React.FC<WorkbenchProps> = ({
             style={{
               display: 'flex',
               justifyContent: 'center',
-              padding: '2rem',
               margin: 'auto',
               marginTop: '1rem',
               marginBottom: '0',
               minWidth: '100%',
-              flexGrow: 1
+              flexGrow: 1,
             }}
           >
             <Editor

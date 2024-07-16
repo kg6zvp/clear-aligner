@@ -25,12 +25,13 @@ const Editor = (props: EditorProps): ReactElement => {
   useDebug('Editor');
 
   return (
-    <Container maxWidth={false} sx={{
+    <Container maxWidth={false} disableGutters sx={{
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
       flexShrink: 1,
-      marginBottom: '1rem'
+      marginBottom: '1rem',
+      px: '12px'
     }}>
             <Polyglot containers={props.containers} position={props.position} />
             <ControlPanel containers={props.containers} position={props.position} />
