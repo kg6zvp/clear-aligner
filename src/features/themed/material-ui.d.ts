@@ -23,3 +23,18 @@ declare module '@mui/material/Typography' {
     selected: true;
   }
 }
+
+// to allow for custom colors in the palette
+declare module '@mui/material/styles' {
+  interface Theme {
+    statusIndicators: {
+      aligned: string;
+    };
+  }
+  // allow configuration using `createTheme`
+  interface ThemeOptions {
+    statusIndicators?: {
+      aligned?: string;
+    };
+  }
+}
