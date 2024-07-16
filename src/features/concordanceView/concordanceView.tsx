@@ -10,7 +10,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  Divider, FormControl, InputLabel, MenuItem,
+  FormControl, InputLabel, MenuItem,
   Paper, Select,
   Stack, Toolbar,
   Typography
@@ -79,7 +79,6 @@ export interface AlignmentTableControlPanelProps {
   setSelectedRowsCount: Function;
   selectedRowsCount: number;
   linksPendingUpdate: Map<string, Link>;
-  container:  React.MutableRefObject<null>;
   setSelectedRows: Function;
   selectedRows: Link[];
   setUpdatedSelectedRows: Function;
@@ -95,7 +94,6 @@ export interface AlignmentTableControlPanelProps {
  * @param setSaveButtonDisabled callback to control the state of the Save Button
  * @param selectedRowsCount number of currently selected rows (via their checkbox)
  * @param linksPendingUpdate Map of alignment links that the user has updated in the UI, but not yet saved
- * @param container used in conjunction with Portal to relocate the select all checkbox
  * @param setSelectedRows callback to update which rows are currently selected
  * @param setSelectedRowsCount callback to update the count of currently selected rows
  * @param selectedRows array of what rows are currently selected
@@ -111,7 +109,6 @@ export const AlignmentTableControlPanel = ({
                                              setSaveButtonDisabled,
                                              selectedRowsCount,
                                              linksPendingUpdate,
-                                             container,
                                              setSelectedRows,
                                              setSelectedRowsCount,
                                              selectedRows,
@@ -214,12 +211,6 @@ export const AlignmentTableControlPanel = ({
           style={{ marginBottom: '10px' }}
           direction="row"
         >
-          <div ref={container}>
-            {/*This is where the checkbox gets inserted via Portal*/}
-          </div>
-          <Typography component="span" alignSelf={'center'}>
-            <Box sx={{ fontWeight: 'bold' }}> Alignments</Box>
-          </Typography>
         </Stack>
         <Stack
           direction="row"
@@ -227,8 +218,6 @@ export const AlignmentTableControlPanel = ({
           justifyContent="right"
           style={{ marginBottom: '10px' }}
         >
-          <DisplayItemsSelectedCount />
-          <Divider orientation="vertical" />
           <ButtonGroup>
             <SingleSelectButtonGroup
               disabled={isButtonGroupDisabled}
@@ -259,10 +248,11 @@ export const AlignmentTableControlPanel = ({
               onSelect={(value) => handleOnSelect(value)}
             />
           </ButtonGroup>
+          <DisplayItemsSelectedCount />
           <ButtonGroup>
             <Button
               variant="contained"
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', borderRadius: '22px'}}
               disabled={saveButtonDisabled}
               onClick={handleSaveLinkStatus}
             >
@@ -328,10 +318,6 @@ export const ConcordanceView = () => {
   const [selectedAlignmentLink, setSelectedAlignmentLink] = useState(
     null as Link | null
   );
-
-  // container is used for the Portal component to transport the checkbox from
-  // the DataGrid to the AlignmentTableControlPanel
-  const container = React.useRef(null);
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
@@ -464,6 +450,23 @@ export const ConcordanceView = () => {
                 <MenuItem value={'all' as PivotWordFilter}>All</MenuItem>
               </Select>
             </FormControl>
+
+            {/*Alignment Table Control Panel*/}
+            <AlignmentTableControlPanel
+              saveButtonDisabled={saveButtonDisabled}
+              setSelectedRowsCount={setSelectedRowsCount}
+              selectedRowsCount={selectedRowsCount}
+              linksPendingUpdate={linksPendingUpdate}
+              setSaveButtonDisabled={setSaveButtonDisabled}
+              setSelectedRows={setSelectedRows}
+              selectedRows={selectedRows}
+              setLinksPendingUpdate={setLinksPendingUpdate}
+              updatedSelectedRows={updatedSelectedRows}
+              setUpdatedSelectedRows={setUpdatedSelectedRows}
+              setRowSelectionModel={setRowSelectionModel}
+              alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+              setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
+            />
             <ProfileAvatar/>
           </Toolbar>
         </AppBar>
@@ -570,22 +573,6 @@ export const ConcordanceView = () => {
               marginTop: '.5em'
             }}
           >
-            <AlignmentTableControlPanel
-              saveButtonDisabled={saveButtonDisabled}
-              setSelectedRowsCount={setSelectedRowsCount}
-              selectedRowsCount={selectedRowsCount}
-              linksPendingUpdate={linksPendingUpdate}
-              setSaveButtonDisabled={setSaveButtonDisabled}
-              container={container}
-              setSelectedRows={setSelectedRows}
-              selectedRows={selectedRows}
-              setLinksPendingUpdate={setLinksPendingUpdate}
-              updatedSelectedRows={updatedSelectedRows}
-              setUpdatedSelectedRows={setUpdatedSelectedRows}
-              setRowSelectionModel={setRowSelectionModel}
-              alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-              setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
-            />
             <Paper
               sx={{
                 display: 'flex',
@@ -615,7 +602,6 @@ export const ConcordanceView = () => {
                 setSaveButtonDisabled={setSaveButtonDisabled}
                 setLinksPendingUpdate={setLinksPendingUpdate}
                 linksPendingUpdate={linksPendingUpdate}
-                container={container}
                 rowSelectionModel={rowSelectionModel}
                 setRowSelectionModel={setRowSelectionModel}
                 alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
