@@ -215,7 +215,7 @@ export const AlignmentTableControlPanel = ({
           direction="row"
           spacing={2}
           justifyContent="right"
-          style={{ marginBottom: '10px' }}
+          marginLeft={'310px'}
         >
           <ButtonGroup>
             <SingleSelectButtonGroup
@@ -251,7 +251,10 @@ export const AlignmentTableControlPanel = ({
           <ButtonGroup>
             <Button
               variant="contained"
-              sx={{ textTransform: 'none', borderRadius: '22px'}}
+              sx={{
+                textTransform: 'none',
+                borderRadius: '22px',
+            }}
               disabled={saveButtonDisabled}
               onClick={handleSaveLinkStatus}
             >
@@ -412,60 +415,62 @@ export const ConcordanceView = () => {
           position="static"
         >
           <Toolbar >
-            <Box >
-              <SingleSelectButtonGroup
-                sx={{ flexGrow: 1 }}
-                value={wordSource}
-                items={[
-                  {
-                    value: 'sources',
-                    label: <CropFree/>,
-                    tooltip: 'Source'
-                  },
-                  {
-                    value: 'targets',
-                    label: <GpsFixed />,
-                    tooltip: 'Target'
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center'}}>
+              <Box >
+                <SingleSelectButtonGroup
+                  sx={{ flexGrow: 1 }}
+                  value={wordSource}
+                  items={[
+                    {
+                      value: 'sources',
+                      label: <CropFree/>,
+                      tooltip: 'Source'
+                    },
+                    {
+                      value: 'targets',
+                      label: <GpsFixed />,
+                      tooltip: 'Target'
+                    }
+                  ]}
+                  onSelect={(value) => setWordSource(value as AlignmentSide)}
+                />
+              </Box>
+
+              {/*Pivot Word Filter*/}
+              <FormControl sx={{ width: 175, marginLeft: '6px' }}>
+                <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
+                <Select
+                  labelId={'pivot-word-filter'}
+                  id={'pivot-word-filter'}
+                  value={wordFilter}
+                  label={'Pivot Word Filter'}
+                  onChange={({ target: { value } }) =>
+                    setWordFilter(value as PivotWordFilter)
                   }
-                ]}
-                onSelect={(value) => setWordSource(value as AlignmentSide)}
+                  sx={{maxHeight: '37px'}}
+                >
+                  <MenuItem value={'aligned' as PivotWordFilter}>Aligned</MenuItem>
+                  <MenuItem value={'all' as PivotWordFilter}>All</MenuItem>
+                </Select>
+              </FormControl>
+
+              {/*Alignment Table Control Panel*/}
+              <AlignmentTableControlPanel
+                saveButtonDisabled={saveButtonDisabled}
+                setSelectedRowsCount={setSelectedRowsCount}
+                selectedRowsCount={selectedRowsCount}
+                linksPendingUpdate={linksPendingUpdate}
+                setSaveButtonDisabled={setSaveButtonDisabled}
+                setSelectedRows={setSelectedRows}
+                selectedRows={selectedRows}
+                setLinksPendingUpdate={setLinksPendingUpdate}
+                updatedSelectedRows={updatedSelectedRows}
+                setUpdatedSelectedRows={setUpdatedSelectedRows}
+                setRowSelectionModel={setRowSelectionModel}
+                alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+                setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
               />
             </Box>
-
-            {/*Pivot Word Filter*/}
-            <FormControl sx={{ width: 175 }}>
-              <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
-              <Select
-                labelId={'pivot-word-filter'}
-                id={'pivot-word-filter'}
-                value={wordFilter}
-                label={'Pivot Word Filter'}
-                onChange={({ target: { value } }) =>
-                  setWordFilter(value as PivotWordFilter)
-                }
-                sx={{maxHeight: '37px'}}
-              >
-                <MenuItem value={'aligned' as PivotWordFilter}>Aligned</MenuItem>
-                <MenuItem value={'all' as PivotWordFilter}>All</MenuItem>
-              </Select>
-            </FormControl>
-
-            {/*Alignment Table Control Panel*/}
-            <AlignmentTableControlPanel
-              saveButtonDisabled={saveButtonDisabled}
-              setSelectedRowsCount={setSelectedRowsCount}
-              selectedRowsCount={selectedRowsCount}
-              linksPendingUpdate={linksPendingUpdate}
-              setSaveButtonDisabled={setSaveButtonDisabled}
-              setSelectedRows={setSelectedRows}
-              selectedRows={selectedRows}
-              setLinksPendingUpdate={setLinksPendingUpdate}
-              updatedSelectedRows={updatedSelectedRows}
-              setUpdatedSelectedRows={setUpdatedSelectedRows}
-              setRowSelectionModel={setRowSelectionModel}
-              alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-              setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
-            />
             <ProfileAvatar/>
           </Toolbar>
         </AppBar>
@@ -495,15 +500,15 @@ export const ConcordanceView = () => {
               gridColumn: '1',
               width: '35%',
               gap: '1em',
-              marginLeft: '1em',
-              marginTop: '1em'
+              marginLeft: '12px',
+              marginTop: '0'
             }}
           >
             <Paper
               sx={{
                 display: 'flex',
                 width: '100%',
-                height: 'calc(100vh - 9em)',
+                height: 'calc(100vh - 5em)',
                 '.MuiTableContainer-root::-webkit-scrollbar': {
                   width: 0
                 }
@@ -533,14 +538,14 @@ export const ConcordanceView = () => {
               width: '40%',
               gap: '1em',
               marginLeft: '1em',
-              marginTop: '1em'
+              marginTop: '0'
             }}
           >
             <Paper
               sx={{
                 display: 'flex',
                 width: '100%',
-                height: 'calc(100vh - 2.5em)',
+                height: 'calc(100vh - 5em)',
                 '.MuiTableContainer-root::-webkit-scrollbar': {
                   width: 0
                 }
@@ -569,14 +574,14 @@ export const ConcordanceView = () => {
               width: '100%',
               gap: '1em',
               margin: '1em',
-              marginTop: '.5em'
+              marginTop: '0'
             }}
           >
             <Paper
               sx={{
                 display: 'flex',
                 width: '100%',
-                height: 'calc(100vh - 37px - 4em)',
+                height: 'calc(100vh - 5em)',
                 '.MuiTableContainer-root::-webkit-scrollbar': {
                   width: 0
                 }
