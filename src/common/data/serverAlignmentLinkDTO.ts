@@ -1,5 +1,7 @@
 import { LinkMetadata } from '../../structs';
 
+export const LINKS_TABLE_NAME = 'links';
+
 /**
  * represents alignment links for communicating with the server
  */
