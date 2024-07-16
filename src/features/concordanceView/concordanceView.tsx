@@ -28,11 +28,10 @@ import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
 import {
-  AddBox,
   CancelOutlined,
   CheckCircleOutlined,
   CropFree,
-  FlagOutlined,
+  FlagOutlined, GpsFixed,
   Link as LinkIcon
 } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
@@ -425,7 +424,7 @@ export const ConcordanceView = () => {
                   },
                   {
                     value: 'targets',
-                    label: <AddBox />,
+                    label: <GpsFixed />,
                     tooltip: 'Target'
                   }
                 ]}
