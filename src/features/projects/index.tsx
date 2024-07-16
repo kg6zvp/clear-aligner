@@ -144,7 +144,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         </Box>
 
         {/*Projects Grid*/}
-        <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
+        <Grid container sx={{ width: '100%', paddingX: '0px', overflow: 'auto'}}>
           {projects
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
