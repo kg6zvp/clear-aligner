@@ -30,18 +30,18 @@ export module ApiUtils {
     }
   };
 
-  const getContentLength = (inputContentLength?: number | string | null) => {
-    if (!inputContentLength) {
-      return 0;
-    }
-    return +inputContentLength;
-  };
-
   const isJsonContentType = (inputContentType?: string | null) => {
     if (!inputContentType) {
       return false;
     }
     return inputContentType.includes('application/json');
+  };
+
+  const getContentLength = (inputContentLength?: number | string | null) => {
+    if (!inputContentLength) {
+      return 0;
+    }
+    return +inputContentLength;
   };
 
   const getFetchResponseObject = async (response: Response, contentLengthOptional = false) => {
