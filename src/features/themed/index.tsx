@@ -4,33 +4,26 @@
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
-import { green, orange, red } from '@mui/material/colors';
-
-// Not sure yet if we really need to manually load these.
-// import '@fontsource/roboto/300.css';
-// import '@fontsource/roboto/400.css';
-// import '@fontsource/roboto/500.css';
-// import '@fontsource/roboto/700.css';
+import { green, grey, orange, red } from '@mui/material/colors';
 
 export enum ThemeMode {
   LIGHT = "light",
   DARK = "dark"
 }
 
-const baseDarkTheme = createTheme({
-  palette: {
-    mode: ThemeMode.DARK,
-  },
-});
+// const baseDarkTheme = createTheme({
+//   palette: {
+//     mode: ThemeMode.DARK,
+//   },
+// });
 
 
-const baseLightTheme = createTheme({
-  palette: {
-    mode: ThemeMode.LIGHT,
-  },
-});
+// const baseLightTheme = createTheme({
+//   palette: {
+//     mode: ThemeMode.LIGHT,
+//   },
+// });
 
-console.log('baseLightTheme is: ', baseLightTheme)
 
 const darkTheme = createTheme({
   palette: {
@@ -39,20 +32,109 @@ const darkTheme = createTheme({
       primary: '#FFFFFF'
     },
     primary: {
-      main: '#56B9DA',
-      dark: '#39ABD4',
-      light: '#E0F3F8',
+      main: '#56B9DA', // Cerulean Blue 300
+      dark: '#39ABD4', // Cerulean Blue 400
+      light: '#E0F3F8', // Cerulean Blue 50
       contrastText: '#000000'
+    },
+    secondary: {
+      main: '#FEB399', // Coral 200
+      dark: '#FF7F50', // Coral 400
+      light: '#FAEBE9', // Coral 50
+      contrastText: '#000000'
+    },
+    error: {
+      main: red[400],
+      dark: red[500],
+      light: red[300],
+      contrastText: '#000000'
+    },
+    warning:{
+      main: orange[400],
+      dark: orange[700],
+      light: orange[300],
+      contrastText: '#000000'
+    },
+    info:{
+      main: '#39ABD4', // Cerulean Blue 400
+      dark: '#0F7EAF', // Cerulean Blue 700
+      light: '#56B9DA', // Cerulean Blue 300
+      contrastText: '#000000'
+    },
+    success:{
+      main: green[300],
+      dark: green[500],
+      light: green[200],
+      contrastText: '#000000'
+    },
+    statusIndicators: {
+      aligned: '#219ECF', // Cerulean Blue 500
+      approved: '#47CF21', // Green 500
+      flagged: '#FB8C00', // Orange 600
+      rejected: '#F44336', // Red 500
+    },
+    tokenButtons: {
+      defaultTokenButtons: {
+        default: '#00000000', //Transparent
+        text: '#000000',
+        outline: '#DCDCDC',
+        rollover: '#FFF9C4',
+        selected: '#47CF21'
+      },
+      alignedTokenButtons :{
+        default: '',
+        text: '',
+        textReversed: '',
+        outline: '',
+        rollover: '',
+        selected: '',
+        icons: '',
+        iconsReversed: ''
+      },
+      machineAlignedTokenButtons :{
+        default: '',
+        text: '',
+        textReversed: '',
+        outline: '',
+        rollover: '',
+        selected: '',
+        icons: '',
+        iconsReversed: ''
+      },
+      approvedTokenButtons :{
+        default: '',
+        text: '',
+        textReversed: '',
+        outline: '',
+        rollover: '',
+        selected: '',
+        icons: '',
+        iconsReversed: ''
+      },
+      flaggedTokenButtons :{
+        default: '',
+        text: '',
+        textReversed: '',
+        outline: '',
+        rollover: '',
+        selected: '',
+        icons: '',
+        iconsReversed: ''
+      },
+    },
+    background :{
+      paper: '',
+      default: ''
     },
   },
   typography: {
     unlinked: {
       fontStyle: 'italic',
-      color: baseDarkTheme.palette.grey['500'],
+      color: grey['500'],
     },
     selected: {
-      color: baseDarkTheme.palette.grey['50'],
-      backgroundColor: baseDarkTheme.palette.grey['600'],
+      color: grey['50'],
+      backgroundColor: grey['600'],
       borderRadius: '0.25rem',
     },
   },
@@ -65,15 +147,15 @@ const lightTheme = createTheme({
       primary: '#000000'
     },
     primary: {
-      main: '#219ECF',
-      dark: '#1990C1',
-      light: '#39ABD4',
+      main: '#219ECF', // Cerulean Blue 500
+      dark: '#1990C1', // Cerulean Blue 600
+      light: '#39ABD4', // Cerulean Blue 400
       contrastText: '#FFFFFF'
     },
     secondary: {
-      main: '#FF7F50',
-      dark: '#F5642F',
-      light: '#FEB399',
+      main: '#FF7F50', // Coral 400
+      dark: '#F5642F', // Coral 600
+      light: '#FEB399', // Coral 200
       contrastText: '#FFFFFF'
     },
     error: {
@@ -89,9 +171,9 @@ const lightTheme = createTheme({
       contrastText: '#FFFFFF'
     },
     info:{
-      main: '#0F7EAF',
-      dark: '#044F7A',
-      light: '#219ECF',
+      main: '#0F7EAF', // Cerulean Blue 700
+      dark: '#044F7A', // Cerulean Blue 900
+      light: '#219ECF', // Cerulean Blue 500
       contrastText: '#FFFFFF'
     },
     success:{
@@ -100,15 +182,74 @@ const lightTheme = createTheme({
       light: green[400],
       contrastText: '#FFFFFF'
     },
+    statusIndicators: {
+      aligned: '#219ECF', // Cerulean Blue 500
+      approved: '#47CF21', // Green 500
+      flagged: '#FB8C00', // Orange 600
+      rejected: '#F44336', // Red 500
+    },
+    tokenButtons: {
+      defaultTokenButtons: {
+        default: '#00000000', //Transparent
+        text: '#000000',
+        outline: '#DCDCDC',
+        rollover: '#FFF9C4', // Yellow 100
+        selected: '#47CF21' // Yello 500
+      },
+      alignedTokenButtons :{
+        default: '#00000000', //Transparent
+        text: '#000000', // Black
+        textReversed: '#FFFFFF', // White
+        outline: '#219ECF', // White
+        rollover: '#E0F3F8', // Cerulean Blue 50
+        selected: '#219ECF', // Cerulean Blue 500
+        icons: '#219ECF', // Cerulean Blue 500
+        iconsReversed: '#E0F3F8' // Cerulean Blue 50
+      },
+      machineAlignedTokenButtons :{
+        default: '#00000000', //Transparent
+        text: '#000000', // Black
+        textReversed: '#FFFFFF', // White
+        outline: '#33D6FF #AD8CFF',
+        rollover: '#E0F3F8', // Cerulean Blue 50
+        selected: '#219ECF', // Cerulean Blue 500
+        icons: '',
+        iconsReversed: ''
+      },
+      approvedTokenButtons :{
+        default: '',
+        text: '',
+        textReversed: '',
+        outline: '',
+        rollover: '',
+        selected: '',
+        icons: '',
+        iconsReversed: ''
+      },
+      flaggedTokenButtons :{
+        default: '',
+        text: '',
+        textReversed: '',
+        outline: '',
+        rollover: '',
+        selected: '',
+        icons: '',
+        iconsReversed: ''
+      },
+    },
+    background :{
+      paper: '',
+      default: ''
+    }
   },
   typography: {
     unlinked: {
       fontStyle: 'italic',
-      color: baseLightTheme.palette.grey['500'],
+      color: grey['500'],
     },
     selected: {
-      color: baseLightTheme.palette.grey['50'],
-      backgroundColor: baseLightTheme.palette.grey['800'],
+      color: grey['50'],
+      backgroundColor: grey['800'],
       borderRadius: '0.25rem',
     },
   },

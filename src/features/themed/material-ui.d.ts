@@ -26,15 +26,73 @@ declare module '@mui/material/Typography' {
 
 // to allow for custom colors in the palette
 declare module '@mui/material/styles' {
-  interface Theme {
-    statusIndicators: {
-      aligned: string;
-    };
+  interface Palette extends ColorOptions {
+
   }
   // allow configuration using `createTheme`
-  interface ThemeOptions {
-    statusIndicators?: {
-      aligned?: string;
-    };
+  interface PaletteOptions extends ColorOptions{
+
+  }
+
+  interface ColorOptions {
+    statusIndicators: {
+      aligned: string;
+      approved?: string;
+      flagged?: string;
+      rejected?: string;
+    },
+      tokenButtons?: {
+        defaultTokenButtons?: {
+          default?: string;
+          text?: string;
+          outline?: string;
+          rollover?: string;
+          selected?: string;
+        },
+        alignedTokenButtons?:{
+          default?: string;
+          text?: string;
+          textReversed?: string;
+          outline?: string;
+          rollover?: string;
+          selected?: string;
+          icons?: string;
+          iconsReversed?: string;
+        },
+        machineAlignedTokenButtons?:{
+          default?: string;
+          text?: string;
+          textReversed?: string;
+          outline?: string;
+          rollover?: string;
+          selected?: string;
+          icons?: string;
+          iconsReversed?: string;
+        },
+        approvedTokenButtons?:{
+          default?: string;
+          text?: string;
+          textReversed?: string;
+          outline?: string;
+          rollover?: string;
+          selected?: string;
+          icons?: string;
+          iconsReversed?: string;
+        },
+        flaggedTokenButtons?:{
+          default?: string;
+          text?: string;
+          textReversed?: string;
+          outline?: string;
+          rollover?: string;
+          selected?: string;
+          icons?: string;
+          iconsReversed?: string;
+        },
+      },
+      background?:{
+        paper?: string;
+        default?: string;
+      }
   }
 }
