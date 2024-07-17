@@ -37,20 +37,20 @@ export module ApiUtils {
     return +inputContentLength;
   };
 
-  const getFetchResponseObject = async (response: Response) => {
+  const getFetchResponseObject = async (response: Response, contentLengthOptional = false) => {
     if (response.status === 200
-      && getContentLength(response.headers.get('content-length')) > 0) {
-      return await response.json();
+      && (contentLengthOptional || getContentLength(response.headers.get('content-length')) > 0)) {
+      return await (response.json());
     } else {
       return {};
     }
   };
 
-  const getAmplifyResponseObject = async (response: RestApiResponse) => {
+  const getAmplifyResponseObject = async (response: RestApiResponse, contentLengthOptional = false) => {
     if (response.statusCode === 200
-      && getContentLength(response.headers['content-length']) > 0
+      && (contentLengthOptional || getContentLength(response.headers['content-length']) > 0)
       && 'body' in response) {
-      return (response.body as Response).json();
+      return await (response.body as Response).json();
     } else {
       return {};
     }
@@ -102,7 +102,8 @@ export module ApiUtils {
       });
       return {
         success: response.ok,
-        response: await getFetchResponseObject(response)
+        response: await getFetchResponseObject(response,
+          requestType === RequestType.GET)
       };
     } else {
       const responseOperation = getAmplifyFromRequestType(requestType)({
@@ -118,7 +119,8 @@ export module ApiUtils {
       }
       return {
         success: validateStatusCode(response.statusCode, requestType, options.expectedStatusCode),
-        response: await getAmplifyResponseObject(response as RestApiResponse)
+        response: await getAmplifyResponseObject(response as RestApiResponse,
+          requestType === RequestType.GET)
       };
     }
   };
