@@ -37,8 +37,16 @@ export module ApiUtils {
     return +inputContentLength;
   };
 
+  const isJsonContentType = (inputContentType?: string | null) => {
+    if (!inputContentType) {
+      return false;
+    }
+    return inputContentType.includes('application/json');
+  };
+
   const getFetchResponseObject = async (response: Response, contentLengthOptional = false) => {
     if (response.status === 200
+      && isJsonContentType(response.headers.get('content-type'))
       && (contentLengthOptional || getContentLength(response.headers.get('content-length')) > 0)) {
       return await (response.json());
     } else {
@@ -48,6 +56,7 @@ export module ApiUtils {
 
   const getAmplifyResponseObject = async (response: RestApiResponse, contentLengthOptional = false) => {
     if (response.statusCode === 200
+      && isJsonContentType(response.headers['content-type'])
       && (contentLengthOptional || getContentLength(response.headers['content-length']) > 0)
       && 'body' in response) {
       return await (response.body as Response).json();
