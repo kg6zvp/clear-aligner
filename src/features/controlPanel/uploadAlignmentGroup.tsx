@@ -34,7 +34,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
   const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
     alignmentFile?: AlignmentFile,
     saveKey?: string,
-    suppressJournaling?: boolean
+    suppressJournaling?: boolean,
+    preserveFileIds: boolean
   }>();
 
   const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
@@ -44,7 +45,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling);
+  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling, alignmentFileSaveState?.preserveFileIds);
   const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
@@ -65,7 +66,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     setAlignmentFileSaveState({
       alignmentFile: alignmentFileFromServer,
       saveKey: uuid(),
-      suppressJournaling: true
+      suppressJournaling: true,
+      preserveFileIds: true
     });
   }, [alignmentFileFromServer, setAlignmentFileSaveState]);
 
@@ -174,7 +176,8 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                   setAlignmentFileSaveState({
                     alignmentFile: fileData.success ? fileData.data : undefined,
                     saveKey: uuid(),
-                    suppressJournaling: false
+                    suppressJournaling: false,
+                    preserveFileIds: false
                   });
                 }}
               />

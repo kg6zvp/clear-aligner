@@ -11,7 +11,6 @@ import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
-import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
 
 export enum SyncProgress {
   IDLE,
@@ -43,7 +42,7 @@ export const useSyncProject = (): SyncState => {
   const {publishProject} = usePublishProject();
   const {refetch: getProjects} = useProjectsFromServer({enabled: false});
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
-  const { sync: syncAlignments, file } = useSyncAlignments();
+  const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
   const {deleteProject} = useDeleteProject();
   const { projectState, setSnackBarMessage } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
@@ -129,7 +128,11 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_ALIGNMENTS: {
-          await syncAlignments(project.id);
+          if (project.location === ProjectLocation.LOCAL) {
+            await uploadAlignments(project.id)
+          } else {
+            await syncAlignments(project.id);
+          }
           setProgress(SyncProgress.UPDATING_PROJECT);
           break;
         }

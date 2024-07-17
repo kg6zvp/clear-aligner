@@ -162,11 +162,12 @@ export class LinksTable extends VirtualTable {
   saveAlignmentFile = async (alignmentFile: AlignmentFile,
                              suppressOnUpdate: boolean = false,
                              isForced: boolean = false,
-                             disableJournaling: boolean = false) => {
+                             disableJournaling: boolean = false,
+                             preserveFileIds: boolean = false) => {
     await this.saveAll(alignmentFile.records.map(
       (record) =>
         ({
-          id: uuid(),
+          id: preserveFileIds ? record.meta?.id : uuid(),
           metadata: {
             origin: record.meta.origin,
             status: record.meta.status
@@ -501,8 +502,9 @@ export const useSaveLink = () => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  * @param suppressJournaling Suppress journaling
+ * @param preserveFileIds whether id's of links in imported file should be preserved
  */
-export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, suppressJournaling?: boolean) => {
+export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, suppressJournaling?: boolean, preserveFileIds?: boolean) => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
   const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [ projects, projectId ]);
   const [status, setStatus] = useState<{
@@ -529,7 +531,7 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, suppressJournaling)
+    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, suppressJournaling, !!preserveFileIds)
       .then(() => {
         const endStatus = {
           ...startStatus,
