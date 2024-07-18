@@ -60,7 +60,7 @@ const darkTheme = createTheme({
       rejected: red[500],
     },
     statusIndicatorsIcons: {
-      aligned: '#219ECF.', // Cerulean Blue 500
+      aligned: '#219ECF', // Cerulean Blue 500
       rejected: red['500'],
       approved: green['500'],
       flagged: orange['600'],
@@ -182,7 +182,7 @@ const lightTheme = createTheme({
       rejected: '#F44336', // Red 500
     },
     statusIndicatorsIcons: {
-      aligned: '#219ECF.', // Cerulean Blue 500
+      aligned: '#219ECF', // Cerulean Blue 500
       rejected: red['500'],
       approved: green['500'],
       flagged: orange['600'],
