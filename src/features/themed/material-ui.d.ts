@@ -45,6 +45,7 @@ declare module '@mui/material/styles' {
         defaultTokenButtons?: {
           default?: string;
           text?: string;
+          textContrast?: string;
           outline?: string;
           rollover?: string;
           selected?: string;
@@ -52,42 +53,50 @@ declare module '@mui/material/styles' {
         alignedTokenButtons?:{
           default?: string;
           text?: string;
+          textContrast?: string;
           textReversed?: string;
           outline?: string;
           rollover?: string;
           selected?: string;
           icons?: string;
           iconsReversed?: string;
+          iconsContrast?: string;
         },
         machineAlignedTokenButtons?:{
           default?: string;
           text?: string;
+          textContrast?: string;
           textReversed?: string;
           outline?: string;
           rollover?: string;
           selected?: string;
           icons?: string;
           iconsReversed?: string;
+          iconsContrast?: string;
         },
         approvedTokenButtons?:{
           default?: string;
           text?: string;
+          textContrast?: string;
           textReversed?: string;
           outline?: string;
           rollover?: string;
           selected?: string;
           icons?: string;
           iconsReversed?: string;
+          iconsContrast?: string;
         },
         flaggedTokenButtons?:{
           default?: string;
           text?: string;
+          textContrast?: string;
           textReversed?: string;
           outline?: string;
           rollover?: string;
           selected?: string;
           icons?: string;
           iconsReversed?: string;
+          iconsContrast?: string;
         },
       },
       background?:{
