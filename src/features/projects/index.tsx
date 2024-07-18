@@ -34,6 +34,7 @@ import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { userState } from '../profileAvatar/profileAvatar';
+import { grey } from '@mui/material/colors';
 
 interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -255,7 +256,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
       <Grid container justifyContent="flex-end" alignItems="center">
         <Tooltip title="Sign in to connect to manage remote projects">
         <Button variant="text" disabled sx={{ textTransform: 'none' }}>
-          <span style={{ color: 'grey' }}>Unavailable</span>
+          <span style={{ color: grey['500'] }}>Unavailable</span>
           <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
         </Button>
         </Tooltip>

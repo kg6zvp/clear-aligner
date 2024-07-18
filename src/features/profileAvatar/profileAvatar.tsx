@@ -12,25 +12,26 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import Login from '../login/login';
 import { signOut } from 'aws-amplify/auth';
 import { AppContext } from '../../App';
+import { blue, green, grey, red } from '@mui/material/colors';
 
 /**
  * userState is an object containing the different user States
  */
 export const userState = {
   LoggedIn: {
-    color:  'green',
+    color:  green['500'],
     label: 'Logged In'
   },
   LoggedOut: {
-    color: 'red',
+    color: red['500'],
     label: 'Logged Out',
   },
   Offline: {
-    color: 'grey',
+    color: grey['500'],
     label: 'Offline'
   },
   CustomEndpoint: {
-    color: 'blue',
+    color: blue['500'],
     label: 'Custom Server'
   }
 }

@@ -119,7 +119,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
               </Button>
               {showLoginError &&
                 <Typography
-                  color={'red'}
+                  color={'error'}
                   fontSize={'small'}
                   sx={{
                     mt: 1
