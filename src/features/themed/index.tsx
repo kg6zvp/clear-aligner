@@ -11,20 +11,6 @@ export enum ThemeMode {
   DARK = "dark"
 }
 
-// const baseDarkTheme = createTheme({
-//   palette: {
-//     mode: ThemeMode.DARK,
-//   },
-// });
-
-
-// const baseLightTheme = createTheme({
-//   palette: {
-//     mode: ThemeMode.LIGHT,
-//   },
-// });
-
-
 const darkTheme = createTheme({
   palette: {
     mode: ThemeMode.DARK,
@@ -69,9 +55,9 @@ const darkTheme = createTheme({
     },
     statusIndicators: {
       aligned: '#219ECF', // Cerulean Blue 500
-      approved: '#47CF21', // Green 500
-      flagged: '#FB8C00', // Orange 600
-      rejected: '#F44336', // Red 500
+      approved: green[500],
+      flagged: orange[600],
+      rejected: red[500], // Red 500
     },
     tokenButtons: {
       defaultTokenButtons: {
@@ -79,48 +65,48 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: '#3C3C3C',
-        rollover: '#242315', // Yellow 500 @ 8%
+        rollover: '#FFEB3B14', // Yellow 500 @ 8%
         selected: '#FFF176' // Yellow 300
       },
       alignedTokenButtons: {
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: '#56B9DA', // Cerulean Blue 300
-        rollover: '#131c20', // Cerulean Blue 500 @ 8%
+        rollover: '#219ECF14', // Cerulean Blue 500 @ 8%
         selected: '#56B9DA', // Cerulean Blue 300
         icons: '#56B9DA', // Cerulean Blue 300
         iconsContrast: '#044F7A' // Cerulean Blue 900
       },
       machineAlignedTokenButtons: {
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: 'linear-gradient(#33D6FF, #AD8CFF)',
-        rollover: '#131c20', // Cerulean Blue 500 @ 8%
-        selected: '',
-        icons: '',
-        iconsContrast: '',
+        rollover: '#219ECF14', // Cerulean Blue 500 @ 8%
+        selected: '#56B9DA', // Cerulean Blue 300
+        icons: 'linear-gradient(#33D6FF, #AD8CFF)',
+        iconsContrast: '#044F7A', // Cerulean Blue 900
       },
       approvedTokenButtons : {
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#FFFFFF',
         textContrast: '#000000',
-        outline: '',
-        rollover: '',
-        selected: '',
-        icons: '',
-        iconsContrast: '',
+        outline: green[300],
+        rollover: '#47CF2114', // Green 500 @ 8%
+        selected: green[300],
+        icons: green[300],
+        iconsReversed: green[800],
       },
       flaggedTokenButtons : {
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#FFFFFF',
         textContrast: '#000000',
-        outline: '',
-        rollover: '',
-        selected: '',
-        icons: '',
-        iconsContrast: '',
+        outline: orange[400],
+        rollover: '#FB8C0014', // Orange 600 @ 8%
+        selected: orange[400],
+        icons: orange[400],
+        iconsReversed: orange[800],
       },
     },
     background : {
@@ -191,14 +177,14 @@ const lightTheme = createTheme({
     },
     tokenButtons: {
       defaultTokenButtons: {
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#000000',
         outline: '#DCDCDC',
-        rollover: yellow[100], // Yellow 100
-        selected: yellow[500], // Yellow 500
+        rollover: yellow[100],
+        selected: yellow[500],
       },
       alignedTokenButtons :{
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#000000', // Black
         textReversed: '#FFFFFF', // White
         outline: '#219ECF', // Cerulean Blue 500
@@ -208,7 +194,7 @@ const lightTheme = createTheme({
         iconsReversed: '#E0F3F8' // Cerulean Blue 50
       },
       machineAlignedTokenButtons :{
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#000000', // Black
         textReversed: '#FFFFFF', // White
         outline: 'linear-gradient(#33D6FF, #AD8CFF)',
@@ -218,7 +204,7 @@ const lightTheme = createTheme({
         iconsReversed: '#E0F3F8', // Cerulean Blue 50
       },
       approvedTokenButtons :{
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#000000', // Black
         textReversed: '#FFFFFF', // White
         outline: green[500],
@@ -228,7 +214,7 @@ const lightTheme = createTheme({
         iconsReversed: green[50]
       },
       flaggedTokenButtons :{
-        default: '#00000000', //Transparent
+        default: '#00000000', // Transparent
         text: '#000000', // Black
         textReversed: '#FFFFFF', // White
         outline: orange[600],
