@@ -98,7 +98,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         <Grid container justifyContent="space-between" alignItems="center"
               sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
           <Grid container sx={{ width: 'fit-content' }}>
-            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+            <Typography variant="h4" sx={ theme => ({
+              marginRight: 5,
+              fontWeight: 'bold',
+              color: theme.palette.primary.main
+            })}>
+              Projects
+            </Typography>
             <Button
               variant="contained"
               onClick={() => setOpenProjectDialog(true)}
