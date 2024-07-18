@@ -57,7 +57,13 @@ const darkTheme = createTheme({
       aligned: '#219ECF', // Cerulean Blue 500
       approved: green[500],
       flagged: orange[600],
-      rejected: red[500], // Red 500
+      rejected: red[500],
+    },
+    statusIndicatorsIcons: {
+      aligned: '#219ECF.', // Cerulean Blue 500
+      rejected: red['500'],
+      approved: green['500'],
+      flagged: orange['600'],
     },
     tokenButtons: {
       defaultTokenButtons: {
@@ -174,6 +180,12 @@ const lightTheme = createTheme({
       approved: '#47CF21', // Green 500
       flagged: '#FB8C00', // Orange 600
       rejected: '#F44336', // Red 500
+    },
+    statusIndicatorsIcons: {
+      aligned: '#219ECF.', // Cerulean Blue 500
+      rejected: red['500'],
+      approved: green['500'],
+      flagged: orange['600'],
     },
     tokenButtons: {
       defaultTokenButtons: {

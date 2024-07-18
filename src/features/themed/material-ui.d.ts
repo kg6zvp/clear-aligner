@@ -36,10 +36,16 @@ declare module '@mui/material/styles' {
 
   interface ColorOptions {
     statusIndicators: {
-      aligned: string;
+      aligned?: string;
       approved?: string;
       flagged?: string;
       rejected?: string;
+    },
+    statusIndicatorsIcons: {
+      aligned?: string;
+      rejected?: string;
+      approved?: string;
+      flagged?: string;
     },
       tokenButtons?: {
         defaultTokenButtons?: {
