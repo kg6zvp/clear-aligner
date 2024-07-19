@@ -85,8 +85,14 @@ const useInitialization = () => {
       setContainers(newContainers);
       setPreferences((oldPreferences) => ({
         ...(oldPreferences ?? {}) as UserPreference,
-        initialized: InitializationStates.INITIALIZED
+        initialized: InitializationStates.INITIALIZED,
+        onInitialized: undefined
       }));
+      if (preferences?.onInitialized) {
+        for(const f of preferences.onInitialized) {
+          f();
+        }
+      }
     };
     if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
       void loadContainers();

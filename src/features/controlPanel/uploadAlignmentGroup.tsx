@@ -18,12 +18,13 @@ import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
 import _ from 'lodash';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
-const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn, disableProjectButtons }: {
-  projectId?: string,
+const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
+  project?: Project,
   containers: CorpusContainer[],
   size?: string,
-  allowImport?: boolean;
+  isCurrentProject?: boolean;
   isSignedIn?: boolean;
   disableProjectButtons: boolean
 }) => {
@@ -45,10 +46,10 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling, alignmentFileSaveState?.preserveFileIds);
+  useImportAlignmentFile(project?.id, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling, alignmentFileSaveState?.preserveFileIds);
   const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
-  const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
+  const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
 
   useEffect(() => {
     saveAlignmentFile(allLinks);
@@ -75,24 +76,43 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     [
       SyncProgress.IN_PROGRESS,
       SyncProgress.SYNCING_LOCAL,
-      SyncProgress.RETRIEVING_TOKENS,
+      SyncProgress.SWITCH_TO_PROJECT,
       SyncProgress.SYNCING_PROJECT,
       SyncProgress.SYNCING_CORPORA,
       SyncProgress.SYNCING_ALIGNMENTS,
     ].includes(progress)
   ), [progress]);
 
-  const [currentProject, setCurrentProject] = useState<Project>();
-  useEffect(() => {
-    projectState.projectTable?.getProjects?.()?.then?.(res => {
-      setCurrentProject(Array.from(res?.values?.() ?? []).find(p => p.id === projectId))
-    })?.catch?.(console.error);
-  }, [projectState, projectId]);
+  const enableSyncButton = useMemo<boolean>(() => {
+    if (!project) {
+      return false;
+    }
+    if (disableProjectButtons) {
+      return false;
+    }
+    if (!isSignedIn || containers.length < 1 || inProgress) {
+      return false;
+    }
+    if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
+      console.log('project updated after last sync',
+        project.id,
+        containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName);
+      return true;
+    }
+    return (_.max([ ...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? []) ]
+        .map((corpus) => corpus.updatedAt?.getTime())
+        .filter((v) => !!v)) ?? 0) > (project.lastSyncTime ?? 0)
+  }, [isCurrentProject, inProgress, project, disableProjectButtons, isSignedIn, containers.length]);
+
+  /*console.log('enableSyncButton',
+    project,
+    containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName,
+    enableSyncButton); //*/
 
   return (
     <span>
       {
-        currentProject?.location !== ProjectLocation.LOCAL && (
+        project?.location !== ProjectLocation.LOCAL && (
         <>
           <RemovableTooltip
             removed={alignmentFileErrors?.showDialog || disableProjectButtons}
@@ -103,22 +123,14 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
 
                 <Button
                   size={size as 'medium' | 'small' | undefined}
-                  disabled={!isSignedIn || containers.length === 0 || !allowImport || inProgress
-                    || (
-                      !!currentProject?.lastSyncTime
-                      && !!currentProject.updatedAt
-                      && currentProject.lastSyncTime === currentProject.updatedAt
-                      && (_.max([ ...(currentProject.sourceCorpora?.corpora ?? []), ...(currentProject.targetCorpora?.corpora ?? []) ]
-                        .map((corpus) => corpus.updatedAt?.getTime())
-                        .filter((v) => !!v)) ?? 0) < currentProject.lastSyncTime
-                    ) || disableProjectButtons}
+                  disabled={!enableSyncButton}
                   variant="contained"
                   sx={{
                     minWidth: '100%',
                     marginBottom: '.2em'
                   }}
                   onClick={async () => {
-                    currentProject && syncProject(currentProject);
+                    project && syncProject(project);
                   }}
                 >
                   <Sync sx={theme => ({
@@ -183,7 +195,7 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
               />
               <Button
                 size={size as 'medium' | 'small' | undefined}
-                disabled={containers.length === 0 || !allowImport || inProgress}
+                disabled={containers.length === 0 || !isCurrentProject || inProgress}
                 variant="contained"
                 onClick={() => {
                   // delegate file loading to regular file input
