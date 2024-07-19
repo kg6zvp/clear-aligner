@@ -217,7 +217,7 @@ export const AlignmentTableControlPanel = ({
           direction="row"
           spacing={2}
           justifyContent="right"
-          marginLeft={'310px'}
+          marginLeft={'330px'}
         >
           <ButtonGroup>
             <SingleSelectButtonGroup
@@ -425,7 +425,7 @@ export const ConcordanceView = () => {
                   items={[
                     {
                       value: 'sources',
-                      label: <CropFree/>,
+                      label: <CropFree />,
                       tooltip: 'Source'
                     },
                     {
@@ -439,7 +439,7 @@ export const ConcordanceView = () => {
               </Box>
 
               {/*Pivot Word Filter*/}
-              <FormControl sx={{ width: 175, marginLeft: '6px' }}>
+              <FormControl sx={{ width: 133, marginLeft: '6px' }}>
                 <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
                 <Select
                   labelId={'pivot-word-filter'}
