@@ -7,7 +7,6 @@ import { ThemeMode } from '../features/themed';
  * Created, Approved, Rejected, NeedsReview
  */
 
-const theme = useTheme();
 
 export const CreatedButton = styled(Button)(({ theme }) => ({
 
