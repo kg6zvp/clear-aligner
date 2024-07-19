@@ -155,7 +155,7 @@ const BCVNavigation = ({
           color={'primary'}
           disabled={disabled || !navigateBack}
           onClick={navigateBack ?? undefined}
-          sx={{ marginLeft: '165px'}}
+          sx={{ marginLeft: '156px'}}
         >
           <ArrowBackIosNew/>
         </IconButton>

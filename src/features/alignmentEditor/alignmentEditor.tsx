@@ -99,6 +99,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                     <Button
                       variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.HORIZONTAL] ? 'contained' : 'outlined' }
                       onClick={() => void saveControlPanelFormat('HORIZONTAL')}
+                      sx={{maxWidth: '40px'}}
                     >
                           <SwapHoriz />
                     </Button>
@@ -111,6 +112,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                     <Button
                       variant={appCtx.preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'contained' : 'outlined'}
                       onClick={() => void saveControlPanelFormat('VERTICAL')}
+                      sx={{maxWidth: '40px'}}
                     >
                           <SwapVert />
                     </Button>
@@ -133,6 +135,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                         };
                         appCtx.setPreferences(updatedPreferences);
                       }}
+                      sx={{maxWidth: '40px'}}
                     >
                       <Translate/>
                     </Button>
