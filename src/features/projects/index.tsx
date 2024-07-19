@@ -35,6 +35,8 @@ import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { userState } from '../profileAvatar/profileAvatar';
 import { grey } from '@mui/material/colors';
+import CreatedButton from '../../components/statusButtons';
+import LinkIcon from '@mui/icons-material/Link';
 
 interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -94,6 +96,27 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 
   return (
     <>
+      Enabled:
+      <CreatedButton>
+        <LinkIcon/>
+      </CreatedButton>
+
+      Hover over Me:
+      <CreatedButton>
+        <LinkIcon/>
+      </CreatedButton>
+
+      Disabled:
+      <CreatedButton disabled>
+        <LinkIcon />
+      </CreatedButton>
+
+      Selected/Contained:
+      <CreatedButton variant={'contained'}>
+        <LinkIcon/>
+      </CreatedButton>
+
+
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
         <Grid container justifyContent="space-between" alignItems="center"
