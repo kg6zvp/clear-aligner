@@ -24,7 +24,15 @@ import { AppContext, THEME_PREFERENCE } from '../../App';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { LayoutContext } from '../../AppLayout';
 import { Box } from '@mui/system';
-import { CloudDownload, CloudOff, CloudSync, Computer, Refresh } from '@mui/icons-material';
+import {
+  CloudDoneOutlined,
+  CloudDownload,
+  CloudOff,
+  CloudOutlined,
+  CloudSync,
+  Computer,
+  Refresh
+} from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectLocation } from '../../common/data/project/project';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
@@ -37,7 +45,7 @@ import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 
-interface ProjectsViewProps {
+export interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
   setPreferredTheme: Function;
 }
@@ -96,56 +104,62 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   return (
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
-            sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
-        <Box>
-
-          {/* App Bar */}
-          <AppBar
-            position="static"
-          >
-            <Toolbar>
-              <Typography variant="h4" component="div" sx={{ flexGrow: 1 }}>
-                Projects
-              </Typography>
-              <Grid item sx={{ px: 2 }}>
-                {
-                  (isSignedIn || usingCustomEndpoint) && (
-                    <Button variant="text"
-                            disabled={disableProjectButtons}
-                            onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
-                      <Grid container alignItems="center">
-                        <Refresh sx={theme => ({
-                          mr: 1,
-                          mb: .5,
-                          ...(disableProjectButtons ? {
-                            '@keyframes rotation': {
-                              from: { transform: 'rotate(0deg)' },
-                              to: { transform: 'rotate(360deg)' }
-                            },
-                            animation: '2s linear infinite rotation',
-                            fill: theme.palette.text.secondary
-                          } : {})
-                        })} />
-                        <Typography variant="subtitle2" sx={theme => ({
-                          textTransform: 'none',
-                          fontWeight: 'bold',
-                          color: disableProjectButtons ? theme.palette.text.secondary
-                            : getPaletteFromProgress(remoteFetchProgress, theme)
-                        })}>
-                          {disableProjectButtons ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
-                        </Typography>
-                      </Grid>
-                    </Button>
-                  )
-                }
-              </Grid>
-              <ProfileAvatar/>
-            </Toolbar>
-          </AppBar>
-        </Box>
-
-        {/* Projects */}
-        <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
+            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+        <Grid container justifyContent="space-between" alignItems="center"
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
+          <Grid container sx={{ width: 'fit-content' }}>
+            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+            <Button
+              variant="contained"
+              onClick={() => setOpenProjectDialog(true)}
+              sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              disabled={disableProjectButtons}
+            >Create New</Button>
+          </Grid>
+          <Grid item sx={{ px: 2 }}>
+            {
+              (isSignedIn || usingCustomEndpoint) && (
+                <Button variant="text"
+                        disabled={disableProjectButtons}
+                        onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
+                  <Grid container alignItems="center">
+                    <Refresh sx={theme => ({
+                      mr: 1,
+                      mb: .5,
+                      ...(disableProjectButtons ? {
+                        '@keyframes rotation': {
+                          from: { transform: 'rotate(0deg)' },
+                          to: { transform: 'rotate(360deg)' }
+                        },
+                        animation: '2s linear infinite rotation',
+                        fill: theme.palette.text.secondary
+                      } : {})
+                    })} />
+                    <Typography variant="subtitle2" sx={theme => ({
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                      color: disableProjectButtons ? theme.palette.text.secondary
+                        : getPaletteFromProgress(remoteFetchProgress, theme)
+                    })}>
+                      {disableProjectButtons ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                    </Typography>
+                  </Grid>
+                </Button>
+              )
+            }
+          </Grid>
+        </Grid>
+        <Grid
+          container
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            maxWidth: '1400px',
+            width: '100%',
+            paddingX: '1.1rem',
+            overflowX: 'hidden',
+            overflowY: 'auto'
+        }}>
           {projects
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
@@ -223,7 +237,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   );
 };
 
-interface ProjectCardProps {
+export interface ProjectCardProps {
   project: Project;
   currentProject: Project | undefined;
   onClick: (project: Project) => void;
@@ -231,12 +245,13 @@ interface ProjectCardProps {
   disableProjectButtons: boolean;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ project,
-                                                   currentProject,
-                                                   onClick,
-                                                   unavailableProjectNames,
-                                                   disableProjectButtons
-                                                 }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({
+                                                          project,
+                                                          currentProject,
+                                                          onClick,
+                                                          unavailableProjectNames,
+                                                          disableProjectButtons
+                                                        }) => {
   useCorpusContainers();
 
   const { downloadProject, dialog: downloadProjectDialog } = useDownloadProject();
@@ -284,22 +299,28 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
       case ProjectLocation.LOCAL:
         return (
           (isSignedIn || usingCustomEndpoint) ? <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
+            <Button variant="text"
+                    disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
                     sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
               Upload Project
-              <Computer sx={theme => ({ fill: disableProjectButtons ? theme.palette.text.secondary
-                  : theme.palette.primary.main, mb: .5, ml: .5})} />
+              <Computer sx={theme => ({
+                fill: disableProjectButtons ? theme.palette.text.secondary
+                  : theme.palette.primary.main, mb: .5, ml: .5
+              })} />
             </Button>
           </Grid> : signedOutIcon
         );
       case ProjectLocation.REMOTE:
         return (isSignedIn || usingCustomEndpoint) ? (
           <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text" disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
+            <Button variant="text"
+                    disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
                     sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
               Download Project
-              <CloudDownload sx={theme => ({ fill: disableProjectButtons ? theme.palette.text.secondary
-                  : theme.palette.primary.main, mb: .5, ml: .5 })} />
+              <CloudOutlined sx={theme => ({
+                fill: disableProjectButtons ? theme.palette.text.secondary
+                  : theme.palette.primary.main, mb: .5, ml: .5
+              })} />
             </Button>
           </Grid>
         ) : signedOutIcon;
@@ -309,7 +330,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
           <Grid container flexDirection="column">
             <Grid container justifyContent="flex-end" alignItems="center">
               <Tooltip title="Synced with remote project">
-                <CloudSync sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
+                <CloudDoneOutlined sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
               </Tooltip>
             </Grid>
           </Grid>
@@ -338,11 +359,18 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
   return (
     <>
       <Card sx={theme => ({
-        height: 250, width: 250, m: 2, '&:hover': {
+        width: 394,
+        height: 320,
+        m: '12px',
+        '&:hover': {
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
             : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-        }, transition: 'box-shadow 0.25s ease', '*': { cursor: disableProjectButtons ? 'default'  : 'pointer' },
+        },
+        transition: 'box-shadow 0.25s ease',
+        '*': {
+          cursor: disableProjectButtons ? 'default' : 'pointer'
+        },
         position: 'relative'
       })}>
         <CardContent sx={{
