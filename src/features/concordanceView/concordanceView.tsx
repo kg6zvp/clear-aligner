@@ -451,21 +451,22 @@ export const ConcordanceView = () => {
                   }
                   sx={{maxHeight: '37px'}}
                 >
-
                     <MenuItem value={'aligned' as PivotWordFilter}>
-                      <ListItemIcon>
-                        <InsertLink color={"primary"}/>
-                      </ListItemIcon>
-                      <ListItemText primary="Aligned"/>
+                      <Box display={'flex'}>
+                        <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
+                          <InsertLink color={"primary"}/>
+                        </ListItemIcon>
+                        <ListItemText primary="Aligned"/>
+                      </Box>
                     </MenuItem>
                     <MenuItem value={'all' as PivotWordFilter}>
-                      <ListItemIcon>
-                        <Icon/>
+                      <Box display={'flex'}>
+                        <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
+                          <Icon/>
                       </ListItemIcon>
                       <ListItemText primary="All"/>
+                      </Box>
                     </MenuItem>
-
-
                 </Select>
               </FormControl>
 
