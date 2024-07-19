@@ -10,7 +10,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  FormControl, InputLabel, MenuItem,
+  FormControl, Icon, InputLabel, MenuItem, MenuList,
   Paper, Select,
   Stack, Toolbar,
   Typography
@@ -31,7 +31,7 @@ import {
   CancelOutlined,
   CheckCircleOutlined,
   CropFree,
-  FlagOutlined, GpsFixed,
+  FlagOutlined, GpsFixed, InsertLink,
   Link as LinkIcon
 } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
@@ -39,6 +39,8 @@ import useConfirm from '../../hooks/useConfirm';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import AppBar from '@mui/material/AppBar';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
 
 /**
  * PivotWordFilter type
@@ -449,8 +451,21 @@ export const ConcordanceView = () => {
                   }
                   sx={{maxHeight: '37px'}}
                 >
-                  <MenuItem value={'aligned' as PivotWordFilter}>Aligned</MenuItem>
-                  <MenuItem value={'all' as PivotWordFilter}>All</MenuItem>
+
+                    <MenuItem value={'aligned' as PivotWordFilter}>
+                      <ListItemIcon>
+                        <InsertLink color={"primary"}/>
+                      </ListItemIcon>
+                      <ListItemText primary="Aligned"/>
+                    </MenuItem>
+                    <MenuItem value={'all' as PivotWordFilter}>
+                      <ListItemIcon>
+                        <Icon/>
+                      </ListItemIcon>
+                      <ListItemText primary="All"/>
+                    </MenuItem>
+
+
                 </Select>
               </FormControl>
 
