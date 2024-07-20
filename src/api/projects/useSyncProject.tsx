@@ -45,7 +45,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
   const { deleteProject } = useDeleteProject();
-  const { projectState, setSnackBarMessage, preferences, setPreferences } = useContext(AppContext);
+  const { projectState, containers, setSnackBarMessage, preferences, setPreferences } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
@@ -92,7 +92,7 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SWITCH_TO_PROJECT: {
-          if (preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
+          if (preferences?.currentProject && preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
             setProgress(SyncProgress.SYNCING_PROJECT);
           } else {
             try {
@@ -132,6 +132,13 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_CORPORA: {
+          if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
+            if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
+              setProgress(SyncProgress.FAILED);
+            }
+            project.sourceCorpora = containers.sourceContainer;
+            project.targetCorpora = containers.targetContainer;
+          }
           await syncWordsOrParts(project);
           setProgress(SyncProgress.SYNCING_ALIGNMENTS);
           break;
@@ -164,6 +171,7 @@ export const useSyncProject = (): SyncState => {
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
     preferences,
+    containers,
     setPreferences,
     uploadAlignments,
     initialProjectState, syncTime]);
@@ -232,7 +240,7 @@ export const useSyncProject = (): SyncState => {
   }, [progress, onCancel, canceled]);
 
   return {
-    sync: project => {
+    sync: (project) => {
       setCanceled(false);
       setInitialProjectState(project);
       setSyncTime(DateTime.now().toMillis());

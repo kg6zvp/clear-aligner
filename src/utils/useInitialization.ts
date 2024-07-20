@@ -30,7 +30,6 @@ const useInitialization = () => {
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
 
-
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
   }, [state.userPreferenceTable]);
@@ -85,14 +84,8 @@ const useInitialization = () => {
       setContainers(newContainers);
       setPreferences((oldPreferences) => ({
         ...(oldPreferences ?? {}) as UserPreference,
-        initialized: InitializationStates.INITIALIZED,
-        onInitialized: undefined
+        initialized: InitializationStates.INITIALIZED
       }));
-      if (preferences?.onInitialized) {
-        for(const f of preferences.onInitialized) {
-          f();
-        }
-      }
     };
     if (containers?.projectId !== preferences?.currentProject || !containers.sourceContainer || !containers.targetContainer || preferences?.initialized !== InitializationStates.INITIALIZED) {
       void loadContainers();

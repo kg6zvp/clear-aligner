@@ -1,6 +1,6 @@
 import './App.css';
 import './styles/theme.css';
-import React, { createContext, useMemo, useState } from 'react';
+import React, { createContext, useEffect, useMemo, useState } from 'react';
 import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AlignmentEditor } from './features/alignmentEditor/alignmentEditor';
@@ -17,6 +17,7 @@ import { useMediaQuery } from '@mui/material';
 import { CustomSnackbar } from './features/snackbar';
 import { NetworkState } from '@uidotdev/usehooks';
 import { setUpAmplify } from './server/amplifySetup';
+import { InitializationStates } from './workbench/query';
 
 
 export interface AppContextProps {
@@ -64,6 +65,20 @@ const App = () => {
         return preferredTheme;
     }
   }, [themeDefault, preferredTheme]);
+
+  useEffect(() => {
+    if (appContext.preferences?.initialized === InitializationStates.INITIALIZED) {
+      if (appContext.preferences?.onInitialized) {
+        for (const callback of appContext.preferences.onInitialized) {
+          callback();
+        }
+        appContext.setPreferences((p) => ({
+          ...(p ?? {}) as UserPreference,
+          onInitialized: undefined
+        }));
+      }
+    }
+  }, [appContext.preferences?.initialized, appContext.setPreferences]);
 
   const router = createHashRouter([
     {
