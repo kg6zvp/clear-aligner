@@ -262,7 +262,6 @@ const lightTheme = createTheme({
     }
   }
 });
-console.log('lightTheme is: ', lightTheme)
 
 interface ThemedProps {
   theme: 'day' | 'night';
