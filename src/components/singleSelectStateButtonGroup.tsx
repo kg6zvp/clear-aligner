@@ -43,36 +43,44 @@ export const SingleSelectStateButtonGroup = ({
     return (
       <ButtonGroup fullWidth={true} disabled={disabled}>
         <Tooltip title={'Created'}>
-          <CreatedButtonLight
-            onClick={() => onSelect('created')}
-            variant={value === 'created' ? 'contained' : undefined}
-          >
+          <span>
+            <CreatedButtonLight
+              onClick={() => onSelect('created')}
+              variant={value === 'created' ? 'contained' : undefined}
+            >
             <LinkIcon />
           </CreatedButtonLight>
+          </span>
         </Tooltip>
         <Tooltip title={'Rejected'}>
-          <RejectedButtonLight
-            onClick={() => onSelect('rejected')}
-            variant={value === 'rejected' ? 'contained' : undefined}
-          >
+          <span>
+            <RejectedButtonLight
+              onClick={() => onSelect('rejected')}
+              variant={value === 'rejected' ? 'contained' : undefined}
+            >
             <Cancel />
           </RejectedButtonLight>
+          </span>
         </Tooltip>
         <Tooltip title={'Approved'}>
-          <ApprovedButtonLight
-            onClick={() => onSelect('approved')}
-            variant={value === 'approved' ? 'contained' : undefined}
-          >
+          <span>
+            <ApprovedButtonLight
+              onClick={() => onSelect('approved')}
+              variant={value === 'approved' ? 'contained' : undefined}
+            >
             <CheckCircle />
           </ApprovedButtonLight>
+          </span>
         </Tooltip>
         <Tooltip title={'Needs Review'}>
-          <NeedsReviewButtonLight
-            onClick={() => onSelect('needsReview')}
-            variant={value === 'needsReview' ? 'contained' : undefined}
-          >
+          <span>
+             <NeedsReviewButtonLight
+               onClick={() => onSelect('needsReview')}
+               variant={value === 'needsReview' ? 'contained' : undefined}
+             >
             <Flag />
           </NeedsReviewButtonLight>
+          </span>
         </Tooltip>
       </ButtonGroup>
     );
@@ -80,36 +88,44 @@ export const SingleSelectStateButtonGroup = ({
     return (
       <ButtonGroup fullWidth={true} disabled={disabled}>
         <Tooltip title={'Created'}>
-          <CreatedButtonDark
-            onClick={() => onSelect('created')}
-            variant={value === 'created' ? 'contained' : undefined}
-          >
+          <span>
+             <CreatedButtonDark
+               onClick={() => onSelect('created')}
+               variant={value === 'created' ? 'contained' : undefined}
+             >
             <LinkIcon />
           </CreatedButtonDark>
+          </span>
         </Tooltip>
         <Tooltip title={'Rejected'}>
-          <RejectedButtonDark
-            onClick={() => onSelect('rejected')}
-            variant={value === 'rejected' ? 'contained' : undefined}
-          >
+          <span>
+            <RejectedButtonDark
+              onClick={() => onSelect('rejected')}
+              variant={value === 'rejected' ? 'contained' : undefined}
+            >
             <Cancel />
           </RejectedButtonDark>
+          </span>
         </Tooltip>
         <Tooltip title={'Approved'}>
-          <ApprovedButtonDark
-            onClick={() => onSelect('approved')}
-            variant={value === 'approved' ? 'contained' : undefined}
-          >
+          <span>
+            <ApprovedButtonDark
+              onClick={() => onSelect('approved')}
+              variant={value === 'approved' ? 'contained' : undefined}
+            >
             <CheckCircle />
           </ApprovedButtonDark>
+          </span>
         </Tooltip>
         <Tooltip title={'Needs Review'}>
-          <NeedsReviewButtonDark
-            onClick={() => onSelect('needsReview')}
-            variant={value === 'needsReview' ? 'contained' : undefined}
-          >
+          <span>
+             <NeedsReviewButtonDark
+               onClick={() => onSelect('needsReview')}
+               variant={value === 'needsReview' ? 'contained' : undefined}
+             >
             <Flag />
-          </NeedsReviewButtonDark>
+            </NeedsReviewButtonDark>
+          </span>
         </Tooltip>
       </ButtonGroup>
     );
