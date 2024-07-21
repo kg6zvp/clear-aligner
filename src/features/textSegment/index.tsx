@@ -4,7 +4,7 @@
  * Concordance Mode to show the verse text.
  */
 import React, { ReactElement, useMemo } from 'react';
-import { Typography } from '@mui/material';
+import { Typography, useTheme } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
@@ -96,6 +96,8 @@ export const TextSegment = ({
                             }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
+  const theme = useTheme();
+
   const dispatch = useAppDispatch();
   const mode = useAppSelector(selectAlignmentMode); // get alignment mode
   const isHoveredWord = useAppSelector(
@@ -172,7 +174,20 @@ export const TextSegment = ({
             <Typography
               paragraph={false}
               component="span"
-              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              sx={{
+                  display: alignment ? 'flex' : null,
+                  justifyContent: alignment ? alignment : null,
+                  backgroundColor: computeDecoration(
+                    !!readonly,
+                    isHoveredWord,
+                    isRelatedToCurrentlyHovered,
+                    mode,
+                    isLinked,
+                    hasInProgressLink,
+                    isMemberOfMultipleAlignments
+                  ) === ' focused related' ? theme.palette.tokenButtons.defaultTokenButtons.rollover : null
+                }
+              }
               style={{
                 ...(languageInfo?.fontFamily
                   ? { fontFamily: languageInfo.fontFamily }
@@ -182,7 +197,9 @@ export const TextSegment = ({
               paragraph={false}
               component="span"
               variant={disableHighlighting ? undefined : computeVariant(isSelectedInEditedLink, isLinked)}
-              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              sx={
+                alignment ? { display: 'flex', justifyContent: alignment } : {}
+              }
               className={`text-segment${
                 readonly ? '.readonly' : ''
               } ${disableHighlighting ? ' locked ' : computeDecoration(
