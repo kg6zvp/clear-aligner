@@ -43,7 +43,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
       display: 'inline-block',
       p: 1,
       m: .25,
-      borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+      borderColor:  theme.palette.tokenButtons.defaultTokenButtons.outline,
       ...(theme.palette.mode === ThemeMode.DARK ? {
         background: 'transparent'
       } : {})
@@ -70,7 +70,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                       languageInfo={languageInfo}
                       variant="caption"
                       sx={theme => ({
-                        color: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.75)',
+                        color: theme.palette.tokenButtons.defaultTokenButtons.text
                       })}
                     >
                       {wordPart.gloss || "-"}
@@ -83,7 +83,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                       borderStyle: 'dashed',
                       borderWidth: '1px',
                       mx: .5,
-                      borderColor: theme.palette.mode === ThemeMode.LIGHT ? 'rgba(0, 0, 0, 0.35)' : 'rgba(255, 255, 255, 0.35)'
+                      borderColor:  theme.palette.tokenButtons.defaultTokenButtons.outline,
                     })} />
                   )
                 }
