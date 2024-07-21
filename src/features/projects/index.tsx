@@ -165,7 +165,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
-          paddingTop: '5rem',
+          paddingTop: '2.5rem',
           paddingLeft: '2.3rem'
         }}>
           <FormControl sx={{ width: 175 }}>
