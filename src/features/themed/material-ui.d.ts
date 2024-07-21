@@ -29,85 +29,86 @@ declare module '@mui/material/styles' {
   interface Palette extends ColorOptions {
 
   }
+
   // allow configuration using `createTheme`
-  interface PaletteOptions extends ColorOptions{
+  interface PaletteOptions extends ColorOptions {
 
   }
 
-  interface ColorOptions {
+  interface ColorOptions  {
     statusIndicators: {
-      aligned?: string;
-      approved?: string;
-      flagged?: string;
-      rejected?: string;
+      aligned: string;
+      approved: string;
+      flagged: string;
+      rejected: string;
     },
     statusIndicatorsIcons: {
-      aligned?: string;
-      rejected?: string;
-      approved?: string;
-      flagged?: string;
+      aligned: string;
+      rejected: string;
+      approved: string;
+      flagged: string;
     },
-      tokenButtons?: {
-        defaultTokenButtons?: {
-          default?: string;
-          text?: string;
-          textContrast?: string;
-          outline?: string;
-          rollover?: string;
-          selected?: string;
-        },
-        alignedTokenButtons?:{
-          default?: string;
-          text?: string;
-          textContrast?: string;
-          textReversed?: string;
-          outline?: string;
-          rollover?: string;
-          selected?: string;
-          icons?: string;
-          iconsReversed?: string;
-          iconsContrast?: string;
-        },
-        machineAlignedTokenButtons?:{
-          default?: string;
-          text?: string;
-          textContrast?: string;
-          textReversed?: string;
-          outline?: string;
-          rollover?: string;
-          selected?: string;
-          icons?: string;
-          iconsReversed?: string;
-          iconsContrast?: string;
-        },
-        approvedTokenButtons?:{
-          default?: string;
-          text?: string;
-          textContrast?: string;
-          textReversed?: string;
-          outline?: string;
-          rollover?: string;
-          selected?: string;
-          icons?: string;
-          iconsReversed?: string;
-          iconsContrast?: string;
-        },
-        flaggedTokenButtons?:{
-          default?: string;
-          text?: string;
-          textContrast?: string;
-          textReversed?: string;
-          outline?: string;
-          rollover?: string;
-          selected?: string;
-          icons?: string;
-          iconsReversed?: string;
-          iconsContrast?: string;
-        },
+    tokenButtons: {
+      defaultTokenButtons: {
+        default: string;
+        text: string;
+        textContrast?: string;
+        outline: string;
+        rollover: string;
+        selected: string;
       },
-      background?:{
-        paper?: string;
-        default?: string;
-      }
+      alignedTokenButtons: {
+        default: string;
+        text: string;
+        textContrast?: string;
+        textReversed?: string;
+        outline: string;
+        rollover: string;
+        selected: string;
+        icons: string;
+        iconsReversed?: string;
+        iconsContrast?: string;
+      },
+      machineAlignedTokenButtons: {
+        default: string;
+        text: string;
+        textContrast?: string;
+        textReversed?: string;
+        outline: string;
+        rollover: string;
+        selected: string;
+        icons: string;
+        iconsReversed?: string;
+        iconsContrast?: string;
+      },
+      approvedTokenButtons: {
+        default: string;
+        text: string;
+        textContrast?: string;
+        textReversed?: string;
+        outline: string;
+        rollover: string;
+        selected: string;
+        icons: string;
+        iconsReversed?: string;
+        iconsContrast?: string;
+      },
+      flaggedTokenButtons: {
+        default: string;
+        text: string;
+        textContrast?: string;
+        textReversed?: string;
+        outline: string;
+        rollover: string;
+        selected: string;
+        icons: string;
+        iconsReversed?: string;
+        iconsContrast?: string;
+      },
+    },
+    background: {
+      paper: string;
+      default: string;
+    }
   }
 }
