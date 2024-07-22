@@ -144,8 +144,13 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
               </ButtonGroup>
               {
                 showNavigation && (
-                  <div style={{ display: 'inline-flex', justifyContent: 'center' }}>
-                    <br />
+                  <div style={{
+                    display: 'inline-flex',
+                    justifyContent: 'center',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    paddingRight: '89px'
+                  }}>
                     <BCVNavigation
                       horizontal
                       disabled={!availableWords || availableWords.length < 1}
