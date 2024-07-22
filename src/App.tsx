@@ -78,7 +78,7 @@ const App = () => {
         }));
       }
     }
-  }, [appContext.preferences?.initialized, appContext.setPreferences]);
+  }, [appContext, appContext.preferences?.initialized, appContext.setPreferences]);
 
   const router = createHashRouter([
     {

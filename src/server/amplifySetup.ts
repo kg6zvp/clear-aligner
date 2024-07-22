@@ -9,7 +9,7 @@ export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;
 export const OverrideUserPoolClientId = environmentVariables.userPoolClientId;
 
-export const DefaultCaApiEndpoint = 'http://clear-aligner-server-1-alb-1281499728.us-east-1.elb.amazonaws.com';
+export const DefaultCaApiEndpoint = 'http://awseb--AWSEB-uI8J0qxyPESc-311978805.us-east-1.elb.amazonaws.com';
 export const DefaultUserPoolId = 'us-east-1_63WiOrSMN';
 export const DefaultUserPoolClientId = 'jteqgoa1rgptil2tdi7b0nqjb';
 export const ClearAlignerApi = 'ClearAlignerApi';

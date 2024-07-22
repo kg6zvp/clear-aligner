@@ -2,7 +2,7 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentFileSchema, alignmentFileSchemaErrorMessageMapper } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
@@ -14,7 +14,6 @@ import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
-import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
 import _ from 'lodash';
@@ -28,7 +27,6 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
   isSignedIn?: boolean;
   disableProjectButtons: boolean
 }) => {
-  const { projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,7 +37,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     preserveFileIds: boolean
   }>();
 
-  const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
+  const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
     errors?: ZodError<AlignmentFile>,
     showDialog?: boolean
   }>();
@@ -79,7 +77,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       SyncProgress.SWITCH_TO_PROJECT,
       SyncProgress.SYNCING_PROJECT,
       SyncProgress.SYNCING_CORPORA,
-      SyncProgress.SYNCING_ALIGNMENTS,
+      SyncProgress.SYNCING_ALIGNMENTS
     ].includes(progress)
   ), [progress]);
 
@@ -99,26 +97,21 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
         containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName);
       return true;
     }
-    return (_.max([ ...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? []) ]
-        .map((corpus) => corpus.updatedAt?.getTime())
-        .filter((v) => !!v)) ?? 0) > (project.lastSyncTime ?? 0)
-  }, [isCurrentProject, inProgress, project, disableProjectButtons, isSignedIn, containers.length]);
-
-  /*console.log('enableSyncButton',
-    project,
-    containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName,
-    enableSyncButton); //*/
+    return (_.max([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+      .map((corpus) => corpus.updatedAt?.getTime())
+      .filter((v) => !!v)) ?? 0) > (project.lastSyncTime ?? 0);
+  }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
 
   return (
     <span>
       {
         project?.location !== ProjectLocation.LOCAL && (
-        <>
-          <RemovableTooltip
-            removed={alignmentFileErrors?.showDialog || disableProjectButtons}
-            title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
-            describeChild
-            arrow>
+          <>
+            <RemovableTooltip
+              removed={alignmentFileErrors?.showDialog || disableProjectButtons}
+              title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
+              describeChild
+              arrow>
           <span>
 
                 <Button
@@ -135,17 +128,20 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 >
                   <Sync sx={theme => ({
                     ...(inProgress ? {
-                      '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                      '@keyframes rotation': {
+                        from: { transform: 'rotate(0deg)' },
+                        to: { transform: 'rotate(360deg)' }
+                      },
                       animation: '2s linear infinite rotation reverse',
                       fill: inProgress ? theme.palette.text.secondary : 'white'
                     } : {})
                   })} />
                 </Button>
           </span>
-          </RemovableTooltip>
-          <br/>
-        </>
-      )}
+            </RemovableTooltip>
+            <br />
+          </>
+        )}
       <ButtonGroup
         disabled={disableProjectButtons}
       >
