@@ -30,7 +30,6 @@ const useInitialization = () => {
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
 
-
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
   }, [state.userPreferenceTable]);

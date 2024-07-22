@@ -340,13 +340,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
             <Grid container alignItems="center" sx={{ height: 75, width: 'fit-content' }}>
               {project.location !== ProjectLocation.REMOTE ?
                 <UploadAlignmentGroup
-                  projectId={project.id}
+                  project={project}
                   size="small"
                   containers={[
                     ...(project.sourceCorpora ? [project.sourceCorpora] : []),
                     ...(project.targetCorpora ? [project.targetCorpora] : [])
                   ]}
-                  allowImport={isCurrentProject}
+                  isCurrentProject={isCurrentProject}
                   isSignedIn={isSignedIn}
                   disableProjectButtons={disableProjectButtons}
                 /> : <></>}
