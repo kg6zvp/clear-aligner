@@ -98,7 +98,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       return true;
     }
     return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-      .some((corpus) => corpus.updatedSinceSync && corpus.updatedSinceSync > 0);
+      .some((corpus) => !!corpus.updatedSinceSync);
   }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
 
   return (

@@ -29,7 +29,7 @@ export const useSyncWordsOrParts = (): SyncState => {
       const corporaToUpdate: Corpus[] = [
         ...(project.sourceCorpora?.corpora ?? []),
         ...(project.targetCorpora?.corpora ?? [])
-      ].filter((corpus: Corpus) => !!corpus.updatedSinceSync && corpus.updatedSinceSync > 0 );
+      ].filter((corpus: Corpus) => !!corpus.updatedSinceSync);
       /*
        * remove tokens in corpora requiring sync
        */
