@@ -124,7 +124,7 @@ export interface Corpus {
   wordsByVerse: Record<string, Verse>;
   wordLocation: Map<string, Set<BCVWP>>;
   createdAt?: Date;
-  updatedAt?: Date;
+  updatedSinceSync?: number;
   books: {
     [key: number]: {
       // book object containing chapters

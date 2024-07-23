@@ -12,6 +12,7 @@ import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
+import { useDatabase } from '../../hooks/useDatabase';
 
 export enum SyncProgress {
   IDLE,
@@ -40,6 +41,7 @@ export interface SyncState {
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
  */
 export const useSyncProject = (): SyncState => {
+  const dbApi = useDatabase();
   const { publishProject } = usePublishProject();
   const { refetch: getProjects } = useProjectsFromServer({enabled: false});
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
@@ -153,9 +155,10 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
-          project.lastSyncTime = syncTime;
-          project.updatedAt = syncTime;
+          project.updatedAt = DateTime.now().toMillis();
+          project.lastSyncTime = DateTime.now().toMillis();
           project.location = ProjectLocation.SYNCED;
+          await dbApi.toggleCorporaUpdatedFlagOff(project.id);
           await projectState.projectTable?.sync?.(project);
           // Update project state to Published.
           await publishProject(project, ProjectState.PUBLISHED);

@@ -10,14 +10,14 @@ export class CorporaTimestamps1720241454613 implements MigrationInterface {
           default: 'CURRENT_TIMESTAMP'
         }),
         new TableColumn({
-          name: 'updated_at',
-          type: 'timestamptz',
-          default: 'CURRENT_TIMESTAMP',
-          onUpdate: 'CURRENT_TIMESTAMP'
+          name: 'updated_since_sync',
+          type: 'INTEGER',
+          default: '0',
+          isNullable: true
         }),
       ]);
     }
     public async down(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.dropColumns(CORPORA_TABLE_NAME, [ 'created_at', 'updated_at' ]);
+      await queryRunner.dropColumns(CORPORA_TABLE_NAME, [ 'created_at', 'updated_since_sync' ]);
     }
 }

@@ -78,6 +78,11 @@ export interface DatabaseApi {
   languageGetAll: (sourceName: string) => Promise<LanguageInfo[]>;
   languageFindByIds: (sourceName: string, languageIds: string[]) => Promise<LanguageInfo[]>;
   getAllWordsByCorpus: (sourceName: string, linkSide: AlignmentSide, corpusId: string, wordLimit: number, wordSkip: number) => Promise<Word[]>;
+  /**
+   * Turns off flag indicating corpora have been updated since last sync
+   * @param projectId
+   */
+  toggleCorporaUpdatedFlagOff: (projectId: string) => Promise<void>;
 }
 
 export const useDatabase = (): DatabaseApi => {
