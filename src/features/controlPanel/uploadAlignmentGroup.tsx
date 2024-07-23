@@ -34,7 +34,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     alignmentFile?: AlignmentFile,
     saveKey?: string,
     suppressJournaling?: boolean,
-    preserveFileIds: boolean
+    removeAllFirst?: boolean,
+    preserveFileIds?: boolean
   }>();
 
   const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
@@ -66,6 +67,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       alignmentFile: alignmentFileFromServer,
       saveKey: uuid(),
       suppressJournaling: true,
+      removeAllFirst: true,
       preserveFileIds: true
     });
   }, [alignmentFileFromServer, setAlignmentFileSaveState]);
@@ -185,6 +187,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                     alignmentFile: fileData.success ? fileData.data : undefined,
                     saveKey: uuid(),
                     suppressJournaling: false,
+                    removeAllFirst: false,
                     preserveFileIds: false
                   });
                 }}
