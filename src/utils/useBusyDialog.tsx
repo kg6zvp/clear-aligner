@@ -121,6 +121,12 @@ const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction) => {
   return (
     <Dialog
       open={!!spinnerParams.isBusy && !cancel}
+      fullWidth={true}
+      sx={{
+        '.MuiPaper-root': {
+          minHeight: '120px'
+        }
+      }}
     >
       <DialogTitle>
         <Grid container justifyContent="flex-end" alignItems="center">
