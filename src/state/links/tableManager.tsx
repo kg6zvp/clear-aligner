@@ -18,8 +18,8 @@ import { Progress } from '../../api/ApiModels';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { Project } from '../projects/tableManager';
 
+const DatabaseInsertChunkSize = 5_000;
 const UIInsertChunkSize = 10_000;
-const DatabaseInsertChunkSize = UIInsertChunkSize / 2;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
