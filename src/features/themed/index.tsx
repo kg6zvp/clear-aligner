@@ -67,25 +67,29 @@ const lightTheme: Theme = createTheme({
     },
     toggleButtons: {
       disabled: {
-        icon: alpha('#000000', .38),
+        color: alpha('#000000', .38),
         stroke: alpha('#000000', .12),
         background: alpha('#000000', 0),
+        borderColor: '#e0e0e0',
       },
       enabled: {
-        icon: alpha('#000000', .54),
+        color: alpha('#000000', .54),
         stroke: alpha('#000000', .12),
         background: alpha('#000000', 0),
+        borderColor: '#e0e0e0',
       },
       hover: {
-        icon: alpha('#000000', .54),
+        color: alpha('#000000', .54),
         stroke: alpha('#000000', .12),
         background: alpha('#000000', .04),
+        borderColor: '#d3d3d3',
       },
       selected: {
-        icon: '#FFFFFF',
+        color: '#FFFFFF',
         stroke: alpha('#000000', .12),
-      }
+      },
     },
+
     tokenButtons: {
       defaultTokenButtons: {
         default: '#00000000', // Transparent
@@ -218,24 +222,27 @@ const darkTheme = createTheme({
     },
     toggleButtons: {
       disabled: {
-        icon: alpha('#FFFFFF', .38),
+        color: alpha('#FFFFFF', .38),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', 0),
+        borderColor: "#2f2f2f",
       },
       enabled: {
-        icon: alpha('#FFFFFF', .70),
+        color: alpha('#FFFFFF', .70),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', 0),
+        borderColor: "#2f2f2f",
       },
       hover: {
-        icon: alpha('#FFFFFF', .70),
+        color: alpha('#FFFFFF', .70),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', .08),
+        borderColor: '#404040',
       },
       selected: {
-        icon: '#FFFFFF',
+        color: '#FFFFFF',
         stroke: alpha('#FFFFFF', .12),
-      }
+      },
     },
     tokenButtons: {
       defaultTokenButtons: {

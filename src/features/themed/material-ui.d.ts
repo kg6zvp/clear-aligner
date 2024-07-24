@@ -50,24 +50,27 @@ declare module '@mui/material/styles' {
     },
     toggleButtons: {
       disabled: {
-        icon: string;
+        color: string;
         stroke: string;
         background: string;
+        borderColor: string;
       }
       enabled: {
-        icon: string;
+        color: string;
         stroke: string;
         background: string;
+        borderColor: string;
       }
       hover: {
-        icon: string;
+        color: string;
         stroke: string;
         background: string;
+        borderColor: string;
       }
       selected: {
-        icon: string;
+        color: string;
         stroke: string;
-      }
+      },
     }
     tokenButtons: {
       defaultTokenButtons: {
