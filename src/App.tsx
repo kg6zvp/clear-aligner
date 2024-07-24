@@ -38,6 +38,8 @@ export interface AppContextProps {
   setContainers: React.Dispatch<React.SetStateAction<Containers>>;
   isProjectDialogOpen: boolean;
   setIsProjectDialogOpen: Function;
+  isBusyDialogOpen: boolean;
+  setIsBusyDialogOpen: Function;
 }
 
 export type THEME = 'night' | 'day';

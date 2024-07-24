@@ -54,7 +54,7 @@ export const useSyncProject = (): SyncState => {
   const [canceled, setCanceled] = React.useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const { setIsProjectDialogOpen } = useContext(AppContext);
+  const { setIsProjectDialogOpen, isBusyDialogOpen } = useContext(AppContext);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -225,7 +225,7 @@ export const useSyncProject = (): SyncState => {
           SyncProgress.IDLE,
           SyncProgress.SUCCESS,
           SyncProgress.FAILED
-        ].includes(progress)}
+        ].includes(progress) && !isBusyDialogOpen}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
@@ -240,7 +240,7 @@ export const useSyncProject = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress, onCancel, canceled]);
+  }, [progress, onCancel, canceled, isBusyDialogOpen]);
 
   return {
     sync: (project) => {

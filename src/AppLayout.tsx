@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import Themed from './features/themed';
 import { Outlet } from 'react-router-dom';
 import useTrackLocation from './utils/useTrackLocation';
@@ -20,7 +20,7 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
   useTrackLocation();
-  const busyDialog = useBusyDialog();
+  const { isOpen: busyDialogOpen, busyDialog } = useBusyDialog();
 
   const layoutContext: LayoutContextProps = useMemo(
     () => ({
@@ -32,7 +32,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
 
   // Ensure we don't show the busyDialog concurrently
   // with one of the project dialogs
-  const { isProjectDialogOpen } = useContext(AppContext);
+  const { isProjectDialogOpen, setIsBusyDialogOpen } = useContext(AppContext);
+
+  useEffect(() => {
+    setIsBusyDialogOpen(busyDialogOpen);
+  }, [busyDialogOpen, setIsBusyDialogOpen ]);
 
   return (
     <LayoutContext.Provider value={layoutContext}>
