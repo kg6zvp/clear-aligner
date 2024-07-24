@@ -48,6 +48,27 @@ declare module '@mui/material/styles' {
       approved: string;
       flagged: string;
     },
+    toggleButtons: {
+      disabled: {
+        icon: string;
+        stroke: string;
+        background: string;
+      }
+      enabled: {
+        icon: string;
+        stroke: string;
+        background: string;
+      }
+      hover: {
+        icon: string;
+        stroke: string;
+        background: string;
+      }
+      selected: {
+        icon: string;
+        stroke: string;
+      }
+    }
     tokenButtons: {
       defaultTokenButtons: {
         default: string;

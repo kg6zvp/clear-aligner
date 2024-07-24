@@ -2,7 +2,7 @@
  * This file sets up the MUI Theme via the Themed wrapper component.
  */
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 import { CssBaseline, Theme } from '@mui/material';
 import { green, grey, orange, red, yellow } from '@mui/material/colors';
 
@@ -64,6 +64,27 @@ const lightTheme: Theme = createTheme({
       rejected: red['500'],
       approved: green['500'],
       flagged: orange['600'],
+    },
+    toggleButtons: {
+      disabled: {
+        icon: alpha('#000000', .38),
+        stroke: alpha('#000000', .12),
+        background: alpha('#000000', 0),
+      },
+      enabled: {
+        icon: alpha('#000000', .54),
+        stroke: alpha('#000000', .12),
+        background: alpha('#000000', 0),
+      },
+      hover: {
+        icon: alpha('#000000', .54),
+        stroke: alpha('#000000', .12),
+        background: alpha('#000000', .04),
+      },
+      selected: {
+        icon: '#FFFFFF',
+        stroke: alpha('#000000', .12),
+      }
     },
     tokenButtons: {
       defaultTokenButtons: {
@@ -194,6 +215,27 @@ const darkTheme = createTheme({
       rejected: red['500'],
       approved: green['500'],
       flagged: orange['600'],
+    },
+    toggleButtons: {
+      disabled: {
+        icon: alpha('#FFFFFF', .38),
+        stroke: alpha('#FFFFFF', .12),
+        background: alpha('#FFFFFF', 0),
+      },
+      enabled: {
+        icon: alpha('#FFFFFF', .70),
+        stroke: alpha('#FFFFFF', .12),
+        background: alpha('#FFFFFF', 0),
+      },
+      hover: {
+        icon: alpha('#FFFFFF', .70),
+        stroke: alpha('#FFFFFF', .12),
+        background: alpha('#FFFFFF', .08),
+      },
+      selected: {
+        icon: '#FFFFFF',
+        stroke: alpha('#FFFFFF', .12),
+      }
     },
     tokenButtons: {
       defaultTokenButtons: {
