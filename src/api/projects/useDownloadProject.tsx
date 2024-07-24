@@ -130,7 +130,10 @@ export const useDownloadProject = (): SyncState => {
         if (prevSourceName !== project.id) {
           projectState.linksTable.setSourceName(project.id);
         }
-        await projectState.linksTable.saveAll( (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true, true);
+        await projectState.linksTable.saveAll(
+          (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity),
+          false, true,
+          true, true);
 
         project.lastSyncTime = DateTime.now().toMillis();
         await projectState.projectTable?.update(project, false);
