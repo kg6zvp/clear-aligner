@@ -137,6 +137,7 @@ export const useSyncProject = (): SyncState => {
           if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
             if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
               setProgress(SyncProgress.FAILED);
+              break;
             }
             project.sourceCorpora = containers.sourceContainer;
             project.targetCorpora = containers.targetContainer;

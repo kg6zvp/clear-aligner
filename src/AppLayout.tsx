@@ -35,8 +35,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
   const { isProjectDialogOpen, setIsBusyDialogOpen } = useContext(AppContext);
 
   useEffect(() => {
-    setIsBusyDialogOpen(busyDialogOpen);
-  }, [busyDialogOpen, setIsBusyDialogOpen ]);
+    setIsBusyDialogOpen(!isProjectDialogOpen && busyDialogOpen);
+  }, [busyDialogOpen, isProjectDialogOpen, setIsBusyDialogOpen ]);
 
   return (
     <LayoutContext.Provider value={layoutContext}>
