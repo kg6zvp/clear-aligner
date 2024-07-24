@@ -168,6 +168,15 @@ export const TextSegment = ({
     return <span>{'ERROR'}</span>;
   }
 
+  const computedDecoration = computeDecoration(
+    !!readonly,
+    isHoveredWord,
+    isRelatedToCurrentlyHovered,
+    mode,
+    isLinked,
+    hasInProgressLink,
+    isMemberOfMultipleAlignments
+  )
   return (
     <React.Fragment>
         <LocalizedTextDisplay languageInfo={languageInfo}>
@@ -177,17 +186,10 @@ export const TextSegment = ({
               sx={{
                   display: alignment ? 'flex' : null,
                   justifyContent: alignment ? alignment : null,
-                  backgroundColor: computeDecoration(
-                    !!readonly,
-                    isHoveredWord,
-                    isRelatedToCurrentlyHovered,
-                    mode,
-                    isLinked,
-                    hasInProgressLink,
-                    isMemberOfMultipleAlignments
-                  ) === ' focused related' ? theme.palette.highlightedText.alignmentEditor : null
-                }
-              }
+                  backgroundColor: computedDecoration === ' focused related' ||
+                  computedDecoration === ' related' ?
+                    theme.palette.highlightedText.alignmentEditor : null
+              }}
               style={{
                 ...(languageInfo?.fontFamily
                   ? { fontFamily: languageInfo.fontFamily }
