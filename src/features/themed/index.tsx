@@ -89,7 +89,9 @@ const lightTheme: Theme = createTheme({
         stroke: alpha('#000000', .12),
       },
     },
-
+    highlightedText: {
+      alignmentEditor: yellow[200],
+    },
     tokenButtons: {
       defaultTokenButtons: {
         default: '#00000000', // Transparent
@@ -243,6 +245,9 @@ const darkTheme = createTheme({
         color: '#FFFFFF',
         stroke: alpha('#FFFFFF', .12),
       },
+    },
+    highlightedText: {
+      alignmentEditor: yellow[700],
     },
     tokenButtons: {
       defaultTokenButtons: {

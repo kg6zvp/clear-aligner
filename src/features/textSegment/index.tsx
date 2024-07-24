@@ -185,7 +185,7 @@ export const TextSegment = ({
                     isLinked,
                     hasInProgressLink,
                     isMemberOfMultipleAlignments
-                  ) === ' focused related' ? theme.palette.tokenButtons.defaultTokenButtons.rollover : null
+                  ) === ' focused related' ? theme.palette.highlightedText.alignmentEditor : null
                 }
               }
               style={{

@@ -72,6 +72,9 @@ declare module '@mui/material/styles' {
         stroke: string;
       },
     }
+    highlightedText: {
+      alignmentEditor: string,
+    }
     tokenButtons: {
       defaultTokenButtons: {
         default: string;
