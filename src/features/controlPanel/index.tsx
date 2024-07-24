@@ -2,13 +2,12 @@
  * This file contains the ControlPanel component which contains buttons like
  * create link, delete link, toggle glosses, swap to vertical mode, etc.
  */
-import { ReactElement, useContext, useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 import { Button, ButtonGroup, Stack, Tooltip } from '@mui/material';
 import { AddLink, LinkOff, RestartAlt } from '@mui/icons-material';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import { CorpusContainer } from '../../structs';
-import { AppContext } from '../../App';
 import { useRemoveLink, useSaveLink } from '../../state/links/tableManager';
 import BCVWP from '../bcvwp/BCVWPSupport';
 

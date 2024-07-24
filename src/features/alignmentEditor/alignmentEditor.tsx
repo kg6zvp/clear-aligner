@@ -26,9 +26,15 @@ const defaultDocumentTitle = 'ClearAligner';
 
 interface AlignmentEditorProps {
   showNavigation?: boolean;
+  showProfileAvatar?: boolean;
+  usePaddingForEditorContainer?: boolean;
 }
 
-export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true }) => {
+export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true,
+                                                                  showProfileAvatar = true,
+                                                                  usePaddingForEditorContainer= true
+
+                                                                }) => {
   const layoutCtx = useContext(LayoutContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
   const [availableWords, setAvailableWords] = useState([] as Word[]);
@@ -171,13 +177,16 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                 )
               }
             </Box>
-            <ProfileAvatar />
+            {showProfileAvatar &&
+              (<ProfileAvatar />)
+            }
           </Toolbar>
         </AppBar>
       </Box>
       <Workbench
         corpora={selectedCorporaContainers}
         currentPosition={currentPosition}
+        usePaddingForEditorContainer={usePaddingForEditorContainer}
       />
     </Stack>
   );

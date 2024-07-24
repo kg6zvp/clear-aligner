@@ -19,9 +19,10 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 interface EditorProps {
   containers: CorpusContainer[];
   position: BCVWP;
+  usePaddingForEditorContainer?: boolean,
 }
 
-const Editor = (props: EditorProps): ReactElement => {
+const Editor = ({containers, position, usePaddingForEditorContainer}: EditorProps): ReactElement => {
   useDebug('Editor');
 
   return (
@@ -31,11 +32,11 @@ const Editor = (props: EditorProps): ReactElement => {
       flexGrow: 1,
       flexShrink: 1,
       marginBottom: '1rem',
-      px: '12px'
+      px: usePaddingForEditorContainer ? '12px' : '0px'
     }}>
-            <Polyglot containers={props.containers} position={props.position} />
-            <ControlPanel containers={props.containers} position={props.position} />
-            <ContextPanel containers={props.containers} />
+            <Polyglot containers={containers} position={position} />
+            <ControlPanel containers={containers} position={position} />
+            <ContextPanel containers={containers} />
     </Container>
   );
 };
