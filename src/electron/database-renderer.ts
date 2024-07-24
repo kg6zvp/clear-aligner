@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('databaseApi', {
 
 contextBridge.exposeInMainWorld('environmentVariables', {
   caApiEndpoint: process.env['CA_API_ENDPOINT'],
+  caApiEndpointIsDev: process.env['CA_API_ENDPOINT_IS_DEV'],
   userPoolId: process.env['CA_USER_POOL_ID'],
   userPoolClientId: process.env['CA_USER_POOL_CLIENT_ID']
 } as EnvironmentVariables);

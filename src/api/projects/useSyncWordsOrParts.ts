@@ -27,24 +27,10 @@ export const useSyncWordsOrParts = (): SyncState => {
   const syncWordsOrParts = async (project: Project) => {
     try {
       setProgress(Progress.IN_PROGRESS);
-      const corporaToUpdate: Corpus[] = [
+      const tokensToUpload = [
         ...(project.sourceCorpora?.corpora ?? []),
         ...(project.targetCorpora?.corpora ?? [])
-      ].filter((corpus: Corpus) => project.location === ProjectLocation.LOCAL || !!corpus.updatedSinceSync);
-      /*
-       * remove tokens in corpora requiring sync
-       */
-      if (project.location !== ProjectLocation.LOCAL) {
-        for (const corpusToUpdate of corporaToUpdate) {
-          await ApiUtils.generateRequest({
-            requestPath: `/api/projects/${project.id}/tokens/${corpusToUpdate.id}/tokens`,
-            requestType: ApiUtils.RequestType.DELETE,
-            signal: abortController.current?.signal
-          });
-        }
-      }
-
-      const tokensToUpload = corporaToUpdate
+      ].filter((corpus: Corpus) => project.location === ProjectLocation.LOCAL || !!corpus.updatedSinceSync)
         .flatMap(c => c.words)
         .map(mapWordOrPartToWordOrPartDTO);
 
