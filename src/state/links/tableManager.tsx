@@ -505,7 +505,7 @@ export const useSaveLink = () => {
  * @param preserveFileIds whether id's of links in imported file should be preserved
  */
 export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, suppressJournaling?: boolean, preserveFileIds?: boolean) => {
-  const { projectState, preferences, projects } = React.useContext(AppContext);
+  const { projectState, preferences, projects, setProjects } = React.useContext(AppContext);
   const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [ projects, projectId ]);
   const [status, setStatus] = useState<{
     isPending: boolean;
@@ -538,11 +538,23 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
           isPending: false
         };
         setStatus(endStatus);
-        project && projectState?.projectTable?.updateLastUpdated?.(project)?.catch?.(console.error);
+        project && projectState?.projectTable?.updateLastUpdated?.(project)
+          ?.then((result) => {
+            if (result) {
+              setProjects((projects) => projects.map((p) => {
+                if (p.id !== result.id) return p;
+                return {
+                  ...p,
+                  updatedAt: result.updatedAt
+                };
+              }));
+            }
+          })
+          ?.catch?.(console.error);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
   }, [project, linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate,
-    projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
+    projects, setProjects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
 
   return { ...status };
 };
