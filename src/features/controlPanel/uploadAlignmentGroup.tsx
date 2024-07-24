@@ -16,8 +16,6 @@ import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
-import _ from 'lodash';
-import { AlignmentSide } from '../../common/data/project/corpus';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,

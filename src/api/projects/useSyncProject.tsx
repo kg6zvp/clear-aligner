@@ -174,11 +174,12 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    dbApi,
     preferences,
     containers,
     setPreferences,
     uploadAlignments,
-    initialProjectState, syncTime]);
+    initialProjectState]);
 
   useEffect(() => {
     if(syncTime && initialProjectState && !canceled) {

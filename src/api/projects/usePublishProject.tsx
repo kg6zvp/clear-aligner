@@ -6,7 +6,6 @@ import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/materia
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { Progress } from '../ApiModels';
-import { DateTime } from 'luxon';
 import { ApiUtils } from '../utils';
 import RequestType = ApiUtils.RequestType;
 

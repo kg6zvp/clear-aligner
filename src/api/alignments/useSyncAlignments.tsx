@@ -1,20 +1,14 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { useMemo, useCallback, useRef, useState } from 'react';
 import {
-  LINKS_TABLE_NAME,
   mapLinkEntityToServerAlignmentLink,
   ServerAlignmentLinkDTO
 } from '../../common/data/serverAlignmentLinkDTO';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName, LinksTable } from '../../state/links/tableManager';
-import {
-  JournalEntry,
-  mapJournalEntryEntityToJournalEntryDTO
-} from '../../common/data/journalEntryDTO';
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { ApiUtils } from '../utils';
-import { LinkMetadata } from '../../structs';
 
 export interface SyncState {
   file?: AlignmentFile;
@@ -116,7 +110,7 @@ export const useSyncAlignments = (): SyncState => {
     } catch (x) {
       console.error(x);
     }
-  }, [dbApi]);
+  }, []);
 
   const dialog = useMemo(() => {
     return (

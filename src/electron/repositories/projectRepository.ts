@@ -674,7 +674,7 @@ export class ProjectRepository extends BaseRepository {
               .insert(savedLinks
                 .map((link) => {
                   const pastLink = pastLinks.has(link.id) ? pastLinks.get(link.id) : undefined;
-                  if (!pastLink) return;
+                  if (!pastLink) return undefined;
                   const linkDiff = this.generateLinkDiff(pastLink, link);
                   if (linkDiff.length < 1) return undefined;
                   return ({
