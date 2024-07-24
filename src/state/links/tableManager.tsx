@@ -18,8 +18,8 @@ import { Progress } from '../../api/ApiModels';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { Project } from '../projects/tableManager';
 
-const DatabaseInsertChunkSize = 10_000;
-const UIInsertChunkSize = DatabaseInsertChunkSize / 2;
+const DatabaseInsertChunkSize = 5_000;
+const UIInsertChunkSize = 10_000;
 const DatabaseSelectChunkSize = 25_000;
 const DatabaseRefreshIntervalInMs = 500;
 const DatabaseCacheTTLMs = 600_000;
@@ -160,10 +160,11 @@ export class LinksTable extends VirtualTable {
   };
 
   saveAlignmentFile = async (alignmentFile: AlignmentFile,
-                             suppressOnUpdate: boolean = false,
-                             isForced: boolean = false,
-                             disableJournaling: boolean = false,
-                             preserveFileIds: boolean = false) => {
+                             suppressOnUpdate = false,
+                             isForced = false,
+                             disableJournaling = false,
+                             removeAllFirst = false,
+                             preserveFileIds = false) => {
     await this.saveAll(alignmentFile.records.map(
       (record) =>
         ({
@@ -175,13 +176,14 @@ export class LinksTable extends VirtualTable {
           sources: record.source,
           targets: record.target
         } as Link)
-    ), suppressOnUpdate, isForced, disableJournaling);
+    ), suppressOnUpdate, isForced, disableJournaling, removeAllFirst);
   };
 
   saveAll = async (inputLinks: Link[],
                    suppressOnUpdate = false,
                    isForced = false,
-                   disableJournaling = false) => {
+                   disableJournaling = false,
+                   removeAllFirst = false) => {
     // reentry is possible because everything is
     // done in chunks with promises
     if (!isForced && this.isDatabaseBusy()) {
@@ -192,7 +194,9 @@ export class LinksTable extends VirtualTable {
     this.incrDatabaseBusyCtr();
     this.setDatabaseBusyText(`Loading ${inputLinks.length.toLocaleString()} links...`);
     try {
-      await this.removeAll(true, true, disableJournaling);
+      if (removeAllFirst) {
+        await this.removeAll(true, true, disableJournaling);
+      }
       await this.checkDatabase();
 
       this.setDatabaseBusyText(`Sorting ${inputLinks.length.toLocaleString()} links...`);
@@ -467,7 +471,7 @@ export const useSaveLink = () => {
       .then(result => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if (currentProject) {
-          if(currentProject.updatedAt === currentProject.lastSyncTime) {
+          if (currentProject.updatedAt === currentProject.lastSyncTime) {
             setProgress(Progress.IN_PROGRESS);
           }
           currentProject.updatedAt = DateTime.now().toMillis();
@@ -502,11 +506,18 @@ export const useSaveLink = () => {
  * @param saveKey Unique key to control save operation (optional; undefined = no save).
  * @param suppressOnUpdate Suppress virtual table update notifications (optional; undefined = true).
  * @param suppressJournaling Suppress journaling
+ * @param removeAllFirst Remove all records first, before adding new ones.
  * @param preserveFileIds whether id's of links in imported file should be preserved
  */
-export const useImportAlignmentFile = (projectId?: string, alignmentFile?: AlignmentFile, saveKey?: string, suppressOnUpdate: boolean = false, suppressJournaling?: boolean, preserveFileIds?: boolean) => {
+export const useImportAlignmentFile = (projectId?: string,
+                                       alignmentFile?: AlignmentFile,
+                                       saveKey?: string,
+                                       suppressOnUpdate = false,
+                                       suppressJournaling = false,
+                                       removeAllFirst = false,
+                                       preserveFileIds = false) => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
-  const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [ projects, projectId ]);
+  const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [projects, projectId]);
   const [status, setStatus] = useState<{
     isPending: boolean;
   }>({ isPending: false });
@@ -531,7 +542,10 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
     setStatus(startStatus);
     prevSaveKey.current = saveKey;
     databaseHookDebug('useImportAlignmentFile(): startStatus', startStatus);
-    linksTable.saveAlignmentFile(alignmentFile, suppressOnUpdate, false, suppressJournaling, !!preserveFileIds)
+    linksTable.saveAlignmentFile(
+      alignmentFile, suppressOnUpdate,
+      false, suppressJournaling,
+      removeAllFirst, preserveFileIds)
       .then(() => {
         const endStatus = {
           ...startStatus,
@@ -541,8 +555,10 @@ export const useImportAlignmentFile = (projectId?: string, alignmentFile?: Align
         project && projectState?.projectTable?.updateLastUpdated?.(project)?.catch?.(console.error);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
-  }, [project, linksTable, prevSaveKey, alignmentFile, saveKey, status, suppressOnUpdate,
-    projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling]);
+  }, [preserveFileIds, project, linksTable, prevSaveKey,
+    alignmentFile, saveKey, status, suppressOnUpdate,
+    projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling,
+    removeAllFirst]);
 
   return { ...status };
 };

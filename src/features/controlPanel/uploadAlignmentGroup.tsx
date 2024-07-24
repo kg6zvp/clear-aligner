@@ -34,7 +34,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     alignmentFile?: AlignmentFile,
     saveKey?: string,
     suppressJournaling?: boolean,
-    preserveFileIds: boolean
+    removeAllFirst?: boolean,
+    preserveFileIds?: boolean
   }>();
 
   const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
@@ -44,7 +45,13 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(project?.id, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling, alignmentFileSaveState?.preserveFileIds);
+  useImportAlignmentFile(project?.id,
+    alignmentFileSaveState?.alignmentFile,
+    alignmentFileSaveState?.saveKey,
+    false,
+    alignmentFileSaveState?.suppressJournaling,
+    alignmentFileSaveState?.removeAllFirst,
+    alignmentFileSaveState?.preserveFileIds);
   const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
@@ -66,6 +73,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       alignmentFile: alignmentFileFromServer,
       saveKey: uuid(),
       suppressJournaling: true,
+      removeAllFirst: true,
       preserveFileIds: true
     });
   }, [alignmentFileFromServer, setAlignmentFileSaveState]);
@@ -185,6 +193,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                     alignmentFile: fileData.success ? fileData.data : undefined,
                     saveKey: uuid(),
                     suppressJournaling: false,
+                    removeAllFirst: false,
                     preserveFileIds: false
                   });
                 }}
