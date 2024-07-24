@@ -104,6 +104,7 @@ export const useDownloadProject = (): SyncState => {
         }
         const currentTime = DateTime.now().toMillis();
         projectData.updatedAt = currentTime;
+        projectData.lastSyncTime = currentTime;
         if (cancelToken.canceled) return;
         const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;
         if (!project) {
