@@ -105,9 +105,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
         containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName);
       return true;
     }
-    return (_.max([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-      .map((corpus) => corpus.updatedAt?.getTime())
-      .filter((v) => !!v)) ?? 0) > (project.lastSyncTime ?? 0);
+    return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+      .some((corpus) => !!corpus.updatedSinceSync);
   }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
 
   return (

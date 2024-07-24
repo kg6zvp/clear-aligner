@@ -206,10 +206,9 @@ const corporaSchema = new EntitySchema({
       createDate: true,
       nullable: true
     },
-    updatedAt: {
-      name: 'updated_at',
-      type: 'datetime',
-      updateDate: true,
+    updatedSinceSync: {
+      name: 'updated_since_sync',
+      type: 'int',
       nullable: true
     }
   }
@@ -378,6 +377,15 @@ export class ProjectRepository extends BaseRepository {
       err(sources.flatMap(v => v));
     }
   });
+
+  toggleCorporaUpdatedFlagOff = async (projectId: string) => {
+    const src = await this.getDataSource(projectId)!;
+    await src?.createQueryBuilder()
+      .update(CorporaTableName)
+      .set({ updatedSinceSync: 0 })
+      .where("updated_since_sync != 0")
+      .execute();
+  }
 
   removeTargetWordsOrParts = async (sourceName: string) => {
     await (await this.getDataSource(sourceName))
@@ -979,7 +987,7 @@ export class ProjectRepository extends BaseRepository {
                                                          c.file_name      as fileName,
                                                          c.side           as side,
                                                          c.created_at     as created_at,
-                                                         c.updated_at     as updated_at,
+                                                         c.updated_since_sync     as updated_since_sync,
                                                          l.code           as code,
                                                          l.text_direction as textDirection,
                                                          l.font_family    as fontFamily
@@ -995,7 +1003,7 @@ export class ProjectRepository extends BaseRepository {
           fullName: result.fullName,
           side: result.side,
           createdAt: new Date(result.created_at),
-          updatedAt: new Date(result.updated_at),
+          updatedSinceSync: result.updated_since_sync,
           language: {
             code: result.code, textDirection: result.textDirection, fontFamily: result.fontFamily
           }
