@@ -46,10 +46,6 @@ export const usePublishProject = (): PublishState => {
       });
       project.state = state;
       if(state === ProjectState.PUBLISHED) {
-        const syncTime = DateTime.now().toMillis();
-        project.location = ProjectLocation.SYNCED;
-        project.updatedAt = syncTime;
-        project.lastSyncTime = syncTime;
         await projectState?.projectTable?.update(project, false);
       } else {
         await deleteProject(project.id);

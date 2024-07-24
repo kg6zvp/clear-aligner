@@ -47,7 +47,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
   const { deleteProject } = useDeleteProject();
-  const { projectState, containers, setSnackBarMessage, preferences, setPreferences } = useContext(AppContext);
+  const { projectState, containers, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
@@ -160,9 +160,17 @@ export const useSyncProject = (): SyncState => {
           project.lastSyncTime = DateTime.now().toMillis();
           project.location = ProjectLocation.SYNCED;
           await dbApi.toggleCorporaUpdatedFlagOff(project.id);
-          await projectState.projectTable?.sync?.(project);
           // Update project state to Published.
           await publishProject(project, ProjectState.PUBLISHED);
+          await projectState.projectTable?.sync?.(project).catch(console.error);
+          setProjects((projects) => projects
+            .map((p) => {
+              if (p.id !== project.id) return p;
+              p.updatedAt = project.updatedAt;
+              p.lastSyncTime = project.lastSyncTime;
+              p.location = project.location;
+              return p;
+            }));
           setProgress(SyncProgress.IDLE);
           break;
         }
@@ -174,6 +182,7 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    setProjects,
     preferences,
     containers,
     setPreferences,
