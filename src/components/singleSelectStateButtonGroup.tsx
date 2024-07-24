@@ -31,7 +31,10 @@ export const SingleSelectStateButtonGroup = ({
   const theme = useTheme();
 
     return (
-      <ButtonGroup fullWidth={true} disabled={disabled}>
+      <ButtonGroup
+        fullWidth={true}
+        disabled={disabled}
+      >
         <Tooltip title={'Created'}>
           <span>
             <ToggleButton
@@ -70,7 +73,6 @@ export const SingleSelectStateButtonGroup = ({
         </Tooltip>
         <Tooltip title={'Needs Review'}>
           <span>
-            <span>
             <ToggleButton
               onSelect={onSelect}
               variant={value === 'needsReview' ? 'contained' : undefined}
@@ -79,7 +81,6 @@ export const SingleSelectStateButtonGroup = ({
             >
               <Flag />
             </ToggleButton>
-          </span>
           </span>
         </Tooltip>
       </ButtonGroup>
