@@ -1,4 +1,8 @@
-import { ClearAlignerApi, getApiOptionsWithAuth, OverrideCaApiEndpoint } from '../server/amplifySetup';
+import {
+  ClearAlignerApiName,
+  getApiOptionsWithAuth,
+  CaApiEndpointIsDev, EffectiveCaApiEndpoint
+} from '../server/amplifySetup';
 import { del, get, patch, post, put } from 'aws-amplify/api';
 import { generateJsonString } from '../common/generateJsonString';
 import { RestApiResponse } from '@aws-amplify/api-rest/src/types';
@@ -99,8 +103,8 @@ export module ApiUtils {
                                           payload,
                                           signal
                                         }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}) => {
-    if (OverrideCaApiEndpoint) {
-      const response = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+    if (CaApiEndpointIsDev) {
+      const response = await fetch(`${EffectiveCaApiEndpoint}${requestPath}`, {
         method: requestType,
         headers: {
           accept: 'application/json',
@@ -116,7 +120,7 @@ export module ApiUtils {
       };
     } else {
       const responseOperation = getAmplifyFromRequestType(requestType)({
-        apiName: ClearAlignerApi,
+        apiName: ClearAlignerApiName,
         path: requestPath,
         options: payload ? getApiOptionsWithAuth(payload) : getApiOptionsWithAuth()
       });
