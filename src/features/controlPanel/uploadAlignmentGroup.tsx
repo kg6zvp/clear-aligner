@@ -100,9 +100,6 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       return false;
     }
     if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-      console.log('project updated after last sync',
-        project.id,
-        containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName);
       return true;
     }
     return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
