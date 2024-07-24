@@ -250,7 +250,7 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: '#3C3C3C',
-        rollover: '#FFEB3B14', // Yellow 500 @ 8%
+        rollover: alpha('#FFEB3B', .08), // Yellow 500 @ 8%
         selected: '#FFF176' // Yellow 300
       },
       alignedTokenButtons: {
@@ -258,7 +258,7 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: '#56B9DA', // Cerulean Blue 300
-        rollover: '#219ECF14', // Cerulean Blue 500 @ 8%
+        rollover: alpha('#219ECF', .08),  // Cerulean Blue 500 @ 8%
         selected: '#56B9DA', // Cerulean Blue 300
         icons: '#56B9DA', // Cerulean Blue 300
         iconsContrast: '#044F7A' // Cerulean Blue 900
@@ -268,7 +268,7 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: 'linear-gradient(#33D6FF, #AD8CFF)',
-        rollover: '#219ECF14', // Cerulean Blue 500 @ 8%
+        rollover: alpha('#219ECF', .08), // Cerulean Blue 500 @ 8%
         selected: '#56B9DA', // Cerulean Blue 300
         icons: 'linear-gradient(#33D6FF, #AD8CFF)',
         iconsContrast: '#044F7A', // Cerulean Blue 900
@@ -278,7 +278,7 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: green[300],
-        rollover: '#47CF2114', // Green 500 @ 8%
+        rollover: alpha('#47CF21', .08 ), // Green 500 @ 8%
         selected: green[300],
         icons: green[300],
         iconsReversed: green[800],
@@ -288,7 +288,7 @@ const darkTheme = createTheme({
         text: '#FFFFFF',
         textContrast: '#000000',
         outline: orange[400],
-        rollover: '#FB8C0014', // Orange 600 @ 8%
+        rollover: alpha('#FB8C00', .08), // Orange 600 @ 8%
         selected: orange[400],
         icons: orange[400],
         iconsReversed: orange[800],
