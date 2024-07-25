@@ -10,7 +10,7 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  Select,
+  Select, Stack,
   Theme, Toolbar,
   Tooltip,
   Typography
@@ -161,33 +161,48 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             ))}
         </Grid>
 
-        {/* Theme Preference */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          paddingTop: '2.5rem',
-          paddingLeft: '2.3rem'
-        }}>
-          <FormControl sx={{ width: 175 }}>
-            <InputLabel id={'theme-label'}>Theme</InputLabel>
-            <Select
-              labelId={'theme-label'}
-              id={'theme-select'}
-              value={preferredTheme}
-              label={'Theme'}
-              onChange={({ target: { value } }) =>
-                setPreferredTheme(value as THEME_PREFERENCE)
-              }
-            >
-              <MenuItem value={'auto' as THEME_PREFERENCE}>
-                Follow System
-              </MenuItem>
-              <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
-              <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+        <Stack direction={'row'}>
+          {/* Theme Preference */}
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            paddingTop: '2.5rem',
+            paddingLeft: '2.3rem'
+          }}>
+            <FormControl sx={{ width: 175 }}>
+              <InputLabel id={'theme-label'}>Theme</InputLabel>
+              <Select
+                labelId={'theme-label'}
+                id={'theme-select'}
+                value={preferredTheme}
+                label={'Theme'}
+                onChange={({ target: { value } }) =>
+                  setPreferredTheme(value as THEME_PREFERENCE)
+                }
+              >
+                <MenuItem value={'auto' as THEME_PREFERENCE}>
+                  Follow System
+                </MenuItem>
+                <MenuItem value={'night' as THEME_PREFERENCE}>Dark</MenuItem>
+                <MenuItem value={'day' as THEME_PREFERENCE}>Light</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+          {/* Create New Button */}
+          <Button
+            variant="contained"
+            onClick={() => setOpenProjectDialog(true)}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 'bold',
+              marginTop: '40px',
+              marginLeft: '20px'
+          }}
+            disabled={disableProjectButtons}
+          >Create New
+          </Button>
+        </Stack>
       </Grid>
 
       {/* Project Dialog */}
