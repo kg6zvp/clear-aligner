@@ -155,7 +155,7 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
                     justifyContent: 'center',
                     marginLeft: 'auto',
                     marginRight: 'auto',
-                    paddingRight: '89px'
+                    paddingRight: '66px'
                   }}>
                     <BCVNavigation
                       horizontal

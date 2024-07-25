@@ -219,7 +219,7 @@ const BCVNavigation = ({
         size="small"
         sx={{
           display: 'inline-flex',
-          width: horizontal ? '6em' : '100%',
+          width: horizontal ? '107px' : '100%',
           marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         getOptionLabel={(option) =>
@@ -308,7 +308,7 @@ const BCVNavigation = ({
         disablePortal
         size="small"
         sx={{
-          width: horizontal ? '6em' : '100%',
+          width: horizontal ? '108px' : '100%',
           display: 'inline-flex',
           marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
