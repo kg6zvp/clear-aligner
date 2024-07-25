@@ -186,7 +186,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
-    , [projectState.projectTable, projectState.userPreferenceTable, project, fileContent, setPreferences, projectId, dispatch, preferences, setProjects]);
+    , [projectState.projectTable, projectState.userPreferenceTable, dbApi, project, fileContent, setPreferences, projectId, dispatch, preferences, setProjects]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {

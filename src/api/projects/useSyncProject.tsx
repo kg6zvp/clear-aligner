@@ -54,7 +54,7 @@ export const useSyncProject = (): SyncState => {
   const [canceled, setCanceled] = React.useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const { setIsProjectDialogOpen } = useContext(AppContext);
+  const { setIsProjectDialogOpen, isBusyDialogOpen } = useContext(AppContext);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -137,6 +137,7 @@ export const useSyncProject = (): SyncState => {
           if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
             if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
               setProgress(SyncProgress.FAILED);
+              break;
             }
             project.sourceCorpora = containers.sourceContainer;
             project.targetCorpora = containers.targetContainer;
@@ -159,9 +160,9 @@ export const useSyncProject = (): SyncState => {
           project.lastSyncTime = DateTime.now().toMillis();
           project.location = ProjectLocation.SYNCED;
           await dbApi.toggleCorporaUpdatedFlagOff(project.id);
-          await projectState.projectTable?.sync?.(project);
           // Update project state to Published.
           await publishProject(project, ProjectState.PUBLISHED);
+          await projectState.projectTable?.sync?.(project).catch(console.error);
           setProgress(SyncProgress.IDLE);
           break;
         }
@@ -173,11 +174,12 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
+    dbApi,
     preferences,
     containers,
     setPreferences,
     uploadAlignments,
-    initialProjectState, syncTime]);
+    initialProjectState]);
 
   useEffect(() => {
     if(syncTime && initialProjectState && !canceled) {
@@ -225,7 +227,7 @@ export const useSyncProject = (): SyncState => {
           SyncProgress.IDLE,
           SyncProgress.SUCCESS,
           SyncProgress.FAILED
-        ].includes(progress)}
+        ].includes(progress) && !isBusyDialogOpen}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
@@ -240,7 +242,7 @@ export const useSyncProject = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress, onCancel, canceled]);
+  }, [progress, onCancel, canceled, isBusyDialogOpen]);
 
   return {
     sync: (project) => {

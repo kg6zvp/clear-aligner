@@ -16,8 +16,6 @@ import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
-import _ from 'lodash';
-import { AlignmentSide } from '../../common/data/project/corpus';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,
@@ -100,9 +98,6 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       return false;
     }
     if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-      console.log('project updated after last sync',
-        project.id,
-        containers.filter(c => c.id === AlignmentSide.TARGET).map((c) => c.corpora)[0][0].fullName);
       return true;
     }
     return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]

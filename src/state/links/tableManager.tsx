@@ -516,7 +516,7 @@ export const useImportAlignmentFile = (projectId?: string,
                                        suppressJournaling = false,
                                        removeAllFirst = false,
                                        preserveFileIds = false) => {
-  const { projectState, preferences, projects } = React.useContext(AppContext);
+  const { projectState, preferences, projects, setProjects } = React.useContext(AppContext);
   const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [projects, projectId]);
   const [status, setStatus] = useState<{
     isPending: boolean;
@@ -552,12 +552,24 @@ export const useImportAlignmentFile = (projectId?: string,
           isPending: false
         };
         setStatus(endStatus);
-        project && projectState?.projectTable?.updateLastUpdated?.(project)?.catch?.(console.error);
+        project && projectState?.projectTable?.updateLastUpdated?.(project)
+          ?.then((result) => {
+            if (result) {
+              setProjects((projects) => projects.map((p) => {
+                if (p.id !== result.id) return p;
+                return {
+                  ...p,
+                  updatedAt: result.updatedAt
+                };
+              }));
+            }
+          })
+          ?.catch?.(console.error);
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
   }, [preserveFileIds, project, linksTable, prevSaveKey,
     alignmentFile, saveKey, status, suppressOnUpdate,
-    projects, preferences?.currentProject, projectState?.projectTable, suppressJournaling,
+    projects, setProjects, preferences?.currentProject, projectState?.projectTable, suppressJournaling,
     removeAllFirst]);
 
   return { ...status };

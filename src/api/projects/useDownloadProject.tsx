@@ -37,7 +37,7 @@ export interface SyncState {
  * hook to download a specified project from the server.
  */
 export const useDownloadProject = (): SyncState => {
-  const { projectState, setProjects, ...appCtx } = useContext(AppContext);
+  const { projectState, setProjects, isBusyDialogOpen, ...appCtx } = useContext(AppContext);
   const { deleteProject } = useDeleteProject();
   const { cancel, reset, cancelToken } = useCancelTask();
   const [progress, setProgress] = useState<ProjectDownloadProgress>(ProjectDownloadProgress.IDLE);
@@ -104,6 +104,7 @@ export const useDownloadProject = (): SyncState => {
         }
         const currentTime = DateTime.now().toMillis();
         projectData.updatedAt = currentTime;
+        projectData.lastSyncTime = currentTime;
         if (cancelToken.canceled) return;
         const project: Project | undefined = projectData ? mapProjectDtoToProject(projectData, ProjectLocation.SYNCED) : undefined;
         if (!project) {
@@ -195,7 +196,7 @@ export const useDownloadProject = (): SyncState => {
           ProjectDownloadProgress.SUCCESS,
           ProjectDownloadProgress.FAILED,
           ProjectDownloadProgress.CANCELED
-        ].includes(progress)}
+        ].includes(progress) && !isBusyDialogOpen}
       >
         <Grid container alignItems="center" justifyContent="space-between"
               sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>
@@ -207,7 +208,7 @@ export const useDownloadProject = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress, onCancel]);
+  }, [progress, onCancel, isBusyDialogOpen]);
 
   return {
     downloadProject: (projectId) => downloadProject(projectId, cancelToken),

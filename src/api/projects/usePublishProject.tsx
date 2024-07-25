@@ -6,7 +6,6 @@ import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/materia
 import useCancelTask, { CancelToken } from '../useCancelTask';
 import { useDeleteProject } from './useDeleteProject';
 import { Progress } from '../ApiModels';
-import { DateTime } from 'luxon';
 import { ApiUtils } from '../utils';
 import RequestType = ApiUtils.RequestType;
 
@@ -46,10 +45,6 @@ export const usePublishProject = (): PublishState => {
       });
       project.state = state;
       if(state === ProjectState.PUBLISHED) {
-        const syncTime = DateTime.now().toMillis();
-        project.location = ProjectLocation.SYNCED;
-        project.updatedAt = syncTime;
-        project.lastSyncTime = syncTime;
         await projectState?.projectTable?.update(project, false);
       } else {
         await deleteProject(project.id);

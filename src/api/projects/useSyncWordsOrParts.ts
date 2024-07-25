@@ -5,6 +5,7 @@ import { Progress } from 'api/ApiModels';
 import { ApiUtils } from '../utils';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { Corpus } from '../../structs';
+import { ProjectLocation } from '../../common/data/project/project';
 
 export interface SyncState {
   sync: (project: Project, side?: AlignmentSide) => Promise<unknown>;
@@ -29,7 +30,7 @@ export const useSyncWordsOrParts = (): SyncState => {
       const tokensToUpload = [
         ...(project.sourceCorpora?.corpora ?? []),
         ...(project.targetCorpora?.corpora ?? [])
-      ].filter((corpus: Corpus) => !!corpus.updatedSinceSync)
+      ].filter((corpus: Corpus) => project.location === ProjectLocation.LOCAL || !!corpus.updatedSinceSync)
         .flatMap(c => c.words)
         .map(mapWordOrPartToWordOrPartDTO);
 
