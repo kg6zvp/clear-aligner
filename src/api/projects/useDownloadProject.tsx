@@ -73,12 +73,16 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_PROJECT);
 
-      const projectResponse = await ApiUtils.generateRequest({
+      const projectResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
       });
-      const projectData = projectResponse.response as ProjectDTO;
+      const projectData = projectResponse.response;
+      Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
+        .map(p => p.id).includes(projectData.id!)
+        ? await projectState.projectTable?.update?.(mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!, true, false, true)
+        : await projectState.projectTable?.save?.(mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!, true, false, true);
 
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);

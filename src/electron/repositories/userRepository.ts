@@ -12,6 +12,7 @@ import uuid from 'uuid-random';
 import { AddProjectSync1719514157111 } from '../typeorm-migrations/user/1719514157111-add-project-sync';
 import { ProjectsUpdatedAt1720240767826 } from '../typeorm-migrations/user/1720240767826-projects-updated-at';
 import { AddServerUpdatedAt1721874829506 } from '../typeorm-migrations/user/1721874829506-add-server-updated-at';
+import { MakeServerStateNullable1721933880644 } from '../typeorm-migrations/user/1721933880644-make-server-state-nullable';
 
 export const ProjectTableName = 'project';
 
@@ -67,7 +68,8 @@ const projectEntitySchema = new EntitySchema<ProjectEntity>({
     },
     serverState: {
       name: 'server_state',
-      type: 'varchar'
+      type: 'varchar',
+      nullable: true
     },
     lastSyncTime: {
       name: 'last_sync_time',
@@ -110,7 +112,8 @@ export class UserRepository extends BaseRepository implements UserRepositoryIFac
     AddProjectsTable1718861542573,
     AddProjectSync1719514157111,
     ProjectsUpdatedAt1720240767826,
-    AddServerUpdatedAt1721874829506
+    AddServerUpdatedAt1721874829506,
+    MakeServerStateNullable1721933880644
   ]);
 
   constructor() {

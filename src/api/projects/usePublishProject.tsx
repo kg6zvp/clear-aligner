@@ -10,7 +10,7 @@ import { ApiUtils } from '../utils';
 import RequestType = ApiUtils.RequestType;
 
 export interface PublishState {
-  publishProject: (project: Project, state: ProjectState) => Promise<unknown>;
+  publishProject: (project: Project, state: ProjectState) => Promise<Project|undefined>;
   progress: Progress;
   dialog: any;
 }
@@ -33,7 +33,7 @@ export const usePublishProject = (): PublishState => {
     reset();
   }, [reset]);
 
-  const publishProject = useCallback(async (project: Project, state: ProjectState, cancelToken: CancelToken) => {
+  const publishProject = useCallback(async (project: Project, state: ProjectState, cancelToken: CancelToken): Promise<Project|undefined> => {
     setPublishState(state);
     try {
       setProgress(Progress.IN_PROGRESS);
@@ -56,6 +56,7 @@ export const usePublishProject = (): PublishState => {
       const updatedProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
       setProjects(p => Array.from(updatedProjects.values() ?? p));
       setProgress(Progress.SUCCESS);
+      return project;
     } catch (x) {
       cleanupRequest();
       setProgress(Progress.FAILED);

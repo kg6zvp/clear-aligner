@@ -49,7 +49,7 @@ export module ApiUtils {
   };
 
   const getFetchResponseObject = async (response: Response, contentLengthOptional = false) => {
-    if (response.status === 200
+    if (response.ok
       && isJsonContentType(response.headers.get('content-type'))
       && (contentLengthOptional || getContentLength(response.headers.get('content-length')) > 0)) {
       return await (response.json());

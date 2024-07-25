@@ -39,7 +39,7 @@ const useInitialization = (): AppContextProps => {
     const currentProjects = await state.projectTable?.getProjects(false);
     if(!currentProjects?.size) {
       state.projectTable?.getProjects(true).then(res => {
-        res && setProjects(p => [...(res.values() ?? p)].filter(p => p.targetCorpora?.corpora?.[0]));
+        res && setProjects(p => [...(res.values() ?? p)]);
       });
     }
   }, 1000);
@@ -108,7 +108,7 @@ const useInitialization = (): AppContextProps => {
       const initializeProject = () => new Promise((resolve) => {
           let projects: Project[] = [];
         currProjectTable.getProjects(true).then(res => {
-          projects = [...res!.values()].filter(p => p.targetCorpora?.corpora?.[0]);
+          projects = [...res!.values()];
           setProjects(projects);
           resolve(projects);
         });

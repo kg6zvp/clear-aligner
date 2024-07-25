@@ -161,7 +161,8 @@ export const useSyncProject = (): SyncState => {
           project.location = ProjectLocation.SYNCED;
           await dbApi.toggleCorporaUpdatedFlagOff(project.id);
           // Update project state to Published.
-          await publishProject(project, ProjectState.PUBLISHED);
+          const publishedProject = await publishProject(project, ProjectState.PUBLISHED);
+          project.lastSyncServerTime = publishedProject?.serverUpdatedAt;
           await projectState.projectTable?.sync?.(project).catch(console.error);
           setProgress(SyncProgress.IDLE);
           break;

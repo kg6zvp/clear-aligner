@@ -100,6 +100,9 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
       return true;
     }
+    if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
+      return true;
+    }
     return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
       .some((corpus) => !!corpus.updatedSinceSync);
   }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
