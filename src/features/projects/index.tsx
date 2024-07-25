@@ -98,6 +98,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', overflow: 'hidden' }}>
         <Box>
+
+          {/* App Bar */}
           <AppBar
             position="static"
           >
@@ -142,32 +144,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           </AppBar>
         </Box>
 
-        {/*Projects Grid*/}
-        {/*<Grid container */}
-        {/*      sx={{ width: '100%', paddingX: '0px', overflow: 'auto'}} */}
-        {/*      sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}*/}
-        {/*>*/}
-
-        {/*<Grid container justifyContent="space-between" alignItems="center"*/}
-        {/*      sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>*/}
-        {/*  <Grid container sx={{ width: 'fit-content' }}>*/}
-        {/*    <Typography variant="h4" sx={ theme => ({*/}
-        {/*      marginRight: 5,*/}
-        {/*      fontWeight: 'bold',*/}
-        {/*      color: theme.palette.primary.main*/}
-        {/*    })}>*/}
-        {/*      Projects*/}
-        {/*    </Typography>*/}
-        {/*    <Button*/}
-        {/*      variant="contained"*/}
-        {/*      onClick={() => setOpenProjectDialog(true)}*/}
-        {/*      sx={{ textTransform: 'none', fontWeight: 'bold' }}*/}
-        {/*      disabled={disableProjectButtons}*/}
-        {/*    >Create New</Button>*/}
-        {/*  </Grid>*/}
-        {/*</Grid>*/}
-
-
+        {/* Projects */}
         <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
@@ -184,7 +161,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             ))}
         </Grid>
 
-
+        {/* Theme Preference */}
         <Box sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -192,8 +169,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           paddingTop: '2.5rem',
           paddingLeft: '2.3rem'
         }}>
-
-          {/*Theme Preference Dropdown*/}
           <FormControl sx={{ width: 175 }}>
             <InputLabel id={'theme-label'}>Theme</InputLabel>
             <Select
@@ -214,6 +189,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           </FormControl>
         </Box>
       </Grid>
+
+      {/* Project Dialog */}
       <ProjectDialog
         open={openProjectDialog}
         projectId={selectedProjectId}
