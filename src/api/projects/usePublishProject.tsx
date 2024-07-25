@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { ProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { AppContext } from '../../App';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
@@ -38,12 +38,13 @@ export const usePublishProject = (): PublishState => {
     try {
       setProgress(Progress.IN_PROGRESS);
       if(cancelToken.canceled) return;
-      await ApiUtils.generateRequest({
+      const updateResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${project.id}/state`,
         requestType: RequestType.POST,
         payload: state
       });
       project.state = state;
+      project.serverUpdatedAt = updateResponse.response.updatedAt;
       if(state === ProjectState.PUBLISHED) {
         await projectState?.projectTable?.update(project, false);
       } else {
@@ -100,7 +101,11 @@ export const usePublishProject = (): PublishState => {
 
 
   return {
-    publishProject: (projectId, state) => new Promise(res => setTimeout(() => res(publishProject(projectId, state, cancelToken)), 2000)),
+    publishProject: (projectId, state) => new Promise(res => {
+      setTimeout(() => {
+        res(publishProject(projectId, state, cancelToken));
+      }, 2000);
+    }),
     progress,
     dialog,
   };

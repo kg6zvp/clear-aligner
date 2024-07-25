@@ -97,12 +97,17 @@ export module ApiUtils {
     expectedStatusCode: number;
   }
 
-  export const generateRequest = async ({
+  export interface ResponseObject<T> {
+    success: boolean;
+    response: T;
+  }
+
+  export const generateRequest = async <T> ({
                                           requestPath,
                                           requestType,
                                           payload,
                                           signal
-                                        }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}) => {
+                                        }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}): Promise<ResponseObject<T>> => {
     if (CaApiEndpointIsDev) {
       const response = await fetch(`${EffectiveCaApiEndpoint}${requestPath}`, {
         method: requestType,

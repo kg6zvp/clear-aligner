@@ -41,6 +41,8 @@ export class ProjectEntity {
   lastSyncTime?: number;
   createdAt?: Date;
   updatedAt?: number;
+  serverUpdatedAt?: number;
+  lastSyncServerTime?: number;
   corpora?: Corpus[];
   constructor() {
     this.name = '';
@@ -71,8 +73,10 @@ export const mapProjectDtoToProject = (projectEntity: ProjectDTO, location: Proj
     languageCode: targetCorpus.language.code,
     textDirection: targetCorpus.language.textDirection as unknown as TextDirection,
     location: location,
+    state: projectEntity.state,
     updatedAt: projectEntity.updatedAt ?? currentTime,
     lastSyncTime: projectEntity.lastSyncTime ?? 0,
+    serverUpdatedAt: projectEntity.updatedAt,
     targetCorpora: CorpusContainer.fromIdAndCorpora(
       AlignmentSide.TARGET,
       (projectEntity.corpora ?? []).map(mapCorpusDTOToCorpusEntity).filter(c => c.side === AlignmentSide.TARGET) ?? []

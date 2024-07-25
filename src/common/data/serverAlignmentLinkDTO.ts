@@ -2,6 +2,10 @@ import { LinkMetadata } from '../../structs';
 
 export const LINKS_TABLE_NAME = 'links';
 
+export interface ServerLinksDTO {
+  links: ServerAlignmentLinkDTO[];
+}
+
 /**
  * represents alignment links for communicating with the server
  */

@@ -113,7 +113,7 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
-          const res = await ApiUtils.generateRequest({
+          const res = await ApiUtils.generateRequest<any>({
             requestPath: '/api/projects',
             requestType: ApiUtils.RequestType.POST,
             signal: abortController.current?.signal,

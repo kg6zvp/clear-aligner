@@ -34,8 +34,8 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
     try {
       setProgress(Progress.IN_PROGRESS);
 
-      const projectsResponse = await ApiUtils.generateRequest({
-        requestPath: "/api/projects",
+      const projectsResponse = await ApiUtils.generateRequest<ProjectDTO[]>({
+        requestPath: '/api/projects',
         requestType: RequestType.GET
       });
       const projectDtos = (projectsResponse.response ?? []) as ProjectDTO[];
@@ -55,13 +55,12 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
           project.sourceCorpora = undefined;
 
           const localProject: Project = localProjects.get(project.id);
-          const syncTime = DateTime.now().toMillis();
           // Update valid projects stored locally that are local or synced.
           if (localProject?.targetCorpora?.corpora?.[0]) {
-            if(localProject.location !== ProjectLocation.REMOTE) {
-              project.lastSyncTime = syncTime;
-              project.location = ProjectLocation.SYNCED;
-            }
+            //if(localProject.location !== ProjectLocation.REMOTE) {
+              //project.lastSyncTime = syncTime;
+            //}
+            project.location = ProjectLocation.SYNCED;
             await projectState.projectTable?.update?.(project, false);
           } else {
             await projectState.projectTable?.save?.(project, false);

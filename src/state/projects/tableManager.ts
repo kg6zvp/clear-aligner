@@ -25,6 +25,8 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
   updatedAt?: number;
+  serverUpdatedAt?: number;
+  lastSyncServerTime?: number;
   location: ProjectLocation;
   state?: ProjectState;
 }
@@ -101,7 +103,8 @@ export class ProjectTable extends VirtualTable {
       return updatedProject ? {
         ...ProjectTable.convertDataSourceToProject(updatedProject),
         lastSyncTime: project.lastSyncTime,
-        updatedAt: project.updatedAt
+        updatedAt: project.updatedAt,
+        serverUpdatedAt: project.serverUpdatedAt
       } : undefined;
     } catch (e) {
       console.error('Error updating project: ', e);
@@ -119,7 +122,8 @@ export class ProjectTable extends VirtualTable {
         location: project.location ?? ProjectLocation.LOCAL,
         serverState: project.state ?? ProjectState.DRAFT,
         lastSyncTime: project.lastSyncTime,
-        updatedAt: project.updatedAt
+        updatedAt: project.updatedAt,
+        serverUpdatedAt: project.serverUpdatedAt
       };
       // @ts-ignore
       await window.databaseApi.projectSave(projectEntity);
