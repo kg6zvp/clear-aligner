@@ -257,19 +257,19 @@ const darkTheme = createTheme({
         color: alpha('#FFFFFF', .38),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', 0),
-        borderColor: "#2f2f2f",
+        borderColor: grey[700],
       },
       enabled: {
         color: alpha('#FFFFFF', .70),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', 0),
-        borderColor: "#2f2f2f",
+        borderColor: grey[700],
       },
       hover: {
         color: alpha('#FFFFFF', .70),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', .08),
-        borderColor: '#404040',
+        borderColor: grey[500],
       },
       selected: {
         color: '#FFFFFF',
