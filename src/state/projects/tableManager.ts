@@ -128,14 +128,15 @@ export class ProjectTable extends VirtualTable {
         id: project.id,
         name: project.name,
         location: project.location ?? ProjectLocation.LOCAL,
-        serverState: project.state ?? ProjectState.DRAFT,
+        serverState: project.state,
         lastSyncTime: project.lastSyncTime,
         updatedAt: project.updatedAt,
+        // updated at millis on server
         serverUpdatedAt: project.serverUpdatedAt,
+        // updated at from last sync
         lastSyncServerTime: project.lastSyncServerTime
       };
-      // @ts-ignore
-      await window.databaseApi.projectSave(projectEntity);
+      await dbApi.projectSave(projectEntity);
       this.decrDatabaseBusyCtr();
       return true;
     } catch (e) {
@@ -163,8 +164,7 @@ export class ProjectTable extends VirtualTable {
         progressMax
       });
       for (const chunk of _.chunk(wordsOrParts, DatabaseInsertChunkSize)) {
-        // @ts-ignore
-        await window.databaseApi.insert({
+        await dbApi.insert({
           projectId: project.id,
           table: 'words_or_parts',
           itemOrItems: chunk,

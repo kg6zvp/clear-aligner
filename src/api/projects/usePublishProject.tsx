@@ -41,7 +41,8 @@ export const usePublishProject = (): PublishState => {
       const updateResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${project.id}/state`,
         requestType: RequestType.POST,
-        payload: state
+        payload: state,
+        contentLengthOptional: true
       });
       project.state = state;
       project.serverUpdatedAt = updateResponse.response.updatedAt;

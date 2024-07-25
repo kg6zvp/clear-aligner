@@ -79,10 +79,12 @@ export const useDownloadProject = (): SyncState => {
         signal: abortController.current?.signal
       });
       const projectData = projectResponse.response;
+      const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
+      tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;
       Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
         .map(p => p.id).includes(projectData.id!)
-        ? await projectState.projectTable?.update?.(mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!, true, false, true)
-        : await projectState.projectTable?.save?.(mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!, true, false, true);
+        ? await projectState.projectTable?.update?.(tmpProject, true, false, true)
+        : await projectState.projectTable?.save?.(tmpProject, true, false, true);
 
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);

@@ -91,6 +91,7 @@ export module ApiUtils {
     requestType: RequestType,
     payload?: any,
     signal?: AbortSignal,
+    contentLengthOptional?: boolean,
   }
 
   interface RequestGenerationOptions {
@@ -106,7 +107,8 @@ export module ApiUtils {
                                           requestPath,
                                           requestType,
                                           payload,
-                                          signal
+                                          signal,
+                                          contentLengthOptional
                                         }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}): Promise<ResponseObject<T>> => {
     if (CaApiEndpointIsDev) {
       const response = await fetch(`${EffectiveCaApiEndpoint}${requestPath}`, {
@@ -121,7 +123,7 @@ export module ApiUtils {
       return {
         success: response.ok,
         response: await getFetchResponseObject(response,
-          requestType === RequestType.GET)
+          contentLengthOptional ?? requestType === RequestType.GET)
       };
     } else {
       const responseOperation = getAmplifyFromRequestType(requestType)({
@@ -138,7 +140,7 @@ export module ApiUtils {
       return {
         success: validateStatusCode(response.statusCode, requestType, options.expectedStatusCode),
         response: await getAmplifyResponseObject(response as RestApiResponse,
-          requestType === RequestType.GET)
+          contentLengthOptional || requestType === RequestType.GET)
       };
     }
   };

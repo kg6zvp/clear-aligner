@@ -33,7 +33,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     saveKey?: string,
     suppressJournaling?: boolean,
     removeAllFirst?: boolean,
-    preserveFileIds?: boolean
+    preserveFileIds?: boolean,
+    fromServer?: boolean
   }>();
 
   const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
@@ -49,7 +50,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     false,
     alignmentFileSaveState?.suppressJournaling,
     alignmentFileSaveState?.removeAllFirst,
-    alignmentFileSaveState?.preserveFileIds);
+    alignmentFileSaveState?.preserveFileIds,
+    alignmentFileSaveState?.fromServer);
   const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
@@ -72,7 +74,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       saveKey: uuid(),
       suppressJournaling: true,
       removeAllFirst: true,
-      preserveFileIds: true
+      preserveFileIds: true,
+      fromServer: true
     });
   }, [alignmentFileFromServer, setAlignmentFileSaveState]);
 
@@ -191,7 +194,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                     saveKey: uuid(),
                     suppressJournaling: false,
                     removeAllFirst: false,
-                    preserveFileIds: false
+                    preserveFileIds: false,
+                    fromServer: false
                   });
                 }}
               />
