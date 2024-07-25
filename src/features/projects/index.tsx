@@ -34,6 +34,7 @@ import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { userState } from '../profileAvatar/profileAvatar';
+import { grey } from '@mui/material/colors';
 
 interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -98,7 +99,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         <Grid container justifyContent="space-between" alignItems="center"
               sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
           <Grid container sx={{ width: 'fit-content' }}>
-            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+            <Typography variant="h4" sx={ theme => ({
+              marginRight: 5,
+              fontWeight: 'bold',
+              color: theme.palette.primary.main
+            })}>
+              Projects
+            </Typography>
             <Button
               variant="contained"
               onClick={() => setOpenProjectDialog(true)}
@@ -158,7 +165,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
-          paddingTop: '5rem',
+          paddingTop: '2.5rem',
           paddingLeft: '2.3rem'
         }}>
           <FormControl sx={{ width: 175 }}>
@@ -249,7 +256,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
       <Grid container justifyContent="flex-end" alignItems="center">
         <Tooltip title="Sign in to connect to manage remote projects">
         <Button variant="text" disabled sx={{ textTransform: 'none' }}>
-          <span style={{ color: 'grey' }}>Unavailable</span>
+          <span style={{ color: grey['500'] }}>Unavailable</span>
           <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
         </Button>
         </Tooltip>

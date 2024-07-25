@@ -161,14 +161,14 @@ export const StateCell = ({ setSaveButtonDisabled,
           tooltip: 'Created',
         },
         {
-          value: 'approved',
-          label: <CheckCircleOutlined />,
-          tooltip: 'Approved',
-        },
-        {
           value: 'rejected',
           label: <CancelOutlined />,
           tooltip: 'Rejected',
+        },
+        {
+          value: 'approved',
+          label: <CheckCircleOutlined />,
+          tooltip: 'Approved',
         },
         {
           value: 'needsReview',

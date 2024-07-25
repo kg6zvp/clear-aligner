@@ -24,7 +24,7 @@ const useInitialization = (): AppContextProps => {
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
-  const [userStatus, setUserStatus] = React.useState(userState.LoggedOut)
+  const [userStatus, setUserStatus] = React.useState<{color: string, label: string}>(userState.LoggedOut)
   const network = useNetworkState();
   const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
   const [snackBarMessage, setSnackBarMessage] = React.useState("")

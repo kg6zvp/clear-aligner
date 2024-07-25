@@ -23,14 +23,14 @@ import { AlignedWordTable } from './alignedWordTable';
 import { AlignmentTable } from './alignmentTable';
 import { LayoutContext } from '../../AppLayout';
 import { GridInputRowSelectionModel, GridSortItem } from '@mui/x-data-grid';
-import { useBlocker, useSearchParams, Location, Blocker } from 'react-router-dom';
+import { Blocker, Location, useBlocker, useSearchParams } from 'react-router-dom';
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
-import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Link as LinkIcon } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import useConfirm from '../../hooks/useConfirm';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { SingleSelectStateButtonGroup } from '../../components/singleSelectStateButtonGroup';
 
 /**
  * PivotWordFilter type
@@ -221,33 +221,10 @@ export const AlignmentTableControlPanel = ({
           <DisplayItemsSelectedCount />
           <Divider orientation="vertical" />
           <ButtonGroup>
-            <SingleSelectButtonGroup
-              disabled={isButtonGroupDisabled}
+            <SingleSelectStateButtonGroup
               value={alignmentTableControlPanelLinkState || undefined}
-              sx={{ size: 'small', width: '200px' }}
-              items={[
-                {
-                  value: 'created',
-                  label: <LinkIcon />,
-                  tooltip: 'Created',
-                },
-                {
-                  value: 'approved',
-                  label: <CheckCircleOutlined />,
-                  tooltip: 'Approved',
-                },
-                {
-                  value: 'rejected',
-                  label: <CancelOutlined />,
-                  tooltip: 'Rejected',
-                },
-                {
-                  value: 'needsReview',
-                  label: <FlagOutlined />,
-                  tooltip: 'Needs Review',
-                }
-              ]}
               onSelect={(value) => handleOnSelect(value)}
+              disabled={isButtonGroupDisabled}
             />
           </ButtonGroup>
           <ButtonGroup>

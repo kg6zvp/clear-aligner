@@ -15,7 +15,7 @@ export const ZodErrorDisplay = ({ fieldNameMapper, errors }: ZodErrorDisplayProp
     {errors &&
       <Typography
         component={'span'}
-        color={'red'} >
+        color={'error'} >
         <ul>
           {errors.issues
             .slice(0, 10)
