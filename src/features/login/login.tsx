@@ -70,7 +70,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       <Box>
         <DialogTitle>
           <Typography
-            color={theme.palette.mode === 'light' ? '#1976d2' : '#90caf9'}
+            color={theme.palette.primary.main}
             align={'center'}
             fontSize={'18px'}
           >
@@ -119,7 +119,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
               </Button>
               {showLoginError &&
                 <Typography
-                  color={'red'}
+                  color={'error'}
                   fontSize={'small'}
                   sx={{
                     mt: 1

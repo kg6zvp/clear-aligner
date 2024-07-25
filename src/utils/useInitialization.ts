@@ -18,18 +18,18 @@ import { EnvironmentVariables } from '../structs/environmentVariables';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 
-const useInitialization = () => {
+const useInitialization = (): AppContextProps => {
   const isLoaded = React.useRef(false);
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
-  const [userStatus, setUserStatus] = React.useState(userState.LoggedOut)
+  const [userStatus, setUserStatus] = React.useState<{color: string, label: string}>(userState.LoggedOut)
   const network = useNetworkState();
   const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
   const [snackBarMessage, setSnackBarMessage] = React.useState("")
   const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
-
+  const [ isBusyDialogOpen, setIsBusyDialogOpen ] = useState<boolean>(false);
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -184,8 +184,10 @@ const useInitialization = () => {
     snackBarMessage,
     setSnackBarMessage,
     isProjectDialogOpen,
-    setIsProjectDialogOpen
-  } as AppContextProps;
+    setIsProjectDialogOpen,
+    isBusyDialogOpen,
+    setIsBusyDialogOpen
+  };
 };
 
 export default useInitialization;

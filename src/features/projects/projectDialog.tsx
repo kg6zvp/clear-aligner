@@ -35,7 +35,8 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { DateTime } from 'luxon';
 import { ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { usePublishProject } from '../../api/projects/usePublishProject';
-import { AlignmentSide } from '../../common/data/project/corpus';
+import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
+import { useDatabase } from '../../hooks/useDatabase';
 
 
 enum TextDirection {
@@ -82,6 +83,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
+  const dbApi = useDatabase();
   const allowDelete = React.useMemo(() => projectId !== DefaultProjectId, [projectId]);
   const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
     if (!projectUpdated) {
@@ -129,7 +131,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
           };
 
           const targetCorpus = {
-            id: uuidv4(),
+            id: project.targetCorpora?.corpora?.[0]?.id ?? uuidv4(),
             name: project.abbreviation,
             fullName: project.name,
             fileName: project.fileName,
@@ -141,7 +143,8 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
             wordsByVerse: {},
             wordLocation: new Map<string, Set<BCVWP>>(),
             books: {},
-            side: AlignmentSide.TARGET
+            side: AlignmentSide.TARGET,
+            updatedSinceSync: 1
           } as Corpus;
 
           if (fileContent) {
@@ -165,6 +168,12 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
           } else {
             await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
           }
+          await dbApi.save({
+            projectId: projectToUpdate.id,
+            table: CORPORA_TABLE_NAME,
+            itemOrItems: targetCorpus,
+            disableJournaling: true
+          });
           if (type === 'update') {
             setPreferences(p => ({
               ...(p ?? {}) as UserPreference,
@@ -177,7 +186,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
-    , [projectState.projectTable, projectState.userPreferenceTable, project, fileContent, setPreferences, projectId, dispatch, preferences, setProjects]);
+    , [projectState.projectTable, projectState.userPreferenceTable, dbApi, project, fileContent, setPreferences, projectId, dispatch, preferences, setProjects]);
 
   const handleDelete = React.useCallback(async () => {
     if (projectId) {

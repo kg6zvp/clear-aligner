@@ -2,7 +2,7 @@
  * This file contains the UploadAlignment component which contains buttons used
  * in the Projects Mode for uploading and saving alignment data
  */
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile, AlignmentFileSchema, alignmentFileSchemaErrorMessageMapper } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
@@ -14,40 +14,45 @@ import { SafeParseReturnType, ZodError } from 'zod';
 import { ZodErrorDialog } from '../../components/zodErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
-import { AppContext } from '../../App';
 import { Project } from '../../state/projects/tableManager';
 import { ProjectLocation } from '../../common/data/project/project';
-import _ from 'lodash';
 
-const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSignedIn, disableProjectButtons }: {
-  projectId?: string,
+const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
+  project?: Project,
   containers: CorpusContainer[],
   size?: string,
-  allowImport?: boolean;
+  isCurrentProject?: boolean;
   isSignedIn?: boolean;
   disableProjectButtons: boolean
 }) => {
-  const { projectState} = useContext(AppContext);
   // File input reference to support file loading via a button click
   const fileInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [alignmentFileSaveState, setAlignmentFileSaveState] = useState<{
     alignmentFile?: AlignmentFile,
     saveKey?: string,
-    suppressJournaling?: boolean
+    suppressJournaling?: boolean,
+    removeAllFirst?: boolean,
+    preserveFileIds?: boolean
   }>();
 
-  const [ alignmentFileErrors, setAlignmentFileErrors ] = useState<{
+  const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
     errors?: ZodError<AlignmentFile>,
     showDialog?: boolean
   }>();
 
   const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
 
-  useImportAlignmentFile(projectId, alignmentFileSaveState?.alignmentFile, alignmentFileSaveState?.saveKey, false, !!alignmentFileSaveState?.suppressJournaling);
+  useImportAlignmentFile(project?.id,
+    alignmentFileSaveState?.alignmentFile,
+    alignmentFileSaveState?.saveKey,
+    false,
+    alignmentFileSaveState?.suppressJournaling,
+    alignmentFileSaveState?.removeAllFirst,
+    alignmentFileSaveState?.preserveFileIds);
   const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
-  const { result: allLinks } = useGetAllLinks(projectId, getAllLinksKey);
+  const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
 
   useEffect(() => {
     saveAlignmentFile(allLinks);
@@ -65,7 +70,9 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     setAlignmentFileSaveState({
       alignmentFile: alignmentFileFromServer,
       saveKey: uuid(),
-      suppressJournaling: true
+      suppressJournaling: true,
+      removeAllFirst: true,
+      preserveFileIds: true
     });
   }, [alignmentFileFromServer, setAlignmentFileSaveState]);
 
@@ -73,65 +80,70 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
     [
       SyncProgress.IN_PROGRESS,
       SyncProgress.SYNCING_LOCAL,
-      SyncProgress.RETRIEVING_TOKENS,
+      SyncProgress.SWITCH_TO_PROJECT,
       SyncProgress.SYNCING_PROJECT,
       SyncProgress.SYNCING_CORPORA,
-      SyncProgress.SYNCING_ALIGNMENTS,
+      SyncProgress.SYNCING_ALIGNMENTS
     ].includes(progress)
   ), [progress]);
 
-  const [currentProject, setCurrentProject] = useState<Project>();
-  useEffect(() => {
-    projectState.projectTable?.getProjects?.()?.then?.(res => {
-      setCurrentProject(Array.from(res?.values?.() ?? []).find(p => p.id === projectId))
-    })?.catch?.(console.error);
-  }, [projectState, projectId]);
+  const enableSyncButton = useMemo<boolean>(() => {
+    if (!project) {
+      return false;
+    }
+    if (disableProjectButtons) {
+      return false;
+    }
+    if (!isSignedIn || containers.length < 1 || inProgress) {
+      return false;
+    }
+    if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
+      return true;
+    }
+    return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+      .some((corpus) => !!corpus.updatedSinceSync);
+  }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
 
   return (
     <span>
       {
-        currentProject?.location !== ProjectLocation.LOCAL && (
-        <>
-          <RemovableTooltip
-            removed={alignmentFileErrors?.showDialog || disableProjectButtons}
-            title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
-            describeChild
-            arrow>
+        project?.location !== ProjectLocation.LOCAL && (
+          <>
+            <RemovableTooltip
+              removed={alignmentFileErrors?.showDialog || disableProjectButtons}
+              title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
+              describeChild
+              arrow>
           <span>
 
                 <Button
                   size={size as 'medium' | 'small' | undefined}
-                  disabled={!isSignedIn || containers.length === 0 || !allowImport || inProgress
-                    || (
-                      !!currentProject?.lastSyncTime
-                      && !!currentProject.updatedAt
-                      && currentProject.lastSyncTime === currentProject.updatedAt
-                      && (_.max([ ...(currentProject.sourceCorpora?.corpora ?? []), ...(currentProject.targetCorpora?.corpora ?? []) ]
-                        .map((corpus) => corpus.updatedAt?.getTime())
-                        .filter((v) => !!v)) ?? 0) < currentProject.lastSyncTime
-                    ) || disableProjectButtons}
+                  disabled={!enableSyncButton}
                   variant="contained"
                   sx={{
                     minWidth: '100%',
                     marginBottom: '.2em'
                   }}
                   onClick={async () => {
-                    currentProject && syncProject(currentProject);
+                    project && syncProject(project);
                   }}
                 >
                   <Sync sx={theme => ({
                     ...(inProgress ? {
-                      '@keyframes rotation': { from: { transform: 'rotate(0deg)' }, to: { transform: 'rotate(360deg)' } },
+                      '@keyframes rotation': {
+                        from: { transform: 'rotate(0deg)' },
+                        to: { transform: 'rotate(360deg)' }
+                      },
                       animation: '2s linear infinite rotation reverse',
                       fill: inProgress ? theme.palette.text.secondary : 'white'
                     } : {})
                   })} />
                 </Button>
           </span>
-          </RemovableTooltip>
-          <br/>
-        </>
-      )}
+            </RemovableTooltip>
+            <br />
+          </>
+        )}
       <ButtonGroup
         disabled={disableProjectButtons}
       >
@@ -174,13 +186,15 @@ const UploadAlignmentGroup = ({ projectId, containers, size, allowImport, isSign
                   setAlignmentFileSaveState({
                     alignmentFile: fileData.success ? fileData.data : undefined,
                     saveKey: uuid(),
-                    suppressJournaling: false
+                    suppressJournaling: false,
+                    removeAllFirst: false,
+                    preserveFileIds: false
                   });
                 }}
               />
               <Button
                 size={size as 'medium' | 'small' | undefined}
-                disabled={containers.length === 0 || !allowImport || inProgress}
+                disabled={containers.length === 0 || !isCurrentProject || inProgress}
                 variant="contained"
                 onClick={() => {
                   // delegate file loading to regular file input

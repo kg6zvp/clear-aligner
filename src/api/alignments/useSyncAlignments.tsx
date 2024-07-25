@@ -1,12 +1,11 @@
 import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { useMemo, useCallback, useRef, useState } from 'react';
-import { ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
-import { useDatabase } from '../../hooks/useDatabase';
-import { JournalEntryTableName } from '../../state/links/tableManager';
 import {
-  JournalEntry,
-  mapJournalEntryEntityToJournalEntryDTO
-} from '../../common/data/journalEntryDTO';
+  mapLinkEntityToServerAlignmentLink,
+  ServerAlignmentLinkDTO
+} from '../../common/data/serverAlignmentLinkDTO';
+import { useDatabase } from '../../hooks/useDatabase';
+import { JournalEntryTableName, LinksTable } from '../../state/links/tableManager';
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { ApiUtils } from '../utils';
@@ -15,6 +14,7 @@ export interface SyncState {
   file?: AlignmentFile;
   progress: Progress;
   sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
+  upload: (projectId?: string, controller?: AbortController) => Promise<unknown>;
   dialog: any;
 }
 
@@ -90,8 +90,27 @@ export const useSyncAlignments = (): SyncState => {
       await fetchLinks(signal, alignmentProjectId);
       return true;
     } catch (x) {
+      console.error(x);
     }
   }, [sendJournal, fetchLinks]);
+
+  const uploadLinks = useCallback(async (alignmentProjectId?: string, controller?: AbortController) => {
+    const signal = (controller ?? new AbortController()).signal;
+    if (!alignmentProjectId) return;
+    try {
+      const linksTable = new LinksTable(alignmentProjectId);
+      const linksInDb = (await linksTable.getAll())
+        .map(mapLinkEntityToServerAlignmentLink);
+      await ApiUtils.generateRequest({
+        requestPath: `/api/projects/${alignmentProjectId}/alignment_links`,
+        requestType: ApiUtils.RequestType.POST,
+        signal,
+        payload: linksInDb,
+      });
+    } catch (x) {
+      console.error(x);
+    }
+  }, []);
 
   const dialog = useMemo(() => {
     return (
@@ -120,6 +139,7 @@ export const useSyncAlignments = (): SyncState => {
     file,
     progress,
     sync: syncLinks,
+    upload: uploadLinks,
     dialog
   };
 };

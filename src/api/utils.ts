@@ -1,6 +1,11 @@
-import { ClearAlignerApi, getApiOptionsWithAuth, OverrideCaApiEndpoint } from '../server/amplifySetup';
-import { get, post, patch, del, put } from 'aws-amplify/api';
+import {
+  ClearAlignerApiName,
+  getApiOptionsWithAuth,
+  CaApiEndpointIsDev, EffectiveCaApiEndpoint
+} from '../server/amplifySetup';
+import { del, get, patch, post, put } from 'aws-amplify/api';
 import { generateJsonString } from '../common/generateJsonString';
+import { RestApiResponse } from '@aws-amplify/api-rest/src/types';
 
 export module ApiUtils {
 
@@ -13,7 +18,7 @@ export module ApiUtils {
   }
 
   const getAmplifyFromRequestType = (requestType: RequestType) => {
-    switch(requestType) {
+    switch (requestType) {
       case RequestType.GET:
         return get;
       case RequestType.POST:
@@ -25,23 +30,50 @@ export module ApiUtils {
       case RequestType.PUT:
         return put;
       default:
-        throw new Error("Unable to find Amplify equivalent for: ", requestType);
+        throw new Error('Unable to find Amplify equivalent for: ', requestType);
     }
-  }
+  };
 
-  const getResponseObject = async (response: Response) => {
-    try {
-      return await response.json();
-    } catch (x) {
+  const isJsonContentType = (inputContentType?: string | null) => {
+    if (!inputContentType) {
+      return false;
+    }
+    return inputContentType.includes('application/json');
+  };
+
+  const getContentLength = (inputContentLength?: number | string | null) => {
+    if (!inputContentLength) {
+      return 0;
+    }
+    return +inputContentLength;
+  };
+
+  const getFetchResponseObject = async (response: Response, contentLengthOptional = false) => {
+    if (response.status === 200
+      && isJsonContentType(response.headers.get('content-type'))
+      && (contentLengthOptional || getContentLength(response.headers.get('content-length')) > 0)) {
+      return await (response.json());
+    } else {
       return {};
     }
-  }
+  };
+
+  const getAmplifyResponseObject = async (response: RestApiResponse, contentLengthOptional = false) => {
+    if (response.statusCode === 200
+      && isJsonContentType(response.headers['content-type'])
+      && (contentLengthOptional || getContentLength(response.headers['content-length']) > 0)
+      && 'body' in response) {
+      return await (response.body as Response).json();
+    } else {
+      return {};
+    }
+  };
 
   const validateStatusCode = (statusCode: number, requestType: RequestType, expectedStatusCode?: number) => {
-    if(expectedStatusCode) {
+    if (expectedStatusCode) {
       return statusCode === expectedStatusCode;
     }
-    switch(requestType) {
+    switch (requestType) {
       case RequestType.GET:
       case RequestType.PATCH:
       case RequestType.PUT:
@@ -52,7 +84,7 @@ export module ApiUtils {
       default:
         return false;
     }
-  }
+  };
 
   interface RequestGenerationPayload {
     requestPath: string,
@@ -65,41 +97,44 @@ export module ApiUtils {
     expectedStatusCode: number;
   }
 
-  export const generateRequest = async ({requestPath, requestType, payload, signal}: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}) => {
-    if (OverrideCaApiEndpoint) {
-      const response = await fetch(`${OverrideCaApiEndpoint}${requestPath}`, {
+  export const generateRequest = async ({
+                                          requestPath,
+                                          requestType,
+                                          payload,
+                                          signal
+                                        }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}) => {
+    if (CaApiEndpointIsDev) {
+      const response = await fetch(`${EffectiveCaApiEndpoint}${requestPath}`, {
         method: requestType,
         headers: {
           accept: 'application/json',
           'Content-Type': 'application/json'
         },
-        ...(signal ? {signal} : {}),
-        ...(payload ? {body: generateJsonString(payload)} : {})
+        ...(signal ? { signal } : {}),
+        ...(payload ? { body: generateJsonString(payload) } : {})
       });
       return {
         success: response.ok,
-        response: await getResponseObject(response)
-      }
+        response: await getFetchResponseObject(response,
+          requestType === RequestType.GET)
+      };
     } else {
       const responseOperation = getAmplifyFromRequestType(requestType)({
-        apiName: ClearAlignerApi,
+        apiName: ClearAlignerApiName,
         path: requestPath,
         options: payload ? getApiOptionsWithAuth(payload) : getApiOptionsWithAuth()
       });
-      const projectResponse = await responseOperation.response;
-      if(signal) {
+      const response = await responseOperation.response;
+      if (signal) {
         signal.onabort = () => {
           responseOperation.cancel();
         };
       }
-      let response = undefined;
-      if('body' in projectResponse) {
-        response = await (projectResponse.body as Response).json();
-      }
       return {
-        success: validateStatusCode(projectResponse.statusCode, requestType, options.expectedStatusCode),
-        response,
-      }
+        success: validateStatusCode(response.statusCode, requestType, options.expectedStatusCode),
+        response: await getAmplifyResponseObject(response as RestApiResponse,
+          requestType === RequestType.GET)
+      };
     }
-  }
+  };
 }

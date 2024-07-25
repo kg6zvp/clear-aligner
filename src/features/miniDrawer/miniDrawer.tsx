@@ -10,6 +10,8 @@ import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
+import { grey } from '@mui/material/colors';
+
 
 
 /**
@@ -74,10 +76,10 @@ export const MiniDrawer = () => {
                   sx={{
                     p: 1,
                   backgroundColor: selectedIndex === ListItems.Home.path ?
-                    (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
+                    (theme.palette.mode === 'light' ? grey['400'] : grey['600'])
                     : null,
                     '&:hover': {
-                    backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
+                    backgroundColor: theme.palette.mode === 'light' ? grey['400'] : grey['600']
                     }
                   }}
                 >
@@ -95,10 +97,10 @@ export const MiniDrawer = () => {
                   sx={{
                     p: 1,
                   backgroundColor: selectedIndex === ListItems.Alignment.path ?
-                    (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
+                    (theme.palette.mode === 'light' ? grey['400'] : grey['600'])
                     : null,
                     '&:hover': {
-                    backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
+                    backgroundColor: theme.palette.mode === 'light' ? grey['400'] : grey['600']
                     }
                   }}
                 >
@@ -116,10 +118,10 @@ export const MiniDrawer = () => {
                   sx={{
                     p: 1,
                   backgroundColor: selectedIndex === ListItems.Concordance.path ?
-                    (theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey')
+                    (theme.palette.mode === 'light' ? grey['400'] : grey['600'])
                     : null,
                     '&:hover': {
-                    backgroundColor: theme.palette.mode === 'light' ? 'lightgrey' : 'slategrey'
+                    backgroundColor: theme.palette.mode === 'light' ? grey['400'] : grey['600']
                     }
                   }}
                 >

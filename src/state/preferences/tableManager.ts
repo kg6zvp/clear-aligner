@@ -21,6 +21,7 @@ export interface UserPreference {
   showGloss: boolean;
   currentProject: string;
   initialized?: InitializationStates;
+  onInitialized?: (() => void)[];
 }
 
 export interface UserPreferenceDto {

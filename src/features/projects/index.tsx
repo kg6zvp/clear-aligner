@@ -35,6 +35,8 @@ import { Progress } from '../../api/ApiModels';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { ProfileAvatar, userState } from '../profileAvatar/profileAvatar';
 import AppBar from '@mui/material/AppBar';
+import { userState } from '../profileAvatar/profileAvatar';
+import { grey } from '@mui/material/colors';
 
 interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -145,6 +147,58 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 
         {/*Projects Grid*/}
         <Grid container sx={{ width: '100%', paddingX: '0px', overflow: 'auto'}}>
+            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+        <Grid container justifyContent="space-between" alignItems="center"
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
+          <Grid container sx={{ width: 'fit-content' }}>
+            <Typography variant="h4" sx={ theme => ({
+              marginRight: 5,
+              fontWeight: 'bold',
+              color: theme.palette.primary.main
+            })}>
+              Projects
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => setOpenProjectDialog(true)}
+              sx={{ textTransform: 'none', fontWeight: 'bold' }}
+              disabled={disableProjectButtons}
+            >Create New</Button>
+          </Grid>
+          <Grid item sx={{ px: 2 }}>
+            {
+              (isSignedIn || usingCustomEndpoint) && (
+                <Button variant="text"
+                        disabled={disableProjectButtons}
+                        onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
+                  <Grid container alignItems="center">
+                    <Refresh sx={theme => ({
+                      mr: 1,
+                      mb: .5,
+                      ...(disableProjectButtons ? {
+                        '@keyframes rotation': {
+                          from: { transform: 'rotate(0deg)' },
+                          to: { transform: 'rotate(360deg)' }
+                        },
+                        animation: '2s linear infinite rotation',
+                        fill: theme.palette.text.secondary
+                      } : {})
+                    })} />
+                    <Typography variant="subtitle2" sx={theme => ({
+                      textTransform: 'none',
+                      fontWeight: 'bold',
+                      color: disableProjectButtons ? theme.palette.text.secondary
+                        : getPaletteFromProgress(remoteFetchProgress, theme)
+                    })}>
+                      {disableProjectButtons ? 'Refreshing Remote Projects...' : 'Refresh Remote Projects'}
+                    </Typography>
+                  </Grid>
+                </Button>
+              )
+            }
+          </Grid>
+        </Grid>
+        <Grid container sx={{ width: '100%', paddingX: '1.1rem', overflow: 'auto' }}>
           {projects
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
@@ -163,7 +217,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
-          paddingTop: '5rem',
+          paddingTop: '2.5rem',
           paddingLeft: '2.3rem'
         }}>
 
@@ -256,7 +310,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
       <Grid container justifyContent="flex-end" alignItems="center">
         <Tooltip title="Sign in to connect to manage remote projects">
         <Button variant="text" disabled sx={{ textTransform: 'none' }}>
-          <span style={{ color: 'grey' }}>Unavailable</span>
+          <span style={{ color: grey['500'] }}>Unavailable</span>
           <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
         </Button>
         </Tooltip>
@@ -347,13 +401,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
             <Grid container alignItems="center" sx={{ height: 75, width: 'fit-content' }}>
               {project.location !== ProjectLocation.REMOTE ?
                 <UploadAlignmentGroup
-                  projectId={project.id}
+                  project={project}
                   size="small"
                   containers={[
                     ...(project.sourceCorpora ? [project.sourceCorpora] : []),
                     ...(project.targetCorpora ? [project.targetCorpora] : [])
                   ]}
-                  allowImport={isCurrentProject}
+                  isCurrentProject={isCurrentProject}
                   isSignedIn={isSignedIn}
                   disableProjectButtons={disableProjectButtons}
                 /> : <></>}

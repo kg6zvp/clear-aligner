@@ -5,6 +5,7 @@ import { Progress } from 'api/ApiModels';
 import { ApiUtils } from '../utils';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { Corpus } from '../../structs';
+import { ProjectLocation } from '../../common/data/project/project';
 
 export interface SyncState {
   sync: (project: Project, side?: AlignmentSide) => Promise<unknown>;
@@ -26,22 +27,10 @@ export const useSyncWordsOrParts = (): SyncState => {
   const syncWordsOrParts = async (project: Project) => {
     try {
       setProgress(Progress.IN_PROGRESS);
-      const corporaToUpdate: Corpus[] = [
+      const tokensToUpload = [
         ...(project.sourceCorpora?.corpora ?? []),
         ...(project.targetCorpora?.corpora ?? [])
-      ].filter((corpus: Corpus) => (corpus.updatedAt?.getTime() ?? 0) > (project.lastSyncTime ?? 0));
-      /*
-       * remove tokens in corpora requiring sync
-       */
-      for (const corpusToUpdate of corporaToUpdate) {
-        await ApiUtils.generateRequest({
-          requestPath: `/api/projects/${project.id}/tokens/${corpusToUpdate.id}/tokens`,
-          requestType: ApiUtils.RequestType.DELETE,
-          signal: abortController.current?.signal
-        });
-      }
-
-      const tokensToUpload = corporaToUpdate
+      ].filter((corpus: Corpus) => project.location === ProjectLocation.LOCAL || !!corpus.updatedSinceSync)
         .flatMap(c => c.words)
         .map(mapWordOrPartToWordOrPartDTO);
 

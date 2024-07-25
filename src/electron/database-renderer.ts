@@ -52,11 +52,13 @@ contextBridge.exposeInMainWorld('databaseApi', {
   findLinksByBCV: (sourceName, side, bookNum, chapterNum, verseNum) => ipcRenderer.invoke(`${ChannelPrefix}:findLinksByBCV`, sourceName, side, bookNum, chapterNum, verseNum),
   findWordsByBCV: (database, side, bookNum, chapterNum, verseNum) => ipcRenderer.invoke(`${ChannelPrefix}:findWordsByBCV`, database, side, bookNum, chapterNum, verseNum),
   getAllWordsByCorpus: (database, side, corpusId, wordLimit, wordSkip) => ipcRenderer.invoke(`${ChannelPrefix}:getAllWordsByCorpus`, database, side, corpusId, wordLimit, wordSkip),
-  getAllCorpora: (database) => ipcRenderer.invoke(`${ChannelPrefix}:getAllCorpora`, database)
+  getAllCorpora: (database) => ipcRenderer.invoke(`${ChannelPrefix}:getAllCorpora`, database),
+  toggleCorporaUpdatedFlagOff: (projectId) => ipcRenderer.invoke(`${ChannelPrefix}:toggleCorporaUpdatedFlagOff`, projectId)
 } as DatabaseApi);
 
 contextBridge.exposeInMainWorld('environmentVariables', {
   caApiEndpoint: process.env['CA_API_ENDPOINT'],
+  caApiEndpointIsDev: process.env['CA_API_ENDPOINT_IS_DEV'],
   userPoolId: process.env['CA_USER_POOL_ID'],
   userPoolClientId: process.env['CA_USER_POOL_CLIENT_ID']
 } as EnvironmentVariables);

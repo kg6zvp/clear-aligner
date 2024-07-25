@@ -4,7 +4,7 @@ import { Project } from '../../state/projects/tableManager';
 import { mapProjectDtoToProject, ProjectDTO, ProjectLocation } from '../../common/data/project/project';
 import { AppContext } from '../../App';
 import { DateTime } from 'luxon';
-import { getAvailableCorporaContainers } from '../../workbench/query';
+import { InitializationStates } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
@@ -13,6 +13,7 @@ import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/cor
 import { ApiUtils } from '../utils';
 import { useDatabase } from '../../hooks/useDatabase';
 import _ from 'lodash';
+import { UserPreference } from '../../state/preferences/tableManager';
 
 enum ProjectDownloadProgress {
   IDLE,
@@ -36,7 +37,7 @@ export interface SyncState {
  * hook to download a specified project from the server.
  */
 export const useDownloadProject = (): SyncState => {
-  const { projectState, setProjects, ...appCtx } = useContext(AppContext);
+  const { projectState, setProjects, isBusyDialogOpen, ...appCtx } = useContext(AppContext);
   const { deleteProject } = useDeleteProject();
   const { cancel, reset, cancelToken } = useCancelTask();
   const [progress, setProgress] = useState<ProjectDownloadProgress>(ProjectDownloadProgress.IDLE);
@@ -127,14 +128,25 @@ export const useDownloadProject = (): SyncState => {
           links: ServerAlignmentLinkDTO[]
         } | undefined = alignmentResponse.response;
         const prevSourceName = projectState.linksTable.getSourceName();
-        projectState.linksTable.setSourceName(project.id);
-        await projectState.linksTable.saveAll( (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity), false, true, true);
-        projectState.linksTable.setSourceName(prevSourceName);
+        if (prevSourceName !== project.id) {
+          projectState.linksTable.setSourceName(project.id);
+        }
+        await projectState.linksTable.saveAll(
+          (linksBody?.links ?? []).map(mapServerAlignmentLinkToLinkEntity),
+          false, true,
+          true, true);
+
+        project.lastSyncTime = DateTime.now().toMillis();
+        await projectState.projectTable?.update(project, false);
+        appCtx.setPreferences((p?: UserPreference) => ({
+          ...(p ?? {}) as UserPreference,
+          currentProject: project.id,
+          initialized: InitializationStates.INITIALIZED
+        }));
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.REFRESHING_CONTAINERS);
         const localProjects = await projectState.projectTable?.getProjects?.(true);
         setProjects(p => Array.from(localProjects?.values?.() ?? p));
-        appCtx.setContainers((await getAvailableCorporaContainers({ projectState, setProjects, ...appCtx })));
       }
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.SUCCESS);
@@ -184,7 +196,7 @@ export const useDownloadProject = (): SyncState => {
           ProjectDownloadProgress.SUCCESS,
           ProjectDownloadProgress.FAILED,
           ProjectDownloadProgress.CANCELED
-        ].includes(progress)}
+        ].includes(progress) && !isBusyDialogOpen}
       >
         <Grid container alignItems="center" justifyContent="space-between"
               sx={{ minWidth: 500, height: 'fit-content', p: 2 }}>
@@ -196,7 +208,7 @@ export const useDownloadProject = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress, onCancel]);
+  }, [progress, onCancel, isBusyDialogOpen]);
 
   return {
     downloadProject: (projectId) => downloadProject(projectId, cancelToken),

@@ -33,17 +33,14 @@ import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
 import {
-  CancelOutlined,
-  CheckCircleOutlined,
   CropFree,
-  FlagOutlined,
   GpsFixed,
-  InsertLink,
-  Link as LinkIcon
+  InsertLink
 } from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import useConfirm from '../../hooks/useConfirm';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { SingleSelectStateButtonGroup } from '../../components/singleSelectStateButtonGroup';
 import AppBar from '@mui/material/AppBar';
 import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 import ListItemText from '@mui/material/ListItemText';
@@ -227,33 +224,10 @@ export const AlignmentTableControlPanel = ({
           marginLeft={'63px'}
         >
           <ButtonGroup>
-            <SingleSelectButtonGroup
-              disabled={isButtonGroupDisabled}
+            <SingleSelectStateButtonGroup
               value={alignmentTableControlPanelLinkState || undefined}
-              sx={{ size: 'small', width: '200px' }}
-              items={[
-                {
-                  value: 'created',
-                  label: <LinkIcon />,
-                  tooltip: 'Created',
-                },
-                {
-                  value: 'approved',
-                  label: <CheckCircleOutlined />,
-                  tooltip: 'Approved',
-                },
-                {
-                  value: 'rejected',
-                  label: <CancelOutlined />,
-                  tooltip: 'Rejected',
-                },
-                {
-                  value: 'needsReview',
-                  label: <FlagOutlined />,
-                  tooltip: 'Needs Review',
-                }
-              ]}
               onSelect={(value) => handleOnSelect(value)}
+              disabled={isButtonGroupDisabled}
             />
           </ButtonGroup>
           <DisplayItemsSelectedCount />

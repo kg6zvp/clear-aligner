@@ -4,20 +4,21 @@ import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
 import { AppContext } from '../../App';
 import { useSyncWordsOrParts } from './useSyncWordsOrParts';
-import { getCorpusFromDatabase } from '../../workbench/query';
+import { InitializationStates } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import { usePublishProject } from './usePublishProject';
 import { DateTime } from 'luxon';
 import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
-import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import { UserPreference } from '../../state/preferences/tableManager';
+import { useDatabase } from '../../hooks/useDatabase';
 
 export enum SyncProgress {
   IDLE,
   IN_PROGRESS,
   SYNCING_LOCAL,
-  RETRIEVING_TOKENS,
+  SWITCH_TO_PROJECT,
   SYNCING_PROJECT,
   SYNCING_CORPORA,
   SYNCING_ALIGNMENTS,
@@ -40,19 +41,20 @@ export interface SyncState {
  * hook to synchronize projects. Updating the syncProjectKey or cancelSyncKey will perform that action as in our other hooks.
  */
 export const useSyncProject = (): SyncState => {
-  const {publishProject} = usePublishProject();
-  const {refetch: getProjects} = useProjectsFromServer({enabled: false});
+  const dbApi = useDatabase();
+  const { publishProject } = usePublishProject();
+  const { refetch: getProjects } = useProjectsFromServer({enabled: false});
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
-  const { sync: syncAlignments, file } = useSyncAlignments();
-  const {deleteProject} = useDeleteProject();
-  const { projectState, setSnackBarMessage } = useContext(AppContext);
+  const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
+  const { deleteProject } = useDeleteProject();
+  const { projectState, containers, setSnackBarMessage, preferences, setPreferences } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
   const [canceled, setCanceled] = React.useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const { setIsProjectDialogOpen } = useContext(AppContext);
+  const { setIsProjectDialogOpen, isBusyDialogOpen } = useContext(AppContext);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -91,15 +93,23 @@ export const useSyncProject = (): SyncState => {
           await cleanupRequest();
           break;
         }
-        case SyncProgress.RETRIEVING_TOKENS: {
-          for (const container of [project.targetCorpora, project.sourceCorpora]) {
-            for (const corpus of (container?.corpora ?? [])) {
-              const corpusFromDB = await getCorpusFromDatabase(corpus, project.id);
-              corpus.words = corpusFromDB.words;
-              corpus.wordsByVerse = corpusFromDB.wordsByVerse;
+        case SyncProgress.SWITCH_TO_PROJECT: {
+          if (preferences?.currentProject && preferences?.currentProject === project?.id && preferences?.initialized === InitializationStates.INITIALIZED) {
+            setProgress(SyncProgress.SYNCING_PROJECT);
+          } else {
+            try {
+              await projectState.linksTable.reset();
+            } catch(x) {
+              console.error(x);
             }
+            projectState.linksTable.setSourceName(project.id);
+            setPreferences((p: UserPreference | undefined) => ({
+              ...(p ?? {}) as UserPreference,
+              currentProject: project.id,
+              initialized: InitializationStates.UNINITIALIZED,
+              onInitialized: [ ...(p?.onInitialized ?? []), () => setProgress(SyncProgress.SYNCING_PROJECT) ]
+            }));
           }
-          setProgress(SyncProgress.SYNCING_PROJECT);
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
@@ -124,22 +134,35 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_CORPORA: {
+          if (project.sourceCorpora?.corpora.some((c) => !c.words || c.words.length < 1) || !project.targetCorpora?.corpora.some((c) => !c.words || c.words.length < 1)) {
+            if (project.id !== containers.projectId || containers.sourceContainer?.corpora.some((c) => !c.words || c.words.length < 1) || containers.targetContainer?.corpora.some((c) => !c.words || c.words.length < 1)) {
+              setProgress(SyncProgress.FAILED);
+              break;
+            }
+            project.sourceCorpora = containers.sourceContainer;
+            project.targetCorpora = containers.targetContainer;
+          }
           await syncWordsOrParts(project);
           setProgress(SyncProgress.SYNCING_ALIGNMENTS);
           break;
         }
         case SyncProgress.SYNCING_ALIGNMENTS: {
-          await syncAlignments(project.id);
+          if (project.location === ProjectLocation.LOCAL) {
+            await uploadAlignments(project.id)
+          } else {
+            await syncAlignments(project.id);
+          }
           setProgress(SyncProgress.UPDATING_PROJECT);
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
-          project.lastSyncTime = syncTime;
-          project.updatedAt = syncTime;
+          project.updatedAt = DateTime.now().toMillis();
+          project.lastSyncTime = DateTime.now().toMillis();
           project.location = ProjectLocation.SYNCED;
-          await projectState.projectTable?.sync?.(project);
+          await dbApi.toggleCorporaUpdatedFlagOff(project.id);
           // Update project state to Published.
           await publishProject(project, ProjectState.PUBLISHED);
+          await projectState.projectTable?.sync?.(project).catch(console.error);
           setProgress(SyncProgress.IDLE);
           break;
         }
@@ -151,7 +174,12 @@ export const useSyncProject = (): SyncState => {
     }
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
-    initialProjectState, syncTime]);
+    dbApi,
+    preferences,
+    containers,
+    setPreferences,
+    uploadAlignments,
+    initialProjectState]);
 
   useEffect(() => {
     if(syncTime && initialProjectState && !canceled) {
@@ -180,8 +208,8 @@ export const useSyncProject = (): SyncState => {
       case SyncProgress.SYNCING_LOCAL:
         dialogMessage = 'Syncing local project data...';
         break;
-      case SyncProgress.RETRIEVING_TOKENS:
-        dialogMessage = 'Retrieving tokens from the local database...';
+      case SyncProgress.SWITCH_TO_PROJECT:
+        dialogMessage = 'Opening project';
         break;
       case SyncProgress.SYNCING_PROJECT:
       case SyncProgress.SYNCING_CORPORA:
@@ -199,7 +227,7 @@ export const useSyncProject = (): SyncState => {
           SyncProgress.IDLE,
           SyncProgress.SUCCESS,
           SyncProgress.FAILED
-        ].includes(progress)}
+        ].includes(progress) && !isBusyDialogOpen}
       >
         <Grid container alignItems="center" justifyContent="space-between" sx={{minWidth: 500, height: 'fit-content', p: 2}}>
           <CircularProgress sx={{mr: 2, height: 10, width: 'auto'}}/>
@@ -214,14 +242,14 @@ export const useSyncProject = (): SyncState => {
         </Grid>
       </Dialog>
     );
-  }, [progress, onCancel, canceled]);
+  }, [progress, onCancel, canceled, isBusyDialogOpen]);
 
   return {
-    sync: project => {
+    sync: (project) => {
       setCanceled(false);
       setInitialProjectState(project);
       setSyncTime(DateTime.now().toMillis());
-      setProgress(SyncProgress.RETRIEVING_TOKENS);
+      setProgress(SyncProgress.SWITCH_TO_PROJECT);
     },
     progress,
     dialog: dialog,

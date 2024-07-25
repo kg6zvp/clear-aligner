@@ -98,7 +98,11 @@ export class ProjectTable extends VirtualTable {
       updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
       this.projects.set(project.id, project);
       this.decrDatabaseBusyCtr();
-      return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
+      return updatedProject ? {
+        ...ProjectTable.convertDataSourceToProject(updatedProject),
+        lastSyncTime: project.lastSyncTime,
+        updatedAt: project.updatedAt
+      } : undefined;
     } catch (e) {
       console.error('Error updating project: ', e);
     } finally {
