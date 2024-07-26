@@ -136,11 +136,10 @@ export class BaseRepository implements RepositoryWithMigrations {
           } : {}),
           prepareDatabase: (db) => {
             db.pragma('journal_mode = MEMORY');
-            db.pragma('synchronous = normal');
             db.pragma('cache_size = -8000000');
             db.pragma('read_uncommitted = true');
             db.pragma('defer_foreign_keys = true');
-            db.pragma('synchronous = 0');
+            db.pragma('synchronous = off');
           },
           entities
         });

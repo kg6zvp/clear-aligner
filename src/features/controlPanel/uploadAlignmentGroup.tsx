@@ -4,14 +4,13 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CorpusContainer } from '../../structs';
-import { AlignmentFile, AlignmentFileSchema, alignmentFileSchemaErrorMessageMapper } from '../../structs/alignmentFile';
+import { AlignmentFile } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
 import { Button, ButtonGroup } from '@mui/material';
 import { FileDownload, FileUpload, Sync } from '@mui/icons-material';
 import uuid from 'uuid-random';
-import saveAlignmentFile from '../../helpers/alignmentFile';
-import { SafeParseReturnType, ZodError } from 'zod';
-import { ZodErrorDialog } from '../../components/zodErrorDialog';
+import { AlignmentFileCheckResults, checkAlignmentFile, saveAlignmentFile } from '../../helpers/alignmentFile';
+import { AlignmentValidationErrorDialog } from '../../components/alignmentValidationErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
@@ -36,12 +35,12 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     preserveFileIds?: boolean
   }>();
 
-  const [alignmentFileErrors, setAlignmentFileErrors] = useState<{
-    errors?: ZodError<AlignmentFile>,
+  const [alignmentFileCheckResults, setAlignmentFileCheckResults] = useState<{
+    checkResults?: AlignmentFileCheckResults,
     showDialog?: boolean
   }>();
 
-  const dismissDialog = useCallback(() => setAlignmentFileErrors({}), [setAlignmentFileErrors]);
+  const dismissDialog = useCallback(() => setAlignmentFileCheckResults({}), [setAlignmentFileCheckResults]);
 
   useImportAlignmentFile(project?.id,
     alignmentFileSaveState?.alignmentFile,
@@ -62,8 +61,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       return;
     }
     // clear errors, if any
-    setAlignmentFileErrors({
-      errors: undefined,
+    setAlignmentFileCheckResults({
+      checkResults: undefined,
       showDialog: undefined
     });
     // import/save file
@@ -110,7 +109,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
         project?.location !== ProjectLocation.LOCAL && (
           <>
             <RemovableTooltip
-              removed={alignmentFileErrors?.showDialog || disableProjectButtons}
+              removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
               title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
               describeChild
               arrow>
@@ -148,15 +147,14 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
         disabled={disableProjectButtons}
       >
         <RemovableTooltip
-          removed={alignmentFileErrors?.showDialog || disableProjectButtons}
+          removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
           title="Load Alignment Data"
           describeChild
           arrow>
             <span>
-              <ZodErrorDialog
-                showDialog={alignmentFileErrors?.showDialog}
-                fieldNameMapper={alignmentFileSchemaErrorMessageMapper}
-                errors={alignmentFileErrors?.errors}
+              <AlignmentValidationErrorDialog
+                showDialog={alignmentFileCheckResults?.showDialog}
+                checkResults={alignmentFileCheckResults?.checkResults}
                 onDismissDialog={dismissDialog}
               />
               <input
@@ -174,17 +172,15 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 onChange={async (event) => {
                   // grab file content
                   const file = event!.target!.files![0];
-                  const content = await file.text();
+                  const checkResults = checkAlignmentFile(JSON.parse(await file.text()), 20);
 
-                  const fileData = AlignmentFileSchema.safeParse(JSON.parse(content)) as SafeParseReturnType<AlignmentFile, AlignmentFile>;
-
-                  setAlignmentFileErrors(fileData.success ? {} : {
-                    errors: fileData.error,
-                    showDialog: true
+                  setAlignmentFileCheckResults({
+                    checkResults: checkResults,
+                    showDialog: !checkResults.isFileValid
                   });
 
                   setAlignmentFileSaveState({
-                    alignmentFile: fileData.success ? fileData.data : undefined,
+                    alignmentFile: checkResults.isFileValid ? checkResults.validatedFile : undefined,
                     saveKey: uuid(),
                     suppressJournaling: false,
                     removeAllFirst: false,
@@ -207,7 +203,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
           </RemovableTooltip>
 
         <RemovableTooltip
-          removed={alignmentFileErrors?.showDialog || disableProjectButtons}
+          removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
           title="Save Alignment Data"
           describeChild
           arrow>

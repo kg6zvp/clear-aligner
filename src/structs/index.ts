@@ -3,7 +3,6 @@
  * and has methods for interacting with said corpora.
  */
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
-import { z } from 'zod';
 import { ServerAlignmentLinkDTO } from '../common/data/serverAlignmentLinkDTO';
 import { AlignmentSide } from '../common/data/project/corpus';
 
@@ -31,7 +30,7 @@ export interface CreateBulkJournalEntryParams {
  * Parameters for the insert function of the Project Repository
  */
 export interface InsertParams<T> extends MutatingOperationParams {
-  itemOrItems: T|T[];
+  itemOrItems: T | T[];
   chunkSize?: number;
 }
 
@@ -39,19 +38,20 @@ export interface InsertParams<T> extends MutatingOperationParams {
  * Parameters for the save function of the project repository
  */
 export interface SaveParams<T> extends MutatingOperationParams {
-  itemOrItems: T|T[];
+  itemOrItems: T | T[];
 }
 
 /**
  * Parameters for the delete function of the Project Repository
  */
-export interface DeleteParams extends MutatingOperationParams { }
+export interface DeleteParams extends MutatingOperationParams {
+}
 
 /**
  * Parameters for the deleteById function of the Project Repository
  */
 export interface DeleteByIdParams extends MutatingOperationParams {
-  itemIdOrIds: string|string[]
+  itemIdOrIds: string | string[];
 }
 
 export enum SyntaxType {
@@ -164,7 +164,7 @@ export class CorpusContainer {
 
   corpusAtReferenceString(refString: string): Corpus | undefined {
     const verseString = BCVWP.truncateTo(refString, BCVWPField.Verse);
-    const foundCorpus =  this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
+    const foundCorpus = this.corpora.find((corpus) => !!corpus.wordsByVerse[verseString]);
     if (foundCorpus) return foundCorpus;
     const ref = BCVWP.parseFromString(verseString);
     return this.corpora.find((corpus) => {
@@ -238,7 +238,7 @@ export class CorpusContainer {
     return BCVWP.parseFromString(ref);
   }
 
-  findNext(ref: BCVWP, truncation: BCVWPField): BCVWP|undefined {
+  findNext(ref: BCVWP, truncation: BCVWPField): BCVWP | undefined {
     if (!ref.hasUpToField(truncation) || !this.refExists(ref)) return undefined;
     const corpus = this.corpusAtReferenceString(ref.toReferenceString());
     if (!corpus) return undefined;
@@ -364,8 +364,7 @@ export class User extends DatabaseRecord {
  * The default origin for links created by ClearAligner
  */
 export const LinkOriginManual: string = 'manual';
-export type LinkOrigin = 'manual'|string;
-export const LinkOriginSchema = z.string().min(1, 'link origin must contain at least one character');
+export type LinkOrigin = 'manual' | string;
 
 /**
  * Enum representing the status of a link
@@ -376,18 +375,6 @@ export enum LinkStatus {
   REJECTED = 'rejected',
   NEEDS_REVIEW = 'needsReview',
 }
-
-/**
- * Zod schema for {@link LinkStatus}
- */
-export const LinkStatusSchema = z.enum([
-  LinkStatus.CREATED,
-  LinkStatus.NEEDS_REVIEW,
-  LinkStatus.REJECTED,
-  LinkStatus.APPROVED
-], {
-  required_error: `link status field is required and must be one of [${Object.values(LinkStatus).join(', ')}]`
-});
 
 /**
  * Required metadata fields for links go in this interface
@@ -413,14 +400,6 @@ export class Link extends DatabaseRecord {
   sources: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the source text(s)
   targets: string[]; // BCVWP identifying the location of the word(s) or word part(s) in the target text(s)
 }
-
-/**
- * Zod schema for {@link AlignmentSide}
- */
-export const AlignmentSideSchema = z.enum([
-  AlignmentSide.SOURCE,
-  AlignmentSide.TARGET
-]);
 
 export interface AlignmentPolarityBase {
   type: 'primary' | 'secondary';

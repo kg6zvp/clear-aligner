@@ -3,10 +3,10 @@
  * Projects Mode to save alignment data.
  */
 import { AlignmentFile, AlignmentRecord } from '../structs/alignmentFile';
-import { Link } from '../structs';
+import { Link, LinkStatus } from '../structs';
 
 
-const saveAlignmentFile = (links: Link[] | undefined) => {
+export const saveAlignmentFile = (links: Link[] | undefined) => {
   if (!links) return;
   // create starting instance
   const alignmentExport: AlignmentFile = {
@@ -22,7 +22,7 @@ const saveAlignmentFile = (links: Link[] | undefined) => {
           ({
             meta: {
               id: link.id,
-              ...link.metadata,
+              ...link.metadata
             },
             source: (link.sources ?? []),
             target: (link.targets ?? [])
@@ -75,4 +75,78 @@ const saveAlignmentFile = (links: Link[] | undefined) => {
   URL.revokeObjectURL(url);
 };
 
-export default saveAlignmentFile;
+export interface AlignmentFileCheckResults {
+  maxErrorMessages: number,
+  isFileValid: boolean;
+  errorMessages: string[];
+  submittedLinks: number,
+  acceptedLinks: number,
+  rejectedLinks: number,
+  validatedFile?: AlignmentFile;
+}
+
+export const checkAlignmentFile = (inputFile: any, maxErrorMessages = 100): AlignmentFileCheckResults => {
+  let isFileValid = true;
+  let errorMessages: string[] = [];
+  let submittedLinks = 0;
+  let acceptedLinks = 0;
+  let rejectedLinks = 0;
+  const validatedFile: AlignmentFile = {
+    type: inputFile?.type ?? '',
+    meta: inputFile?.meta,
+    records: []
+  };
+  if (Array.isArray(inputFile?.records)) {
+    const linkArray = (inputFile?.records as any[]);
+    submittedLinks = linkArray.length;
+    linkArray.forEach((arrayEntry, entryIndex) => {
+      const linkNum = (entryIndex + 1);
+      const possibleLink = arrayEntry as AlignmentRecord | undefined;
+      const possibleOrigin = (possibleLink?.meta?.origin as string | undefined);
+      let isLinkValid = true;
+      if (!possibleOrigin) {
+        isLinkValid = false;
+        errorMessages.length < maxErrorMessages
+        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no origin (missing/empty "meta.origin" field).`);
+      }
+      const possibleStatus = (possibleLink?.meta?.status as string | undefined);
+      if (!possibleStatus || !((possibleStatus ?? '').toUpperCase() in LinkStatus)) {
+        isLinkValid = false;
+        errorMessages.length < maxErrorMessages
+        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no valid status (missing/invalid "meta.status" field).`);
+      }
+      const possibleSource = (possibleLink?.source as string[] | undefined);
+      if (!possibleSource || (possibleSource?.length ?? 0) < 1) {
+        isLinkValid = false;
+        errorMessages.length < maxErrorMessages
+        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no source links (missing/empty "source" field).`);
+      }
+      const possibleTarget = (possibleLink?.target as string[] | undefined);
+      if (!possibleTarget || (possibleTarget?.length ?? 0) < 1) {
+        isLinkValid = false;
+        errorMessages.length < maxErrorMessages
+        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no target links (missing/empty "target" field).`);
+      }
+      if (isLinkValid) {
+        validatedFile.records.push(possibleLink as AlignmentRecord);
+        acceptedLinks++;
+      } else {
+        isFileValid = false;
+        rejectedLinks++;
+      }
+    });
+  } else {
+    isFileValid = false;
+    errorMessages.length < maxErrorMessages
+    && errorMessages.push('Input file has no alignment links (missing "records" field).');
+  }
+  return {
+    maxErrorMessages,
+    isFileValid,
+    errorMessages,
+    submittedLinks,
+    acceptedLinks,
+    rejectedLinks,
+    validatedFile
+  };
+};
