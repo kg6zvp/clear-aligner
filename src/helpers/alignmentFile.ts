@@ -93,7 +93,9 @@ export const checkAlignmentFile = (inputFile: any, maxErrorMessages = 100): Alig
   let rejectedLinks = 0;
   const validatedFile: AlignmentFile = {
     type: inputFile?.type ?? '',
-    meta: inputFile?.meta,
+    meta: inputFile?.meta ?? {
+      creator: ''
+    },
     records: []
   };
   if (Array.isArray(inputFile?.records)) {
