@@ -51,6 +51,8 @@ export const ProjectDatabaseDirectory = 'projects';
 export const JournalEntryDirectory = 'journal_entries';
 export const JournalEntryTableName = 'journal_entries';
 
+const MaxRmRetries = 10;
+
 /**
  * Journal entry object
  */
@@ -383,9 +385,9 @@ export class ProjectRepository extends BaseRepository {
     await src?.createQueryBuilder()
       .update(CorporaTableName)
       .set({ updatedSinceSync: 0 })
-      .where("updated_since_sync != 0")
+      .where('updated_since_sync != 0')
       .execute();
-  }
+  };
 
   removeTargetWordsOrParts = async (sourceName: string) => {
     await (await this.getDataSource(sourceName))
@@ -464,25 +466,39 @@ export class ProjectRepository extends BaseRepository {
   };
 
   removeSource = async (projectId: string) => {
-    this.removeDataSource(projectId);
-    fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
-      if (err) {
-        console.error('There was an error removing the data source: ', err);
-      }
-      const sourceFiles = [];
-      for (let file of files) {
-        if (!(file.endsWith('.sqlite') || file.endsWith('.sqlite-shm') || file.endsWith('.sqlite-wal'))) {
+    this.logDatabaseTime('removeSource()');
+    try {
+      await this.removeDataSource(projectId);
+      const dbFiles = fs.readdirSync(path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
+      const filesToDelete = [];
+      for (const dbFile of dbFiles) {
+        if (!(dbFile.endsWith('.sqlite')
+          || dbFile.endsWith('.sqlite-shm')
+          || dbFile.endsWith('.sqlite-wal'))) {
           continue;
         }
-        const sourceName = file.slice(app.getName().length + 1);
+        const sourceName = dbFile.slice(app.getName().length + 1);
         if (sourceName.startsWith(projectId)) {
-          sourceFiles.push(file);
+          filesToDelete.push(dbFile);
         }
       }
-      for (const sourceFile of sourceFiles) {
-        fs.unlink(path.join(this.getDataDirectory(), ProjectDatabaseDirectory, sourceFile), () => null);
+      for (const fileToDelete of filesToDelete) {
+        const pathToDelete = path.join(this.getDataDirectory(), ProjectDatabaseDirectory, fileToDelete);
+        this.logDatabaseTimeLog('removeSource()', pathToDelete);
+        fs.rmSync(pathToDelete, {
+          force: true,
+          maxRetries: MaxRmRetries
+        });
       }
-    });
+
+      fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
+        if (err) {
+          console.error('There was an error removing the data source: ', err);
+        }
+      });
+    } finally {
+      this.logDatabaseTimeEnd('removeSource()');
+    }
   };
 
   createDataSource = async (sourceName: string) => {
@@ -981,16 +997,16 @@ export class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('getAllCorpora()');
     try {
       const entityManager = (await this.getDataSource(sourceName)).manager;
-      const results = (await entityManager.query(`select c.id             as id,
-                                                         c.name           as name,
-                                                         c.full_name      as fullName,
-                                                         c.file_name      as fileName,
-                                                         c.side           as side,
-                                                         c.created_at     as created_at,
-                                                         c.updated_since_sync     as updated_since_sync,
-                                                         l.code           as code,
-                                                         l.text_direction as textDirection,
-                                                         l.font_family    as fontFamily
+      const results = (await entityManager.query(`select c.id                 as id,
+                                                         c.name               as name,
+                                                         c.full_name          as fullName,
+                                                         c.file_name          as fileName,
+                                                         c.side               as side,
+                                                         c.created_at         as created_at,
+                                                         c.updated_since_sync as updated_since_sync,
+                                                         l.code               as code,
+                                                         l.text_direction     as textDirection,
+                                                         l.font_family        as fontFamily
                                                   from corpora c
                                                          inner join language l on c.language_id = l.code;`));
       this.logDatabaseTimeLog('getAllCorpora()', sourceName, results?.length ?? results);
@@ -1434,7 +1450,7 @@ export class ProjectRepository extends BaseRepository {
     const bulkInsertDirPath = this.getBulkInsertDirPath(projectId, true);
     if (fs.existsSync(bulkInsertDirPath)
       && (!dontRmIfNotEmpty || fs.readdirSync(bulkInsertDirPath).length === 0)) {
-      fs.rmSync(bulkInsertDirPath, { recursive: true, force: true });
+      fs.rmSync(bulkInsertDirPath, { recursive: true, force: true, maxRetries: MaxRmRetries });
     }
   };
 
@@ -1443,7 +1459,7 @@ export class ProjectRepository extends BaseRepository {
   rmBulkInsertFile = (projectId: string, fileName?: string, rmDirIfEmpty = false) => {
     const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, fileName, true);
     if (fs.existsSync(bulkInsertFilePath)) {
-      fs.rmSync(bulkInsertFilePath, { force: true });
+      fs.rmSync(bulkInsertFilePath, { force: true, maxRetries: MaxRmRetries });
       if (rmDirIfEmpty) {
         this.rmBulkInsertDir(projectId, true);
       }
