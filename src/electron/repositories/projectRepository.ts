@@ -487,12 +487,6 @@ export class ProjectRepository extends BaseRepository {
         this.logDatabaseTimeLog('removeSource()', pathToDelete);
         fs.rmSync(pathToDelete, { recursive: true, force: true, maxRetries: MaxRmRetries });
       }
-
-      fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
-        if (err) {
-          console.error('There was an error removing the data source: ', err);
-        }
-      });
     } finally {
       this.logDatabaseTimeEnd('removeSource()');
     }
