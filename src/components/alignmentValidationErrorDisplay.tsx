@@ -23,7 +23,7 @@ export const AlignmentValidationErrorDisplay = ({ checkResults }: AlignmentError
           })}
         </ul>
         {errorMessages.length < checkResults?.rejectedLinks
-          && `+ ${(checkResults?.rejectedLinks - errorMessages.length).toLocaleString()} more validation error(s)`}
+          && `+ ${(checkResults?.rejectedLinks - errorMessages.length).toLocaleString()} more validation errors.`}
       </Typography>}
   </>;
 };
