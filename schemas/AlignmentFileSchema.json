@@ -9,12 +9,14 @@
         },
         "source": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
         },
         "target": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -41,7 +43,6 @@
         }
       },
       "required": [
-        "id",
         "origin",
         "status"
       ],
