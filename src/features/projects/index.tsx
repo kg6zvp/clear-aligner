@@ -30,7 +30,7 @@ import {
   CloudOff,
   CloudOutlined,
   CloudSync,
-  Computer,
+  Computer, LibraryAdd,
   Refresh
 } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
@@ -109,12 +109,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
               sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
           <Grid container sx={{ width: 'fit-content' }}>
             <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
-            <Button
-              variant="contained"
-              onClick={() => setOpenProjectDialog(true)}
-              sx={{ textTransform: 'none', fontWeight: 'bold' }}
-              disabled={disableProjectButtons}
-            >Create New</Button>
           </Grid>
           <Grid item sx={{ px: 2 }}>
             {
@@ -160,6 +154,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             overflowX: 'hidden',
             overflowY: 'auto'
         }}>
+          <CreateProjectCard
+            onClick={() => setOpenProjectDialog(true)} />
           {projects
             .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
             .map((project: Project) => (
@@ -244,6 +240,45 @@ export interface ProjectCardProps {
   unavailableProjectNames: string[];
   disableProjectButtons: boolean;
 }
+
+export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+  return (<>
+    <Card
+      onClick={() => onClick?.()}
+      sx={theme => ({
+        width: 394,
+        height: 320,
+        m: '12px',
+        '&:hover': {
+          boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
+            ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
+            : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
+        },
+        transition: 'box-shadow 0.25s ease',
+        '*': {
+          cursor: 'default'
+        },
+        position: 'relative'
+      })}>
+      <CardContent sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyItems: 'center',
+        alignItems: 'center',
+        width: '100%',
+        height: '100%'
+      }}>
+        <Grid container justifyContent="center" alignItems="center" sx={{
+          height: '100%',
+          margin: '0 auto'
+        }}>
+          <LibraryAdd color={'primary'} />
+        </Grid>
+      </CardContent>
+    </Card>
+  </>);
+}
+
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           project,
