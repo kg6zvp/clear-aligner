@@ -101,34 +101,34 @@ export const checkAlignmentFile = (inputFile: any, maxErrorMessages = 100): Alig
     submittedLinks = linkArray.length;
     linkArray.forEach((arrayEntry, entryIndex) => {
       const linkNum = (entryIndex + 1);
-      const possibleLink = arrayEntry as AlignmentRecord | undefined;
-      const possibleOrigin = (possibleLink?.meta?.origin as string | undefined);
+      const possibleRecord = arrayEntry as AlignmentRecord | undefined;
+      const possibleOrigin = (possibleRecord?.meta?.origin as string | undefined);
       let isLinkValid = true;
       if (!possibleOrigin) {
         isLinkValid = false;
         errorMessages.length < maxErrorMessages
         && errorMessages.push(`Link #${linkNum.toLocaleString()} has no origin (missing/empty "meta.origin" field).`);
       }
-      const possibleStatus = (possibleLink?.meta?.status as string | undefined);
+      const possibleStatus = (possibleRecord?.meta?.status as string | undefined);
       if (!possibleStatus || !((possibleStatus ?? '').toUpperCase() in LinkStatus)) {
         isLinkValid = false;
         errorMessages.length < maxErrorMessages
         && errorMessages.push(`Link #${linkNum.toLocaleString()} has no valid status (missing/invalid "meta.status" field).`);
       }
-      const possibleSource = (possibleLink?.source as string[] | undefined);
+      const possibleSource = (possibleRecord?.source as string[] | undefined);
       if (!possibleSource || (possibleSource?.length ?? 0) < 1) {
         isLinkValid = false;
         errorMessages.length < maxErrorMessages
         && errorMessages.push(`Link #${linkNum.toLocaleString()} has no source tokens (missing/empty "source" field).`);
       }
-      const possibleTarget = (possibleLink?.target as string[] | undefined);
+      const possibleTarget = (possibleRecord?.target as string[] | undefined);
       if (!possibleTarget || (possibleTarget?.length ?? 0) < 1) {
         isLinkValid = false;
         errorMessages.length < maxErrorMessages
         && errorMessages.push(`Link #${linkNum.toLocaleString()} has no target tokens (missing/empty "target" field).`);
       }
       if (isLinkValid) {
-        validatedFile.records.push(possibleLink as AlignmentRecord);
+        validatedFile.records.push(possibleRecord as AlignmentRecord);
         acceptedLinks++;
       } else {
         isFileValid = false;
