@@ -164,6 +164,36 @@ const lightTheme: Theme = createTheme({
           backgroundColor: '#eeeeee'
         }
       }
+    },
+    MuiToolbar:{
+      styleOverrides:{
+        root: {
+          paddingLeft: "12px !important",
+          paddingTop: "12px",
+          paddingRight: "12px !important",
+          paddingBottom: "6px",
+          maxHeight: "58px !important",
+          minHeight: "58px !important"
+        }
+      }
+    },
+    MuiBadge:{
+      styleOverrides:{
+        root: {
+          marginRight: "0px !important"
+        }
+      }
+    },
+    MuiAppBar:{
+      styleOverrides:{
+        root: ({theme}) => ({
+          boxShadow: "none",
+          color: theme.palette.primary.main,
+        }),
+        colorPrimary:{
+          backgroundColor: "white"
+        }
+      }
     }
   }
 });
@@ -227,19 +257,19 @@ const darkTheme = createTheme({
         color: alpha('#FFFFFF', .38),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', 0),
-        borderColor: "#2f2f2f",
+        borderColor: grey[700],
       },
       enabled: {
         color: alpha('#FFFFFF', .70),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', 0),
-        borderColor: "#2f2f2f",
+        borderColor: grey[700],
       },
       hover: {
         color: alpha('#FFFFFF', .70),
         stroke: alpha('#FFFFFF', .12),
         background: alpha('#FFFFFF', .08),
-        borderColor: '#404040',
+        borderColor: grey[500],
       },
       selected: {
         color: '#FFFFFF',

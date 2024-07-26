@@ -10,9 +10,14 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  Divider,
+  FormControl,
+  Icon,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
   Stack,
+  Toolbar,
   Typography
 } from '@mui/material';
 import { Box } from '@mui/system';
@@ -27,10 +32,19 @@ import { Blocker, Location, useBlocker, useSearchParams } from 'react-router-dom
 import { usePivotWords } from './usePivotWords';
 import { resetTextSegments } from '../../state/alignment.slice';
 import { useAppDispatch } from '../../app/index';
+import {
+  CropFree,
+  GpsFixed,
+  InsertLink
+} from '@mui/icons-material';
 import { useSaveLink } from '../../state/links/tableManager';
 import useConfirm from '../../hooks/useConfirm';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { SingleSelectStateButtonGroup } from '../../components/singleSelectStateButtonGroup';
+import AppBar from '@mui/material/AppBar';
+import { ProfileAvatar } from '../profileAvatar/profileAvatar';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
 
 /**
  * PivotWordFilter type
@@ -70,7 +84,6 @@ export interface AlignmentTableControlPanelProps {
   setSelectedRowsCount: Function;
   selectedRowsCount: number;
   linksPendingUpdate: Map<string, Link>;
-  container:  React.MutableRefObject<null>;
   setSelectedRows: Function;
   selectedRows: Link[];
   setUpdatedSelectedRows: Function;
@@ -86,7 +99,6 @@ export interface AlignmentTableControlPanelProps {
  * @param setSaveButtonDisabled callback to control the state of the Save Button
  * @param selectedRowsCount number of currently selected rows (via their checkbox)
  * @param linksPendingUpdate Map of alignment links that the user has updated in the UI, but not yet saved
- * @param container used in conjunction with Portal to relocate the select all checkbox
  * @param setSelectedRows callback to update which rows are currently selected
  * @param setSelectedRowsCount callback to update the count of currently selected rows
  * @param selectedRows array of what rows are currently selected
@@ -102,7 +114,6 @@ export const AlignmentTableControlPanel = ({
                                              setSaveButtonDisabled,
                                              selectedRowsCount,
                                              linksPendingUpdate,
-                                             container,
                                              setSelectedRows,
                                              setSelectedRowsCount,
                                              selectedRows,
@@ -197,7 +208,7 @@ export const AlignmentTableControlPanel = ({
     <>
       <Stack
         direction="row"
-        justifyContent="space-between"
+        justifyContent="start"
         alignItems="center"
       >
         <Stack
@@ -205,21 +216,13 @@ export const AlignmentTableControlPanel = ({
           style={{ marginBottom: '10px' }}
           direction="row"
         >
-          <div ref={container}>
-            {/*This is where the checkbox gets inserted via Portal*/}
-          </div>
-          <Typography component="span" alignSelf={'center'}>
-            <Box sx={{ fontWeight: 'bold' }}> Alignments</Box>
-          </Typography>
         </Stack>
         <Stack
           direction="row"
           spacing={2}
           justifyContent="right"
-          style={{ marginBottom: '10px' }}
+          marginLeft={'63px'}
         >
-          <DisplayItemsSelectedCount />
-          <Divider orientation="vertical" />
           <ButtonGroup>
             <SingleSelectStateButtonGroup
               value={alignmentTableControlPanelLinkState || undefined}
@@ -227,10 +230,14 @@ export const AlignmentTableControlPanel = ({
               disabled={isButtonGroupDisabled}
             />
           </ButtonGroup>
+          <DisplayItemsSelectedCount />
           <ButtonGroup>
             <Button
               variant="contained"
-              sx={{ textTransform: 'none' }}
+              sx={{
+                textTransform: 'none',
+                borderRadius: '22px',
+            }}
               disabled={saveButtonDisabled}
               onClick={handleSaveLinkStatus}
             >
@@ -296,10 +303,6 @@ export const ConcordanceView = () => {
   const [selectedAlignmentLink, setSelectedAlignmentLink] = useState(
     null as Link | null
   );
-
-  // container is used for the Portal component to transport the checkbox from
-  // the DataGrid to the AlignmentTableControlPanel
-  const container = React.useRef(null);
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
@@ -388,192 +391,270 @@ export const ConcordanceView = () => {
   )
 
   return (
-    <div style={{
-      position: 'relative',
-      display: 'flex',
-    }}>
-      <Box
-        sx={{
-          flex: 1,
-          display: 'flex',
-          gridGap: '.2em',
-          gridTemplateColumns: 'repeat(18, 1fr)',
-          width: '95.5vw !important'
-        }}
-      >
-        {/**
-         * Pivot Words
-         */}
+    <>
+      {/*App Bar*/}
+      <Box>
+        <AppBar
+          position="static"
+        >
+          <Toolbar >
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center'}}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexFlow: 'row',
+                  flexGrow: '0',
+                  flexShrink: '1',
+                  gridColumn: '1',
+                  width: '35%',
+                  gap: '0',
+                  marginTop: '0',
+                }}
+              >
+                <Box display={'inline'} >
+                  <SingleSelectButtonGroup
+                    sx={{ flexGrow: 1 }}
+                    value={wordSource}
+                    items={[
+                      {
+                        value: 'sources',
+                        label: <CropFree />,
+                        tooltip: 'Source'
+                      },
+                      {
+                        value: 'targets',
+                        label: <GpsFixed />,
+                        tooltip: 'Target'
+                      }
+                    ]}
+                    onSelect={(value) => setWordSource(value as AlignmentSide)}
+                  />
+                </Box>
+
+                {/*Pivot Word Filter*/}
+                <FormControl sx={{ marginLeft: '6px', display: 'inline' }}>
+                  <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
+                  <Select
+                    labelId={'pivot-word-filter'}
+                    id={'pivot-word-filter'}
+                    value={wordFilter}
+                    label={'Pivot Word Filter'}
+                    onChange={({ target: { value } }) =>
+                      setWordFilter(value as PivotWordFilter)
+                    }
+                    sx={{maxHeight: '37px', width: '134px'}}
+                  >
+                      <MenuItem value={'aligned' as PivotWordFilter}>
+                        <Box display={'flex'}>
+                          <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
+                            <InsertLink color={"primary"}/>
+                          </ListItemIcon>
+                          <ListItemText primary="Aligned"/>
+                        </Box>
+                      </MenuItem>
+                      <MenuItem value={'all' as PivotWordFilter}>
+                        <Box display={'flex'}>
+                          <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
+                            <Icon/>
+                        </ListItemIcon>
+                        <ListItemText primary="All"/>
+                        </Box>
+                      </MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexFlow: 'column',
+                  flexShrink: '1',
+                  gridColumn: '1',
+                  width: '40%',
+                  gap: '0',
+                  marginLeft: '1em',
+                  marginTop: '0',
+                }}
+              >
+                {/*Empty Box for Spacing*/}
+              </Box>
+
+              {/*Alignment Table Control Panel*/}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexFlow: 'column',
+                  flexShrink: '1',
+                  gridColumn: '1',
+                  width: '100%',
+                  gap: '1em',
+                  margin: '',
+                  marginTop: '0',
+                  justifyContent: 'start',
+                }}
+              >
+                <AlignmentTableControlPanel
+                  saveButtonDisabled={saveButtonDisabled}
+                  setSelectedRowsCount={setSelectedRowsCount}
+                  selectedRowsCount={selectedRowsCount}
+                  linksPendingUpdate={linksPendingUpdate}
+                  setSaveButtonDisabled={setSaveButtonDisabled}
+                  setSelectedRows={setSelectedRows}
+                  selectedRows={selectedRows}
+                  setLinksPendingUpdate={setLinksPendingUpdate}
+                  updatedSelectedRows={updatedSelectedRows}
+                  setUpdatedSelectedRows={setUpdatedSelectedRows}
+                  setRowSelectionModel={setRowSelectionModel}
+                  alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+                  setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
+                />
+              </Box>
+            </Box>
+            <ProfileAvatar/>
+          </Toolbar>
+        </AppBar>
+      </Box>
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+      }}>
         <Box
           sx={{
+            flex: 1,
             display: 'flex',
-            flexFlow: 'column',
-            flexGrow: '0',
-            flexShrink: '1',
-            gridColumn: '1',
-            width: '35%',
-            gap: '1em',
-            marginLeft: '1em',
-            marginTop: '1em'
+            gridGap: '.2em',
+            gridTemplateColumns: 'repeat(18, 1fr)',
+            width: '95.5vw !important'
           }}
         >
-          <SingleSelectButtonGroup
-            value={wordSource}
-            items={[
-              {
-                value: 'sources',
-                label: 'Source'
-              },
-              {
-                value: 'targets',
-                label: 'Target'
-              }
-            ]}
-            onSelect={(value) => setWordSource(value as AlignmentSide)}
-          />
-          <SingleSelectButtonGroup
-            value={wordFilter}
-            items={[
-              {
-                value: 'aligned',
-                label: 'Aligned'
-              },
-              {
-                value: 'all',
-                label: 'All'
-              }
-            ]}
-            onSelect={(value) => setWordFilter(value as PivotWordFilter)}
-          />
-          <Paper
+          {/**
+           * Pivot Words
+           */}
+          <Box
             sx={{
               display: 'flex',
-              width: '100%',
-              height: 'calc(100vh - 9em)',
-              '.MuiTableContainer-root::-webkit-scrollbar': {
-                width: 0
-              }
+              flexFlow: 'column',
+              flexGrow: '0',
+              flexShrink: '1',
+              gridColumn: '1',
+              width: '35%',
+              gap: '1em',
+              marginLeft: '12px',
+              marginTop: '0'
             }}
           >
-            <PivotWordTable
-              loading={!pivotWords}
-              sort={pivotWordSortData}
-              pivotWords={pivotWords ?? []}
-              chosenWord={selectedPivotWord}
-              onChooseWord={(word) =>
-                handleUpdateSelectedPivotWord(word)
-              }
-              onChangeSort={setPivotWordSortData}
-            />
-          </Paper>
-        </Box>
-        {/**
-         * Aligned Words
-         */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexFlow: 'column',
-            flexShrink: '1',
-            gridColumn: '1',
-            width: '40%',
-            gap: '1em',
-            marginLeft: '1em',
-            marginTop: '1em'
-          }}
-        >
-          <Paper
-            sx={{
-              display: 'flex',
-              width: '100%',
-              height: 'calc(100vh - 2.5em)',
-              '.MuiTableContainer-root::-webkit-scrollbar': {
-                width: 0
-              }
-            }}
-          >
-            <AlignedWordTable
-              sort={alignedWordSortData}
-              pivotWord={selectedPivotWord}
-              chosenAlignedWord={selectedAlignedWord}
-              onChooseAlignedWord={(alignedWord) =>
-                handleUpdateSelectedAlignedWord(alignedWord)
-              }
-              onChangeSort={setAlignedWordSortData}
-            />
-          </Paper>
-        </Box>
-        {/**
-         * Alignment Links
-         */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexFlow: 'column',
-            flexShrink: '1',
-            gridColumn: '1',
-            width: '100%',
-            gap: '1em',
-            margin: '1em',
-            marginTop: '.5em'
-          }}
-        >
-          <AlignmentTableControlPanel
-            saveButtonDisabled={saveButtonDisabled}
-            setSelectedRowsCount={setSelectedRowsCount}
-            selectedRowsCount={selectedRowsCount}
-            linksPendingUpdate={linksPendingUpdate}
-            setSaveButtonDisabled={setSaveButtonDisabled}
-            container={container}
-            setSelectedRows={setSelectedRows}
-            selectedRows={selectedRows}
-            setLinksPendingUpdate={setLinksPendingUpdate}
-            updatedSelectedRows={updatedSelectedRows}
-            setUpdatedSelectedRows={setUpdatedSelectedRows}
-            setRowSelectionModel={setRowSelectionModel}
-            alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-            setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
-          />
-          <Paper
-            sx={{
-              display: 'flex',
-              width: '100%',
-              height: 'calc(100vh - 37px - 4em)',
-              '.MuiTableContainer-root::-webkit-scrollbar': {
-                width: 0
-              }
-            }}
-          >
-            <AlignmentTable
-              wordSource={wordSource}
-              pivotWord={selectedPivotWord}
-              alignedWord={selectedAlignedWord ?? undefined}
-              chosenAlignmentLink={selectedAlignmentLink}
-              onChooseAlignmentLink={setSelectedAlignmentLink}
-              updateAlignments={(resetState: boolean) => {
-                dispatch(resetTextSegments());
-                if (resetState) {
-                  setSelectedAlignedWord(null);
-                  setSelectedAlignmentLink(null);
-                  setSelectedPivotWord(undefined);
+            <Paper
+              sx={{
+                display: 'flex',
+                width: '100%',
+                height: 'calc(100vh - 5em)',
+                '.MuiTableContainer-root::-webkit-scrollbar': {
+                  width: 0
                 }
               }}
-              setSelectedRowsCount={setSelectedRowsCount}
-              setSelectedRows={setSelectedRows}
-              setSaveButtonDisabled={setSaveButtonDisabled}
-              setLinksPendingUpdate={setLinksPendingUpdate}
-              linksPendingUpdate={linksPendingUpdate}
-              container={container}
-              rowSelectionModel={rowSelectionModel}
-              setRowSelectionModel={setRowSelectionModel}
-              alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-              setUpdatedSelectedRows={setUpdatedSelectedRows}
-            />
-          </Paper>
+            >
+              <PivotWordTable
+                loading={!pivotWords}
+                sort={pivotWordSortData}
+                pivotWords={pivotWords ?? []}
+                chosenWord={selectedPivotWord}
+                onChooseWord={(word) =>
+                  handleUpdateSelectedPivotWord(word)
+                }
+                onChangeSort={setPivotWordSortData}
+              />
+            </Paper>
+          </Box>
+          {/**
+           * Aligned Words
+           */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexFlow: 'column',
+              flexShrink: '1',
+              gridColumn: '1',
+              width: '40%',
+              gap: '1em',
+              marginLeft: '1em',
+              marginTop: '0'
+            }}
+          >
+            <Paper
+              sx={{
+                display: 'flex',
+                width: '100%',
+                height: 'calc(100vh - 5em)',
+                '.MuiTableContainer-root::-webkit-scrollbar': {
+                  width: 0
+                }
+              }}
+            >
+              <AlignedWordTable
+                sort={alignedWordSortData}
+                pivotWord={selectedPivotWord}
+                chosenAlignedWord={selectedAlignedWord}
+                onChooseAlignedWord={(alignedWord) =>
+                  handleUpdateSelectedAlignedWord(alignedWord)
+                }
+                onChangeSort={setAlignedWordSortData}
+              />
+            </Paper>
+          </Box>
+          {/**
+           * Alignment Links
+           */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexFlow: 'column',
+              flexShrink: '1',
+              gridColumn: '1',
+              width: '100%',
+              gap: '1em',
+              margin: '1em',
+              marginTop: '0'
+            }}
+          >
+            <Paper
+              sx={{
+                display: 'flex',
+                width: '100%',
+                height: 'calc(100vh - 5em)',
+                '.MuiTableContainer-root::-webkit-scrollbar': {
+                  width: 0
+                }
+              }}
+            >
+              <AlignmentTable
+                wordSource={wordSource}
+                pivotWord={selectedPivotWord}
+                alignedWord={selectedAlignedWord ?? undefined}
+                chosenAlignmentLink={selectedAlignmentLink}
+                onChooseAlignmentLink={setSelectedAlignmentLink}
+                updateAlignments={(resetState: boolean) => {
+                  dispatch(resetTextSegments());
+                  if (resetState) {
+                    setSelectedAlignedWord(null);
+                    setSelectedAlignmentLink(null);
+                    setSelectedPivotWord(undefined);
+                  }
+                }}
+                setSelectedRowsCount={setSelectedRowsCount}
+                setSelectedRows={setSelectedRows}
+                setSaveButtonDisabled={setSaveButtonDisabled}
+                setLinksPendingUpdate={setLinksPendingUpdate}
+                linksPendingUpdate={linksPendingUpdate}
+                rowSelectionModel={rowSelectionModel}
+                setRowSelectionModel={setRowSelectionModel}
+                alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+                setUpdatedSelectedRows={setUpdatedSelectedRows}
+              />
+            </Paper>
+          </Box>
         </Box>
-      </Box>
-      <SaveChangesConfirmation />
-      <SaveChangesConfirmationViaRouter blocker={blocker}/>
-    </div>
+        <SaveChangesConfirmation />
+        <SaveChangesConfirmationViaRouter blocker={blocker}/>
+      </div>
+    </>
   );
 };

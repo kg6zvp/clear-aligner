@@ -10,11 +10,12 @@ import Editor from '../features/editor';
 interface WorkbenchProps {
   corpora?: CorpusContainer[];
   currentPosition?: BCVWP | null;
+  usePaddingForEditorContainer?: boolean
 }
 
 const Workbench: React.FC<WorkbenchProps> = ({
   corpora,
-  currentPosition,
+  currentPosition, usePaddingForEditorContainer = true,
 }: WorkbenchProps): ReactElement => {
   return (
     <>
@@ -23,17 +24,17 @@ const Workbench: React.FC<WorkbenchProps> = ({
             style={{
               display: 'flex',
               justifyContent: 'center',
-              padding: '2rem',
               margin: 'auto',
-              marginTop: '1rem',
+              marginTop: '0',
               marginBottom: '0',
               minWidth: '100%',
-              flexGrow: 1
+              flexGrow: 1,
             }}
           >
             <Editor
               containers={corpora}
               position={currentPosition as BCVWP}
+              usePaddingForEditorContainer={usePaddingForEditorContainer}
             />
           </div>
       )}

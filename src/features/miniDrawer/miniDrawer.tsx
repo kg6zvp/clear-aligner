@@ -10,7 +10,6 @@ import SpaceDashboardIcon from "@mui/icons-material/SpaceDashboard";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Drawer, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
-import { ProfileAvatar } from '../profileAvatar/profileAvatar';
 import { grey } from '@mui/material/colors';
 
 
@@ -20,7 +19,7 @@ import { grey } from '@mui/material/colors';
  */
 export const MiniDrawer = () => {
   const [selectedIndex, setSelectedIndex] = React.useState("");
-  const drawerWidth = 50;
+  const drawerWidth = 49;
   const theme = useTheme();
 
   const ListItems = {
@@ -129,11 +128,6 @@ export const MiniDrawer = () => {
                   <SpaceDashboardIcon />
                 </IconButton>
               </Tooltip>
-            </ListItem>
-          </Stack>
-          <Stack>
-            <ListItem key={"5"} sx={{ display: "block", px: 0, pb: 3 }}>
-              <ProfileAvatar/>
             </ListItem>
           </Stack>
         </Stack>

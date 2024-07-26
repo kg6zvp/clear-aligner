@@ -47,7 +47,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
         display={'flex'}
         flexGrow={1}
         direction={preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'column' : 'row'}
-        spacing={2}
+        spacing={'8px'}
         style={{ minHeight: preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? '30rem' : '17rem' }}
         justifyContent="stretch"
         alignItems="stretch"
