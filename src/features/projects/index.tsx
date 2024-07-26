@@ -106,7 +106,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
         <Grid container justifyContent="space-between" alignItems="center"
-              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', marginLeft: '1.1rem' }}>
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: '1.1rem' }}>
           <Grid container sx={{ width: 'fit-content' }}>
             <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           </Grid>
@@ -152,7 +152,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             width: '100%',
             paddingX: '1.1rem',
             overflowX: 'hidden',
-            overflowY: 'auto'
+            overflowY: 'auto',
+            letterSpacing: '12px',
+            transform: `translate(-${projectCardMargin})`,
         }}>
           <CreateProjectCard
             onClick={() => setOpenProjectDialog(true)} />
@@ -177,8 +179,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            paddingTop: '2.5rem',
-            paddingLeft: '2.3rem'
+            paddingTop: '2.3rem',
+            paddingBottom: '2.3rem',
+            paddingLeft: '1.1rem'
           }}>
             <FormControl sx={{ width: 175 }}>
               <InputLabel id={'theme-label'}>Theme</InputLabel>
@@ -240,6 +243,11 @@ export interface ProjectCardProps {
   unavailableProjectNames: string[];
   disableProjectButtons: boolean;
 }
+
+/**
+ * margin used by project cards
+ */
+const projectCardMargin = '12px';
 
 export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   return (<>
@@ -396,7 +404,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       <Card sx={theme => ({
         width: 394,
         height: 320,
-        m: '12px',
+        m: projectCardMargin,
         '&:hover': {
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
