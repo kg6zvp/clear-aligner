@@ -138,7 +138,7 @@ export const checkAlignmentFile = (inputFile: any, maxErrorMessages = 100): Alig
   } else {
     isFileValid = false;
     errorMessages.length < maxErrorMessages
-    && errorMessages.push('Input file has no alignment links (missing "records" field).');
+    && errorMessages.push('Input file has no alignment links (missing/empty "records" field).');
   }
   return {
     maxErrorMessages,
