@@ -47,7 +47,7 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
   const { deleteProject } = useDeleteProject();
-  const { projectState, containers, setSnackBarMessage, preferences, setPreferences } = useContext(AppContext);
+  const { projectState, containers, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
@@ -113,7 +113,7 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
-          const res = await ApiUtils.generateRequest({
+          const res = await ApiUtils.generateRequest<any>({
             requestPath: '/api/projects',
             requestType: ApiUtils.RequestType.POST,
             signal: abortController.current?.signal,
@@ -156,13 +156,25 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.UPDATING_PROJECT: {
-          project.updatedAt = DateTime.now().toMillis();
-          project.lastSyncTime = DateTime.now().toMillis();
+          const currentTime = DateTime.now().toMillis();
+          project.updatedAt = currentTime;
+          project.lastSyncTime = currentTime;
           project.location = ProjectLocation.SYNCED;
           await dbApi.toggleCorporaUpdatedFlagOff(project.id);
           // Update project state to Published.
-          await publishProject(project, ProjectState.PUBLISHED);
+          const publishedProject = await publishProject(project, ProjectState.PUBLISHED);
+          project.lastSyncServerTime = publishedProject?.serverUpdatedAt;
+          project.serverUpdatedAt = publishedProject?.serverUpdatedAt;
           await projectState.projectTable?.sync?.(project).catch(console.error);
+          setProjects((projects) =>
+            projects.map((p) => {
+              if (p.id !== project.id) return p;
+              p.updatedAt = project.updatedAt;
+              p.lastSyncTime = project.lastSyncTime;
+              p.serverUpdatedAt = project.serverUpdatedAt;
+              p.lastSyncServerTime = project.lastSyncServerTime;
+              return p;
+            }));
           setProgress(SyncProgress.IDLE);
           break;
         }
@@ -175,6 +187,7 @@ export const useSyncProject = (): SyncState => {
   }, [progress, projectState, cleanupRequest, publishProject,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
     dbApi,
+    setProjects,
     preferences,
     containers,
     setPreferences,

@@ -49,7 +49,7 @@ export module ApiUtils {
   };
 
   const getFetchResponseObject = async (response: Response, contentLengthOptional = false) => {
-    if (response.status === 200
+    if (response.ok
       && isJsonContentType(response.headers.get('content-type'))
       && (contentLengthOptional || getContentLength(response.headers.get('content-length')) > 0)) {
       return await (response.json());
@@ -91,18 +91,25 @@ export module ApiUtils {
     requestType: RequestType,
     payload?: any,
     signal?: AbortSignal,
+    contentLengthOptional?: boolean,
   }
 
   interface RequestGenerationOptions {
     expectedStatusCode: number;
   }
 
-  export const generateRequest = async ({
+  export interface ResponseObject<T> {
+    success: boolean;
+    response: T;
+  }
+
+  export const generateRequest = async <T> ({
                                           requestPath,
                                           requestType,
                                           payload,
-                                          signal
-                                        }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}) => {
+                                          signal,
+                                          contentLengthOptional
+                                        }: RequestGenerationPayload, options: Partial<RequestGenerationOptions> = {}): Promise<ResponseObject<T>> => {
     if (CaApiEndpointIsDev) {
       const response = await fetch(`${EffectiveCaApiEndpoint}${requestPath}`, {
         method: requestType,
@@ -116,7 +123,7 @@ export module ApiUtils {
       return {
         success: response.ok,
         response: await getFetchResponseObject(response,
-          requestType === RequestType.GET)
+          contentLengthOptional ?? requestType === RequestType.GET)
       };
     } else {
       const responseOperation = getAmplifyFromRequestType(requestType)({
@@ -133,7 +140,7 @@ export module ApiUtils {
       return {
         success: validateStatusCode(response.statusCode, requestType, options.expectedStatusCode),
         response: await getAmplifyResponseObject(response as RestApiResponse,
-          requestType === RequestType.GET)
+          contentLengthOptional || requestType === RequestType.GET)
       };
     }
   };

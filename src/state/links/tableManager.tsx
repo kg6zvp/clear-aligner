@@ -508,6 +508,7 @@ export const useSaveLink = () => {
  * @param suppressJournaling Suppress journaling
  * @param removeAllFirst Remove all records first, before adding new ones.
  * @param preserveFileIds whether id's of links in imported file should be preserved
+ * @param fromServer whether to treat the imported file as if they're from a server
  */
 export const useImportAlignmentFile = (projectId?: string,
                                        alignmentFile?: AlignmentFile,
@@ -515,7 +516,8 @@ export const useImportAlignmentFile = (projectId?: string,
                                        suppressOnUpdate = false,
                                        suppressJournaling = false,
                                        removeAllFirst = false,
-                                       preserveFileIds = false) => {
+                                       preserveFileIds = false,
+                                       fromServer = false) => {
   const { projectState, preferences, projects, setProjects } = React.useContext(AppContext);
   const project = useMemo<Project>(() => projects.find(p => p.id === projectId)!, [projects, projectId]);
   const [status, setStatus] = useState<{
@@ -552,19 +554,21 @@ export const useImportAlignmentFile = (projectId?: string,
           isPending: false
         };
         setStatus(endStatus);
-        project && projectState?.projectTable?.updateLastUpdated?.(project)
-          ?.then((result) => {
-            if (result) {
-              setProjects((projects) => projects.map((p) => {
-                if (p.id !== result.id) return p;
-                return {
-                  ...p,
-                  updatedAt: result.updatedAt
-                };
-              }));
-            }
-          })
-          ?.catch?.(console.error);
+        if (!fromServer) {
+          project && projectState?.projectTable?.updateLastUpdated?.(project)
+            ?.then((result) => {
+              if (result) {
+                setProjects((projects) => projects.map((p) => {
+                  if (p.id !== result.id) return p;
+                  return {
+                    ...p,
+                    updatedAt: result.updatedAt
+                  };
+                }));
+              }
+            })
+            ?.catch?.(console.error);
+        }
         databaseHookDebug('useImportAlignmentFile(): endStatus', endStatus);
       });
   }, [preserveFileIds, project, linksTable, prevSaveKey,

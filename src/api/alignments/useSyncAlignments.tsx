@@ -2,7 +2,7 @@ import { AlignmentFile, AlignmentRecord } from '../../structs/alignmentFile';
 import { useMemo, useCallback, useRef, useState } from 'react';
 import {
   mapLinkEntityToServerAlignmentLink,
-  ServerAlignmentLinkDTO
+  ServerAlignmentLinkDTO, ServerLinksDTO
 } from '../../common/data/serverAlignmentLinkDTO';
 import { useDatabase } from '../../hooks/useDatabase';
 import { JournalEntryTableName, LinksTable } from '../../state/links/tableManager';
@@ -55,12 +55,12 @@ export const useSyncAlignments = (): SyncState => {
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
     let resultLinks: ServerAlignmentLinkDTO[] = [];
     try {
-      const alignmentLinkResponse = await ApiUtils.generateRequest({
+      const { response: alignmentLinkResponse } = await ApiUtils.generateRequest<ServerLinksDTO>({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
           });
-      resultLinks = alignmentLinkResponse.response?.links ?? [];
+      resultLinks = alignmentLinkResponse?.links ?? [];
     } catch (x) {
       cleanupRequest();
       throw new Error('Aborted');

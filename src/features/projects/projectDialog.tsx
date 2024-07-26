@@ -164,9 +164,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
           projectState.projectTable?.decrDatabaseBusyCtr();
           if (!projectId) {
             projectToUpdate.lastSyncTime = 0;
-            await projectState.projectTable?.save?.(projectToUpdate, !!fileContent);
+            await projectState.projectTable?.save?.(projectToUpdate, !!fileContent, false, true);
           } else {
-            await projectState.projectTable?.update?.(projectToUpdate, !!fileContent);
+            await projectState.projectTable?.update?.(projectToUpdate, !!fileContent, false, true);
           }
           await dbApi.save({
             projectId: projectToUpdate.id,

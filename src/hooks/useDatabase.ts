@@ -38,6 +38,7 @@ export interface DatabaseApi {
   getCount: (sourceName: string, tableName: string) => Promise<number>;
   getDataSources: () => Promise<ListedProjectDto[]|undefined>;
   getProjects: () => Promise<ProjectEntity[]|undefined>;
+  projectSave: (project: ProjectEntity) => Promise<ProjectEntity>;
   corporaGetPivotWords: (sourceName: string, side: AlignmentSide, filter: PivotWordFilter, sort: GridSortItem | null) => Promise<{
     t: string, // normalized text
     l: string, // language id

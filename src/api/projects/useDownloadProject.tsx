@@ -8,7 +8,11 @@ import { InitializationStates } from '../../workbench/query';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { useDeleteProject } from './useDeleteProject';
 import useCancelTask, { CancelToken } from '../useCancelTask';
-import { mapServerAlignmentLinkToLinkEntity, ServerAlignmentLinkDTO } from '../../common/data/serverAlignmentLinkDTO';
+import {
+  mapServerAlignmentLinkToLinkEntity,
+  ServerAlignmentLinkDTO,
+  ServerLinksDTO
+} from '../../common/data/serverAlignmentLinkDTO';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { ApiUtils } from '../utils';
 import { useDatabase } from '../../hooks/useDatabase';
@@ -69,17 +73,23 @@ export const useDownloadProject = (): SyncState => {
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_PROJECT);
 
-      const projectResponse = await ApiUtils.generateRequest({
+      const projectResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
       });
-      const projectData = projectResponse.response as ProjectDTO;
+      const projectData = projectResponse.response;
+      const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
+      tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;
+      Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
+        .map(p => p.id).includes(projectData.id!)
+        ? await projectState.projectTable?.update?.(tmpProject, true, false, true)
+        : await projectState.projectTable?.save?.(tmpProject, true, false, true);
 
       if (cancelToken.canceled) return;
       setProgress(ProjectDownloadProgress.RETRIEVING_TOKENS);
 
-      const resultTokens = ((await ApiUtils.generateRequest({
+      const resultTokens = ((await ApiUtils.generateRequest<any>({
         requestPath: `/api/projects/${projectId}/tokens?side=targets`,
         requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal,
@@ -111,6 +121,7 @@ export const useDownloadProject = (): SyncState => {
           setProgress(ProjectDownloadProgress.FAILED);
           return;
         }
+        project.lastSyncServerTime = project.serverUpdatedAt;
         if (cancelToken.canceled) return;
         setProgress(ProjectDownloadProgress.UPDATING);
         Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
@@ -118,7 +129,7 @@ export const useDownloadProject = (): SyncState => {
           ? await projectState.projectTable?.update?.(project, true)
           : await projectState.projectTable?.save?.(project, true);
 
-        const alignmentResponse = await ApiUtils.generateRequest({
+        const alignmentResponse = await ApiUtils.generateRequest<ServerLinksDTO>({
           requestPath: `/api/projects/${project.id}/alignment_links`,
           requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal

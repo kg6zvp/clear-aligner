@@ -25,6 +25,8 @@ export interface Project {
   targetCorpora?: CorpusContainer;
   lastSyncTime?: number;
   updatedAt?: number;
+  serverUpdatedAt?: number;
+  lastSyncServerTime?: number;
   location: ProjectLocation;
   state?: ProjectState;
 }
@@ -45,17 +47,21 @@ export class ProjectTable extends VirtualTable {
     this.projects = new Map();
   }
 
-  save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
+  save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean, createDataSource?: boolean): Promise<Project | undefined> => {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore
-      const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
       await this.sync(project);
-      updateWordsOrParts && await this.insertWordsOrParts(project);
-      createdProject && this.projects.set(createdProject.id, createdProject);
+      if (!!createDataSource || updateWordsOrParts) {
+        // @ts-ignore
+        const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+        createdProject && this.projects.set(createdProject.id, createdProject);
+        updateWordsOrParts && await this.insertWordsOrParts(project);
+        this.decrDatabaseBusyCtr();
+        return createdProject ? ProjectTable.convertDataSourceToProject(createdProject) : undefined;
+      }
       this.decrDatabaseBusyCtr();
-      return createdProject ? ProjectTable.convertDataSourceToProject(createdProject) : undefined;
+      return project;
     } catch (e) {
       console.error('Error creating project: ', e);
       return undefined;
@@ -87,22 +93,27 @@ export class ProjectTable extends VirtualTable {
     return this.update(project, false, suppressOnUpdate);
   };
 
-  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
+  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false, createDataSource?: boolean): Promise<Project | undefined> => {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
 
-      // @ts-ignore
-      const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
       await this.sync(project).catch(console.error);
-      updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
-      this.projects.set(project.id, project);
+      if (!!createDataSource || updateWordsOrParts) {
+        // @ts-ignore
+        const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+        updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
+        this.projects.set(project.id, project);
+        this.decrDatabaseBusyCtr();
+        return updatedProject ? {
+          ...ProjectTable.convertDataSourceToProject(updatedProject),
+          lastSyncTime: project.lastSyncTime,
+          updatedAt: project.updatedAt,
+          serverUpdatedAt: project.serverUpdatedAt
+        } : undefined;
+      }
       this.decrDatabaseBusyCtr();
-      return updatedProject ? {
-        ...ProjectTable.convertDataSourceToProject(updatedProject),
-        lastSyncTime: project.lastSyncTime,
-        updatedAt: project.updatedAt
-      } : undefined;
+      return project;
     } catch (e) {
       console.error('Error updating project: ', e);
     } finally {
@@ -117,12 +128,15 @@ export class ProjectTable extends VirtualTable {
         id: project.id,
         name: project.name,
         location: project.location ?? ProjectLocation.LOCAL,
-        serverState: project.state ?? ProjectState.DRAFT,
+        serverState: project.state,
         lastSyncTime: project.lastSyncTime,
-        updatedAt: project.updatedAt
+        updatedAt: project.updatedAt,
+        // updated at millis on server
+        serverUpdatedAt: project.serverUpdatedAt,
+        // updated at from last sync
+        lastSyncServerTime: project.lastSyncServerTime
       };
-      // @ts-ignore
-      await window.databaseApi.projectSave(projectEntity);
+      await dbApi.projectSave(projectEntity);
       this.decrDatabaseBusyCtr();
       return true;
     } catch (e) {
@@ -150,8 +164,7 @@ export class ProjectTable extends VirtualTable {
         progressMax
       });
       for (const chunk of _.chunk(wordsOrParts, DatabaseInsertChunkSize)) {
-        // @ts-ignore
-        await window.databaseApi.insert({
+        await dbApi.insert({
           projectId: project.id,
           table: 'words_or_parts',
           itemOrItems: chunk,
@@ -204,18 +217,28 @@ export class ProjectTable extends VirtualTable {
 
   getProjects = async (requery = false): Promise<Map<string, Project> | undefined> => {
     if (requery) {
-      const dataSources = await this.getDataSourcesAsProjects();
-      if (dataSources) {
-        const projectEntities = await this.getProjectTableData();
-        this.projects = new Map<string, Project>(dataSources.filter(p => p?.targetCorpora?.corpora?.length).map(p => {
-          const entity = projectEntities.find(e => e.id === p.id);
-          return [p.id, {
-            ...p,
-            ...(entity ?? {}),
-            name: p.id === DefaultProjectId ? p.name : entity?.name ?? p.name
-          }]
-        }));
+      const projectEntities = await this.getProjectTableData();
+      const dataSources = (await this.getDataSourcesAsProjects()) ?? [];
+      for (const src of dataSources) {
+        if (!projectEntities.find(entity => entity.id === src.id)) {
+          const project: ProjectEntity = {
+            ...src,
+            location: ProjectLocation.LOCAL,
+            serverState: undefined,
+            lastSyncServerTime: undefined,
+            lastSyncTime: undefined
+          };
+          projectEntities.push(await dbApi.projectSave(project));
+        }
       }
+      this.projects = new Map<string, Project>(projectEntities.map((entity) => {
+        const p = dataSources?.find(src => src.id === entity.id);
+        return [entity.id!, {
+          ...(p ?? {}),
+          ...entity,
+          name: entity.name
+        } as Project];
+      }));
     }
     return this.projects;
   };

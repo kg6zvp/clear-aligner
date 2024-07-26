@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useRef, useState } from 'react';
-import { ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { ProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { AppContext } from '../../App';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
@@ -10,7 +10,7 @@ import { ApiUtils } from '../utils';
 import RequestType = ApiUtils.RequestType;
 
 export interface PublishState {
-  publishProject: (project: Project, state: ProjectState) => Promise<unknown>;
+  publishProject: (project: Project, state: ProjectState) => Promise<Project|undefined>;
   progress: Progress;
   dialog: any;
 }
@@ -33,17 +33,19 @@ export const usePublishProject = (): PublishState => {
     reset();
   }, [reset]);
 
-  const publishProject = useCallback(async (project: Project, state: ProjectState, cancelToken: CancelToken) => {
+  const publishProject = useCallback(async (project: Project, state: ProjectState, cancelToken: CancelToken): Promise<Project|undefined> => {
     setPublishState(state);
     try {
       setProgress(Progress.IN_PROGRESS);
       if(cancelToken.canceled) return;
-      await ApiUtils.generateRequest({
+      const updateResponse = await ApiUtils.generateRequest<ProjectDTO>({
         requestPath: `/api/projects/${project.id}/state`,
         requestType: RequestType.POST,
-        payload: state
+        payload: state,
+        contentLengthOptional: true
       });
       project.state = state;
+      project.serverUpdatedAt = updateResponse.response.updatedAt;
       if(state === ProjectState.PUBLISHED) {
         await projectState?.projectTable?.update(project, false);
       } else {
@@ -55,6 +57,7 @@ export const usePublishProject = (): PublishState => {
       const updatedProjects = await projectState.projectTable?.getProjects?.(true) ?? new Map();
       setProjects(p => Array.from(updatedProjects.values() ?? p));
       setProgress(Progress.SUCCESS);
+      return project;
     } catch (x) {
       cleanupRequest();
       setProgress(Progress.FAILED);
@@ -100,7 +103,11 @@ export const usePublishProject = (): PublishState => {
 
 
   return {
-    publishProject: (projectId, state) => new Promise(res => setTimeout(() => res(publishProject(projectId, state, cancelToken)), 2000)),
+    publishProject: (projectId, state) => new Promise(res => {
+      setTimeout(() => {
+        res(publishProject(projectId, state, cancelToken));
+      }, 2000);
+    }),
     progress,
     dialog,
   };
