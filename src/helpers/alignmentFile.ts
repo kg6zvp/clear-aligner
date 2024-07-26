@@ -119,13 +119,13 @@ export const checkAlignmentFile = (inputFile: any, maxErrorMessages = 100): Alig
       if (!possibleSource || (possibleSource?.length ?? 0) < 1) {
         isLinkValid = false;
         errorMessages.length < maxErrorMessages
-        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no source links (missing/empty "source" field).`);
+        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no source tokens (missing/empty "source" field).`);
       }
       const possibleTarget = (possibleLink?.target as string[] | undefined);
       if (!possibleTarget || (possibleTarget?.length ?? 0) < 1) {
         isLinkValid = false;
         errorMessages.length < maxErrorMessages
-        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no target links (missing/empty "target" field).`);
+        && errorMessages.push(`Link #${linkNum.toLocaleString()} has no target tokens (missing/empty "target" field).`);
       }
       if (isLinkValid) {
         validatedFile.records.push(possibleLink as AlignmentRecord);
