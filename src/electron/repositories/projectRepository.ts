@@ -485,10 +485,7 @@ export class ProjectRepository extends BaseRepository {
       for (const fileToDelete of filesToDelete) {
         const pathToDelete = path.join(this.getDataDirectory(), ProjectDatabaseDirectory, fileToDelete);
         this.logDatabaseTimeLog('removeSource()', pathToDelete);
-        fs.rmSync(pathToDelete, {
-          force: true,
-          maxRetries: MaxRmRetries
-        });
+        fs.rmSync(pathToDelete, { recursive: true, force: true, maxRetries: MaxRmRetries });
       }
 
       fs.readdir(path.join(this.getDataDirectory(), ProjectDatabaseDirectory), async (err, files) => {
@@ -1459,7 +1456,7 @@ export class ProjectRepository extends BaseRepository {
   rmBulkInsertFile = (projectId: string, fileName?: string, rmDirIfEmpty = false) => {
     const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, fileName, true);
     if (fs.existsSync(bulkInsertFilePath)) {
-      fs.rmSync(bulkInsertFilePath, { force: true, maxRetries: MaxRmRetries });
+      fs.rmSync(bulkInsertFilePath, { recursive: true, force: true, maxRetries: MaxRmRetries });
       if (rmDirIfEmpty) {
         this.rmBulkInsertDir(projectId, true);
       }
