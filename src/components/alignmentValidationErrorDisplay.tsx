@@ -6,8 +6,8 @@ export interface AlignmentErrorDisplayProps {
 }
 
 /**
- * Displays errors resulting from Zod's safeParse call
- * @param errors optional errors to be displayed
+ * Displays errors resulting from alignment validation
+ * @param checkResults validation results, including errors.
  */
 export const AlignmentValidationErrorDisplay = ({ checkResults }: AlignmentErrorDisplayProps) => {
   const errorMessages = checkResults?.errorMessages;

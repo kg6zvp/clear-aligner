@@ -75,6 +75,9 @@ export const saveAlignmentFile = (links: Link[] | undefined) => {
   URL.revokeObjectURL(url);
 };
 
+/**
+ * Alignment check results, including error messages and validated data.
+ */
 export interface AlignmentFileCheckResults {
   maxErrorMessages: number,
   isFileValid: boolean;
@@ -85,6 +88,11 @@ export interface AlignmentFileCheckResults {
   validatedFile?: AlignmentFile;
 }
 
+/**
+ * Validates supplied alignment file and returns results, including errors and a validated version of the input data.
+ * @param inputFile Input data that may or may not be an alignment file.
+ * @param maxErrorMessages Max error messages to generate.
+ */
 export const checkAlignmentFile = (inputFile: any, maxErrorMessages = 100): AlignmentFileCheckResults => {
   let isFileValid = true;
   let errorMessages: string[] = [];

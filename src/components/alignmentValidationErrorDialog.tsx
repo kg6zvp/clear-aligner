@@ -14,7 +14,7 @@ export interface AlignmentErrorDialogProps {
  * @param showDialog whether dialog should be displayed
  * @param fieldNameMapper custom field error message mapper to use (optional)
  * @param onDismissDialog callback for the keys/buttons to dismiss the dialog
- * @param checkResults alignment check results
+ * @param checkResults alignment check results, including errors
  */
 export const AlignmentValidationErrorDialog = ({
                                                  showDialog,
