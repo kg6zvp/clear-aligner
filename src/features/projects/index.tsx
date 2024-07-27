@@ -149,31 +149,36 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         <Grid
           container
           sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            maxWidth: '1400px',
             width: `calc(100% + ${projectCardMargin})`,
-            paddingX: '1.1rem',
             overflowX: 'hidden',
             overflowY: 'auto',
-            letterSpacing: '12px',
             transform: `translate(-${projectCardMargin})`,
         }}>
-          <CreateProjectCard
-            onClick={() => setOpenProjectDialog(true)} />
-          {projects
-            .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
-            .map((project: Project) => (
-              <ProjectCard
-                key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
-                project={project}
-                onClick={disableProjectButtons ? () => {} : selectProject}
-                currentProject={projects.find((p: Project) =>
-                  p.id === preferences?.currentProject) ?? projects?.[0]}
-                unavailableProjectNames={unavailableProjectNames}
-                disableProjectButtons={disableProjectButtons}
-              />
-            ))}
+          <Grid
+            container
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              paddingX: '1.1rem',
+              maxWidth: '1400px',
+              letterSpacing: '12px',
+            }}>
+            <CreateProjectCard
+              onClick={() => setOpenProjectDialog(true)} />
+            {projects
+              .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
+              .map((project: Project) => (
+                <ProjectCard
+                  key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
+                  project={project}
+                  onClick={disableProjectButtons ? () => {} : selectProject}
+                  currentProject={projects.find((p: Project) =>
+                    p.id === preferences?.currentProject) ?? projects?.[0]}
+                  unavailableProjectNames={unavailableProjectNames}
+                  disableProjectButtons={disableProjectButtons}
+                />
+              ))}
+          </Grid>
         </Grid>
 
         <Stack direction={'row'}>
@@ -226,14 +231,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   );
 };
 
-export interface ProjectCardProps {
-  project: Project;
-  currentProject: Project | undefined;
-  onClick: (project: Project) => void;
-  unavailableProjectNames: string[];
-  disableProjectButtons: boolean;
-}
-
 /**
  * margin used by project cards
  */
@@ -277,6 +274,13 @@ export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick 
   </>);
 }
 
+export interface ProjectCardProps {
+  project: Project;
+  currentProject: Project | undefined;
+  onClick: (project: Project) => void;
+  unavailableProjectNames: string[];
+  disableProjectButtons: boolean;
+}
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           project,
