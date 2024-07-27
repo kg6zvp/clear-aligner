@@ -108,7 +108,10 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         <Grid container justifyContent="space-between" alignItems="center"
               sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: '1.1rem' }}>
           <Grid container sx={{ width: 'fit-content' }}>
-            <Typography variant="h4" sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
+            <Typography
+              variant="h4"
+              color={'primary'}
+              sx={{ marginRight: 5, fontWeight: 'bold' }}>Projects</Typography>
           </Grid>
           <Grid item sx={{ px: 2 }}>
             {
@@ -149,7 +152,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             display: 'flex',
             flexDirection: 'row',
             maxWidth: '1400px',
-            width: '100%',
+            width: `calc(100% + ${projectCardMargin})`,
             paddingX: '1.1rem',
             overflowX: 'hidden',
             overflowY: 'auto',
@@ -202,19 +205,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
               </Select>
             </FormControl>
           </Box>
-          {/* Create New Button */}
-          <Button
-            variant="contained"
-            onClick={() => setOpenProjectDialog(true)}
-            sx={{
-              textTransform: 'none',
-              fontWeight: 'bold',
-              marginTop: '40px',
-              marginLeft: '20px'
-          }}
-            disabled={disableProjectButtons}
-          >Create New
-          </Button>
         </Stack>
       </Grid>
 
