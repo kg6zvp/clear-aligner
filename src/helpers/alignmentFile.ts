@@ -113,7 +113,7 @@ export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): A
   try {
     inputJson = JSON.parse(inputFile);
   } catch (ex) {
-    result.errorMessages.push('Input file is not valid JSON.');
+    result.errorMessages.push(`Input file is not valid JSON: ${(ex as any)?.message ?? ex}`);
     return result;
   }
   result.isFileValid = true;
