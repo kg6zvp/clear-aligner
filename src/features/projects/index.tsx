@@ -44,6 +44,7 @@ import { grey } from '@mui/material/colors';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
+import { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx';
 
 export interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -321,6 +322,22 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     syncProject(project);
   }, [project, syncProject]);
 
+  const locationIndicator = useMemo<JSX.Element>(() => {
+    const propCompute = (theme: Theme): SystemStyleObject<Theme> => ({
+      fill: theme.palette.text.secondary,
+      mt: .5
+    });
+
+    switch (project.location) {
+      case ProjectLocation.LOCAL:
+        return (<Computer sx={propCompute} />);
+      case ProjectLocation.REMOTE:
+        return (<CloudOutlined sx={propCompute} />);
+      case ProjectLocation.SYNCED:
+        return (<CloudDoneOutlined sx={propCompute} />);
+    }
+  }, [project.location]);
+
   const cloudSyncInfo = useMemo(() => {
     const signedOutIcon = (
       <Grid container justifyContent="flex-end" alignItems="center">
@@ -411,13 +428,27 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         position: 'relative'
       })}>
         <CardContent sx={{
+          margin: 1.2,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          height: '100%'
+          height: '100%',
+          width: `calc(100%-${projectCardMargin})`,
         }}>
-          {cloudSyncInfo}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              fontWeight: 'fontWeightMedium'
+            }}>
+            <Typography
+              sx={theme => ({ color: theme.palette.text.primary })}
+              variant={'h6'}>
+              {project.name}
+            </Typography>
+            {locationIndicator}
+          </Box>
           <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
                 onClick={() => onClick(project)}>
             <Typography variant="h6"
