@@ -29,9 +29,9 @@ import {
   CloudDownload,
   CloudOff,
   CloudOutlined,
-  CloudSync,
+  CloudSync, CollectionsBookmark,
   Computer, LibraryAdd,
-  Refresh
+  Refresh, Settings
 } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectLocation } from '../../common/data/project/project';
@@ -172,7 +172,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
                 <ProjectCard
                   key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
                   project={project}
-                  onClick={disableProjectButtons ? () => {} : selectProject}
+                  onChooseProject={disableProjectButtons ? () => {} : selectProject}
                   currentProject={projects.find((p: Project) =>
                     p.id === preferences?.currentProject) ?? projects?.[0]}
                   unavailableProjectNames={unavailableProjectNames}
@@ -278,7 +278,7 @@ export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick 
 export interface ProjectCardProps {
   project: Project;
   currentProject: Project | undefined;
-  onClick: (project: Project) => void;
+  onChooseProject: (project: Project) => void;
   unavailableProjectNames: string[];
   disableProjectButtons: boolean;
 }
@@ -286,7 +286,7 @@ export interface ProjectCardProps {
 export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           project,
                                                           currentProject,
-                                                          onClick,
+                                                          onChooseProject,
                                                           unavailableProjectNames,
                                                           disableProjectButtons
                                                         }) => {
@@ -392,7 +392,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     }
   }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject, disableProjectButtons, usingCustomEndpoint]);
 
-  const currentProjectIndicator = useMemo(() => {
+  const settingsButton = useMemo(() => {
     if (isCurrentProject) {
       return (<Typography variant="subtitle2">Current Project</Typography>);
     } else if (project.location !== ProjectLocation.REMOTE) {
@@ -400,15 +400,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <Button variant="text" size="small" sx={{ textTransform: 'none' }}
                 disabled={disableProjectButtons}
                 onClick={e => {
-                  e.preventDefault();
-                  updateCurrentProject();
+                  onChooseProject(project);
                 }}
-        >Open</Button>
+        ><Settings/></Button>
       );
     } else {
       return <></>;
     }
-  }, [isCurrentProject, project, updateCurrentProject, disableProjectButtons]);
+  }, [isCurrentProject, project, onChooseProject, disableProjectButtons]);
 
   return (
     <>
@@ -450,13 +449,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             {locationIndicator}
           </Box>
           <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
-                onClick={() => onClick(project)}>
+                onClick={(e) => {
+                  e.preventDefault();
+                  updateCurrentProject();
+                }}>
             <Typography variant="h6"
-                        sx={{ textAlign: 'center', mt: 4 }}>{project.name}</Typography>
+                        sx={{ textAlign: 'center', mt: 4 }}>
+              <CollectionsBookmark sx={theme => ({
+                color: theme.palette.text.secondary
+              })} />
+            </Typography>
           </Grid>
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid item>
-              {currentProjectIndicator}
+              {settingsButton}
             </Grid>
             <Grid container alignItems="center" sx={{ height: 75, width: 'fit-content' }}>
               {project.location !== ProjectLocation.REMOTE ?
