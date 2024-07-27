@@ -172,7 +172,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 onChange={async (event) => {
                   // grab file content
                   const file = event!.target!.files![0];
-                  const checkResults = checkAlignmentFile(JSON.parse(await file.text()), 20);
+                  const checkResults = checkAlignmentFile(await file.text(), 20);
 
                   setAlignmentFileCheckResults({
                     checkResults: checkResults,

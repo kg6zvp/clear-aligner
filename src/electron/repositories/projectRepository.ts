@@ -469,6 +469,7 @@ export class ProjectRepository extends BaseRepository {
     this.logDatabaseTime('removeSource()');
     try {
       await this.removeDataSource(projectId);
+      this.rmBulkInsertDir(projectId);
       const dbFiles = fs.readdirSync(path.join(this.getDataDirectory(), ProjectDatabaseDirectory));
       const filesToDelete = [];
       for (const dbFile of dbFiles) {
@@ -1438,22 +1439,34 @@ export class ProjectRepository extends BaseRepository {
   };
 
   rmBulkInsertDir = (projectId: string, dontRmIfNotEmpty = false) => {
-    const bulkInsertDirPath = this.getBulkInsertDirPath(projectId, true);
-    if (fs.existsSync(bulkInsertDirPath)
-      && (!dontRmIfNotEmpty || fs.readdirSync(bulkInsertDirPath).length === 0)) {
-      fs.rmSync(bulkInsertDirPath, { recursive: true, force: true, maxRetries: MaxRmRetries });
+    this.logDatabaseTime('rmBulkInsertDir()');
+    try {
+      const bulkInsertDirPath = this.getBulkInsertDirPath(projectId, true);
+      if (fs.existsSync(bulkInsertDirPath)
+        && (!dontRmIfNotEmpty || fs.readdirSync(bulkInsertDirPath).length === 0)) {
+        this.logDatabaseTimeLog('rmBulkInsertDir()', bulkInsertDirPath);
+        fs.rmSync(bulkInsertDirPath, { recursive: true, force: true, maxRetries: MaxRmRetries });
+      }
+    } finally {
+      this.logDatabaseTimeEnd('rmBulkInsertDir()');
     }
   };
 
   getBulkInsertFilePath = (projectId: string, fileName?: string, dontMkDirIfMissing = false) => path.join(this.getBulkInsertDirPath(projectId, dontMkDirIfMissing), fileName);
 
   rmBulkInsertFile = (projectId: string, fileName?: string, rmDirIfEmpty = false) => {
-    const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, fileName, true);
-    if (fs.existsSync(bulkInsertFilePath)) {
-      fs.rmSync(bulkInsertFilePath, { recursive: true, force: true, maxRetries: MaxRmRetries });
-      if (rmDirIfEmpty) {
-        this.rmBulkInsertDir(projectId, true);
+    this.logDatabaseTime('rmBulkInsertFile()');
+    try {
+      const bulkInsertFilePath = this.getBulkInsertFilePath(projectId, fileName, true);
+      if (fs.existsSync(bulkInsertFilePath)) {
+        this.logDatabaseTimeLog('rmBulkInsertFile()', bulkInsertFilePath);
+        fs.rmSync(bulkInsertFilePath, { recursive: true, force: true, maxRetries: MaxRmRetries });
+        if (rmDirIfEmpty) {
+          this.rmBulkInsertDir(projectId, true);
+        }
       }
+    } finally {
+      this.logDatabaseTimeEnd('rmBulkInsertFile()');
     }
   };
 
