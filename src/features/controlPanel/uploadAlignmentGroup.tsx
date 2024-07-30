@@ -110,48 +110,10 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
   }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
 
   return (
-    <span>
-      {
-        project?.location !== ProjectLocation.LOCAL && (
-          <>
-            <RemovableTooltip
-              removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
-              title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
-              describeChild
-              arrow>
-          <span>
-
-                <Button
-                  size={size as 'medium' | 'small' | undefined}
-                  disabled={!enableSyncButton}
-                  variant="contained"
-                  sx={{
-                    minWidth: '100%',
-                    marginBottom: '.2em'
-                  }}
-                  onClick={async () => {
-                    project && syncProject(project);
-                  }}
-                >
-                  <Sync sx={theme => ({
-                    ...(inProgress ? {
-                      '@keyframes rotation': {
-                        from: { transform: 'rotate(0deg)' },
-                        to: { transform: 'rotate(360deg)' }
-                      },
-                      animation: '2s linear infinite rotation reverse',
-                      fill: inProgress ? theme.palette.text.secondary : 'white'
-                    } : {})
-                  })} />
-                </Button>
-          </span>
-            </RemovableTooltip>
-            <br />
-          </>
-        )}
-      <ButtonGroup
-        disabled={disableProjectButtons}
-      >
+    <span style={{
+      width: '100%',
+      marginTop: '16px'
+    }}>
         <RemovableTooltip
           removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
           title="Load Alignment Data"
@@ -199,12 +161,18 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 size={size as 'medium' | 'small' | undefined}
                 disabled={containers.length === 0 || !isCurrentProject || inProgress}
                 variant="contained"
+                component="label"
+                sx={{
+                  textTransform: 'none',
+                  mr: '2px',
+                  width: 'calc(50% - 2px)'
+              }}
                 onClick={() => {
                   // delegate file loading to regular file input
                   fileInputRef?.current?.click();
                 }}
               >
-                <FileUpload />
+                {'Import Alignment JSON'}
               </Button>
             </span>
           </RemovableTooltip>
@@ -219,6 +187,12 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 size={size as 'medium' | 'small' | undefined}
                 disabled={containers.length === 0 || inProgress}
                 variant="contained"
+                component="label"
+                sx={{
+                  textTransform: 'none',
+                  ml: '2px',
+                  width: 'calc(50% - 2px)'
+              }}
                 onClick={() => new Promise<undefined>((resolve) => {
                   setTimeout(async () => {
                     setGetAllLinksKey(String(Date.now()));
@@ -226,11 +200,10 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   }, 20);
                 })}
               >
-                <FileDownload />
+                {'Export Alignment JSON'}
               </Button>
             </span>
         </RemovableTooltip>
-      </ButtonGroup>
       {dialog}
     </span>
   );

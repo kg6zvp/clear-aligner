@@ -37,7 +37,12 @@ import { ProjectLocation, ProjectState } from '../../common/data/project/project
 import { usePublishProject } from '../../api/projects/usePublishProject';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
+import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 
+enum ProjectDialogMode {
+  CREATE = 'create',
+  EDIT = 'update'
+}
 
 enum TextDirection {
   LTR = 'Left to Right',
@@ -117,7 +122,9 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
     && projectUpdated
   ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
-  const handleSubmit = React.useCallback(async (type: 'create' | 'update', e: any) => {
+  const projectDialogMode = useMemo<ProjectDialogMode>(() => !!project.id ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, [project?.id]);
+
+  const handleSubmit = React.useCallback(async (type: ProjectDialogMode, e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
       while (!projectState.projectTable?.isDatabaseBusy()) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -216,7 +223,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
   React.useEffect(() => {
     setInitialProjectState().catch(console.error);
   }, [setInitialProjectState]);
-
 
   return (
     <>
@@ -343,6 +349,14 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   </>
                 ) : project.fileName}
               </Typography>
+              {
+                (projectId && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED)) &&
+                <UploadAlignmentGroup containers={[ project.sourceCorpora, project.targetCorpora ].filter(v => !!v)}
+                                      disableProjectButtons={false}
+                                      isCurrentProject={projectId === preferences?.currentProject}
+                                      isSignedIn={isSignedIn}
+                />
+              }
             </FormGroup>
           </Grid>
         </DialogContent>
@@ -350,7 +364,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
             <Grid container alignItems="center" sx={{ width: 'fit-content' }}>
               {
-                (projectId && allowDelete)
+                (projectId && allowDelete && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED))
                   ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
                             onClick={() => setOpenConfirmDelete(true)}
                             startIcon={<DeleteOutline />}
@@ -372,7 +386,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
               sx={{ textTransform: 'none' }}
               disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
               onClick={e => {
-                handleSubmit(projectId ? 'update' : 'create', e).then(() => {
+                handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
                   // handleClose() in the .then() ensures dialog doesn't close prematurely
                   handleClose();
                 });

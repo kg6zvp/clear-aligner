@@ -11,14 +11,12 @@ import {
   InputLabel,
   MenuItem,
   Select, Stack,
-  Theme, Toolbar,
-  Tooltip,
+  Theme, Tooltip,
   Typography
 } from '@mui/material';
 import React, { useContext, useEffect, useMemo } from 'react';
 import ProjectDialog from './projectDialog';
 import { Project } from '../../state/projects/tableManager';
-import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { DefaultProjectId } from '../../state/links/tableManager';
 import { AppContext, THEME_PREFERENCE } from '../../App';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
@@ -26,12 +24,11 @@ import { LayoutContext } from '../../AppLayout';
 import { Box } from '@mui/system';
 import {
   CloudDoneOutlined,
-  CloudDownload,
   CloudOff,
   CloudOutlined,
-  CloudSync, CollectionsBookmark,
-  Computer, LibraryAdd,
-  Refresh, Settings
+  CollectionsBookmark,
+  Computer, Download, LibraryAdd,
+  Refresh, Settings, Sync, Upload
 } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectLocation } from '../../common/data/project/project';
@@ -39,12 +36,12 @@ import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject'
 import { DateTime } from 'luxon';
 import { Progress } from '../../api/ApiModels';
 import { ProfileAvatar, userState } from '../profileAvatar/profileAvatar';
-import AppBar from '@mui/material/AppBar';
 import { grey } from '@mui/material/colors';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 import { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx';
+import { RemovableTooltip } from '../../components/removableTooltip';
 
 export interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -107,7 +104,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
         <Grid container justifyContent="space-between" alignItems="center"
-              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: '1.1rem' }}>
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: '1.1rem', width: `calc(100% + ${projectCardMargin})` }}>
           <Grid container sx={{ width: 'fit-content' }}>
             <Typography
               variant="h4"
@@ -145,6 +142,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
                 </Button>
               )
             }
+            <ProfileAvatar/>
           </Grid>
         </Grid>
         <Grid
@@ -153,7 +151,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             width: `calc(100% + ${projectCardMargin})`,
             overflowX: 'hidden',
             overflowY: 'auto',
-            transform: `translate(-${projectCardMargin})`,
+            transform: `translate(-${projectCardMargin}, -${projectCardMargin})`,
         }}>
           <Grid
             container
@@ -188,8 +186,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            paddingTop: '2.3rem',
-            paddingBottom: '2.3rem',
+            paddingTop: '.2rem',
+            paddingBottom: '1.1rem',
             paddingLeft: '1.1rem'
           }}>
             <FormControl sx={{ width: 175 }}>
@@ -244,7 +242,7 @@ export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick 
       sx={theme => ({
         width: 394,
         height: 320,
-        m: '12px',
+        m: projectCardMargin,
         '&:hover': {
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
@@ -336,78 +334,137 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       case ProjectLocation.SYNCED:
         return (<CloudDoneOutlined sx={propCompute} />);
     }
-  }, [project.location]);
+  }, [project.location, isCurrentProject]);
 
-  const cloudSyncInfo = useMemo(() => {
+  const serverActionButton = useMemo(() => {
     const signedOutIcon = (
       <Grid container justifyContent="flex-end" alignItems="center">
         <Tooltip title="Sign in to connect to manage remote projects">
-        <Button variant="text" disabled sx={{ textTransform: 'none' }}>
-          <span style={{ color: grey['500'] }}>Unavailable</span>
-          <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
-        </Button>
+          <Button
+            variant="text"
+            disabled
+            sx={{
+              margin: 0,
+              padding: 0,
+              textTransform: 'none',
+              minWidth: '0px !important'
+            }}>
+            <span style={{ color: grey['500'] }}>Unavailable</span>
+            <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
+          </Button>
         </Tooltip>
       </Grid>
     );
-    switch (project.location) {
-      case ProjectLocation.LOCAL:
-        return (
-          (isSignedIn || usingCustomEndpoint) ? <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text"
-                    disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
-                    sx={{ textTransform: 'none' }} onClick={syncLocalProjectWithServer}>
-              Upload Project
-              <Computer sx={theme => ({
-                fill: disableProjectButtons ? theme.palette.text.secondary
-                  : theme.palette.primary.main, mb: .5, ml: .5
-              })} />
-            </Button>
-          </Grid> : signedOutIcon
-        );
-      case ProjectLocation.REMOTE:
-        return (isSignedIn || usingCustomEndpoint) ? (
-          <Grid container justifyContent="flex-end" alignItems="center">
-            <Button variant="text"
-                    disabled={![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons}
-                    sx={{ textTransform: 'none' }} onClick={() => downloadProject(project.id)}>
-              Download Project
-              <CloudOutlined sx={theme => ({
-                fill: disableProjectButtons ? theme.palette.text.secondary
-                  : theme.palette.primary.main, mb: .5, ml: .5
-              })} />
-            </Button>
-          </Grid>
-        ) : signedOutIcon;
-      case ProjectLocation.SYNCED:
-      default:
-        return (
-          <Grid container flexDirection="column">
-            <Grid container justifyContent="flex-end" alignItems="center">
-              <Tooltip title="Synced with remote project">
-                <CloudDoneOutlined sx={theme => ({ ml: 1, fill: theme.palette.text.secondary })} />
-              </Tooltip>
-            </Grid>
-          </Grid>
-        );
+    if (!(isSignedIn || usingCustomEndpoint)) {
+      return signedOutIcon;
     }
-  }, [project.location, project.id, isSignedIn, syncingProject, syncLocalProjectWithServer, downloadProject, disableProjectButtons, usingCustomEndpoint]);
 
-  const settingsButton = useMemo(() => {
-    if (isCurrentProject) {
-      return (<Typography variant="subtitle2">Current Project</Typography>);
-    } else if (project.location !== ProjectLocation.REMOTE) {
-      return (
-        <Button variant="text" size="small" sx={{ textTransform: 'none' }}
-                disabled={disableProjectButtons}
-                onClick={e => {
-                  onChooseProject(project);
-                }}
-        ><Settings/></Button>
-      );
-    } else {
-      return <></>;
-    }
-  }, [isCurrentProject, project, onChooseProject, disableProjectButtons]);
+    const tooltipText = (() => {
+      switch(project.location) {
+        case ProjectLocation.LOCAL:
+          return `Upload ${project.name}`;
+        case ProjectLocation.REMOTE:
+          return `Download ${project.name}`;
+        case ProjectLocation.SYNCED:
+          return `Sync ${project.name}`;
+        default:
+          return '';
+      }
+    })();
+
+    const buttonDisabled: boolean = (() => {
+      switch (project.location) {
+        case ProjectLocation.SYNCED:
+          if (!project) {
+            return true;
+          }
+          if (disableProjectButtons) {
+            return true;
+          }
+          const containers = [ project.sourceCorpora, project.targetCorpora ];
+          if (!isSignedIn || containers.length < 1) {
+            return true;
+          }
+          if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
+            return false;
+          }
+          if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
+            return false;
+          }
+          return !([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+            .some((corpus) => !!corpus.updatedSinceSync));
+        default:
+          return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
+      }
+    })();
+
+    const actionButton = (() => {
+      const buttonStyle = {
+        margin: 0,
+        padding: 0,
+        textTransform: 'none',
+        minWidth: '0px !important'
+      };
+      const iconStyle = (theme: Theme) => ({
+        fill: buttonDisabled ? theme.palette.text.secondary : theme.palette.primary.main
+      });
+      switch (project.location) {
+        case ProjectLocation.LOCAL:
+          return (
+            <Button variant="text"
+                    disabled={buttonDisabled}
+                    sx={buttonStyle}
+                    onClick={syncLocalProjectWithServer}>
+              <Upload sx={iconStyle} />
+            </Button>
+          );
+        case ProjectLocation.REMOTE:
+          return (
+            <Button variant="text"
+                    disabled={buttonDisabled}
+                    sx={buttonStyle}
+                    onClick={() => downloadProject(project.id)}>
+              <Download sx={iconStyle} />
+            </Button>
+          );
+        case ProjectLocation.SYNCED:
+          return (
+            <Button variant="text"
+                    disabled={buttonDisabled}
+                    sx={buttonStyle}
+                    onClick={() => syncProject(project)}>
+              <Sync sx={iconStyle} />
+            </Button>
+          );
+        default:
+          return (<></>);
+      }
+    })();
+
+    return (
+      <RemovableTooltip
+        removed={buttonDisabled}
+        title={tooltipText}>
+        {actionButton}
+      </RemovableTooltip>
+    );
+  }, [isSignedIn, usingCustomEndpoint, syncingProject, disableProjectButtons, syncLocalProjectWithServer, downloadProject, syncProject, project, project.name]);
+
+  const settingsButton = useMemo(() => (
+    <Button variant="text"
+            size="small"
+            sx={{
+              margin: 0,
+              padding: 0,
+              textTransform: 'none',
+              minWidth: '0px !important'
+            }}
+            disabled={disableProjectButtons}
+            onClick={e => {
+              onChooseProject(project);
+            }}
+    ><Settings/></Button>
+  ), [project, onChooseProject, disableProjectButtons]);
 
   return (
     <>
@@ -442,7 +499,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               fontWeight: 'fontWeightMedium'
             }}>
             <Typography
-              sx={theme => ({ color: theme.palette.text.primary })}
+              sx={{ color: 'text.primary' }}
               variant={'h6'}>
               {project.name}
             </Typography>
@@ -460,40 +517,59 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
               })} />
             </Typography>
           </Grid>
-          <Grid container justifyContent="space-between" alignItems="center">
-            <Grid item>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              fontWeight: 'fontWeightMedium',
+              marginBottom: `calc(${projectCardMargin}/2)`,
+            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                alignItems: 'initial'
+              }}>
               {settingsButton}
-            </Grid>
-            <Grid container alignItems="center" sx={{ height: 75, width: 'fit-content' }}>
-              {project.location !== ProjectLocation.REMOTE ?
-                <UploadAlignmentGroup
-                  project={project}
-                  size="small"
-                  containers={[
-                    ...(project.sourceCorpora ? [project.sourceCorpora] : []),
-                    ...(project.targetCorpora ? [project.targetCorpora] : [])
-                  ]}
-                  isCurrentProject={isCurrentProject}
-                  isSignedIn={isSignedIn}
-                  disableProjectButtons={disableProjectButtons}
-                /> : <></>}
-            </Grid>
-          </Grid>
-          {
-            (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
-              <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
-                <span style={{ fontWeight: 'bold' }}>Last sync:</span>
-                &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
-              </Typography>
-            )
-          }
-          {
-            syncingProject === SyncProgress.FAILED && (
-              <Typography variant="caption" color="error" sx={{ position: 'absolute', bottom: 0, left: 10 }}>
-                There was an error uploading this project.
-              </Typography>
-            )
-          }
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'flex-end',
+                alignItems: 'initial'
+              }}>
+              <Box
+                sx={{
+                  height: '100%',
+                  marginRight: '1em'
+                }}>
+                {
+                  (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary">
+                      <span style={{ fontWeight: 'bold' }}>Last sync</span>
+                      &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
+                    </Typography>
+                  )
+                }
+                {
+                  syncingProject === SyncProgress.FAILED && (
+                    <Typography
+                      variant="caption"
+                      color="error">
+                      There was an error uploading this project.
+                    </Typography>
+                  )
+                }
+              </Box>
+              {serverActionButton}
+            </Box>
+          </Box>
         </CardContent>
       </Card>
       {syncDialog}
