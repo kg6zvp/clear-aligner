@@ -87,6 +87,7 @@ export const VerseDisplay = ({
             corpus={corpus}
             parts={token}
             allowGloss={allowGloss}
+            showBorders={true}
           />
         )
       )}

@@ -12,6 +12,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import GlossSegment from '../textSegment/glossSegment';
 import uuid from 'uuid-random';
+import ButtonSegment from '../textSegment/buttonSegment';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
@@ -20,6 +21,7 @@ export interface WordDisplayProps extends LimitedToLinks {
   corpus?: Corpus;
   allowGloss?: boolean;
   links?: Map<string, Link>;
+  showBorders?: boolean;
 }
 
 /**
@@ -38,7 +40,8 @@ export const WordDisplay = ({
                               parts,
                               corpus,
                               links,
-                              allowGloss = false
+                              allowGloss = false,
+                              showBorders = false
                             }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
   const { preferences } = React.useContext(AppContext);
@@ -72,24 +75,39 @@ export const WordDisplay = ({
               allowGloss={allowGloss}
               languageInfo={languageInfo}
             />
-          ) : (
-            <>
-              {parts?.map((part) => (
-                <React.Fragment key={part?.id}>
-                  <TextSegment
-                    key={part.id}
-                    readonly={readonly}
-                    disableHighlighting={disableHighlighting}
-                    onlyLinkIds={onlyLinkIds}
-                    word={part}
-                    links={links}
-                    languageInfo={languageInfo}
-                    showAfter={!suppressAfter}
-                  />
-                </React.Fragment>
-              ))}
-              <span> </span>
-            </>
+          ) : (showBorders ?
+            (
+              <>
+                <ButtonSegment
+                  disableHighlighting={disableHighlighting}
+                  readonly={readonly}
+                  suppressAfter={suppressAfter}
+                  onlyLinkIds={onlyLinkIds}
+                  links={links}
+                  parts={parts}
+                  corpus={corpus}
+                  languageInfo={languageInfo}
+                />
+              </>
+            ) : (
+              <>
+                {parts?.map((part) => (
+                  <React.Fragment key={part?.id}>
+                    <TextSegment
+                      key={part.id}
+                      readonly={readonly}
+                      disableHighlighting={disableHighlighting}
+                      onlyLinkIds={onlyLinkIds}
+                      word={part}
+                      links={links}
+                      languageInfo={languageInfo}
+                      showAfter={!suppressAfter}
+                    />
+                  </React.Fragment>
+                ))}
+                <span> </span>
+              </>
+            )
           )
         }
       </Typography>
