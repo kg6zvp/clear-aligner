@@ -144,7 +144,8 @@ const lightTheme: Theme = createTheme({
     background :{
       paper: '#FAFAFA',
       default: '#FAFAFA'
-    }
+    },
+    transparent: '#00000000',
   },
   typography: {
     unlinked: {
@@ -330,8 +331,9 @@ const darkTheme = createTheme({
     },
     background : {
       paper: '#1E1E1E',
-      default: '#121212'
+      default: '#121212',
     },
+    transparent: '#00000000'
   },
   typography: {
     unlinked: {

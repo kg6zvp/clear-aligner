@@ -137,5 +137,6 @@ declare module '@mui/material/styles' {
       paper: string;
       default: string;
     }
+    transparent: string;
   }
 }
