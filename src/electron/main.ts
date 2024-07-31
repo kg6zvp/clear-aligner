@@ -14,8 +14,8 @@ function createWindow() {
   const win = new BrowserWindow({
     ...(nativeTheme.shouldUseDarkColors ? { backgroundColor: 'black' } : {}),
     show: false,
-    width: 1450,
-    height: 900,
+    width: 1280,
+    height: 720,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, '/database-renderer.js'),
