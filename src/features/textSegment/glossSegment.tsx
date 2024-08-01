@@ -10,9 +10,9 @@ import TextSegment from './index';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import LogoutIcon from '@mui/icons-material/Logout';
 import { Cancel, CheckCircle, Flag } from '@mui/icons-material';
 import LinkIcon from '@mui/icons-material/Link';
+import { useSaveLink } from '../../state/links/tableManager';
 
 interface GlossSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -45,6 +45,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
 
   const [isLinkStateMenuOpen, setIsLinkStateMenuOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const {saveLink} = useSaveLink();
 
   const handleRightClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setAnchorEl(event.currentTarget);
@@ -54,7 +55,22 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
     setAnchorEl(null);
     setIsLinkStateMenuOpen(false);
   };
-  const handleMenuClick = () => {
+  const handleMenuClick = (event: any, wordPartID: string) => {
+    const { linkState } = event.currentTarget.dataset;
+
+    // prepare an updated link to save
+    const thisLink = links?.get(wordPartID)
+    const updatedLink = {
+      ...thisLink,
+      metadata: {
+        ...thisLink?.metadata,
+        status: linkState
+      }
+    }
+
+    // save link
+    saveLink(updatedLink as Link);
+
     setAnchorEl(null);
     setIsLinkStateMenuOpen(false);
   }
@@ -114,67 +130,74 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                       })} />
                     )
                   }
+                  <Menu
+                    id="link-state-menu"
+                    anchorEl={anchorEl}
+                    open={isLinkStateMenuOpen}
+                    onClose={handleClose}
+                    anchorOrigin={{
+                      vertical: 'bottom',
+                      horizontal: 'center',
+                    }}
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                  >
+                    <MenuItem>
+                      wordPart.id is: {wordPart.id}
+                    </MenuItem>
+                    <MenuItem
+                      data-link-state={'created'}
+                      onClick={(e) => handleMenuClick( e, wordPart.id)}
+                    >
+                      <ListItemIcon >
+                        <LinkIcon sx={{
+                          color : theme.palette.primary.main
+                        }} />
+                      </ListItemIcon>
+                      Aligned
+                    </MenuItem>
+                    <MenuItem
+                      data-link-state={'rejected'}
+                      onClick={(e) => handleMenuClick( e, wordPart.id)}
+                    >
+                      <ListItemIcon >
+                        <Cancel sx={{
+                          color : theme.palette.error.main
+                        }} />
+                      </ListItemIcon>
+                      Rejected
+                    </MenuItem>
+                    <MenuItem
+                      data-link-state={'approved'}
+                      onClick={(e) => handleMenuClick( e, wordPart.id)}
+                    >
+                      <ListItemIcon>
+                        <CheckCircle sx={{
+                          color : theme.palette.success.main
+                        }}/>
+                      </ListItemIcon>
+                      Approved
+                    </MenuItem>
+                    <MenuItem
+                      data-link-state={'needsReview'}
+                      onClick={(e) => handleMenuClick( e, wordPart.id)}
+                    >
+                      <ListItemIcon>
+                        <Flag sx={{
+                          color : theme.palette.warning.main
+                        }} />
+                      </ListItemIcon>
+                      Flagged
+                    </MenuItem>
+                  </Menu>
                 </React.Fragment>
               )
             })
           }
         </Grid>
       </Paper>
-      <Menu
-        id="basic-menu"
-        anchorEl={anchorEl}
-        open={isLinkStateMenuOpen}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-      >
-        <MenuItem
-            onClick={handleMenuClick}
-        >
-          <ListItemIcon >
-            <LinkIcon sx={{
-              color : theme.palette.primary.main
-            }} />
-          </ListItemIcon>
-            Aligned
-        </MenuItem>
-        <MenuItem
-          onClick={handleMenuClick}
-        >
-          <ListItemIcon >
-            <Cancel sx={{
-              color : theme.palette.error.main
-            }} />
-          </ListItemIcon>
-          Rejected
-        </MenuItem>
-        <MenuItem
-          onClick={handleMenuClick}
-        >
-          <ListItemIcon>
-            <CheckCircle sx={{
-              color : theme.palette.success.main
-            }}/>
-          </ListItemIcon>
-          Approved
-        </MenuItem>
-        <MenuItem
-          onClick={handleMenuClick}
-        >
-          <ListItemIcon>
-            <Flag sx={{
-              color : theme.palette.warning.main
-            }} />
-          </ListItemIcon>
-          Flagged
-        </MenuItem>
-      </Menu>
     </>
   );
 }
