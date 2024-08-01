@@ -4,7 +4,7 @@
  */
 import {
   Button,
-  Card,
+  Card, CardActionArea, CardActions,
   CardContent,
   FormControl,
   Grid,
@@ -15,7 +15,7 @@ import {
   Typography
 } from '@mui/material';
 import React, { useContext, useEffect, useMemo } from 'react';
-import ProjectDialog from './projectDialog';
+import ProjectCreationDialog from './projectCreationDialog';
 import { Project } from '../../state/projects/tableManager';
 import { DefaultProjectId } from '../../state/links/tableManager';
 import { AppContext, THEME_PREFERENCE } from '../../App';
@@ -42,6 +42,7 @@ import { UserPreference } from '../../state/preferences/tableManager';
 import { InitializationStates } from '../../workbench/query';
 import { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx';
 import { RemovableTooltip } from '../../components/removableTooltip';
+import ProjectSettings from './projectSettings';
 
 export interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -89,10 +90,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
 
-  const selectProject = React.useCallback((project: Project) => {
+  const selectProject = React.useCallback((project?: Project) => {
     if (project) {
       setSelectedProjectId(project.id);
       setOpenProjectDialog(true);
+    } else {
+      setSelectedProjectId(null);
+      setOpenProjectDialog(false);
     }
   }, [setSelectedProjectId, setOpenProjectDialog]);
   const unavailableProjectNames: string[] = React.useMemo(() => (
@@ -104,7 +108,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
       <Grid container flexDirection="column" flexWrap={'nowrap'}
             sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
         <Grid container justifyContent="space-between" alignItems="center"
-              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: '1.1rem', width: `calc(100% + ${projectCardMargin})` }}>
+              sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: projectCardMargin, width: `calc(100% + ${projectCardMargin})` }}>
           <Grid container sx={{ width: 'fit-content' }}>
             <Typography
               variant="h4"
@@ -148,33 +152,48 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
         <Grid
           container
           sx={{
-            width: `calc(100% + ${projectCardMargin})`,
+            width: `100%`,
             overflowX: 'hidden',
             overflowY: 'auto',
-            transform: `translate(-${projectCardMargin}, -${projectCardMargin})`,
         }}>
           <Grid
             container
             sx={{
               display: 'flex',
               flexDirection: 'row',
-              paddingX: '1.1rem',
               maxWidth: '1400px',
               letterSpacing: '12px',
             }}>
             <CreateProjectCard
-              onClick={() => setOpenProjectDialog(true)} />
+              projectId={selectedProjectId}
+              onClick={(e) => {
+                e.preventDefault();
+                setSelectedProjectId(null);
+                setOpenProjectDialog(true);
+              }}
+              unavailableProjectNames={
+                unavailableProjectNames.filter(name =>
+                  name !== projects.find(p => p.id === selectedProjectId)?.name)
+              }
+              open={openProjectDialog}
+              closeCallback={() => {
+                setOpenProjectDialog(false);
+                setSelectedProjectId(null);
+              }}
+              isSignedIn={isSignedIn}
+            />
             {projects
               .sort((p1: Project) => p1?.id === DefaultProjectId ? -1 : projects.indexOf(p1))
               .map((project: Project) => (
                 <ProjectCard
                   key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
                   project={project}
-                  onChooseProject={disableProjectButtons ? () => {} : selectProject}
+                  onOpenProjectSettings={disableProjectButtons ? () => {} : selectProject}
                   currentProject={projects.find((p: Project) =>
                     p.id === preferences?.currentProject) ?? projects?.[0]}
                   unavailableProjectNames={unavailableProjectNames}
                   disableProjectButtons={disableProjectButtons}
+                  isProjectDialogOpen={selectedProjectId === project.id}
                 />
               ))}
           </Grid>
@@ -186,9 +205,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            paddingTop: '.2rem',
-            paddingBottom: '1.1rem',
-            paddingLeft: '1.1rem'
+            paddingTop: '8px',
+            paddingBottom: projectCardMargin,
+            paddingLeft: projectCardMargin
           }}>
             <FormControl sx={{ width: 175 }}>
               <InputLabel id={'theme-label'}>Theme</InputLabel>
@@ -211,21 +230,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
           </Box>
         </Stack>
       </Grid>
-
-      {/* Project Dialog */}
-      <ProjectDialog
-        open={openProjectDialog}
-        projectId={selectedProjectId}
-        closeCallback={() => {
-          setOpenProjectDialog(false);
-          setSelectedProjectId(null);
-        }}
-        unavailableProjectNames={
-          unavailableProjectNames.filter(name =>
-            name !== projects.find(p => p.id === selectedProjectId)?.name)
-        }
-        isSignedIn={isSignedIn}
-      />
     </>
   );
 };
@@ -233,12 +237,19 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 /**
  * margin used by project cards
  */
-const projectCardMargin = '12px';
+const projectCardMargin = '4px';
 
-export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
+export const CreateProjectCard: React.FC<{
+  onClick?: (e: React.MouseEvent) => void,
+  projectId: string | null,
+  unavailableProjectNames?: string[],
+  open: boolean,
+  closeCallback: () => void,
+  isSignedIn: boolean
+}> = ({ onClick, projectId, unavailableProjectNames, open, closeCallback, isSignedIn }) => {
   return (<>
     <Card
-      onClick={() => onClick?.()}
+      onClick={(e) => onClick?.(e)}
       sx={theme => ({
         width: 394,
         height: 320,
@@ -270,23 +281,36 @@ export const CreateProjectCard: React.FC<{ onClick?: () => void }> = ({ onClick 
         </Grid>
       </CardContent>
     </Card>
+
+    {/* Project Dialog */}
+    <ProjectCreationDialog
+      projectId={null}
+      unavailableProjectNames={unavailableProjectNames}
+      open={!projectId && open}
+      closeCallback={closeCallback}
+      isSignedIn={isSignedIn}
+    />
   </>);
 }
 
 export interface ProjectCardProps {
   project: Project;
   currentProject: Project | undefined;
-  onChooseProject: (project: Project) => void;
+  onOpenProjectSettings: (project?: Project) => void;
   unavailableProjectNames: string[];
   disableProjectButtons: boolean;
+  isProjectDialogOpen: boolean;
 }
+
+const currentProjectBorderIndicatorHeight = '4px';
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           project,
                                                           currentProject,
-                                                          onChooseProject,
+                                                          onOpenProjectSettings,
                                                           unavailableProjectNames,
-                                                          disableProjectButtons
+                                                          disableProjectButtons,
+                                                          isProjectDialogOpen
                                                         }) => {
   useCorpusContainers();
 
@@ -461,10 +485,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             }}
             disabled={disableProjectButtons}
             onClick={e => {
-              onChooseProject(project);
+              onOpenProjectSettings(project);
             }}
     ><Settings/></Button>
-  ), [project, onChooseProject, disableProjectButtons]);
+  ), [project, onOpenProjectSettings, disableProjectButtons]);
 
   return (
     <>
@@ -472,6 +496,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         width: 394,
         height: 320,
         m: projectCardMargin,
+        ...(isCurrentProject ? {
+          borderBottomWidth: currentProjectBorderIndicatorHeight,
+          borderBottomStyle: 'solid',
+          borderBottomColor: 'success.main'
+        } : {}),
         '&:hover': {
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
@@ -487,94 +516,104 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           margin: 1.2,
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
-          width: `calc(100%-${projectCardMargin})`,
+          height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%',
+          width: `calc(100% - 4 * ${projectCardMargin})`,
         }}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              fontWeight: 'fontWeightMedium'
-            }}>
-            <Typography
-              sx={{ color: 'text.primary' }}
-              variant={'h6'}>
-              {project.name}
-            </Typography>
-            {locationIndicator}
-          </Box>
-          <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  updateCurrentProject();
-                }}>
-            <Typography variant="h6"
-                        sx={{ textAlign: 'center', mt: 4 }}>
-              <CollectionsBookmark sx={theme => ({
-                color: theme.palette.text.secondary
-              })} />
-            </Typography>
-          </Grid>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              fontWeight: 'fontWeightMedium',
-              marginBottom: `calc(${projectCardMargin}/2)`,
-            }}>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-                alignItems: 'initial'
-              }}>
-              {settingsButton}
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'flex-end',
-                alignItems: 'initial'
-              }}>
-              <Box
-                sx={{
-                  height: '100%',
-                  marginRight: '1em'
-                }}>
-                {
-                  (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary">
-                      <span style={{ fontWeight: 'bold' }}>Last sync</span>
-                      &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
-                    </Typography>
-                  )
-                }
-                {
-                  syncingProject === SyncProgress.FAILED && (
-                    <Typography
-                      variant="caption"
-                      color="error">
-                      There was an error uploading this project.
-                    </Typography>
-                  )
-                }
-              </Box>
-              {serverActionButton}
-            </Box>
-          </Box>
+          {isProjectDialogOpen ?
+            (<>
+              <ProjectSettings closeCallback={() => onOpenProjectSettings(undefined)} projectId={project.id} isSignedIn={isSignedIn} />
+            </>) : (
+              <>
+                <Box
+                  id={'project-title'}
+                  sx={{
+                    position: 'absolute',
+                    width: `calc(100% - 12 * ${projectCardMargin})`,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    fontWeight: 'fontWeightMedium'
+                  }}>
+                  <Typography
+                    sx={{ color: 'text.primary' }}
+                    variant={'h6'}>
+                    {project.name}
+                  </Typography>
+                  {locationIndicator}
+                </Box>
+                <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        !isCurrentProject && updateCurrentProject();
+                      }}>
+                  <Typography variant="h6"
+                              sx={{ textAlign: 'center', mt: 4 }}>
+                    <CollectionsBookmark sx={theme => ({
+                      color: theme.palette.text.secondary
+                    })} />
+                  </Typography>
+                </Grid>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    fontWeight: 'fontWeightMedium',
+                    marginBottom: `calc(${projectCardMargin}/2)`,
+                  }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'flex-end',
+                      alignItems: 'initial'
+                    }}>
+                    {settingsButton}
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'flex-end',
+                      alignItems: 'initial'
+                    }}>
+                    <Box
+                      sx={{
+                        height: '100%',
+                        marginRight: '1em'
+                      }}>
+                      {
+                        (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary">
+                            <span style={{ fontWeight: 'bold' }}>Last sync</span>
+                            &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
+                          </Typography>
+                        )
+                      }
+                      {
+                        syncingProject === SyncProgress.FAILED && (
+                          <Typography
+                            variant="caption"
+                            color="error">
+                            There was an error uploading this project.
+                          </Typography>
+                        )
+                      }
+                    </Box>
+                    {serverActionButton}
+                  </Box>
+                </Box>
+              </>
+            )}
         </CardContent>
       </Card>
       {syncDialog}
       {downloadProjectDialog}
-      <ProjectDialog
+      <ProjectCreationDialog
         open={uniqueNameError}
         projectId={project.id}
         closeCallback={() => setUniqueNameError(false)}

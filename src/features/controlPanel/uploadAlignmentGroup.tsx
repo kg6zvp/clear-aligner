@@ -163,8 +163,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 variant="contained"
                 component="label"
                 sx={{
-                  textTransform: 'none',
                   mr: '2px',
+                  borderRadius: 10,
                   width: 'calc(50% - 2px)'
               }}
                 onClick={() => {
@@ -172,7 +172,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   fileInputRef?.current?.click();
                 }}
               >
-                {'Import Alignment JSON'}
+                {'Import Data'}
               </Button>
             </span>
           </RemovableTooltip>
@@ -189,8 +189,8 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 variant="contained"
                 component="label"
                 sx={{
-                  textTransform: 'none',
                   ml: '2px',
+                  borderRadius: 10,
                   width: 'calc(50% - 2px)'
               }}
                 onClick={() => new Promise<undefined>((resolve) => {
@@ -200,7 +200,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   }, 20);
                 })}
               >
-                {'Export Alignment JSON'}
+                {'Export Data'}
               </Button>
             </span>
         </RemovableTooltip>
