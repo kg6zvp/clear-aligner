@@ -79,12 +79,14 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 elevation={2}
                 className="corpus-container corpus-scroll-container"
                 key={key}
-                style={{
+                sx={ (theme) => ({
                   flexGrow: '1',
                   flexBasis: '0',
                   minWidth: '16rem',
-                  position: 'relative'
-                }}
+                  position: 'relative',
+                  backgroundColor: theme.palette.primary.contrastText,
+                  backgroundImage: 'none'
+                })}
               >
                 <CorpusComponent
                   key={corpusId}

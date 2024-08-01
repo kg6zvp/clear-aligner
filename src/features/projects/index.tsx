@@ -343,7 +343,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project,
             ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
             : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
         }, transition: 'box-shadow 0.25s ease', '*': { cursor: disableProjectButtons ? 'default'  : 'pointer' },
-        position: 'relative'
+        position: 'relative',
+        backgroundColor: theme.palette.primary.contrastText,
       })}>
         <CardContent sx={{
           display: 'flex',

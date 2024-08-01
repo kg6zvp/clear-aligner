@@ -57,6 +57,7 @@ const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignme
           showNavigation={false}
           showProfileAvatar={false}
           usePaddingForEditorContainer={false}
+          useZeroYPaddingForToolbar={true}
         />
       </DialogContent>
     </Dialog>

@@ -543,14 +543,16 @@ export const ConcordanceView = () => {
             }}
           >
             <Paper
-              sx={{
+              sx={(theme) => ({
                 display: 'flex',
                 width: '100%',
                 height: 'calc(100vh - 5em)',
+                backgroundColor: theme.palette.primary.contrastText,
+                backgroundImage: 'none',
                 '.MuiTableContainer-root::-webkit-scrollbar': {
                   width: 0
                 }
-              }}
+              })}
             >
               <PivotWordTable
                 loading={!pivotWords}
@@ -580,14 +582,16 @@ export const ConcordanceView = () => {
             }}
           >
             <Paper
-              sx={{
+              sx={(theme) => ({
                 display: 'flex',
                 width: '100%',
+                backgroundColor: theme.palette.primary.contrastText,
+                backgroundImage: 'none',
                 height: 'calc(100vh - 5em)',
                 '.MuiTableContainer-root::-webkit-scrollbar': {
                   width: 0
                 }
-              }}
+              })}
             >
               <AlignedWordTable
                 sort={alignedWordSortData}
@@ -616,14 +620,16 @@ export const ConcordanceView = () => {
             }}
           >
             <Paper
-              sx={{
+              sx={ (theme) => ({
                 display: 'flex',
                 width: '100%',
                 height: 'calc(100vh - 5em)',
+                backgroundColor: theme.palette.primary.contrastText,
+                backgroundImage: 'none',
                 '.MuiTableContainer-root::-webkit-scrollbar': {
                   width: 0
                 }
-              }}
+              })}
             >
               <AlignmentTable
                 wordSource={wordSource}

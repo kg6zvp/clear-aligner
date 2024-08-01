@@ -29,10 +29,12 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
       <Card
         elevation={6}
         key="a"
-        style={{
+        sx={ (theme) => ({
           flexGrow: '1',
           flexBasis: '0',
-        }}
+          backgroundColor: theme.palette.primary.contrastText,
+          backgroundImage: 'none'
+        })}
       >
         <LinkBuilderComponent containers={containers} />
       </Card>

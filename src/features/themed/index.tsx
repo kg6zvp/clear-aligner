@@ -144,7 +144,8 @@ const lightTheme: Theme = createTheme({
     background :{
       paper: '#FAFAFA',
       default: '#FAFAFA'
-    }
+    },
+    transparent: '#00000000',
   },
   typography: {
     unlinked: {
@@ -161,7 +162,7 @@ const lightTheme: Theme = createTheme({
     MuiDrawer:{
       styleOverrides:{
         paper:{
-          backgroundColor: '#eeeeee'
+          backgroundColor: '#f5f5f5'
         }
       }
     },
@@ -189,10 +190,9 @@ const lightTheme: Theme = createTheme({
         root: ({theme}) => ({
           boxShadow: "none",
           color: theme.palette.primary.main,
+          backgroundColor: theme.palette.background.default,
+          backgroundImage: "none",
         }),
-        colorPrimary:{
-          backgroundColor: "white"
-        }
       }
     }
   }
@@ -331,8 +331,9 @@ const darkTheme = createTheme({
     },
     background : {
       paper: '#1E1E1E',
-      default: '#121212'
+      default: '#121212',
     },
+    transparent: '#00000000'
   },
   typography: {
     unlinked: {
@@ -345,6 +346,44 @@ const darkTheme = createTheme({
       borderRadius: '0.25rem',
     },
   },
+  components:{
+    MuiDrawer:{
+      styleOverrides:{
+        paper:{
+          backgroundColor: '#1E1E1E'
+        }
+      }
+    },
+    MuiToolbar:{
+      styleOverrides:{
+        root: {
+          paddingLeft: "12px !important",
+          paddingTop: "12px",
+          paddingRight: "12px !important",
+          paddingBottom: "6px",
+          maxHeight: "58px !important",
+          minHeight: "58px !important"
+        }
+      }
+    },
+    MuiBadge:{
+      styleOverrides:{
+        root: {
+          marginRight: "0px !important"
+        }
+      }
+    },
+    MuiAppBar:{
+      styleOverrides:{
+        root: ({theme}) => ({
+          boxShadow: "none",
+          color: theme.palette.primary.main,
+          backgroundColor: theme.palette.background.default,
+          backgroundImage: "none",
+        }),
+      }
+    }
+  }
 });
 
 interface ThemedProps {
