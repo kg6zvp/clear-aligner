@@ -4,12 +4,12 @@
  * Concordance Mode to show the verse text.
  */
 import React, { ReactElement, useMemo } from 'react';
-import { Typography } from '@mui/material';
+import { Typography, useTheme } from '@mui/material';
 import useDebug from 'hooks/useDebug';
 import { useAppDispatch, useAppSelector } from 'app/hooks';
 import { selectAlignmentMode, toggleTextSegment } from 'state/alignment.slice';
 import { hover } from 'state/textSegmentHover.slice';
-import { AlignmentSide, LanguageInfo, Link, Word } from 'structs';
+import { LanguageInfo, Link, Word } from 'structs';
 
 import './textSegment.style.css';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -17,6 +17,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AlignmentMode } from '../../state/alignmentState';
 import _ from 'lodash';
 import BCVWP from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 export interface TextSegmentProps extends LimitedToLinks {
   readonly?: boolean;
@@ -95,6 +96,8 @@ export const TextSegment = ({
                             }: TextSegmentProps): ReactElement => {
   useDebug('TextSegmentComponent');
 
+  const theme = useTheme();
+
   const dispatch = useAppDispatch();
   const mode = useAppSelector(selectAlignmentMode); // get alignment mode
   const isHoveredWord = useAppSelector(
@@ -165,13 +168,28 @@ export const TextSegment = ({
     return <span>{'ERROR'}</span>;
   }
 
+  const computedDecoration = computeDecoration(
+    !!readonly,
+    isHoveredWord,
+    isRelatedToCurrentlyHovered,
+    mode,
+    isLinked,
+    hasInProgressLink,
+    isMemberOfMultipleAlignments
+  )
   return (
     <React.Fragment>
         <LocalizedTextDisplay languageInfo={languageInfo}>
             <Typography
               paragraph={false}
               component="span"
-              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              sx={{
+                  display: alignment ? 'flex' : null,
+                  justifyContent: alignment ? alignment : null,
+                  backgroundColor: computedDecoration === ' focused related' ||
+                  computedDecoration === ' related' ?
+                    theme.palette.highlightedText.alignmentEditor : null
+              }}
               style={{
                 ...(languageInfo?.fontFamily
                   ? { fontFamily: languageInfo.fontFamily }
@@ -181,7 +199,9 @@ export const TextSegment = ({
               paragraph={false}
               component="span"
               variant={disableHighlighting ? undefined : computeVariant(isSelectedInEditedLink, isLinked)}
-              sx={alignment ? { display: 'flex', justifyContent: alignment } : {}}
+              sx={
+                alignment ? { display: 'flex', justifyContent: alignment } : {}
+              }
               className={`text-segment${
                 readonly ? '.readonly' : ''
               } ${disableHighlighting ? ' locked ' : computeDecoration(

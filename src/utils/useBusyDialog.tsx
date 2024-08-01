@@ -2,20 +2,36 @@
  * This file contains the useBusyDialog component that can be shown to users
  * while wait for an action in the background to complete.
  */
-import { useContext, useMemo, useState } from 'react';
-import { Box, CircularProgress, Dialog, DialogContent, DialogContentText, Typography } from '@mui/material';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import {
+  Box,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Grid, IconButton,
+  Typography
+} from '@mui/material';
 import { useInterval } from 'usehooks-ts';
 import { DatabaseStatus } from '../state/databaseManagement';
 import _ from 'lodash';
 import { AppContext } from '../App';
 import { LinksTable } from '../state/links/tableManager';
 import { isLoadingAnyCorpora } from '../workbench/query';
+import { Close } from '@mui/icons-material';
 
 const BusyRefreshTimeInMs = 500;
 const DefaultBusyMessage = 'Please wait...';
 
-const useBusyDialog = () => {
+export interface UseBusyDialogStatus {
+  isOpen: boolean;
+  busyDialog: JSX.Element;
+};
+
+const useBusyDialog = (customStatus?: string, onCancel?: CallableFunction): UseBusyDialogStatus => {
   const { projectState } = useContext(AppContext);
+  const [cancel, setCancel] = useState(false);
   const [databaseStatus, setDatabaseStatus] = useState<{
     projects: DatabaseStatus,
     links: DatabaseStatus
@@ -46,7 +62,8 @@ const useBusyDialog = () => {
     isBusy?: boolean,
     text?: string,
     variant?: 'determinate' | 'indeterminate',
-    value?: number
+    value?: number,
+    isCancelled?: boolean
   }>(() => {
     const busyInfo =
       [databaseStatus?.links, databaseStatus?.projects]
@@ -86,42 +103,80 @@ const useBusyDialog = () => {
         value: undefined
       };
     }
+    if (customStatus) {
+      return {
+        isBusy: true,
+        text: customStatus,
+        variant: 'indeterminate',
+        value: undefined
+      };
+    }
     return {
       isBusy: false,
       text: undefined,
       variant: 'indeterminate',
       value: undefined
     };
-  }, [databaseStatus, isLoadingCorpora, numProjects]);
+  }, [databaseStatus, isLoadingCorpora, numProjects, customStatus]);
 
-  return (
-    <Dialog
-      open={!!spinnerParams.isBusy}>
-      <DialogContent>
-        <Box sx={{
-          display: 'flex',
-          margin: 'auto',
-          position: 'relative'
-        }}>
-          <CircularProgress sx={{ margin: 'auto' }}
-                            variant={spinnerParams.variant ?? 'indeterminate'}
-                            value={spinnerParams.value} />
-          {!!spinnerParams.value && <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)'
-            }}>
-            <Typography variant="caption">{`${spinnerParams.value}%`}</Typography>
-          </Box>}
-        </Box>
-        <DialogContentText>
-          {spinnerParams.text}
-        </DialogContentText>
-      </DialogContent>
-    </Dialog>
-  );
+  useEffect(() => {
+    setCancel(false);
+  }, [customStatus]);
+
+  const isOpen = useMemo(() => !!spinnerParams.isBusy && !cancel, [spinnerParams.isBusy, cancel]);
+
+  return {
+    isOpen,
+    busyDialog: (
+      <Dialog
+        open={isOpen}
+        fullWidth={true}
+        sx={{
+          '.MuiPaper-root': {
+            minHeight: '120px'
+          }
+        }}
+      >
+        <DialogTitle>
+          <Grid container justifyContent="flex-end" alignItems="center">
+            {
+              !!onCancel && (
+                <IconButton onClick={() => {
+                  setCancel(true);
+                  onCancel();
+                }} sx={{m: 0}}>
+                  <Close sx={{height: 18, width: 'auto'}} />
+                </IconButton>
+              )
+            }
+          </Grid>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{
+            display: 'flex',
+            margin: 'auto',
+            position: 'relative'
+          }}>
+            <CircularProgress sx={{ margin: 'auto' }}
+                              variant={spinnerParams.variant ?? 'indeterminate'}
+                              value={spinnerParams.value} />
+            {!!spinnerParams.value && <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}>
+              <Typography variant="caption">{`${spinnerParams.value}%`}</Typography>
+            </Box>}
+          </Box>
+          <DialogContentText>
+            {spinnerParams.text}
+          </DialogContentText>
+        </DialogContent>
+      </Dialog>
+    )
+  };
 };
 
 export default useBusyDialog;

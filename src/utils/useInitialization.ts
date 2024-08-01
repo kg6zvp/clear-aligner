@@ -5,19 +5,31 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Project, ProjectTable } from '../state/projects/tableManager';
 import { UserPreference, UserPreferenceTable } from '../state/preferences/tableManager';
 import { ProjectState } from '../state/databaseManagement';
-import { DefaultProjectName, LinksTable } from '../state/links/tableManager';
+import { DefaultProjectId, LinksTable } from '../state/links/tableManager';
 import { AppContextProps } from '../App';
 import { Containers } from '../hooks/useCorpusContainers';
 import { getAvailableCorporaContainers, InitializationStates } from '../workbench/query';
 import BCVWP, { BCVWPField } from '../features/bcvwp/BCVWPSupport';
 import { useInterval } from 'usehooks-ts';
+import { useNetworkState } from '@uidotdev/usehooks';
+import { userState } from '../features/profileAvatar/profileAvatar';
+import { getCurrentUser } from 'aws-amplify/auth';
+import { EnvironmentVariables } from '../structs/environmentVariables';
 
-const useInitialization = () => {
+const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
+
+const useInitialization = (): AppContextProps => {
   const isLoaded = React.useRef(false);
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [preferences, setPreferences] = React.useState<UserPreference | undefined>();
   const [state, setState] = useState({} as ProjectState);
   const [containers, setContainers] = useState<Containers>({});
+  const [userStatus, setUserStatus] = React.useState<{color: string, label: string}>(userState.LoggedOut)
+  const network = useNetworkState();
+  const [isSnackBarOpen, setIsSnackBarOpen] = React.useState(false)
+  const [snackBarMessage, setSnackBarMessage] = React.useState("")
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = React.useState(false);
+  const [ isBusyDialogOpen, setIsBusyDialogOpen ] = useState<boolean>(false);
 
   const setUpdatedPreferences = useCallback((updatedPreferences?: UserPreference) => {
     updatedPreferences && state.userPreferenceTable?.saveOrUpdate(updatedPreferences);
@@ -106,11 +118,11 @@ const useInitialization = () => {
             ...(res ?? {}) as UserPreference,
             currentProject: res?.currentProject
               ?? projects?.[0]?.id
-              ?? DefaultProjectName
+              ?? DefaultProjectId
           });
           currLinksTable.setSourceName(res?.currentProject
             ?? projects?.[0]?.id
-            ?? DefaultProjectName);
+            ?? DefaultProjectId);
         });
       });
       initializeProject().catch(console.error);
@@ -119,6 +131,42 @@ const useInitialization = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Update UserStatus
+  useEffect( () => {
+    const getCurrentUserDetails = async () => {
+      if (environmentVariables.caApiEndpoint && network.online) {
+        setUserStatus(userState.CustomEndpoint);
+        return;
+      }
+      try{
+        await getCurrentUser();
+        setUserStatus(userState.LoggedIn)
+      }
+      catch(error){
+        setUserStatus(userState.LoggedOut)
+      }
+    }
+    if(network.online){
+      getCurrentUserDetails();
+    }
+    else{
+      setUserStatus(userState.Offline)
+    }
+  },[network])
+
+  // trigger snackbar messages indicating network status
+  useEffect( () => {
+    if(network && network.online){
+      setSnackBarMessage('Internet Connection Detected')
+      setIsSnackBarOpen(true)
+    }
+    else{
+      setSnackBarMessage('No internet connection')
+      setIsSnackBarOpen(true)
+    }
+  },[network])
+
+
   return {
     projectState: state,
     setProjectState: setState,
@@ -126,8 +174,20 @@ const useInitialization = () => {
     setPreferences,
     projects,
     setProjects,
-    containers
-  } as AppContextProps;
+    containers,
+    setContainers,
+    network,
+    userStatus,
+    setUserStatus,
+    isSnackBarOpen,
+    setIsSnackBarOpen,
+    snackBarMessage,
+    setSnackBarMessage,
+    isProjectDialogOpen,
+    setIsProjectDialogOpen,
+    isBusyDialogOpen,
+    setIsBusyDialogOpen
+  };
 };
 
 export default useInitialization;

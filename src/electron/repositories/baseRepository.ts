@@ -3,6 +3,7 @@
  */
 //@ts-nocheck
 import path from 'path';
+
 const { DataSource } = require('typeorm');
 const isDev = require('electron-is-dev');
 const { app } = require('electron');
@@ -16,6 +17,10 @@ const isMac = platform() === 'darwin';
  * This class contains properties for DataSourceStatus
  */
 class DataSourceStatus {
+  isLoading: boolean;
+  isLoaded: boolean;
+  dataSource: DataSource | undefined;
+
   constructor() {
     this.isLoading = false;
     this.isLoaded = false;
@@ -45,9 +50,12 @@ export interface RepositoryWithMigrations {
 export class BaseRepository implements RepositoryWithMigrations {
   static DB_WAIT_IN_MS = 1000;
 
+  isLoggingTime: boolean;
+  dataSources: Map<string, DataSourceStatus>;
+
   constructor() {
     this.isLoggingTime = true;
-    this.dataSources = new Map();
+    this.dataSources = new Map<string, DataSourceStatus>();
   }
 
   logDatabaseTime = (label) => {
@@ -79,6 +87,21 @@ export class BaseRepository implements RepositoryWithMigrations {
     return path.join((isMac
       ? path.join(path.dirname(app.getPath('exe')), '..')
       : path.dirname(app.getPath('exe'))), 'sql');
+  };
+
+  removeDataSource = async (sourceName) => {
+    this.logDatabaseTime('removeDataSource()');
+    try {
+      const sourceStatus = this.dataSources.get(sourceName);
+      if (!!sourceStatus) {
+        this.dataSources.delete(sourceName);
+        if (!!sourceStatus.dataSource) {
+          await sourceStatus.dataSource.destroy();
+        }
+      }
+    } finally {
+      this.logDatabaseTimeEnd('removeDataSource()');
+    }
   };
 
   getDataSourceWithEntities = async (sourceName, entities, generationFile = '', databaseDirectory = '') => {
@@ -128,15 +151,14 @@ export class BaseRepository implements RepositoryWithMigrations {
           statementCacheSize: 1000,
           ...(!!migrations ? {
             migrationsRun: true,
-            migrations: [ ...migrations ],
+            migrations: [...migrations]
           } : {}),
           prepareDatabase: (db) => {
             db.pragma('journal_mode = MEMORY');
-            db.pragma('synchronous = normal');
             db.pragma('cache_size = -8000000');
             db.pragma('read_uncommitted = true');
             db.pragma('defer_foreign_keys = true');
-            db.pragma('synchronous = 0');
+            db.pragma('synchronous = off');
           },
           entities
         });

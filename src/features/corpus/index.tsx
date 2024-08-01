@@ -6,7 +6,7 @@ import React, { ReactElement, useCallback, useEffect, useMemo, useRef, useState 
 import { Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { Add, InfoOutlined, Remove } from '@mui/icons-material';
 import useDebug from 'hooks/useDebug';
-import { AlignmentSide, CorpusContainer, Verse } from 'structs';
+import { CorpusContainer, Verse } from 'structs';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { VerseDisplay } from './verseDisplay';
 import {
@@ -15,6 +15,7 @@ import {
   findPreviousNavigableVerse,
   getReferenceListFromWords
 } from '../bcvNavigation/structs';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 export interface CorpusProps {
   viewCorpora: CorpusContainer;

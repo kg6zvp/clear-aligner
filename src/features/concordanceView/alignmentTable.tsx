@@ -2,18 +2,17 @@
  * This file contains the AlignmentTable component which is the third table
  * in the ConcordanceView component
  */
-import { AlignmentSide, Link, LinkStatus } from '../../structs';
+import { Link, LinkStatus } from '../../structs';
 import {
   DataGrid,
   GridColDef,
-  GridHeaderCheckbox,
   GridRenderCellParams,
   GridRowParams,
   GridSortItem,
   GridInputRowSelectionModel,
   GridRowSelectionModel, GridRowHeightParams
 } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, Portal, TableContainer } from '@mui/material';
+import { CircularProgress, IconButton, TableContainer } from '@mui/material';
 import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -32,6 +31,7 @@ import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
 import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -160,14 +160,14 @@ export const StateCell = ({ setSaveButtonDisabled,
           tooltip: 'Created',
         },
         {
-          value: 'approved',
-          label: <CheckCircleOutlined />,
-          tooltip: 'Approved',
-        },
-        {
           value: 'rejected',
           label: <CancelOutlined />,
           tooltip: 'Rejected',
+        },
+        {
+          value: 'approved',
+          label: <CheckCircleOutlined />,
+          tooltip: 'Approved',
         },
         {
           value: 'needsReview',
@@ -195,7 +195,6 @@ export interface AlignmentTableProps {
   setSaveButtonDisabled: Function,
   setLinksPendingUpdate: Function,
   linksPendingUpdate: Map<string, Link>;
-  container:  React.MutableRefObject<null>;
   setSelectedRows: Function;
   rowSelectionModel: GridInputRowSelectionModel;
   setRowSelectionModel: Function;
@@ -217,7 +216,6 @@ export interface AlignmentTableProps {
  * @param setSaveButtonDisabled callback to control the status of the Save button
  * @param setLinksPendingUpdate callback to add an updated Link to the array of Links pending an update
  * @param linksPendingUpdate Array of Links pending an update
- * @param container Reference to the container utilized by Portal component
  * @param setSelectedRows callback to update the state with what rows are currently selected
  * @param rowSelectionModel prop that reflects what rows in the table are currently selected
  * @param setRowSelectionModel callback to update what rows are currently selected
@@ -236,7 +234,6 @@ export const AlignmentTable = ({
                                  setSaveButtonDisabled,
                                  setLinksPendingUpdate,
                                  linksPendingUpdate,
-                                 container,
                                  rowSelectionModel,
                                  setRowSelectionModel,
                                  alignmentTableControlPanelLinkState,
@@ -313,11 +310,6 @@ export const AlignmentTable = ({
   const columns: GridColDef[] = [
     {
       field: "__check__",
-      renderHeader: (params) => (
-          <Portal container={() => container?.current}>
-            <GridHeaderCheckbox {...params} />
-          </Portal>
-      ),
       type: 'checkboxSelection',
       disableColumnMenu: true,
       resizable: false,
@@ -326,6 +318,7 @@ export const AlignmentTable = ({
       filterable: false,
       sortable: false,
       width: 20,
+      align: 'center'
     },
     {
       field: 'state',

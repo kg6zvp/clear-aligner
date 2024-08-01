@@ -2,11 +2,14 @@
  * This file contains the ProjectTable Class and supporting functions.
  */
 import { VirtualTable } from '../databaseManagement';
-import { AlignmentSide, Corpus, CorpusContainer, Word } from '../../structs';
-import { EmptyWordId, LinksTable } from '../links/tableManager';
+import { Corpus, CorpusContainer, Word } from '../../structs';
+import { DefaultProjectId, EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
+import { ProjectEntity, ProjectLocation, ProjectState } from '../../common/data/project/project';
+import { DateTime } from 'luxon';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 const dbApi: DatabaseApi = (window as any).databaseApi! as DatabaseApi;
 
@@ -20,16 +23,21 @@ export interface Project {
   linksTable?: LinksTable;
   sourceCorpora?: CorpusContainer;
   targetCorpora?: CorpusContainer;
+  lastSyncTime?: number;
+  updatedAt?: number;
+  serverUpdatedAt?: number;
+  lastSyncServerTime?: number;
+  location: ProjectLocation;
+  state?: ProjectState;
 }
 
 export interface ProjectDto {
   id?: string;
   name?: string;
-  corpora: Corpus[]
+  corpora: Corpus[];
 }
 
 const DatabaseInsertChunkSize = 2_000;
-const UIInsertChunkSize = DatabaseInsertChunkSize * 8;
 
 export class ProjectTable extends VirtualTable {
   private projects: Map<string, Project>;
@@ -39,16 +47,21 @@ export class ProjectTable extends VirtualTable {
     this.projects = new Map();
   }
 
-  save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean): Promise<Project | undefined> => {
+  save = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate?: boolean, createDataSource?: boolean): Promise<Project | undefined> => {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore
-      const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
-      updateWordsOrParts && await this.insertWordsOrParts(project);
-      this.projects.set(createdProject.id, createdProject);
+      await this.sync(project);
+      if (!!createDataSource || updateWordsOrParts) {
+        // @ts-ignore
+        const createdProject = await window.databaseApi.createSourceFromProject(ProjectTable.convertToDto(project));
+        createdProject && this.projects.set(createdProject.id, createdProject);
+        updateWordsOrParts && await this.insertWordsOrParts(project);
+        this.decrDatabaseBusyCtr();
+        return createdProject ? ProjectTable.convertDataSourceToProject(createdProject) : undefined;
+      }
       this.decrDatabaseBusyCtr();
-      return createdProject?.[0] ? ProjectTable.convertDataSourceToProject(createdProject?.[0]) : undefined;
+      return project;
     } catch (e) {
       console.error('Error creating project: ', e);
       return undefined;
@@ -61,66 +74,116 @@ export class ProjectTable extends VirtualTable {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore
+      // @ts-ignore Remove the local project database.
       await window.databaseApi.removeSource(projectId);
+      // @ts-ignore Remove the project from the user database.
+      await window.databaseApi.projectRemove(projectId);
       this.projects.delete(projectId);
       this.decrDatabaseBusyCtr();
     } catch (e) {
       console.error('Error deleting project: ', e);
+      this.decrDatabaseBusyCtr();
     } finally {
       await this._onUpdate(suppressOnUpdate);
     }
   };
 
-  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false): Promise<Project | undefined> => {
+  updateLastUpdated = async (project: Project, lastUpdated?: number, suppressOnUpdate = false): Promise<Project | undefined> => {
+    project.updatedAt = lastUpdated ?? DateTime.now().toMillis();
+    return this.update(project, false, suppressOnUpdate);
+  };
+
+  update = async (project: Project, updateWordsOrParts: boolean, suppressOnUpdate = false, createDataSource?: boolean): Promise<Project | undefined> => {
     try {
       if (this.isDatabaseBusy()) return;
       this.incrDatabaseBusyCtr();
-      // @ts-ignore
-      const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
-      updateWordsOrParts && await this.insertWordsOrParts(project);
-      this.projects.set(updatedProject, updatedProject);
+
+      await this.sync(project).catch(console.error);
+      if (!!createDataSource || updateWordsOrParts) {
+        // @ts-ignore
+        const updatedProject = await window.databaseApi.updateSourceFromProject(ProjectTable.convertToDto(project));
+        updateWordsOrParts && await this.insertWordsOrParts(project).catch(console.error);
+        this.projects.set(project.id, project);
+        this.decrDatabaseBusyCtr();
+        return updatedProject ? {
+          ...ProjectTable.convertDataSourceToProject(updatedProject),
+          lastSyncTime: project.lastSyncTime,
+          updatedAt: project.updatedAt,
+          serverUpdatedAt: project.serverUpdatedAt
+        } : undefined;
+      }
       this.decrDatabaseBusyCtr();
-      return updatedProject ? ProjectTable.convertDataSourceToProject(updatedProject) : undefined;
+      return project;
     } catch (e) {
       console.error('Error updating project: ', e);
     } finally {
-      await this._onUpdate(suppressOnUpdate);
+      this._onUpdate(suppressOnUpdate).catch(console.error);
+    }
+  };
+
+  sync = async (project: Project): Promise<boolean> => {
+    try {
+      this.incrDatabaseBusyCtr();
+      const projectEntity: ProjectEntity = {
+        id: project.id,
+        name: project.name,
+        location: project.location ?? ProjectLocation.LOCAL,
+        serverState: project.state,
+        lastSyncTime: project.lastSyncTime,
+        updatedAt: project.updatedAt,
+        // updated at millis on server
+        serverUpdatedAt: project.serverUpdatedAt,
+        // updated at from last sync
+        lastSyncServerTime: project.lastSyncServerTime
+      };
+      await dbApi.projectSave(projectEntity);
+      this.decrDatabaseBusyCtr();
+      return true;
+    } catch (e) {
+      console.error('Error syncing project: ', e);
+      return false;
     }
   };
 
   insertWordsOrParts = async (project: Project) => {
-    this.incrDatabaseBusyCtr();
-    const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-      .flatMap(corpus => (corpus.words ?? [])
-        .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
-        .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
+    try {
+      this.incrDatabaseBusyCtr();
+      const wordsOrParts = [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+        .flatMap(corpus => (corpus.words ?? [])
+          .filter((word) => !((word.text ?? '').match(/^\p{P}$/gu)))
+          .map((w: Word) => ProjectTable.convertWordToDto(w, corpus)));
 
-    // @ts-ignore
-    await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
-
-    let progressCtr = 0;
-    let progressMax = wordsOrParts.length;
-    this.setDatabaseBusyInfo({
-      userText: `Loading ${wordsOrParts.length.toLocaleString()} words and parts...`,
-      progressCtr,
-      progressMax
-    });
-    for (const chunk of _.chunk(wordsOrParts, UIInsertChunkSize)) {
       // @ts-ignore
-      await window.databaseApi.insert(project.id, 'words_or_parts', chunk, DatabaseInsertChunkSize).catch(console.error);
-      progressCtr += chunk.length;
-      this.setDatabaseBusyProgress(progressCtr, progressMax);
+      await window.databaseApi.removeTargetWordsOrParts(project.id).catch(console.error);
 
-      const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
-      const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
-      this.setDatabaseBusyText(chunk.length === progressMax
-        ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} words and parts)...`
-        : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} words and parts)...`);
+      let progressCtr = 0;
+      let progressMax = wordsOrParts.length;
+      this.setDatabaseBusyInfo({
+        userText: `Loading ${wordsOrParts.length.toLocaleString()} tokens...`,
+        progressCtr,
+        progressMax
+      });
+      for (const chunk of _.chunk(wordsOrParts, DatabaseInsertChunkSize)) {
+        await dbApi.insert({
+          projectId: project.id,
+          table: 'words_or_parts',
+          itemOrItems: chunk,
+          chunkSize: DatabaseInsertChunkSize
+        }).catch(console.error);
+        progressCtr += chunk.length;
+        this.setDatabaseBusyProgress(progressCtr, progressMax);
 
+        const fromWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[0]);
+        const toWordTitle = ProjectTable.createWordsOrPartsTitle(chunk[chunk.length - 1]);
+        this.setDatabaseBusyText(chunk.length === progressMax
+          ? `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} tokens)...`
+          : `Loading ${fromWordTitle} to ${toWordTitle} (${progressCtr.toLocaleString()} of ${progressMax.toLocaleString()} tokens)...`);
+      }
+      this.setDatabaseBusyText('Finishing project creation...');
+      this.decrDatabaseBusyCtr();
+    } catch (e) {
+      console.error("Failed to insert tokens: ", e);
     }
-    this.setDatabaseBusyText('Finishing project creation...');
-    this.decrDatabaseBusyCtr();
   };
 
   static createWordsOrPartsTitle = (word: { id: string }) => {
@@ -143,12 +206,39 @@ export class ProjectTable extends VirtualTable {
     }
   };
 
+  getProjectTableData = async (): Promise<ProjectEntity[]> => {
+    try {
+      return (await dbApi.getProjects()) ?? [];
+    } catch (ex) {
+      console.error('Unable to convert data source to project: ', ex);
+      return [];
+    }
+  };
+
   getProjects = async (requery = false): Promise<Map<string, Project> | undefined> => {
     if (requery) {
-      const projects = await this.getDataSourcesAsProjects();
-      if (projects) {
-        this.projects = new Map<string, Project>(projects.filter(p => p).map(p => [p.id, p]));
+      const projectEntities = await this.getProjectTableData();
+      const dataSources = (await this.getDataSourcesAsProjects()) ?? [];
+      for (const src of dataSources) {
+        if (!projectEntities.find(entity => entity.id === src.id)) {
+          const project: ProjectEntity = {
+            ...src,
+            location: ProjectLocation.LOCAL,
+            serverState: undefined,
+            lastSyncServerTime: undefined,
+            lastSyncTime: undefined
+          };
+          projectEntities.push(await dbApi.projectSave(project));
+        }
       }
+      this.projects = new Map<string, Project>(projectEntities.map((entity) => {
+        const p = dataSources?.find(src => src.id === entity.id);
+        return [entity.id!, {
+          ...(p ?? {}),
+          ...entity,
+          name: entity.name
+        } as Project];
+      }));
     }
     return this.projects;
   };
@@ -161,7 +251,8 @@ export class ProjectTable extends VirtualTable {
   static convertDataSourceToProject = (dataSource: { id: string, corpora: Corpus[] }) => {
     const corpora = dataSource?.corpora || [];
     const sourceCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.SOURCE);
-    const targetCorpus = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET)[0];
+    const targetCorpora = corpora.filter((c: Corpus) => c.side === AlignmentSide.TARGET);
+    const targetCorpus = targetCorpora[0];
 
     return {
       id: dataSource.id,
@@ -171,7 +262,7 @@ export class ProjectTable extends VirtualTable {
       textDirection: targetCorpus?.language.textDirection,
       fileName: targetCorpus?.fileName ?? '',
       sourceCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.SOURCE, sourceCorpora),
-      targetCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, [targetCorpus])
+      targetCorpora: CorpusContainer.fromIdAndCorpora(AlignmentSide.TARGET, targetCorpora)
     } as Project;
   };
 

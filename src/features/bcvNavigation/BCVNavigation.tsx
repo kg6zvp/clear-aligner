@@ -8,7 +8,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Autocomplete, Button, IconButton, SxProps, TextField, Theme, Tooltip } from '@mui/material';
 import { Word } from '../../structs';
 import { Box } from '@mui/system';
-import { ArrowBack, ArrowForward } from '@mui/icons-material';
+import { ArrowBackIosNew, ArrowForward, ArrowForwardIos } from '@mui/icons-material';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
 import {
@@ -31,7 +31,7 @@ export interface BCVNavigationProps {
   onNavigate?: (selection: BCVWP) => void;
 }
 
-const ICON_BTN_VERT_MARGIN = '.5em';
+const AUTOCOMPLETE_VERT_MARGIN = '.15em';
 
 /**
  * BCVNavigation component for use in React
@@ -153,11 +153,10 @@ const BCVNavigation = ({
       >
         <IconButton
           color={'primary'}
-          sx={{ marginTop: ICON_BTN_VERT_MARGIN }}
           disabled={disabled || !navigateBack}
           onClick={navigateBack ?? undefined}
         >
-          <ArrowBack />
+          <ArrowBackIosNew/>
         </IconButton>
       </Tooltip>
     ),
@@ -201,11 +200,10 @@ const BCVNavigation = ({
       >
         <IconButton
           color={'primary'}
-          sx={{ marginTop: ICON_BTN_VERT_MARGIN }}
           disabled={disabled || !navigateForward}
           onClick={navigateForward ?? undefined}
         >
-          <ArrowForward />
+          <ArrowForwardIos />
         </IconButton>
       </Tooltip>
     ),
@@ -221,7 +219,8 @@ const BCVNavigation = ({
         size="small"
         sx={{
           display: 'inline-flex',
-          width: horizontal ? '6em' : '100%'
+          width: horizontal ? '107px' : '100%',
+          marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         getOptionLabel={(option) =>
           option?.reference ? String(option.reference) : ''
@@ -231,7 +230,7 @@ const BCVNavigation = ({
         value={selectedVerse}
         onChange={(_, value) => setSelectedVerse(value)}
         renderInput={(params) => (
-          <TextField label={'Verse'} {...params} variant={'standard'} />
+          <TextField label={'Verse'} {...params} />
         )}
       />
     ),
@@ -268,7 +267,7 @@ const BCVNavigation = ({
           ...(horizontal
             ? {
               flexWrap: 'wrap',
-              gap: '.50em'
+              gap: '6px'
             }
             : {
               alignItems: 'center'
@@ -277,7 +276,8 @@ const BCVNavigation = ({
       }
       className={BCVNavigation.name}
     >
-      {horizontal && backButton}
+      {horizontal && backButton }
+      {horizontal && forwardButton }
       <Autocomplete
         disabled={disabled}
         disablePortal
@@ -285,7 +285,8 @@ const BCVNavigation = ({
         size="small"
         sx={{
           width: horizontal ? '12em' : '100%',
-          display: 'inline-flex'
+          display: 'inline-flex',
+          marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         options={availableBooks ?? ([] as NavigableBook[])}
         typeof={'select'}
@@ -299,7 +300,7 @@ const BCVNavigation = ({
         value={selectedBook}
         onChange={(_, value) => handleSetBook(value)}
         renderInput={(params) => (
-          <TextField {...params} label={'Book'} variant={'standard'} />
+          <TextField {...params} label={'Book'} />
         )}
       />
       <Autocomplete
@@ -307,8 +308,9 @@ const BCVNavigation = ({
         disablePortal
         size="small"
         sx={{
-          width: horizontal ? '6em' : '100%',
-          display: 'inline-flex'
+          width: horizontal ? '108px' : '100%',
+          display: 'inline-flex',
+          marginTop: AUTOCOMPLETE_VERT_MARGIN
         }}
         options={availableChapters}
         typeof={'select'}
@@ -316,13 +318,12 @@ const BCVNavigation = ({
         value={selectedChapter}
         onChange={(_, value) => handleSetChapter(value)}
         renderInput={(params) => (
-          <TextField label={'Chapter'} {...params} variant={'standard'} />
+          <TextField label={'Chapter'} {...params} />
         )}
       />
       {horizontal ? (
         <>
           {verseSelection}
-          {forwardButton}
         </>
       ) : (
         <Box
@@ -333,22 +334,23 @@ const BCVNavigation = ({
           }}
         >
           {backButton}
-          {verseSelection}
           {forwardButton}
+          {verseSelection}
         </Box>
       )}
       <Button
         sx={{
-          ...(horizontal ? { marginTop: '.85em' } : {})
+          borderRadius: 10,
         }}
-        variant={'text'}
+        variant={'contained'}
         color={'primary'}
         disabled={
           disabled || !selectedBook || !selectedChapter || !selectedVerse
         }
         onClick={() => handleNavigation()}
+        endIcon={<ArrowForward/>}
       >
-        Navigate
+        GO
       </Button>
     </Box>
   );

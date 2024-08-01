@@ -3,10 +3,10 @@
  * Projects Mode to save alignment data.
  */
 import { AlignmentFile, AlignmentRecord } from '../structs/alignmentFile';
-import { Link } from '../structs';
+import { Link, LinkStatus } from '../structs';
 
 
-const saveAlignmentFile = (links: Link[] | undefined) => {
+export const saveAlignmentFile = (links: Link[] | undefined) => {
   if (!links) return;
   // create starting instance
   const alignmentExport: AlignmentFile = {
@@ -22,7 +22,7 @@ const saveAlignmentFile = (links: Link[] | undefined) => {
           ({
             meta: {
               id: link.id,
-              ...link.metadata,
+              ...link.metadata
             },
             source: (link.sources ?? []),
             target: (link.targets ?? [])
@@ -75,4 +75,95 @@ const saveAlignmentFile = (links: Link[] | undefined) => {
   URL.revokeObjectURL(url);
 };
 
-export default saveAlignmentFile;
+/**
+ * Alignment check results, including error messages and validated data.
+ */
+export interface AlignmentFileCheckResults {
+  maxErrorMessages: number,
+  isFileValid: boolean;
+  errorMessages: string[];
+  submittedLinks: number,
+  acceptedLinks: number,
+  rejectedLinks: number,
+  validatedFile: AlignmentFile;
+}
+
+/**
+ * Validates supplied alignment file and returns results, including errors and a validated version of the input data.
+ * @param inputFile Input file text that may or may not be an alignment file.
+ * @param maxErrorMessages Max error messages to generate.
+ */
+export const checkAlignmentFile = (inputFile: string, maxErrorMessages = 100): AlignmentFileCheckResults => {
+  const result: AlignmentFileCheckResults = {
+    maxErrorMessages,
+    isFileValid: false,
+    errorMessages: [],
+    submittedLinks: 0,
+    acceptedLinks: 0,
+    rejectedLinks: 0,
+    validatedFile: {
+      type: '',
+      meta: {
+        creator: ''
+      },
+      records: []
+    }
+  };
+  let inputJson: any = {};
+  try {
+    inputJson = JSON.parse(inputFile);
+  } catch (ex) {
+    result.errorMessages.push(`Input file is not valid JSON: ${(ex as any)?.message ?? ex}`);
+    return result;
+  }
+  result.isFileValid = true;
+  result.validatedFile.type = inputJson?.type ?? '';
+  result.validatedFile.meta = inputJson?.meta ?? {
+    creator: ''
+  };
+  if (Array.isArray(inputJson?.records)) {
+    const linkArray = (inputJson?.records as any[]);
+    result.submittedLinks = linkArray.length;
+    linkArray.forEach((arrayEntry, entryIndex) => {
+      const linkNum = (entryIndex + 1);
+      const possibleRecord = arrayEntry as AlignmentRecord | undefined;
+      const possibleOrigin = (possibleRecord?.meta?.origin as string | undefined);
+      let isRecordValid = true;
+      if (!possibleOrigin) {
+        isRecordValid = false;
+        result.errorMessages.length < maxErrorMessages
+        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no origin (missing/empty "meta.origin" field).`);
+      }
+      const possibleStatus = (possibleRecord?.meta?.status as string | undefined);
+      if (!possibleStatus || !((possibleStatus ?? '').toUpperCase() in LinkStatus)) {
+        isRecordValid = false;
+        result.errorMessages.length < maxErrorMessages
+        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no valid status (missing/invalid "meta.status" field).`);
+      }
+      const possibleSource = (possibleRecord?.source as string[] | undefined);
+      if (!possibleSource || (possibleSource?.length ?? 0) < 1) {
+        isRecordValid = false;
+        result.errorMessages.length < maxErrorMessages
+        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no source tokens (missing/empty "source" field).`);
+      }
+      const possibleTarget = (possibleRecord?.target as string[] | undefined);
+      if (!possibleTarget || (possibleTarget?.length ?? 0) < 1) {
+        isRecordValid = false;
+        result.errorMessages.length < maxErrorMessages
+        && result.errorMessages.push(`Link #${linkNum.toLocaleString()} has no target tokens (missing/empty "target" field).`);
+      }
+      if (isRecordValid) {
+        result.validatedFile.records.push(possibleRecord as AlignmentRecord);
+        result.acceptedLinks++;
+      } else {
+        result.isFileValid = false;
+        result.rejectedLinks++;
+      }
+    });
+  } else {
+    result.isFileValid = false;
+    result.errorMessages.length < maxErrorMessages
+    && result.errorMessages.push('Input file has no alignment links (missing/empty "records" field).');
+  }
+  return result;
+};

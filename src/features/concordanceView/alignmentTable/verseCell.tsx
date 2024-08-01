@@ -3,13 +3,14 @@
  * in the AlignmentTable
  */
 import { GridRenderCellParams } from '@mui/x-data-grid';
-import { AlignmentSide, Link, Verse } from '../../../structs';
+import { Link, Verse } from '../../../structs';
 import { useContext } from 'react';
 import _ from 'lodash';
 import BCVWP, { BCVWPField } from '../../bcvwp/BCVWPSupport';
 import { VerseDisplay } from '../../corpus/verseDisplay';
 import { AlignmentTableContext } from '../alignmentTable';
 import { useCorpusContainers } from '../../../hooks/useCorpusContainers';
+import { AlignmentSide } from '../../../common/data/project/corpus';
 
 /**
  * Render cells with verse text in the appropriate font and text orientation for the verse

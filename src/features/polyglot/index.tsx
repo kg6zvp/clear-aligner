@@ -8,12 +8,13 @@ import { Box, Card, Grid, Stack } from '@mui/material';
 import { useAppSelector } from 'app/hooks';
 import useDebug from 'hooks/useDebug';
 import CorpusComponent from 'features/corpus';
-import { AlignmentSide, CorpusContainer, CorpusViewport } from 'structs';
+import { CorpusContainer, CorpusViewport } from 'structs';
 
 import './styles.css';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AppContext } from '../../App';
 import { ControlPanelFormat } from '../../state/preferences/tableManager';
+import { AlignmentSide } from '../../common/data/project/corpus';
 
 interface PolyglotProps {
   containers: CorpusContainer[];
@@ -46,7 +47,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
         display={'flex'}
         flexGrow={1}
         direction={preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'column' : 'row'}
-        spacing={2}
+        spacing={'8px'}
         style={{ minHeight: preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? '30rem' : '17rem' }}
         justifyContent="stretch"
         alignItems="stretch"
@@ -78,12 +79,14 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
                 elevation={2}
                 className="corpus-container corpus-scroll-container"
                 key={key}
-                style={{
+                sx={ (theme) => ({
                   flexGrow: '1',
                   flexBasis: '0',
                   minWidth: '16rem',
-                  position: 'relative'
-                }}
+                  position: 'relative',
+                  backgroundColor: theme.palette.primary.contrastText,
+                  backgroundImage: 'none'
+                })}
               >
                 <CorpusComponent
                   key={corpusId}
