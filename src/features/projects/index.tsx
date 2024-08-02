@@ -106,7 +106,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
   return (
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
-            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden' }}>
+            sx={{ height: '100%', width: '100%', paddingTop: '.1rem', overflow: 'hidden', paddingLeft: '8px', paddingBottom: '8px' }}>
         <Grid container justifyContent="space-between" alignItems="center"
               sx={{ marginBottom: '.25rem', paddingX: '1.1rem', paddingLeft: projectCardMargin, width: `calc(100% + ${projectCardMargin})` }}>
           <Grid container sx={{ width: 'fit-content' }}>
@@ -238,6 +238,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
  * margin used by project cards
  */
 const projectCardMargin = '4px';
+const projectCardWidth = 391;
+const projectCardHeight = 320;
 
 export const CreateProjectCard: React.FC<{
   onClick?: (e: React.MouseEvent) => void,
@@ -251,8 +253,8 @@ export const CreateProjectCard: React.FC<{
     <Card
       onClick={(e) => onClick?.(e)}
       sx={theme => ({
-        width: 394,
-        height: 320,
+        width: projectCardWidth,
+        height: projectCardHeight,
         m: projectCardMargin,
         '&:hover': {
           boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
@@ -493,8 +495,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   return (
     <>
       <Card sx={theme => ({
-        width: 394,
-        height: 320,
+        width: projectCardWidth,
+        height: projectCardHeight,
         m: projectCardMargin,
         ...(isCurrentProject ? {
           borderBottomWidth: currentProjectBorderIndicatorHeight,

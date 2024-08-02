@@ -19,7 +19,7 @@ import { grey } from '@mui/material/colors';
  */
 export const MiniDrawer = () => {
   const [selectedIndex, setSelectedIndex] = React.useState("");
-  const drawerWidth = 49;
+  const drawerWidth = 48;
   const theme = useTheme();
 
   const ListItems = {
