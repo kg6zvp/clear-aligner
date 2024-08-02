@@ -4,7 +4,7 @@
  */
 import {
   Button,
-  Card, CardActionArea, CardActions,
+  Card,
   CardContent,
   FormControl,
   Grid,
@@ -87,7 +87,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
 
   const projects = React.useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
 
-  const [openProjectDialog, setOpenProjectDialog] = React.useState(false);
+  const [openProjectDialog, setOpenProjectDialog] = React.useState<boolean>(false);
   const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
 
   const selectProject = React.useCallback((project?: Project) => {
@@ -95,8 +95,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
       setSelectedProjectId(project.id);
       setOpenProjectDialog(true);
     } else {
-      setSelectedProjectId(null);
       setOpenProjectDialog(false);
+      setSelectedProjectId(null);
     }
   }, [setSelectedProjectId, setOpenProjectDialog]);
   const unavailableProjectNames: string[] = React.useMemo(() => (
@@ -166,20 +166,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
             }}>
             <CreateProjectCard
               projectId={selectedProjectId}
-              onClick={(e) => {
-                e.preventDefault();
+              onClick={() => {
                 setSelectedProjectId(null);
                 setOpenProjectDialog(true);
               }}
-              unavailableProjectNames={
-                unavailableProjectNames.filter(name =>
-                  name !== projects.find(p => p.id === selectedProjectId)?.name)
-              }
-              open={openProjectDialog}
-              closeCallback={() => {
-                setOpenProjectDialog(false);
-                setSelectedProjectId(null);
-              }}
+              unavailableProjectNames={unavailableProjectNames}
+              open={openProjectDialog && !selectedProjectId}
+              closeCallback={selectProject}
               isSignedIn={isSignedIn}
             />
             {projects
@@ -193,7 +186,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
                     p.id === preferences?.currentProject) ?? projects?.[0]}
                   unavailableProjectNames={unavailableProjectNames}
                   disableProjectButtons={disableProjectButtons}
-                  isProjectDialogOpen={selectedProjectId === project.id}
+                  isProjectDialogOpen={openProjectDialog && selectedProjectId === project.id}
                 />
               ))}
           </Grid>
@@ -251,7 +244,7 @@ export const CreateProjectCard: React.FC<{
 }> = ({ onClick, projectId, unavailableProjectNames, open, closeCallback, isSignedIn }) => {
   return (<>
     <Card
-      onClick={(e) => onClick?.(e)}
+      onClick={open ? () => {} : (e) => onClick?.(e)}
       sx={theme => ({
         width: projectCardWidth,
         height: projectCardHeight,
@@ -267,31 +260,27 @@ export const CreateProjectCard: React.FC<{
         },
         position: 'relative'
       })}>
-      <CardContent sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyItems: 'center',
-        alignItems: 'center',
-        width: '100%',
-        height: '100%'
-      }}>
+      <CardContent
+        id={'create-card-content'}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyItems: 'center',
+          alignItems: 'center',
+          height: '100%',
+          margin: projectCardMargin
+        }}>
+        {open ?
+          <ProjectSettings closeCallback={closeCallback} isSignedIn={isSignedIn} unavailableProjectNames={unavailableProjectNames} projectId={null}/>
+          :
         <Grid container justifyContent="center" alignItems="center" sx={{
           height: '100%',
           margin: '0 auto'
         }}>
           <LibraryAdd color={'primary'} />
-        </Grid>
+        </Grid>}
       </CardContent>
     </Card>
-
-    {/* Project Dialog */}
-    <ProjectCreationDialog
-      projectId={null}
-      unavailableProjectNames={unavailableProjectNames}
-      open={!projectId && open}
-      closeCallback={closeCallback}
-      isSignedIn={isSignedIn}
-    />
   </>);
 }
 
@@ -515,11 +504,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         position: 'relative'
       })}>
         <CardContent sx={{
-          margin: 1.2,
+          margin: projectCardMargin,
           display: 'flex',
           flexDirection: 'column',
           height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%',
-          width: `calc(100% - 4 * ${projectCardMargin})`,
         }}>
           {isProjectDialogOpen ?
             (<>
@@ -530,7 +518,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   id={'project-title'}
                   sx={{
                     position: 'absolute',
-                    width: `calc(100% - 12 * ${projectCardMargin})`,
+                    width: `calc(100% - 10 * ${projectCardMargin})`,
                     display: 'flex',
                     flexDirection: 'row',
                     justifyContent: 'space-between',

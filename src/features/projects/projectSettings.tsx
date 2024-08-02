@@ -2,7 +2,7 @@
  * This file contains the ProjectDialog component which handles project creation
  * and project editing in the Project Mode of the CA application.
  */
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -20,7 +20,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { DeleteOutline, Unpublished } from '@mui/icons-material';
+import { DeleteOutline, FileUpload, Unpublished, UploadFile } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
@@ -87,14 +87,14 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
   const dbApi = useDatabase();
-  const allowDelete = React.useMemo(() => projectId !== DefaultProjectId, [projectId]);
-  const handleUpdate = React.useCallback((updatedProjectFields: Partial<Project>) => {
+  const allowDelete = useMemo(() => projectId !== DefaultProjectId, [projectId]);
+  const handleUpdate = useCallback((updatedProjectFields: Partial<Project>) => {
     if (!projectUpdated) {
       setProjectUpdated(true);
     }
     setProject((p: Project) => ({ ...p, ...updatedProjectFields }));
   }, [projectUpdated, setProject]);
-  const handleClose = React.useCallback(() => {
+  const handleClose = useCallback(() => {
     setFileContent('');
     setProjectUpdated(false);
     setUploadErrors([]);
@@ -102,14 +102,14 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
     closeCallback();
   }, [closeCallback, setProject, setUploadErrors, setFileContent]);
 
-  const invalidProjectName = React.useMemo(() => {
+  const invalidProjectName = useMemo(() => {
     return (
       unavailableProjectNames.includes((project.name || '').trim())
       && !projectState.projectTable.getDatabaseStatus().busyInfo.isBusy
     );
   }, [unavailableProjectNames, projectState, project]);
 
-  const enableCreate = React.useMemo(() => (
+  const enableCreate = useMemo(() => (
     !uploadErrors.length
     && (project.fileName || '').length
     && (project.name || '').length
@@ -120,7 +120,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
     && projectUpdated
   ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
-  const handleSubmit = React.useCallback(async (type: ProjectDialogMode, e: any) => {
+  const handleSubmit = useCallback(async (type: ProjectDialogMode, e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
       while (!projectState.projectTable?.isDatabaseBusy()) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -189,9 +189,9 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
-    , [projectState.projectTable, projectState.userPreferenceTable, dbApi, project, fileContent, setPreferences, projectId, dispatch, preferences, setProjects]);
+    , [dbApi, project, fileContent, setPreferences, dispatch, preferences, setProjects]);
 
-  const handleDelete = React.useCallback(async () => {
+  const handleDelete = useCallback(async () => {
     if (projectId) {
       await projectState.projectTable?.remove?.(projectId);
       setProjects((ps: Project[]) => (ps || []).filter(p => (p.id || '').trim() !== (projectId || '').trim()));
@@ -209,24 +209,104 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
     }
   }, [projectId, projectState.projectTable, projectState.linksTable, setProjects, preferences?.currentProject, handleClose, setPreferences]);
 
-  const setInitialProjectState = React.useCallback(async () => {
+  const setInitialProjectState = useCallback(async () => {
     const foundProject = [...(projects?.values?.() ?? [])].find(p => p.id === projectId);
     if (foundProject) {
       setProject(foundProject as Project);
     }
   }, [projectId, projects, setProject]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setInitialProjectState().catch(console.error);
   }, [setInitialProjectState]);
+
+  const tsvUploadGroup = useMemo<JSX.Element>(() => {
+    if (!!projectId) return (<></>);
+    return (
+      <Box
+        sx={{
+          mt: 2,
+          display: 'flex',
+          flexDirection: 'row'
+        }}>
+        <Box
+          sx={(theme) => ({
+            marginRight: '6px',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderStyle: 'dashed',
+            borderWidth: '1px',
+            borderColor: theme.palette.text.disabled,
+            paddingX: '8px',
+            flexGrow: 1
+          })}>
+          <UploadFile sx={{ color: uploadErrors.length ? 'error.main' : 'primary.main', m: 1 }} />
+          <Typography variant="subtitle2" sx={{ mt: .5 }} {...(uploadErrors.length ? { color: 'error' } : { color: 'primary' })}>
+            {uploadErrors.length ? (
+              <>
+                {uploadErrors.map(error => <span style={{ display: 'block' }}>{error}</span>)}
+              </>
+            ) : project.fileName}
+          </Typography>
+        </Box>
+        <Button variant="contained" component="label"
+                sx={{
+                  borderRadius: 10,
+                }}
+                disabled={project.location === ProjectLocation.REMOTE}>
+          <FileUpload/>
+          Upload
+          <input type="file" hidden
+                 onClick={(event) => {
+                   // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
+                   // event isn't thrown.
+
+                   // @ts-ignore
+                   event.currentTarget.value = null;
+                 }}
+                 onChange={async (event) => {
+                   // grab file content
+                   const file = event!.target!.files![0];
+                   const content = await file.text();
+                   const errorMessages: string[] = [];
+                   const contentLines = content.split('\n');
+                   if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
+                     errorMessages.push('TSV must include \'text\' and \'id\' headers.');
+                   }
+                   let goodCtr = 0;
+                   for (const contentLine of contentLines) {
+                     goodCtr += !!contentLine ? 1 : 0;
+                     if (goodCtr > 1) {
+                       break;
+                     }
+                   }
+                   if (goodCtr < 2) {
+                     errorMessages.push('TSV must include at least one row of data.');
+                   }
+                   if (errorMessages.length) {
+                     setUploadErrors(errorMessages);
+                     return;
+                   }
+
+                   setUploadErrors([]);
+                   handleUpdate({ fileName: file.name });
+                   setFileContent(content);
+                 }}
+          />
+        </Button>
+      </Box>);
+  }, [uploadErrors, project.fileName, project.location, handleUpdate, setUploadErrors, setFileContent]);
 
   return (
     <>
       <Typography variant={'subtitle1'}
                   sx={{
-                    mb: '12px',
+                    alignSelf: 'start',
+                    justifyContent: 'left',
+                    mb: '8px',
                     fontWeight: 'bold'
-                  }}>Edit Project</Typography>
+                  }}>{!projectId ? 'Create' : 'Edit'} Project</Typography>
           <Grid container flexDirection="column" alignItems="center" justifyContent="space-between"
                 sx={{ width: '100%', height: '100%' }}>
             <FormGroup sx={{
@@ -278,7 +358,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   display: 'flex',
                   flexDirection: 'row',
                   width: '100%',
-                  mt: '12px'
+                  mt: '8px'
                 }}>
                 <FormControl
                   sx={{
@@ -332,57 +412,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                 </FormControl>
               </Box>
 
-              {!projectId && <>
-                <Button variant="contained" component="label" sx={{  }}
-                        disabled={project.location === ProjectLocation.REMOTE}>
-                  Upload
-                  <input type="file" hidden
-                         onClick={(event) => {
-                           // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
-                           // event isn't thrown.
-
-                           // @ts-ignore
-                           event.currentTarget.value = null;
-                         }}
-                         onChange={async (event) => {
-                           // grab file content
-                           const file = event!.target!.files![0];
-                           const content = await file.text();
-                           const errorMessages: string[] = [];
-                           const contentLines = content.split('\n');
-                           if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
-                             errorMessages.push('TSV must include \'text\' and \'id\' headers.');
-                           }
-                           let goodCtr = 0;
-                           for (const contentLine of contentLines) {
-                             goodCtr += !!contentLine ? 1 : 0;
-                             if (goodCtr > 1) {
-                               break;
-                             }
-                           }
-                           if (goodCtr < 2) {
-                             errorMessages.push('TSV must include at least one row of data.');
-                           }
-                           if (errorMessages.length) {
-                             setUploadErrors(errorMessages);
-                             return;
-                           }
-
-                           setUploadErrors([]);
-                           handleUpdate({ fileName: file.name });
-                           setFileContent(content);
-                         }}
-                  />
-                </Button>
-                <Typography variant="subtitle2" sx={{  }} {...(uploadErrors.length ? { color: 'error' } : {})}>
-                  {uploadErrors.length ? (
-                    <>
-                      <span style={{ display: 'block' }}>The file you have selected is not valid:</span>
-                      {uploadErrors.map(error => <span style={{ display: 'block' }}>{error}</span>)}
-                    </>
-                  ) : project.fileName}
-                </Typography>
-              </>}
+              {!projectId && tsvUploadGroup}
               {
                 (projectId && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED)) &&
                 <UploadAlignmentGroup containers={[ project.sourceCorpora, project.targetCorpora ].filter(v => !!v)}
@@ -393,7 +423,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
               }
             </FormGroup>
           </Grid>
-          <Grid container justifyContent="space-between" sx={{  }}>
+          <Grid container justifyContent="space-between">
             <Grid container alignItems="center" sx={{ width: 'fit-content' }}>
               {
                 (projectId && allowDelete && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED))
@@ -413,24 +443,25 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   : <Box />
               }
             </Grid>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-              }}>
-              <Button
-                onClick={handleClose}>Cancel</Button>
-              <Button
-                disabled={projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
-                onClick={e => {
-                  handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
-                    // handleClose() in the .then() ensures dialog doesn't close prematurely
-                    handleClose();
-                  });
-                }}
-              >Save</Button>
-            </Box>
           </Grid>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignSelf: 'end'
+        }}>
+        <Button
+          onClick={handleClose}>Cancel</Button>
+        <Button
+          disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
+          onClick={e => {
+            handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
+              // handleClose() in the .then() ensures dialog doesn't close prematurely
+              handleClose();
+            });
+          }}
+        >{!projectId ? 'Create' : 'Save'}</Button>
+      </Box>
       <Dialog
         maxWidth="xl"
         open={openConfirmDelete}
@@ -441,10 +472,10 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
             <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
             <Grid item>
               <Grid container>
-                <Button variant="text" onClick={() => setOpenConfirmDelete(false)} sx={{ textTransform: 'none' }}>
+                <Button variant="text" onClick={() => setOpenConfirmDelete(false)}>
                   Go Back
                 </Button>
-                <Button variant="contained" onClick={handleDelete} sx={{ ml: 2, textTransform: 'none' }}>Delete</Button>
+                <Button variant="contained" onClick={handleDelete} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
               </Grid>
             </Grid>
           </Grid>
@@ -460,13 +491,13 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
             <Typography variant="subtitle1">Are you sure you want to delete this project?</Typography>
             <Grid item>
               <Grid container>
-                <Button variant="text" onClick={() => setOpenConfirmUnpublish(false)} sx={{ textTransform: 'none' }}>
+                <Button variant="text" onClick={() => setOpenConfirmUnpublish(false)}>
                   Go Back
                 </Button>
                 <Button variant="contained" onClick={() => {
                   setOpenConfirmUnpublish(false);
                   publishProject(project, ProjectState.DRAFT).then(() => handleClose());
-                }} sx={{ ml: 2, textTransform: 'none' }}>Delete</Button>
+                }} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
               </Grid>
             </Grid>
           </Grid>

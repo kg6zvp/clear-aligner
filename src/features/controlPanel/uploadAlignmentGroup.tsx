@@ -112,7 +112,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
   return (
     <span style={{
       width: '100%',
-      marginTop: '16px'
+      marginTop: '8px'
     }}>
         <RemovableTooltip
           removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}

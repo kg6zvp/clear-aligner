@@ -20,7 +20,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
-import { Close, DeleteOutline, Unpublished, UploadFile } from '@mui/icons-material';
+import { Close, DeleteOutline, FileUpload, Unpublished, UploadFile } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
@@ -366,6 +366,7 @@ const ProjectCreationDialog: React.FC<ProjectCreationDialogProps> = ({
                           borderRadius: 10,
                         }}
                         disabled={project.location === ProjectLocation.REMOTE}>
+                  <FileUpload/>
                   Upload
                   <input type="file" hidden
                          onClick={(event) => {
