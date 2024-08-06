@@ -25,15 +25,17 @@ import { SwapHoriz, SwapVert, Translate } from '@mui/icons-material';
 const defaultDocumentTitle = 'ClearAligner';
 
 interface AlignmentEditorProps {
+  useDialogStyling?: boolean;
   showNavigation?: boolean;
   showProfileAvatar?: boolean;
   usePaddingForEditorContainer?: boolean;
+  useZeroYPaddingForToolbar?: boolean;
 }
 
 export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation = true,
                                                                   showProfileAvatar = true,
-                                                                  usePaddingForEditorContainer= true
-
+                                                                  usePaddingForEditorContainer= true,
+                                                                  useZeroYPaddingForToolbar = false,
                                                                 }) => {
   const layoutCtx = useContext(LayoutContext);
   const { sourceContainer, targetContainer } = useCorpusContainers();
@@ -94,8 +96,15 @@ export const AlignmentEditor: React.FC<AlignmentEditorProps> = ({ showNavigation
       <Box>
         <AppBar
           position="static"
+          sx={ (theme) => ({
+            backgroundColor: theme.palette.transparent,
+            backgroundImage: 'none'
+          })}
         >
-          <Toolbar>
+          <Toolbar sx={{
+            paddingLeft: useZeroYPaddingForToolbar ? '0px !important' : null,
+            paddingRight: useZeroYPaddingForToolbar ? '0px !important' : null,
+          }}>
             <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center'}}>
               <ButtonGroup sx={{ marginRight: '6px'}}>
                 <Tooltip

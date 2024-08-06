@@ -226,6 +226,11 @@ const ProjectCreationDialog: React.FC<ProjectCreationDialogProps> = ({
     <>
       <Dialog
         open={open}
+        sx={ theme => ({
+          '& .MuiPaper-root': {
+            background: theme.palette.primary.contrastText
+          },
+        })}
       >
         <DialogTitle>
           <Grid container justifyContent="space-between">
