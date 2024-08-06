@@ -13,6 +13,7 @@ import { AppContext } from '../../App';
 import GlossSegment from '../textSegment/glossSegment';
 import uuid from 'uuid-random';
 import ButtonSegment from '../textSegment/buttonSegment';
+import { ButtonWord } from './buttonWord';
 
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
