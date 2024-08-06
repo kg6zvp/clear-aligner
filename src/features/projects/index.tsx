@@ -5,16 +5,19 @@
 import {
   Button,
   Card,
+  CardActionArea,
   CardContent,
   FormControl,
   Grid,
   InputLabel,
   MenuItem,
-  Select, Stack,
-  Theme, Tooltip,
+  Select,
+  Stack,
+  Theme,
+  Tooltip,
   Typography
 } from '@mui/material';
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import ProjectCreationDialog from './projectCreationDialog';
 import { Project } from '../../state/projects/tableManager';
 import { DefaultProjectId } from '../../state/links/tableManager';
@@ -27,8 +30,13 @@ import {
   CloudOff,
   CloudOutlined,
   CollectionsBookmark,
-  Computer, Download, LibraryAdd,
-  Refresh, Settings, Sync, Upload
+  Computer,
+  Download,
+  LibraryAdd,
+  Refresh,
+  Settings,
+  Sync,
+  Upload
 } from '@mui/icons-material';
 import { useProjectsFromServer } from '../../api/projects/useProjectsFromServer';
 import { ProjectLocation } from '../../common/data/project/project';
@@ -64,11 +72,11 @@ const getPaletteFromProgress = (progress: Progress, theme: Theme) => {
 
 const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferredTheme }) => {
   useContext(LayoutContext);
-  const { preferences, projects: initialProjects, userStatus } = React.useContext(AppContext);
+  const { preferences, projects: initialProjects, userStatus } = useContext(AppContext);
   const { refetch: refetchRemoteProjects, progress: remoteFetchProgress } = useProjectsFromServer({
     enabled: false // Prevents immediate and useEffect-based requerying
   });
-  const [disableProjectButtons, setDisableProjectButtons] = React.useState(false);
+  const [disableProjectButtons, setDisableProjectButtons] = useState(false);
 
   useEffect(() => {
     if (remoteFetchProgress === 0) {
@@ -78,19 +86,19 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
     }
   }, [remoteFetchProgress]);
 
-  const isSignedIn = React.useMemo(() => (
+  const isSignedIn = useMemo(() => (
     userStatus === userState.LoggedIn
   ), [userStatus]);
 
   const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
 
 
-  const projects = React.useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
+  const projects = useMemo(() => initialProjects.filter(p => !!p?.name), [initialProjects]);
 
-  const [openProjectDialog, setOpenProjectDialog] = React.useState<boolean>(false);
-  const [selectedProjectId, setSelectedProjectId] = React.useState<string | null>(null);
+  const [openProjectDialog, setOpenProjectDialog] = useState<boolean>(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
-  const selectProject = React.useCallback((project?: Project) => {
+  const selectProject = useCallback((project?: Project) => {
     if (project) {
       setSelectedProjectId(project.id);
       setOpenProjectDialog(true);
@@ -99,7 +107,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
       setSelectedProjectId(null);
     }
   }, [setSelectedProjectId, setOpenProjectDialog]);
-  const unavailableProjectNames: string[] = React.useMemo(() => (
+  const unavailableProjectNames: string[] = useMemo(() => (
     projects.map(p => (p.name || '').trim())
   ), [projects]);
 
@@ -242,44 +250,51 @@ export const CreateProjectCard: React.FC<{
   closeCallback: () => void,
   isSignedIn: boolean
 }> = ({ onClick, projectId, unavailableProjectNames, open, closeCallback, isSignedIn }) => {
-  return (<>
-    <Card
-      onClick={open ? () => {} : (e) => onClick?.(e)}
-      sx={theme => ({
-        width: projectCardWidth,
-        height: projectCardHeight,
-        m: projectCardMargin,
-        '&:hover': {
-          boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
-            ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
-            : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-        },
-        transition: 'box-shadow 0.25s ease',
-        '*': {
-          cursor: 'default'
-        },
-        position: 'relative'
-      })}>
-      <CardContent
-        id={'create-card-content'}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyItems: 'center',
-          alignItems: 'center',
-          height: '100%',
-          margin: projectCardMargin
-        }}>
-        {open ?
-          <ProjectSettings closeCallback={closeCallback} isSignedIn={isSignedIn} unavailableProjectNames={unavailableProjectNames} projectId={null}/>
-          :
+  const cardContents: JSX.Element = (
+    <CardContent
+      id={'create-card-content'}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyItems: 'center',
+        alignItems: 'center',
+        height: '100%',
+        margin: projectCardMargin
+      }}>
+      {open ?
+        <ProjectSettings closeCallback={closeCallback} isSignedIn={isSignedIn} unavailableProjectNames={unavailableProjectNames} projectId={null}/>
+        :
         <Grid container justifyContent="center" alignItems="center" sx={{
           height: '100%',
           margin: '0 auto'
         }}>
           <LibraryAdd color={'primary'} />
         </Grid>}
-      </CardContent>
+    </CardContent>);
+  return (<>
+    <Card
+      variant={'outlined'}
+      onClick={open ? () => {} : (e) => onClick?.(e)}
+      sx={theme => ({
+        width: projectCardWidth,
+        height: projectCardHeight,
+        m: projectCardMargin,
+        backgroundColor: theme.palette.primary.contrastText,
+        position: 'relative'
+      })}>
+      {open
+        ? <>
+          {cardContents}
+        </>
+        : <CardActionArea
+            sx={{
+              width: '100%',
+              height: '100%'
+            }}
+            onClick={(e) => onClick?.(e)}>
+          {cardContents}
+        </CardActionArea>
+      }
     </Card>
   </>);
 }
@@ -314,13 +329,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     setUniqueNameError
   } = useSyncProject();
 
-  const { setPreferences, projectState, preferences, userStatus } = React.useContext(AppContext);
-  const isCurrentProject = React.useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
+  const { setPreferences, projectState, preferences, userStatus } = useContext(AppContext);
+  const isCurrentProject = useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
-  const isSignedIn = React.useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
+  const isSignedIn = useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
   const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
 
-  const updateCurrentProject = React.useCallback(() => {
+  const updateCurrentProject = useCallback(() => {
     projectState.linksTable.reset().catch(console.error);
     projectState.linksTable.setSourceName(project.id);
     setPreferences((p: UserPreference | undefined) => ({
@@ -331,7 +346,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setPreferences, preferences, project.id, projectState.userPreferenceTable, projectState.linksTable]);
 
-  const syncLocalProjectWithServer = React.useCallback(() => {
+  const syncLocalProjectWithServer = useCallback(() => {
     syncProject(project);
   }, [project, syncProject]);
 
@@ -481,125 +496,136 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     ><Settings/></Button>
   ), [project, onOpenProjectSettings, disableProjectButtons]);
 
+  const cardContents: JSX.Element = (
+    <CardContent sx={{
+      margin: projectCardMargin,
+      display: 'flex',
+      flexDirection: 'column',
+      height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%',
+    }}>
+      {isProjectDialogOpen ?
+        (<>
+          <ProjectSettings closeCallback={() => onOpenProjectSettings(undefined)} projectId={project.id} isSignedIn={isSignedIn} />
+        </>) : (
+          <>
+            <Box
+              id={'project-title'}
+              sx={{
+                position: 'absolute',
+                width: `calc(100% - 10 * ${projectCardMargin})`,
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                fontWeight: 'fontWeightMedium'
+              }}>
+              <Typography
+                sx={{ color: 'text.primary' }}
+                variant={'h6'}>
+                {project.name}
+              </Typography>
+              {locationIndicator}
+            </Box>
+            <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}>
+              <Typography variant="h6"
+                          sx={{ textAlign: 'center', mt: 4 }}>
+                <CollectionsBookmark sx={theme => ({
+                  color: theme.palette.text.secondary
+                })} />
+              </Typography>
+            </Grid>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                fontWeight: 'fontWeightMedium',
+                marginBottom: `calc(${projectCardMargin}/2)`,
+              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                  alignItems: 'initial'
+                }}>
+                {settingsButton}
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'flex-end',
+                  alignItems: 'initial'
+                }}>
+                <Box
+                  sx={{
+                    height: '100%',
+                    marginRight: '1em'
+                  }}>
+                  {
+                    (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary">
+                        <span style={{ fontWeight: 'bold' }}>Last sync</span>
+                        &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
+                      </Typography>
+                    )
+                  }
+                  {
+                    syncingProject === SyncProgress.FAILED && (
+                      <Typography
+                        variant="caption"
+                        color="error">
+                        There was an error uploading this project.
+                      </Typography>
+                    )
+                  }
+                </Box>
+                {serverActionButton}
+              </Box>
+            </Box>
+          </>
+        )}
+    </CardContent>
+  );
+
   return (
     <>
-      <Card sx={theme => ({
-        width: projectCardWidth,
-        height: projectCardHeight,
-        m: projectCardMargin,
-        ...(isCurrentProject ? {
-          borderBottomWidth: currentProjectBorderIndicatorHeight,
-          borderBottomStyle: 'solid',
-          borderBottomColor: 'success.main'
-        } : {}),
-        '&:hover': {
-          boxShadow: (theme.palette as unknown as { mode: string; }).mode === 'dark'
-            ? '0px 2px 4px -1px rgba(255,255,255,0.2), 0px 4px 5px 0px rgba(255,255,255,0.14), 0px 1px 10px 0px rgba(255,255,255,0.12)'
-            : '0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)'
-        },
-        transition: 'box-shadow 0.25s ease',
-        '*': {
-          cursor: disableProjectButtons ? 'default' : 'pointer'
-        },
-        position: 'relative'
-      })}>
-        <CardContent sx={{
-          margin: projectCardMargin,
-          display: 'flex',
-          flexDirection: 'column',
-          height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%',
-        }}>
-          {isProjectDialogOpen ?
-            (<>
-              <ProjectSettings closeCallback={() => onOpenProjectSettings(undefined)} projectId={project.id} isSignedIn={isSignedIn} />
-            </>) : (
-              <>
-                <Box
-                  id={'project-title'}
-                  sx={{
-                    position: 'absolute',
-                    width: `calc(100% - 10 * ${projectCardMargin})`,
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    fontWeight: 'fontWeightMedium'
-                  }}>
-                  <Typography
-                    sx={{ color: 'text.primary' }}
-                    variant={'h6'}>
-                    {project.name}
-                  </Typography>
-                  {locationIndicator}
-                </Box>
-                <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        !isCurrentProject && updateCurrentProject();
-                      }}>
-                  <Typography variant="h6"
-                              sx={{ textAlign: 'center', mt: 4 }}>
-                    <CollectionsBookmark sx={theme => ({
-                      color: theme.palette.text.secondary
-                    })} />
-                  </Typography>
-                </Grid>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    fontWeight: 'fontWeightMedium',
-                    marginBottom: `calc(${projectCardMargin}/2)`,
-                  }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-end',
-                      alignItems: 'initial'
-                    }}>
-                    {settingsButton}
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      justifyContent: 'flex-end',
-                      alignItems: 'initial'
-                    }}>
-                    <Box
-                      sx={{
-                        height: '100%',
-                        marginRight: '1em'
-                      }}>
-                      {
-                        (!!project.lastSyncTime && syncingProject !== SyncProgress.FAILED) && (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary">
-                            <span style={{ fontWeight: 'bold' }}>Last sync</span>
-                            &nbsp;{DateTime.fromJSDate(new Date(project.lastSyncTime)).toFormat('MMMM dd yyyy, hh:mm:ss a')}
-                          </Typography>
-                        )
-                      }
-                      {
-                        syncingProject === SyncProgress.FAILED && (
-                          <Typography
-                            variant="caption"
-                            color="error">
-                            There was an error uploading this project.
-                          </Typography>
-                        )
-                      }
-                    </Box>
-                    {serverActionButton}
-                  </Box>
-                </Box>
-              </>
-            )}
-        </CardContent>
+      <Card
+          variant={'outlined'}
+          sx={theme => ({
+            width: projectCardWidth,
+            height: projectCardHeight,
+            m: projectCardMargin,
+            backgroundColor: theme.palette.primary.contrastText,
+            ...(isCurrentProject ? {
+              borderBottomWidth: currentProjectBorderIndicatorHeight,
+              borderBottomStyle: 'solid',
+              borderBottomColor: 'success.main'
+            } : {}),
+            position: 'relative'
+          })}>
+        {(project.location !== ProjectLocation.REMOTE && !isCurrentProject)
+          ? <>
+            <CardActionArea
+              sx={{
+                width: '100%',
+                height: '100%'
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                !isCurrentProject && updateCurrentProject();
+              }}>
+              {cardContents}
+            </CardActionArea>
+          </>
+          : <>
+            {cardContents}
+          </>
+        }
       </Card>
       {syncDialog}
       {downloadProjectDialog}
