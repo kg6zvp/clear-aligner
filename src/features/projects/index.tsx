@@ -274,7 +274,6 @@ export const CreateProjectCard: React.FC<{
   return (<>
     <Card
       variant={'outlined'}
-      onClick={open ? () => {} : (e) => onClick?.(e)}
       sx={theme => ({
         width: projectCardWidth,
         height: projectCardHeight,
@@ -444,7 +443,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <Button variant="text"
                     disabled={buttonDisabled}
                     sx={buttonStyle}
-                    onClick={syncLocalProjectWithServer}>
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      syncLocalProjectWithServer();
+                    }}>
               <Upload sx={iconStyle} />
             </Button>
           );
@@ -453,7 +455,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <Button variant="text"
                     disabled={buttonDisabled}
                     sx={buttonStyle}
-                    onClick={() => downloadProject(project.id)}>
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void downloadProject(project.id);
+                    }}>
               <Download sx={iconStyle} />
             </Button>
           );
@@ -462,7 +467,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <Button variant="text"
                     disabled={buttonDisabled}
                     sx={buttonStyle}
-                    onClick={() => syncProject(project)}>
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      syncProject(project);
+                    }}>
               <Sync sx={iconStyle} />
             </Button>
           );
@@ -491,6 +499,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             }}
             disabled={disableProjectButtons}
             onClick={e => {
+              e.stopPropagation();
               onOpenProjectSettings(project);
             }}
     ><Settings/></Button>
@@ -608,7 +617,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             } : {}),
             position: 'relative'
           })}>
-        {(project.location !== ProjectLocation.REMOTE && !isCurrentProject)
+        {(project.location !== ProjectLocation.REMOTE && !isCurrentProject && !isProjectDialogOpen)
           ? <>
             <CardActionArea
               component={'div'}
