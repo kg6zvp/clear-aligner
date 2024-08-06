@@ -41,10 +41,9 @@ export const ButtonWord = ({
                           languageInfo={languageInfo}
                           sx={{
                             '.MuiButtonGroup-grouped': {
-                              //padding: '12px !important',
                               padding: '0px !important',
                               minWidth: '12px !important',
-                              height: '64px !important'
+                              height: '62px !important'
                             },
                           }} >
       {tokens?.map((token) => <ButtonToken key={token.id} token={token} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={hoverHighlightingDisabled} />)}
