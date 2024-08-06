@@ -37,7 +37,6 @@ import { ProjectLocation, ProjectState } from '../../common/data/project/project
 import { usePublishProject } from '../../api/projects/usePublishProject';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
-import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 
 enum ProjectDialogMode {
   CREATE = 'create',

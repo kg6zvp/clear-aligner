@@ -8,13 +8,11 @@ import {
   Box,
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
-  DialogTitle,
   FormControl,
   FormGroup,
   Grid,
-  IconButton, InputLabel,
+  InputLabel,
   MenuItem,
   Select,
   TextField,
@@ -189,7 +187,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
         }, 1000); // Set to 1000 ms to ensure the load dialog displays prior to parsing the tsv
       });
     }
-    , [dbApi, project, fileContent, setPreferences, dispatch, preferences, setProjects]);
+    , [dbApi, project, fileContent, setPreferences, dispatch, preferences, setProjects, projectId, projectState.projectTable, projectState.userPreferenceTable]);
 
   const handleDelete = useCallback(async () => {
     if (projectId) {
@@ -296,7 +294,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
           />
         </Button>
       </Box>);
-  }, [uploadErrors, project.fileName, project.location, handleUpdate, setUploadErrors, setFileContent]);
+  }, [uploadErrors, project.fileName, project.location, handleUpdate, setUploadErrors, setFileContent, projectId]);
 
   return (
     <>

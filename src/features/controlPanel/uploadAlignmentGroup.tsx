@@ -6,15 +6,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
-import { Button, ButtonGroup } from '@mui/material';
-import { FileDownload, FileUpload, Sync } from '@mui/icons-material';
+import { Button } from '@mui/material';
 import uuid from 'uuid-random';
 import { AlignmentFileCheckResults, checkAlignmentFile, saveAlignmentFile } from '../../helpers/alignmentFile';
 import { AlignmentValidationErrorDialog } from '../../components/alignmentValidationErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
-import { ProjectLocation } from '../../common/data/project/project';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,
@@ -51,7 +49,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     alignmentFileSaveState?.removeAllFirst,
     alignmentFileSaveState?.preserveFileIds,
     alignmentFileSaveState?.fromServer);
-  const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
+  const { progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
 
@@ -88,26 +86,6 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
       SyncProgress.SYNCING_ALIGNMENTS
     ].includes(progress)
   ), [progress]);
-
-  const enableSyncButton = useMemo<boolean>(() => {
-    if (!project) {
-      return false;
-    }
-    if (disableProjectButtons) {
-      return false;
-    }
-    if (!isSignedIn || containers.length < 1 || inProgress) {
-      return false;
-    }
-    if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-      return true;
-    }
-    if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
-      return true;
-    }
-    return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-      .some((corpus) => !!corpus.updatedSinceSync);
-  }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
 
   return (
     <span style={{

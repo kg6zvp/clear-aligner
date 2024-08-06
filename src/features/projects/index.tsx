@@ -364,7 +364,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       case ProjectLocation.SYNCED:
         return (<CloudDoneOutlined sx={propCompute} />);
     }
-  }, [project.location, isCurrentProject]);
+  }, [project.location]);
 
   const serverActionButton = useMemo(() => {
     const signedOutIcon = (
@@ -478,7 +478,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {actionButton}
       </RemovableTooltip>
     );
-  }, [isSignedIn, usingCustomEndpoint, syncingProject, disableProjectButtons, syncLocalProjectWithServer, downloadProject, syncProject, project, project.name]);
+  }, [isSignedIn, usingCustomEndpoint, syncingProject, disableProjectButtons, syncLocalProjectWithServer, downloadProject, syncProject, project]);
 
   const settingsButton = useMemo(() => (
     <Button variant="text"
@@ -611,6 +611,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {(project.location !== ProjectLocation.REMOTE && !isCurrentProject)
           ? <>
             <CardActionArea
+              component={'div'}
               sx={{
                 width: '100%',
                 height: '100%'

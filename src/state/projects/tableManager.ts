@@ -3,7 +3,7 @@
  */
 import { VirtualTable } from '../databaseManagement';
 import { Corpus, CorpusContainer, Word } from '../../structs';
-import { DefaultProjectId, EmptyWordId, LinksTable } from '../links/tableManager';
+import { EmptyWordId, LinksTable } from '../links/tableManager';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import _ from 'lodash';
 import { DatabaseApi } from '../../hooks/useDatabase';
