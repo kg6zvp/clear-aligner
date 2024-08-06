@@ -79,15 +79,14 @@ export const WordDisplay = ({
           ) : (showBorders ?
             (
               <>
-                <ButtonSegment
-                  disableHighlighting={disableHighlighting}
-                  readonly={readonly}
+                <ButtonWord
+                  disabled={readonly}
+                  hoverHighlightingDisabled={disableHighlighting}
                   suppressAfter={suppressAfter}
-                  onlyLinkIds={onlyLinkIds}
+                  //onlyLinkIds={onlyLinkIds}
                   links={links}
-                  parts={parts}
+                  tokens={parts}
                   corpus={corpus}
-                  languageInfo={languageInfo}
                 />
               </>
             ) : (

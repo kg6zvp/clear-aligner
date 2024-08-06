@@ -185,13 +185,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                         {lastWordId && container.findNext(lastWordId, BCVWPField.Word)?.toTruncatedReferenceString(BCVWPField.Word) !== wordId
                           ? <span id={`selected_${lastWordId}_ellipsis`}
                                   key={`selected_${lastWordId}_ellipsis`}>... </span> : ''}
-                        <WordDisplay
+                        <ButtonWord
                           suppressAfter={true}
-                          readonly={true}
                           key={wordId}
-                          parts={selectedWord}
+                          tokens={selectedWord}
                           corpus={corpusAtRef}
-                          disableHighlighting
                         />
                       </span>
                     );
