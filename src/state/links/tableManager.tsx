@@ -574,7 +574,7 @@ export const useImportAlignmentFile = (projectId?: string,
   }, [preserveFileIds, project, linksTable, prevSaveKey,
     alignmentFile, saveKey, status, suppressOnUpdate,
     projects, setProjects, preferences?.currentProject, projectState?.projectTable, suppressJournaling,
-    removeAllFirst]);
+    removeAllFirst, fromServer]);
 
   return { ...status };
 };

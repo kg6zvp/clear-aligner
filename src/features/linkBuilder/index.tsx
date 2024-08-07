@@ -6,12 +6,12 @@ import React, { ReactElement, useMemo } from 'react';
 import useDebug from 'hooks/useDebug';
 import { useAppSelector } from 'app/hooks';
 import { Divider, Typography } from '@mui/material';
-import { CorpusContainer, Word } from 'structs';
+import { CorpusContainer, TextDirection, Word } from 'structs';
 import findWordById from 'helpers/findWord';
 import cssVar from 'styles/cssVar';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
-import { WordDisplay } from '../wordDisplay';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { ButtonWord } from '../wordDisplay/buttonWord';
 
 interface LinkBuilderProps {
   containers: CorpusContainer[];
@@ -171,9 +171,9 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
               <div style={{ marginBottom: '8px' }}>
                 <Divider />
               </div>
-              <div>
+              <div style={{ direction: corpus.language.textDirection ?? TextDirection.LTR }}>
                 <span>&nbsp;</span>
-                {partsAsWords
+                {(partsAsWords)
                   .map((selectedWord, index: number): ReactElement => {
                     const lastWord = index > 0 ? partsAsWords.at(index-1) : undefined;
                     const lastWordId = lastWord ? BCVWP.parseFromString(lastWord.at(0)!.id!) : undefined;
@@ -185,13 +185,11 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                         {lastWordId && container.findNext(lastWordId, BCVWPField.Word)?.toTruncatedReferenceString(BCVWPField.Word) !== wordId
                           ? <span id={`selected_${lastWordId}_ellipsis`}
                                   key={`selected_${lastWordId}_ellipsis`}>... </span> : ''}
-                        <WordDisplay
+                        <ButtonWord
                           suppressAfter={true}
-                          readonly={true}
                           key={wordId}
-                          parts={selectedWord}
+                          tokens={selectedWord}
                           corpus={corpusAtRef}
-                          disableHighlighting
                         />
                       </span>
                     );
