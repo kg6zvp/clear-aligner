@@ -47,10 +47,25 @@ enum TextDirection {
   RTL = 'R to L'
 }
 
+/**
+ * props for project settings component
+ */
 export interface ProjectSettingsProps {
+  /**
+   * action run when the user requests to close the settings display
+   */
   closeCallback: () => void;
+  /**
+   * project id the settings display is for, null for project creation form
+   */
   projectId: string | null;
+  /**
+   * project names that already exist
+   */
   unavailableProjectNames?: string[];
+  /**
+   * whether the user is signed in
+   */
   isSignedIn: boolean;
 }
 
@@ -65,6 +80,13 @@ const getInitialProjectState = (): Project => ({
   location: ProjectLocation.LOCAL
 });
 
+/**
+ * project settings display
+ * @param closeCallback action run when the user requests to close the settings display
+ * @param projectId project id the settings display is for, null for project creation form
+ * @param isSignedIn whether the user is signed in
+ * @param unavailableProjectNames project names that already exist
+ */
 const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                                                        closeCallback,
                                                        projectId,
