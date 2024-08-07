@@ -136,7 +136,10 @@ declare module '@mui/material/styles' {
     background: {
       paper: string;
       default: string;
+    },
+    transparent: string,
+    alignmentStateMenu: {
+      check: string;
     }
-    transparent: string;
   }
 }

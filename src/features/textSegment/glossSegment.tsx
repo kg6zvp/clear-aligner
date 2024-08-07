@@ -157,7 +157,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                             >
                               Aligned
                             </Typography>
-                            {linkState === 'created' && <CheckIcon sx={{width: '18px', height: '20px'}}/>
+                            {linkState === 'created' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
                             }
                           </Box>
                         </MenuItem>
@@ -178,7 +178,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                             >
                               Rejected
                             </Typography>
-                            {linkState === 'rejected' && <CheckIcon sx={{width: '18px', height: '20px'}}/>
+                            {linkState === 'rejected' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
                             }
                           </Box>
                         </MenuItem>
@@ -199,7 +199,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                             >
                               Approved
                             </Typography>
-                            {linkState === 'approved' && <CheckIcon sx={{width: '18px', height: '20px'}}/>
+                            {linkState === 'approved' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
                             }
                           </Box>
                         </MenuItem>
@@ -220,7 +220,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                             >
                               Flagged
                             </Typography>
-                            {linkState === 'needsReview' && <CheckIcon sx={{width: '18px', height: '20px'}}/>
+                            {linkState === 'needsReview' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
                             }
                           </Box>
                         </MenuItem>
