@@ -16,6 +16,7 @@ import {
   getReferenceListFromWords
 } from '../bcvNavigation/structs';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { WordDisplayVariant } from '../wordDisplay';
 
 export interface CorpusProps {
   viewCorpora: CorpusContainer;
@@ -74,7 +75,9 @@ const determineCorpusView = async (
                 paddingRight: '0.7rem'
               }}
             >
-              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())} verse={verse}
+              <VerseDisplay corpus={viewCorpora.corpusAtReferenceString(verse.bcvId.toReferenceString())}
+                            verse={verse}
+                            variant={WordDisplayVariant.BUTTON}
                             allowGloss />
             </Typography>
           </Grid>

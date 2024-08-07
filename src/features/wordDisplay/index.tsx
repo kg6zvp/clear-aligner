@@ -15,19 +15,25 @@ import uuid from 'uuid-random';
 import ButtonSegment from '../textSegment/buttonSegment';
 import { ButtonWord } from './buttonWord';
 
+export enum WordDisplayVariant {
+  TEXT = 'TEXT',
+  BUTTON = 'BUTTON'
+}
+
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
+  variant?: WordDisplayVariant;
   suppressAfter?: boolean;
   parts?: Word[];
   corpus?: Corpus;
   allowGloss?: boolean;
   links?: Map<string, Link>;
-  showBorders?: boolean;
 }
 
 /**
  * Display a word made up of one or more parts with spacing after it
  * @param readonly whether the word should be displayed in read-only mode
+ * @param variant variant to use for word display
  * @param suppressAfter suppress after string at the end of the word
  * @param parts parts to display as a single word
  * @param languageInfo language info for display
@@ -35,6 +41,7 @@ export interface WordDisplayProps extends LimitedToLinks {
  */
 export const WordDisplay = ({
                               readonly,
+                              variant,
                               suppressAfter,
                               onlyLinkIds,
                               disableHighlighting,
@@ -42,11 +49,14 @@ export const WordDisplay = ({
                               corpus,
                               links,
                               allowGloss = false,
-                              showBorders = false
                             }: WordDisplayProps) => {
   const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
   const { preferences } = React.useContext(AppContext);
   const ref = parts?.find((part) => part.id)?.id;
+  const computedVariant = useMemo(() => {
+    if (!!variant) return variant;
+    return WordDisplayVariant.TEXT;
+  }, [variant]);
 
   return (
     <>
@@ -76,14 +86,14 @@ export const WordDisplay = ({
               allowGloss={allowGloss}
               languageInfo={languageInfo}
             />
-          ) : (showBorders ?
+          ) : (computedVariant === WordDisplayVariant.BUTTON ?
             (
               <>
                 <ButtonWord
+                  disableHighlighting={disableHighlighting}
                   disabled={readonly}
-                  hoverHighlightingDisabled={disableHighlighting}
                   suppressAfter={suppressAfter}
-                  //onlyLinkIds={onlyLinkIds}
+                  onlyLinkIds={onlyLinkIds}
                   links={links}
                   tokens={parts}
                   corpus={corpus}

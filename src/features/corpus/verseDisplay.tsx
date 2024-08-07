@@ -4,7 +4,7 @@
  */
 import { Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
-import { WordDisplay } from '../wordDisplay';
+import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -19,6 +19,7 @@ export interface LimitedToLinks {
 
 export interface VerseDisplayProps extends LimitedToLinks {
   readonly?: boolean;
+  variant?: WordDisplayVariant;
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
@@ -28,6 +29,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
  * which doesn't edit alignments
  * @param readonly optional property to specify if the verse should be displayed in read-only mode
+ * @param variant which component variant to use
  * @param corpus Corpus containing language information to determine how the verse should be displayed
  * @param verse verse to be displayed
  * @param onlyLinkIds
@@ -36,6 +38,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
  */
 export const VerseDisplay = ({
                                readonly,
+                               variant,
                                corpus,
                                verse,
                                onlyLinkIds,
@@ -81,13 +84,13 @@ export const VerseDisplay = ({
         (token: Word[], index): ReactElement => (
           <WordDisplay
             key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+            variant={variant}
             links={linkMap}
             readonly={readonly}
             onlyLinkIds={onlyLinkIds}
             corpus={corpus}
             parts={token}
             allowGloss={allowGloss}
-            showBorders={true}
           />
         )
       )}

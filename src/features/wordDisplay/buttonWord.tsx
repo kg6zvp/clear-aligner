@@ -8,8 +8,9 @@ import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
 import { Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
+import { LimitedToLinks } from '../corpus/verseDisplay';
 
-export interface ButtonWordProps {
+export interface ButtonWordProps extends LimitedToLinks {
   tokens?: Word[];
   /**
    * whether gloss should be displayed
@@ -22,7 +23,6 @@ export interface ButtonWordProps {
   corpus?: Corpus;
   suppressAfter?: boolean;
   disabled?: boolean;
-  hoverHighlightingDisabled?: boolean;
 }
 
 export const ButtonWord = ({
@@ -32,21 +32,23 @@ export const ButtonWord = ({
                             corpus,
                             enableGlossDisplay,
                             suppressAfter,
-                            hoverHighlightingDisabled
+                            disableHighlighting
                            }: ButtonWordProps) => {
   const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
+
   return (
     <LocalizedButtonGroup id={tokens?.[0]?.id}
                           disabled={disabled}
                           languageInfo={languageInfo}
                           sx={{
+                            borderStyle: 'none',
                             '.MuiButtonGroup-grouped': {
                               padding: '0px !important',
                               minWidth: '12px !important',
                               height: '62px !important'
                             },
                           }} >
-      {tokens?.map((token) => <ButtonToken key={token.id} token={token} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={hoverHighlightingDisabled} />)}
+      {tokens?.map((token) => <ButtonToken key={token.id} token={token} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
     </LocalizedButtonGroup>
   );
 }
@@ -100,6 +102,22 @@ export const ButtonToken = ({
     }
   }, [memberOfLink?.metadata.origin]);
 
+  const borderColor = useMemo<string>(() => {
+    if (!memberOfLink?.metadata.status) return 'text.disabled';
+    switch (memberOfLink?.metadata.status) {
+      case LinkStatus.APPROVED:
+        return 'success.main';
+      case LinkStatus.CREATED:
+        return 'primary.main';
+      case LinkStatus.NEEDS_REVIEW:
+        return 'warning.main';
+      case LinkStatus.REJECTED:
+        return 'error.main';
+      default:
+        return 'text.disabled';
+    }
+  }, [memberOfLink?.metadata.status]);
+
   const statusIndicator = useMemo<JSX.Element>(() => {
     const baseSx: SxProps<Theme> = {
       fontSize: '16px',
@@ -149,9 +167,12 @@ export const ButtonToken = ({
         sx={(theme) => ({
           textTransform: 'none',
           color: theme.palette.text.primary,
-          borderColor: `${theme.palette.text.disabled} !important`,
+          borderColor: `${borderColor} !important`,
           '&:hover': hoverColors,
-          padding: '0 !important'
+          padding: '0 !important',
+          '.MuiButtonGroup-grouped': {
+
+          }
         })}
         onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
         onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
