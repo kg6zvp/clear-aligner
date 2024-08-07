@@ -173,7 +173,6 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
               letterSpacing: '12px',
             }}>
             <CreateProjectCard
-              projectId={selectedProjectId}
               onClick={() => {
                 setSelectedProjectId(null);
                 setOpenProjectDialog(true);
@@ -242,14 +241,21 @@ const projectCardMargin = '4px';
 const projectCardWidth = 391;
 const projectCardHeight = 320;
 
+/**
+ * card component which allows users to create projects
+ * @param onClick action performed when the card is clicked
+ * @param unavailableProjectNames project names that can't be used because they already exist
+ * @param open if the project settings display is open (in this case, the project creation display)
+ * @param closeCallback callback when the creation display is dismissed
+ * @param isSignedIn whether the user is currently signed in
+ */
 export const CreateProjectCard: React.FC<{
   onClick?: (e: React.MouseEvent) => void,
-  projectId: string | null,
   unavailableProjectNames?: string[],
   open: boolean,
   closeCallback: () => void,
   isSignedIn: boolean
-}> = ({ onClick, projectId, unavailableProjectNames, open, closeCallback, isSignedIn }) => {
+}> = ({ onClick, unavailableProjectNames, open, closeCallback, isSignedIn }) => {
   const cardContents: JSX.Element = (
     <CardContent
       id={'create-card-content'}
@@ -298,17 +304,49 @@ export const CreateProjectCard: React.FC<{
   </>);
 }
 
+/**
+ * props for the project card component
+ */
 export interface ProjectCardProps {
+  /**
+   * project being represented by the project card
+   */
   project: Project;
+  /**
+   * the currently open project
+   */
   currentProject: Project | undefined;
+  /**
+   * callback when the user requests to open the project settings display (the {@link ProjectCard} component does not keep track of whether the dialog is open)
+   * @param project project to open the settings dialog for
+   */
   onOpenProjectSettings: (project?: Project) => void;
+  /**
+   * project names this can't be set to because they already exist
+   */
   unavailableProjectNames: string[];
+  /**
+   * whether the project action buttons should be disabled (import/export/etc.)
+   */
   disableProjectButtons: boolean;
+  /**
+   * whether the project settings display is currently enabled
+   */
   isProjectDialogOpen: boolean;
 }
 
 const currentProjectBorderIndicatorHeight = '4px';
 
+/**
+ * component displaying a project
+ * @param project project being displayed
+ * @param currentProject current project
+ * @param onOpenProjectSettings callback for the project settings display
+ * @param unavailableProjectNames unavailable names
+ * @param disableProjectButtons whether project buttons should be disabled
+ * @param isProjectDialogOpen whether the project settings display is being shown
+ * @constructor
+ */
 export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           project,
                                                           currentProject,
