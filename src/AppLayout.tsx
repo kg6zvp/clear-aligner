@@ -50,7 +50,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({theme}) => {
         }}>
           <Box sx={{ display: "flex" }}>
             <MiniDrawer/>
-            <div id={'outlet'} style={{ flexGrow: 1, overflow: 'auto' }}>
+            <div id={'outlet'} style={{ flexGrow: 1, height: '100vh', overflowX: 'hidden', overflowY: 'hidden' }}>
               <Outlet />
             </div>
           </Box>

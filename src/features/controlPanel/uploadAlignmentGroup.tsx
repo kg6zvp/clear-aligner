@@ -6,15 +6,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CorpusContainer } from '../../structs';
 import { AlignmentFile } from '../../structs/alignmentFile';
 import { useGetAllLinks, useImportAlignmentFile } from '../../state/links/tableManager';
-import { Button, ButtonGroup } from '@mui/material';
-import { FileDownload, FileUpload, Sync } from '@mui/icons-material';
+import { Button } from '@mui/material';
 import uuid from 'uuid-random';
 import { AlignmentFileCheckResults, checkAlignmentFile, saveAlignmentFile } from '../../helpers/alignmentFile';
 import { AlignmentValidationErrorDialog } from '../../components/alignmentValidationErrorDialog';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import { SyncProgress, useSyncProject } from '../../api/projects/useSyncProject';
 import { Project } from '../../state/projects/tableManager';
-import { ProjectLocation } from '../../common/data/project/project';
 
 const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isSignedIn, disableProjectButtons }: {
   project?: Project,
@@ -51,7 +49,7 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     alignmentFileSaveState?.removeAllFirst,
     alignmentFileSaveState?.preserveFileIds,
     alignmentFileSaveState?.fromServer);
-  const { sync: syncProject, progress, dialog, file: alignmentFileFromServer } = useSyncProject();
+  const { progress, dialog, file: alignmentFileFromServer } = useSyncProject();
   const [getAllLinksKey, setGetAllLinksKey] = useState<string>();
   const { result: allLinks } = useGetAllLinks(project?.id, getAllLinksKey);
 
@@ -89,69 +87,11 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
     ].includes(progress)
   ), [progress]);
 
-  const enableSyncButton = useMemo<boolean>(() => {
-    if (!project) {
-      return false;
-    }
-    if (disableProjectButtons) {
-      return false;
-    }
-    if (!isSignedIn || containers.length < 1 || inProgress) {
-      return false;
-    }
-    if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-      return true;
-    }
-    if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
-      return true;
-    }
-    return [...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-      .some((corpus) => !!corpus.updatedSinceSync);
-  }, [project, disableProjectButtons, isSignedIn, containers, inProgress]);
-
   return (
-    <span>
-      {
-        project?.location !== ProjectLocation.LOCAL && (
-          <>
-            <RemovableTooltip
-              removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
-              title={isSignedIn ? 'Sync Project' : 'Unable to sync projects while signed out'}
-              describeChild
-              arrow>
-          <span>
-
-                <Button
-                  size={size as 'medium' | 'small' | undefined}
-                  disabled={!enableSyncButton}
-                  variant="contained"
-                  sx={{
-                    minWidth: '100%',
-                    marginBottom: '.2em'
-                  }}
-                  onClick={async () => {
-                    project && syncProject(project);
-                  }}
-                >
-                  <Sync sx={theme => ({
-                    ...(inProgress ? {
-                      '@keyframes rotation': {
-                        from: { transform: 'rotate(0deg)' },
-                        to: { transform: 'rotate(360deg)' }
-                      },
-                      animation: '2s linear infinite rotation reverse',
-                      fill: inProgress ? theme.palette.text.secondary : 'white'
-                    } : {})
-                  })} />
-                </Button>
-          </span>
-            </RemovableTooltip>
-            <br />
-          </>
-        )}
-      <ButtonGroup
-        disabled={disableProjectButtons}
-      >
+    <span style={{
+      width: '100%',
+      marginTop: '8px'
+    }}>
         <RemovableTooltip
           removed={alignmentFileCheckResults?.showDialog || disableProjectButtons}
           title="Load Alignment Data"
@@ -199,12 +139,18 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 size={size as 'medium' | 'small' | undefined}
                 disabled={containers.length === 0 || !isCurrentProject || inProgress}
                 variant="contained"
+                component="label"
+                sx={{
+                  mr: '2px',
+                  borderRadius: 10,
+                  width: 'calc(50% - 2px)'
+              }}
                 onClick={() => {
                   // delegate file loading to regular file input
                   fileInputRef?.current?.click();
                 }}
               >
-                <FileUpload />
+                {'Import Data'}
               </Button>
             </span>
           </RemovableTooltip>
@@ -219,6 +165,12 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                 size={size as 'medium' | 'small' | undefined}
                 disabled={containers.length === 0 || inProgress}
                 variant="contained"
+                component="label"
+                sx={{
+                  ml: '2px',
+                  borderRadius: 10,
+                  width: 'calc(50% - 2px)'
+              }}
                 onClick={() => new Promise<undefined>((resolve) => {
                   setTimeout(async () => {
                     setGetAllLinksKey(String(Date.now()));
@@ -226,11 +178,10 @@ const UploadAlignmentGroup = ({ project, containers, size, isCurrentProject, isS
                   }, 20);
                 })}
               >
-                <FileDownload />
+                {'Export Data'}
               </Button>
             </span>
         </RemovableTooltip>
-      </ButtonGroup>
       {dialog}
     </span>
   );

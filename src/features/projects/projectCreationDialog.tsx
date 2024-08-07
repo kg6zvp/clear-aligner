@@ -14,13 +14,13 @@ import {
   FormControl,
   FormGroup,
   Grid,
-  IconButton,
+  IconButton, InputLabel,
   MenuItem,
   Select,
   TextField,
   Typography
 } from '@mui/material';
-import { Close, DeleteOutline, Unpublished } from '@mui/icons-material';
+import { Close, DeleteOutline, FileUpload, Unpublished, UploadFile } from '@mui/icons-material';
 import ISO6393 from 'utils/iso-639-3.json';
 import { DefaultProjectId, LinksTable } from '../../state/links/tableManager';
 import { Project } from '../../state/projects/tableManager';
@@ -38,13 +38,17 @@ import { usePublishProject } from '../../api/projects/usePublishProject';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
 
-
-enum TextDirection {
-  LTR = 'Left to Right',
-  RTL = 'Right to Left'
+enum ProjectDialogMode {
+  CREATE = 'create',
+  EDIT = 'update'
 }
 
-interface ProjectDialogProps {
+enum TextDirection {
+  LTR = 'L to R',
+  RTL = 'R to L'
+}
+
+export interface ProjectCreationDialogProps {
   open: boolean;
   closeCallback: () => void;
   projectId: string | null;
@@ -63,7 +67,7 @@ const getInitialProjectState = (): Project => ({
   location: ProjectLocation.LOCAL
 });
 
-const ProjectDialog: React.FC<ProjectDialogProps> = ({
+const ProjectCreationDialog: React.FC<ProjectCreationDialogProps> = ({
                                                        open,
                                                        closeCallback,
                                                        projectId,
@@ -117,7 +121,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
     && projectUpdated
   ), [invalidProjectName, uploadErrors.length, project.fileName, project.name, project.abbreviation, project.languageCode, project.textDirection, projectUpdated]);
 
-  const handleSubmit = React.useCallback(async (type: 'create' | 'update', e: any) => {
+  const handleSubmit = React.useCallback(async (type: ProjectDialogMode, e: any) => {
       projectState.projectTable?.incrDatabaseBusyCtr();
       while (!projectState.projectTable?.isDatabaseBusy()) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -217,7 +221,6 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
     setInitialProjectState().catch(console.error);
   }, [setInitialProjectState]);
 
-
   return (
     <>
       <Dialog
@@ -240,114 +243,174 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
         </DialogTitle>
         <DialogContent>
           <Grid container flexDirection="column" alignItems="center" justifyContent="space-between"
-                sx={{ width: 500, height: '100%', minHeight: 500, p: 2 }}>
+                sx={{ width: 500, height: '100%', p: 2 }}>
             <FormGroup sx={{ width: '100%' }}>
-              <FormControl>
-                <Typography variant="subtitle2">Name</Typography>
-                <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.name}
-                           disabled={project.location === ProjectLocation.REMOTE}
-                           onChange={({ target: { value: name } }) =>
-                             handleUpdate({ name })}
-                           error={invalidProjectName}
-                           helperText={invalidProjectName ? 'Project name already in use.' : ''}
-                />
-              </FormControl>
-              <FormControl>
-                <Typography variant="subtitle2">Abbreviation</Typography>
-                <TextField size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.abbreviation}
-                           disabled={project.location === ProjectLocation.REMOTE}
-                           onChange={({ target: { value: abbreviation } }) =>
-                             handleUpdate({ abbreviation })}
-                />
-              </FormControl>
-              <FormControl>
-                <Typography variant="subtitle2">Language</Typography>
-                <Autocomplete
-                  size="small"
-                  fullWidth
-                  disablePortal
-                  options={languageOptions}
-                  ListboxProps={{
-                    style: {
-                      maxHeight: 250
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                }}>
+                <FormControl
+                  sx={{
+                    flexGrow: 1
+                  }}>
+                  <TextField size="small" label={'Name'} sx={{  }} fullWidth type="text" value={project.name}
+                             disabled={project.location === ProjectLocation.REMOTE}
+                             onChange={({ target: { value: name } }) =>
+                               handleUpdate({ name })}
+                             error={invalidProjectName}
+                             helperText={invalidProjectName ? 'Project name already in use.' : ''}
+                  />
+                </FormControl>
+                <FormControl>
+                  <TextField
+                    size="small"
+                    sx={{
+                      ml: '2px',
+                      width: '84px'
+                    }}
+                    label={'Abbrev'}
+                    fullWidth
+                    type="text"
+                    value={project.abbreviation}
+                    disabled={project.location === ProjectLocation.REMOTE}
+                    onChange={({ target: { value: abbreviation } }) =>
+                      handleUpdate({ abbreviation })}
+                  />
+                </FormControl>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  width: '100%',
+                  mt: '12px'
+                }}>
+                <FormControl
+                  sx={{
+                    width: '90px'
+                  }}>
+                  <InputLabel id={'direction-label'} shrink>Direction</InputLabel>
+                  <Select
+                    size="small"
+                    label={'Direction'}
+                    sx={{
+                    }}
+                    fullWidth type="text" value={project.textDirection}
+                    disabled={project.location === ProjectLocation.REMOTE}
+                    onChange={({ target: { value: textDirection } }) =>
+                      handleUpdate({ textDirection: textDirection as string })
+                    }>
+                    {
+                      Object.keys(TextDirection).map(td => (
+                        <MenuItem key={td.toLowerCase()} value={td.toLowerCase()}>
+                          {TextDirection[td as keyof typeof TextDirection]}
+                        </MenuItem>
+                      ))
                     }
-                  }}
-                  sx={{ mb: 2 }}
-                  disabled={project.location === ProjectLocation.REMOTE}
-                  value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
-                  onChange={(_, language) =>
-                    handleUpdate({
-                      languageCode: Object.keys(ISO6393).find(k => ISO6393[k as keyof typeof ISO6393] === language) ?? ''
-                    })}
-                  renderInput={(params) => <TextField {...params} />}
-                />
-              </FormControl>
-              <FormControl>
-                <Typography variant="subtitle2">Text Direction</Typography>
-                <Select size="small" sx={{ mb: 2 }} fullWidth type="text" value={project.textDirection}
-                        disabled={project.location === ProjectLocation.REMOTE}
-                        onChange={({ target: { value: textDirection } }) =>
-                          handleUpdate({ textDirection: textDirection as string })
-                        }>
-                  {
-                    Object.keys(TextDirection).map(td => (
-                      <MenuItem key={td.toLowerCase()} value={td.toLowerCase()}>
-                        {TextDirection[td as keyof typeof TextDirection]}
-                      </MenuItem>
-                    ))
-                  }
-                </Select>
-              </FormControl>
+                  </Select>
+                </FormControl>
+                <FormControl
+                  sx={{
+                    flexGrow: 1,
+                    ml: '2px'
+                  }}>
+                  <Autocomplete
+                    sx={{
+                    }}
+                    size="small"
+                    fullWidth
+                    disablePortal
+                    options={languageOptions}
+                    ListboxProps={{
+                      style: {
+                        maxHeight: 250
+                      }
+                    }}
+                    disabled={project.location === ProjectLocation.REMOTE}
+                    value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
+                    onChange={(_, language) =>
+                      handleUpdate({
+                        languageCode: Object.keys(ISO6393).find(k => ISO6393[k as keyof typeof ISO6393] === language) ?? ''
+                      })}
+                    renderInput={(params) => <TextField label={'Language'} {...params} />}
+                  />
+                </FormControl>
+              </Box>
 
-              <Button variant="contained" component="label" sx={{ mt: 2, textTransform: 'none' }}
-                      disabled={project.location === ProjectLocation.REMOTE}>
-                Upload File
-                <input type="file" hidden
-                       onClick={(event) => {
-                         // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
-                         // event isn't thrown.
+              <Box
+                sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexDirection: 'row'
+                }}>
+                <Box
+                  sx={(theme) => ({
+                    marginRight: '6px',
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    borderStyle: 'dashed',
+                    borderWidth: '1px',
+                    borderColor: theme.palette.text.disabled,
+                    paddingX: '8px',
+                    flexGrow: 1
+                  })}>
+                  <UploadFile sx={{ color: uploadErrors.length ? 'error.main' : 'primary.main', m: 1 }} />
+                  <Typography variant="subtitle2" sx={{ mt: .5 }} {...(uploadErrors.length ? { color: 'error' } : { color: 'primary' })}>
+                    {uploadErrors.length ? (
+                      <>
+                        {uploadErrors.map(error => <span style={{ display: 'block' }}>{error}</span>)}
+                      </>
+                    ) : project.fileName}
+                  </Typography>
+                </Box>
+                <Button variant="contained" component="label"
+                        sx={{
+                          borderRadius: 10,
+                        }}
+                        disabled={project.location === ProjectLocation.REMOTE}>
+                  <FileUpload/>
+                  Upload
+                  <input type="file" hidden
+                         onClick={(event) => {
+                           // this is a fix which allows loading a file of the same path and filename. Otherwise the onChange
+                           // event isn't thrown.
 
-                         // @ts-ignore
-                         event.currentTarget.value = null;
-                       }}
-                       onChange={async (event) => {
-                         // grab file content
-                         const file = event!.target!.files![0];
-                         const content = await file.text();
-                         const errorMessages: string[] = [];
-                         const contentLines = content.split('\n');
-                         if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
-                           errorMessages.push('TSV must include \'text\' and \'id\' headers.');
-                         }
-                         let goodCtr = 0;
-                         for (const contentLine of contentLines) {
-                           goodCtr += !!contentLine ? 1 : 0;
-                           if (goodCtr > 1) {
-                             break;
+                           // @ts-ignore
+                           event.currentTarget.value = null;
+                         }}
+                         onChange={async (event) => {
+                           // grab file content
+                           const file = event!.target!.files![0];
+                           const content = await file.text();
+                           const errorMessages: string[] = [];
+                           const contentLines = content.split('\n');
+                           if (!['text', 'id'].every(header => contentLines[0].includes(header))) {
+                             errorMessages.push('TSV must include \'text\' and \'id\' headers.');
                            }
-                         }
-                         if (goodCtr < 2) {
-                           errorMessages.push('TSV must include at least one row of data.');
-                         }
-                         if (errorMessages.length) {
-                           setUploadErrors(errorMessages);
-                           return;
-                         }
+                           let goodCtr = 0;
+                           for (const contentLine of contentLines) {
+                             goodCtr += !!contentLine ? 1 : 0;
+                             if (goodCtr > 1) {
+                               break;
+                             }
+                           }
+                           if (goodCtr < 2) {
+                             errorMessages.push('TSV must include at least one row of data.');
+                           }
+                           if (errorMessages.length) {
+                             setUploadErrors(errorMessages);
+                             return;
+                           }
 
-                         setUploadErrors([]);
-                         handleUpdate({ fileName: file.name });
-                         setFileContent(content);
-                       }}
-                />
-              </Button>
-              <Typography variant="subtitle2" sx={{ mt: 1 }} {...(uploadErrors.length ? { color: 'error' } : {})}>
-                {uploadErrors.length ? (
-                  <>
-                    <span style={{ display: 'block' }}>The file you have selected is not valid:</span>
-                    {uploadErrors.map(error => <span style={{ display: 'block' }}>{error}</span>)}
-                  </>
-                ) : project.fileName}
-              </Typography>
+                           setUploadErrors([]);
+                           handleUpdate({ fileName: file.name });
+                           setFileContent(content);
+                         }}
+                  />
+                </Button>
+              </Box>
             </FormGroup>
           </Grid>
         </DialogContent>
@@ -355,7 +418,7 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
           <Grid container justifyContent="space-between" sx={{ p: 2 }}>
             <Grid container alignItems="center" sx={{ width: 'fit-content' }}>
               {
-                (projectId && allowDelete)
+                (projectId && allowDelete && (project.location === ProjectLocation.LOCAL || project.location === ProjectLocation.SYNCED))
                   ? <Button variant="text" color="error" sx={{ textTransform: 'none', mr: 1 }}
                             onClick={() => setOpenConfirmDelete(true)}
                             startIcon={<DeleteOutline />}
@@ -372,19 +435,25 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
                   : <Box />
               }
             </Grid>
-            <Button
-              variant="contained"
-              sx={{ textTransform: 'none' }}
-              disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
-              onClick={e => {
-                handleSubmit(projectId ? 'update' : 'create', e).then(() => {
-                  // handleClose() in the .then() ensures dialog doesn't close prematurely
-                  handleClose();
-                });
-              }}
-            >
-              {projectId ? 'Update' : 'Create'}
-            </Button>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+              }}>
+              <Button
+                onClick={handleClose}>Cancel</Button>
+              <Button
+                disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
+                onClick={e => {
+                  handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
+                    // handleClose() in the .then() ensures dialog doesn't close prematurely
+                    handleClose();
+                  });
+                }}
+              >
+                {projectId ? 'Update' : 'Create'}
+              </Button>
+            </Box>
           </Grid>
         </DialogActions>
       </Dialog>
@@ -434,4 +503,4 @@ const ProjectDialog: React.FC<ProjectDialogProps> = ({
   );
 };
 
-export default ProjectDialog;
+export default ProjectCreationDialog;
