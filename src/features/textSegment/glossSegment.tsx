@@ -14,7 +14,7 @@ interface GlossSegmentProps extends LimitedToLinks {
   readonly?: boolean;
   suppressAfter?: boolean;
   parts?: Word[];
-  links?: Map<string, Link>;
+  links?: Map<string, Link[]>;
   corpus?: Corpus;
   allowGloss?: boolean;
   languageInfo?: LanguageInfo;

@@ -12,7 +12,6 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
 import GlossSegment from '../textSegment/glossSegment';
 import uuid from 'uuid-random';
-import ButtonSegment from '../textSegment/buttonSegment';
 import { ButtonWord } from './buttonWord';
 
 export enum WordDisplayVariant {
@@ -27,7 +26,7 @@ export interface WordDisplayProps extends LimitedToLinks {
   parts?: Word[];
   corpus?: Corpus;
   allowGloss?: boolean;
-  links?: Map<string, Link>;
+  links?: Map<string, Link[]>;
 }
 
 /**
@@ -97,6 +96,7 @@ export const WordDisplay = ({
                   links={links}
                   tokens={parts}
                   corpus={corpus}
+                  enableGlossDisplay={allowGloss}
                 />
               </>
             ) : (

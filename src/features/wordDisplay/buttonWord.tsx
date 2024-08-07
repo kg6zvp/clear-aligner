@@ -1,14 +1,17 @@
 import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
 import { useMemo } from 'react';
-import { Button, SvgIconOwnProps, SxProps, Theme } from '@mui/material';
+import { Button, decomposeColor, SvgIconOwnProps, SxProps, Theme, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
-import { useAppDispatch } from '../../app';
+import { useAppDispatch, useAppSelector } from '../../app';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
 import { Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
+import BCVWP from '../bcvwp/BCVWPSupport';
+import { AlignmentSide } from '../../common/data/project/corpus';
+import _ from 'lodash';
 
 export interface ButtonWordProps extends LimitedToLinks {
   tokens?: Word[];
@@ -19,7 +22,7 @@ export interface ButtonWordProps extends LimitedToLinks {
   /**
    * link data
    */
-  links?: Map<string, Link>;
+  links?: Map<string, Link[]>;
   corpus?: Corpus;
   suppressAfter?: boolean;
   disabled?: boolean;
@@ -60,9 +63,13 @@ export interface ButtonTokenProps {
    */
   enableGlossDisplay?: boolean;
   /**
+   * whether rejected links should be shown. If this is false|undefined (default), it is as if the link does not exist
+   */
+  showRejected?: boolean;
+  /**
    * link data
    */
-  links?: Map<string, Link>;
+  links?: Map<string, Link[]>;
   languageInfo?: LanguageInfo;
   suppressAfter?: boolean;
   disabled?: boolean;
@@ -78,87 +85,184 @@ export const ButtonToken = ({
                               token,
                               languageInfo,
                               enableGlossDisplay,
+                              showRejected,
                               suppressAfter,
                               hoverHighlightingDisabled
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
+  const theme = useTheme();
 
-  const memberOfLink = useMemo(() => links?.get(token.id), [links, token.id]);
+  /**
+   * whether the current token is being hovered by the user
+   */
+  const isHoveredToken = useAppSelector(
+    (state) =>
+      state.textSegmentHover.hovered?.side === token.side &&
+      state.textSegmentHover.hovered?.id === token.id
+  );
+
+  /**
+   * the token currently being hovered by the user
+   */
+  const currentlyHoveredToken = useAppSelector(
+    (state) => state.textSegmentHover.hovered
+  );
+
+  /**
+   * links currently being hovered over by the user, if any
+   */
+  const currentlyHoveredLinks = useMemo<Link[]>(() => {
+    if (!links
+      || !currentlyHoveredToken?.id) {
+      return [];
+    }
+    const sanitized = BCVWP.sanitize(currentlyHoveredToken.id);
+    const result = [...links.values()].flatMap((a) => a).find((link: Link) => link[currentlyHoveredToken.side].includes(sanitized));
+    return result ? [result] : [];
+  }, [links, currentlyHoveredToken?.id, currentlyHoveredToken?.side]);
+
+  /**
+   * link this token is a member of, undefined if not a member
+   */
+  const memberOfLinks = useMemo(() => {
+    const foundLinks = links?.get(BCVWP.sanitize(token.id));
+    if (showRejected) return foundLinks;
+    return foundLinks?.filter((link) => link?.metadata.status !== LinkStatus.REJECTED);
+  }, [links, showRejected, token.id]);
+
+  /**
+   * since rejected links no longer show up, we must filter the links and choose a primary link to use for display purposes that this token is a member of
+   */
+  const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
+
+  const wasMemberOfCurrentlyEditedLink = useAppSelector((state) =>
+    state.alignment.present.inProgressLink?.id && memberOfLinks?.map(({ id }) => id).filter((v) => !!v).includes(state.alignment.present.inProgressLink?.id));
+
+  const isSelectedInEditedLink = useAppSelector((state) => {
+    switch (token.side) {
+      case AlignmentSide.SOURCE:
+        return !!state.alignment.present.inProgressLink?.sources.includes(
+          BCVWP.sanitize(token.id)
+        );
+      case AlignmentSide.TARGET:
+        return !!state.alignment.present.inProgressLink?.targets.includes(
+          BCVWP.sanitize(token.id)
+        );
+    }
+  });
+
+  const isCurrentlyHoveredToken = useMemo<boolean>(() => token?.side === currentlyHoveredToken?.side && token?.id === currentlyHoveredToken?.id, [currentlyHoveredToken, token?.id, token?.side]);
+
+  /**
+   * whether this token is a member of an alignment that the currently hovered token is a member of
+   */
+  const isInLinkWithCurrentlyHoveredToken = useMemo(
+    () => {
+      return _.intersection(memberOfLinks, currentlyHoveredLinks).length > 0;
+    },
+    [memberOfLinks, currentlyHoveredLinks]
+  );
+
+  /**
+   * this is the color used for the iconography and borders in an unselected state
+   * when the token is selected, this is the background/fill color
+   */
+  const buttonPrimaryColor = useMemo(() => {
+    if (!memberOfPrimaryLink?.metadata.status && isSelectedInEditedLink) return theme.palette.primary.main;
+    if (!memberOfPrimaryLink?.metadata.status) return theme.palette.text.disabled;
+    switch (memberOfPrimaryLink?.metadata.status) {
+      case LinkStatus.APPROVED:
+        return theme.palette.success.main;
+      case LinkStatus.CREATED:
+        return theme.palette.primary.main;
+      case LinkStatus.NEEDS_REVIEW:
+        return theme.palette.warning.main;
+      case LinkStatus.REJECTED:
+        return theme.palette.error.main;
+      default:
+        return theme.palette.text.disabled;
+    }
+  }, [memberOfPrimaryLink?.metadata.status, theme.palette.success.main, theme.palette.primary.main, theme.palette.warning.main, theme.palette.text.disabled, theme.palette.error.main, isSelectedInEditedLink]);
+
+  const buttonNormalBackgroundColor = useMemo(() => theme.palette.background.default, [theme.palette.background.default]);
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
+    const color = (() => {
+      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isSelectedInEditedLink) {
+        return buttonNormalBackgroundColor;
+      }
+      return buttonPrimaryColor;
+    })();
     const iconProps: SvgIconOwnProps = {
       sx: {
         fontSize: '16px',
-        transform: 'translate(0, -4px)',
+        transform: 'translate(0, -3px)',
+        color,
       }
     };
     /* eslint-disable no-fallthrough */
-    switch (memberOfLink?.metadata.origin) {
+    switch (memberOfPrimaryLink?.metadata.origin) {
       case 'manual':
         return (<Person {...iconProps} />)
       default:
         return (<>
         </>);
     }
-  }, [memberOfLink?.metadata.origin]);
-
-  const borderColor = useMemo<string>(() => {
-    if (!memberOfLink?.metadata.status) return 'text.disabled';
-    switch (memberOfLink?.metadata.status) {
-      case LinkStatus.APPROVED:
-        return 'success.main';
-      case LinkStatus.CREATED:
-        return 'primary.main';
-      case LinkStatus.NEEDS_REVIEW:
-        return 'warning.main';
-      case LinkStatus.REJECTED:
-        return 'error.main';
-      default:
-        return 'text.disabled';
-    }
-  }, [memberOfLink?.metadata.status]);
+  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
+    const color = (() => {
+      if (isCurrentlyHoveredToken) return buttonPrimaryColor;
+      if (isSelectedInEditedLink) {
+        return buttonNormalBackgroundColor;
+      }
+      return buttonPrimaryColor;
+    })();
     const baseSx: SxProps<Theme> = {
       fontSize: '16px',
-      transform: 'translate(0, 3px)',
+      transform: 'translate(0, 2px)',
+      color
     };
-    switch (memberOfLink?.metadata.status) {
+    switch (memberOfPrimaryLink?.metadata.status) {
       case LinkStatus.APPROVED:
         return (<CheckCircle sx={{
           ...baseSx,
-          color: 'success.main'
         }} />);
       case LinkStatus.CREATED:
         return (<InsertLink sx={{
           ...baseSx,
-          color: 'primary.main'
         }} />);
       case LinkStatus.NEEDS_REVIEW:
         return (<Flag sx={(theme) => ({
           ...baseSx,
-          color: theme.palette.warning.main
         })} />);
       case LinkStatus.REJECTED:
         return (<Cancel sx={{
           ...baseSx,
-          color: 'error.main'
         }} />);
     }
-    if (memberOfLink) {
+    if (memberOfPrimaryLink) {
       return (<InsertLink sx={{
           ...baseSx,
-          color: 'primary.main'
         }} />);
     }
     return (<>
     </>);
-  }, [memberOfLink]);
+  }, [memberOfPrimaryLink, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor]);
 
-  const hoverColors = useMemo(() => {
-    return {
-    };
-  }, [memberOfLink]);
+  const hoverSx: SxProps<Theme> = useMemo(() => {
+    if (buttonPrimaryColor === theme.palette.text.disabled) {
+      const decomposedColor = decomposeColor(theme.palette.primary.main)
+      return ({
+        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, .08)`
+      });
+    }
+    const rgbColor = decomposeColor(buttonPrimaryColor);
+    return ({
+      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, .08)`
+    });
+  }, [buttonPrimaryColor, theme.palette.text.disabled, theme.palette.primary.main]);
 
   return (<>
       <Button
@@ -166,17 +270,21 @@ export const ButtonToken = ({
         component={'button'}
         sx={(theme) => ({
           textTransform: 'none',
-          color: theme.palette.text.primary,
-          borderColor: `${borderColor} !important`,
-          '&:hover': hoverColors,
+          color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+          borderColor: `${buttonPrimaryColor} !important`,
+          '&:hover': hoverSx,
           padding: '0 !important',
-          '.MuiButtonGroup-grouped': {
-
-          }
+          ...(isSelectedInEditedLink ? {
+            backgroundColor: buttonPrimaryColor
+          } : {}),
+          /**
+           * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
+           */
+          ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
         })}
         onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
         onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-        onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfLink].filter((v) => !!v), word: token }))}>
+        onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
         <LocalizedTextDisplay languageInfo={languageInfo}>
           <Box
             sx={{

@@ -68,13 +68,18 @@ export const VerseDisplay = ({
       && !onlyLink) {
       return;
     }
-    const result = new Map<string, Link>();
+    const result = new Map<string, Link[]>();
     (allLinks ?? [onlyLink as Link])
       .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
       .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
         ? link!.sources
         : link!.targets) ?? [])
-        .forEach(wordId => result.set(wordId, link!)));
+        .forEach(wordId => {
+          if (!result.has(wordId)) {
+            result.set(wordId, []);
+          }
+          result.get(wordId)!.push(link!);
+        }));
     return result;
   }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 

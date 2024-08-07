@@ -46,7 +46,7 @@ const determineCorpusView = async (
           <Typography
             sx={
               bcvId?.matchesTruncated(verse.bcvId, BCVWPField.Verse)
-                ? { textDecoration: 'underline', fontStyle: 'italic' }
+                ? { fontStyle: 'italic' }
                 : {}
             }
           >
