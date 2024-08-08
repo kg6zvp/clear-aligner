@@ -13,6 +13,9 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 
+/**
+ * props for the {@link ButtonWord} component
+ */
 export interface ButtonWordProps extends LimitedToLinks {
   tokens?: Word[];
   /**
@@ -28,6 +31,16 @@ export interface ButtonWordProps extends LimitedToLinks {
   disabled?: boolean;
 }
 
+/**
+ * Displays a word as a {@link LocalizedButtonGroup}
+ * @param disabled if the word has input disabled
+ * @param links links map to be displayed with this group of tokens
+ * @param tokens tokens being displayed
+ * @param corpus corpus for displayed tokens
+ * @param enableGlossDisplay whether gloss display is toggled on
+ * @param suppressAfter whether the after of tokens should be displayed or suppressed
+ * @param disableHighlighting whether highlighting behavior is turned off, defaults to normal highlighting behavior
+ */
 export const ButtonWord = ({
                             disabled,
                             links,
@@ -56,6 +69,9 @@ export const ButtonWord = ({
   );
 }
 
+/**
+ * props used by {@link ButtonToken}
+ */
 export interface ButtonTokenProps {
   token: Word;
   /**
@@ -79,6 +95,17 @@ export interface ButtonTokenProps {
   hoverHighlightingDisabled?: boolean;
 }
 
+/**
+ * component that displays an individual token as a button
+ * @param disabled whether the button is disabled
+ * @param links links possibly associated with the token
+ * @param token token being displayed
+ * @param languageInfo language information for the token
+ * @param enableGlossDisplay whether gloss is toggled on
+ * @param showRejected whether rejected links should be displayed
+ * @param suppressAfter whether the after string should be displayed
+ * @param hoverHighlightingDisabled whether normal hover behavior is suppressed
+ */
 export const ButtonToken = ({
                               disabled,
                               links,
@@ -358,7 +385,7 @@ export const ButtonToken = ({
                   <Typography
                     variant={'caption'}
                     sx={{
-                      color: theme.palette.tokenButtons.defaultTokenButtons.text
+                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
                     }} >
                     {token.gloss ?? '-'}
                   </Typography> : <></>}

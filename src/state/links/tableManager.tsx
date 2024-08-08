@@ -472,7 +472,6 @@ export const useSaveLink = (updateNonManualLinksToApproveOnSave?: boolean) => {
         return (Array.isArray(linkOrLinks) ? linkOrLinks : [ linkOrLinks ])
           .map((link) => {
             if (link.metadata.origin !== LinkOriginManual) {
-              console.log('updating status');
               return {
                 ...link,
                 metadata: {

@@ -10,15 +10,20 @@ import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import React, { useMemo } from 'react';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import { AppContext } from '../../App';
-import GlossSegment from '../textSegment/glossSegment';
 import uuid from 'uuid-random';
 import { ButtonWord } from './buttonWord';
 
+/**
+ * used for expressing which variant of the {@link WordDisplay component should be shown}
+ */
 export enum WordDisplayVariant {
   TEXT = 'TEXT',
   BUTTON = 'BUTTON'
 }
 
+/**
+ * props for {@link WordDisplay} component
+ */
 export interface WordDisplayProps extends LimitedToLinks {
   readonly?: boolean;
   variant?: WordDisplayVariant;
