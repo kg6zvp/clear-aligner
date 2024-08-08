@@ -12,6 +12,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
+import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
 
 /**
  * props for the {@link ButtonWord} component
@@ -119,6 +120,8 @@ export const ButtonToken = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
 
+
+
   /**
    * whether the current token is being hovered by the user
    */
@@ -161,6 +164,9 @@ export const ButtonToken = ({
    * since rejected links no longer show up, we must filter the links and choose a primary link to use for display purposes that this token is a member of
    */
   const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
+
+  // Allow the user to right-click on an alignment and change it's state
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(memberOfPrimaryLink);
 
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
@@ -316,6 +322,9 @@ export const ButtonToken = ({
   }, [buttonPrimaryColor, backgroundImageGradientTransparent, alpha, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
   return (<>
+    <Box
+      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
+    >
       <Button
         disabled={disabled}
         component={'button'}
@@ -403,6 +412,8 @@ export const ButtonToken = ({
           </Box>
         </LocalizedTextDisplay>
       </Button>
+      <ContextMenuAlignmentState />
+    </Box>
       {!!token.after && !suppressAfter
         ? <Button disabled={true}>
             <LocalizedTextDisplay languageInfo={languageInfo}>

@@ -16,7 +16,7 @@ import { useSaveLink } from '../state/links/tableManager';
  * useAlignmentStateContextMenu hook
  * allow users to change the link state by right-clicking on an alignment
  */
-const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
+const useAlignmentStateContextMenu = (link?: Link ): any => {
   const [isLinkStateMenuOpen, setIsLinkStateMenuOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [linkState ,setLinkState ] = React.useState("")
@@ -28,12 +28,9 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
                             wordPartID: string) => {
     setWordPartID(wordPartID);
 
-    // grab the link if it exists
-   const thisLink = links?.get(wordPartID)
-
     // if this is a valid link, open the menu
-    if(thisLink){
-      setLinkState(thisLink?.metadata.status);
+    if(link){
+      setLinkState(link?.metadata.status);
       setAnchorEl(event.currentTarget);
       setIsLinkStateMenuOpen(true);
     }
@@ -46,14 +43,13 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
   };
 
   // change the state of the alignment
-  const handleMenuClick = (event: any, wordPartID: string, links?: Map<string, Link>) => {
+  const handleMenuClick = React.useCallback((event: any, wordPartID: string) => {
     const { linkState } = event.currentTarget.dataset;
     // prepare an updated link to save
-    const thisLink = links?.get(wordPartID)
     const updatedLink = {
-      ...thisLink,
+      ...link,
       metadata: {
-        ...thisLink?.metadata,
+        ...link?.metadata,
         status: linkState
       }
     }
@@ -63,7 +59,7 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
     // close menu
     setAnchorEl(null);
     setIsLinkStateMenuOpen(false);
-  }
+  },[saveLink])
 
   const ContextMenu = () => (
     <Menu
@@ -82,7 +78,7 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
     >
       <MenuItem
         data-link-state={'created'}
-        onClick={(e) => handleMenuClick( e, wordPartID, links)}
+        onClick={(e) => handleMenuClick( e, wordPartID)}
       >
         <ListItemIcon >
           <LinkIcon sx={{
@@ -103,7 +99,7 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
       </MenuItem>
       <MenuItem
         data-link-state={'rejected'}
-        onClick={(e) => handleMenuClick( e, wordPartID, links)}
+        onClick={(e) => handleMenuClick( e, wordPartID)}
       >
         <ListItemIcon >
           <Cancel sx={{
@@ -124,7 +120,7 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
       </MenuItem>
       <MenuItem
         data-link-state={'approved'}
-        onClick={(e) => handleMenuClick( e, wordPartID, links)}
+        onClick={(e) => handleMenuClick( e, wordPartID)}
       >
         <ListItemIcon>
           <CheckCircle sx={{
@@ -145,7 +141,7 @@ const useAlignmentStateContextMenu = (links?: Map<string, Link>): any => {
       </MenuItem>
       <MenuItem
         data-link-state={'needsReview'}
-        onClick={(e) => handleMenuClick( e, wordPartID, links)}
+        onClick={(e) => handleMenuClick( e, wordPartID)}
       >
         <ListItemIcon>
           <Flag sx={{
