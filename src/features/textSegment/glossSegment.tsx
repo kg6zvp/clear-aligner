@@ -63,15 +63,14 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
               return (
                 <React.Fragment key={wordPart.id}>
                   <Box
+                    onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, wordPart.id, links)}
                     sx={{
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'flex-end',
                   }}
                   >
-                    <Box
-                      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, wordPart.id, links)}
-                    >
+                    <Box>
                       <TextSegment
                         key={wordPart.id}
                         readonly={readonly}
