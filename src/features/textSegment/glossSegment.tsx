@@ -4,16 +4,12 @@
  */
 import React from 'react';
 import { ThemeMode } from '../themed';
-import { Box, Divider, Grid, Menu, MenuItem, Paper, Typography, useTheme } from '@mui/material';
+import { Box, Divider, Grid, Paper } from '@mui/material';
 import { Corpus, LanguageInfo, Link, Word } from '../../structs';
 import TextSegment from './index';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LimitedToLinks } from '../corpus/verseDisplay';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import { Cancel, CheckCircle, Flag } from '@mui/icons-material';
-import CheckIcon from '@mui/icons-material/Check';
-import LinkIcon from '@mui/icons-material/Link';
-import { useSaveLink } from '../../state/links/tableManager';
+import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
 
 
 interface GlossSegmentProps extends LimitedToLinks {
@@ -45,47 +41,8 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                         languageInfo
                       }: GlossSegmentProps) => {
 
-  const [isLinkStateMenuOpen, setIsLinkStateMenuOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const {saveLink} = useSaveLink();
-  const [linkState ,setLinkState ] = React.useState("")
-  const [wordPartID, setWordPartID] = React.useState("");
-
-  const handleRightClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>, wordPartID: string) => {
-    setWordPartID(wordPartID);
-    // grab the link if it exists
-    const thisLink = links?.get(wordPartID)
-
-    // if this is a valid link, open the menu
-    if(thisLink){
-      setLinkState(thisLink?.metadata.status);
-      setAnchorEl(event.currentTarget);
-      setIsLinkStateMenuOpen(true);
-    }
-  }
-  const handleClose = () => {
-    setAnchorEl(null);
-    setIsLinkStateMenuOpen(false);
-  };
-  const handleMenuClick = (event: any, wordPartID: string) => {
-    const { linkState } = event.currentTarget.dataset;
-    // prepare an updated link to save
-    const thisLink = links?.get(wordPartID)
-    const updatedLink = {
-      ...thisLink,
-      metadata: {
-        ...thisLink?.metadata,
-        status: linkState
-      }
-    }
-    // save link
-    saveLink(updatedLink as Link);
-
-    setAnchorEl(null);
-    setIsLinkStateMenuOpen(false);
-  }
-
-  const theme = useTheme();
+  // Allow the user to right-click on an alignment and change it's state
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(links);
 
   return (
     <>
@@ -113,7 +70,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                   }}
                   >
                     <Box
-                      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, wordPart.id)}
+                      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, wordPart.id, links)}
                     >
                       <TextSegment
                         key={wordPart.id}
@@ -126,105 +83,7 @@ const GlossSegment: React.FC<GlossSegmentProps> = ({
                         showAfter={!suppressAfter}
                         alignment={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'}
                       />
-                      <Menu
-                        id="link-state-menu"
-                        anchorEl={anchorEl}
-                        open={isLinkStateMenuOpen}
-                        onClose={handleClose}
-                        anchorOrigin={{
-                          vertical: 'bottom',
-                          horizontal: 'center',
-                        }}
-                        transformOrigin={{
-                          vertical: 'top',
-                          horizontal: 'right',
-                        }}
-                      >
-                        <MenuItem
-                          data-link-state={'created'}
-                          onClick={(e) => handleMenuClick( e, wordPartID)}
-                        >
-                          <ListItemIcon >
-                            <LinkIcon sx={{
-                              color : theme.palette.primary.main
-                            }} />
-                          </ListItemIcon>
-                          <Box
-                            sx={{width: '87px', display: 'flex', justifyContent: 'space-between'}}
-                          >
-                            <Typography
-                              sx={{fontSize: '13px'}}
-                            >
-                              Aligned
-                            </Typography>
-                            {linkState === 'created' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-                            }
-                          </Box>
-                        </MenuItem>
-                        <MenuItem
-                          data-link-state={'rejected'}
-                          onClick={(e) => handleMenuClick( e, wordPartID)}
-                        >
-                          <ListItemIcon >
-                            <Cancel sx={{
-                              color : theme.palette.error.main
-                            }} />
-                          </ListItemIcon>
-                          <Box
-                            sx={{width: '87px', display: 'flex', justifyContent: 'space-between', gap: '12px'}}
-                          >
-                            <Typography
-                              sx={{fontSize: '13px'}}
-                            >
-                              Rejected
-                            </Typography>
-                            {linkState === 'rejected' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-                            }
-                          </Box>
-                        </MenuItem>
-                        <MenuItem
-                          data-link-state={'approved'}
-                          onClick={(e) => handleMenuClick( e, wordPartID)}
-                        >
-                          <ListItemIcon>
-                            <CheckCircle sx={{
-                              color : theme.palette.success.main
-                            }}/>
-                          </ListItemIcon>
-                          <Box
-                            sx={{width: '87px', display: 'flex', justifyContent: 'space-between', gap: '12px'}}
-                          >
-                            <Typography
-                              sx={{fontSize: '13px'}}
-                            >
-                              Approved
-                            </Typography>
-                            {linkState === 'approved' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-                            }
-                          </Box>
-                        </MenuItem>
-                        <MenuItem
-                          data-link-state={'needsReview'}
-                          onClick={(e) => handleMenuClick( e, wordPartID)}
-                        >
-                          <ListItemIcon>
-                            <Flag sx={{
-                              color : theme.palette.warning.main
-                            }} />
-                          </ListItemIcon>
-                          <Box
-                            sx={{width: '87px', display: 'flex', justifyContent: 'space-between'}}
-                          >
-                            <Typography
-                              sx={{fontSize: '13px'}}
-                            >
-                              Flagged
-                            </Typography>
-                            {linkState === 'needsReview' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-                            }
-                          </Box>
-                        </MenuItem>
-                      </Menu>
+                      <ContextMenuAlignmentState />
                     </Box>
                     <Grid container justifyContent={idx === 0 && (parts || []).length > 1 ? 'flex-end' : 'flex-start'} sx={{ height: '20px' }}>
                       <LocalizedTextDisplay
