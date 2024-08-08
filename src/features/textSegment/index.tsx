@@ -25,7 +25,7 @@ export interface TextSegmentProps extends LimitedToLinks {
   languageInfo?: LanguageInfo;
   showAfter?: boolean;
   alignment?: 'flex-end' | 'flex-start' | 'center';
-  links?: Map<string, Link>;
+  links?: Map<string, Link[]>;
 }
 
 const computeVariant = (
@@ -114,7 +114,7 @@ export const TextSegment = ({
       return [];
     }
     const result = links.get(BCVWP.sanitize(word.id));
-    return (result ? [result] : []);
+    return (result ?? []);
   }, [links, word?.id]);
   const hoveredLinks = useMemo<Link[]>(() => {
     if (!links
@@ -122,7 +122,7 @@ export const TextSegment = ({
       return [];
     }
     const sanitized = BCVWP.sanitize(currentlyHoveredWord.id);
-    const result = [...links.values()].find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
+    const result = [...links.values()].flatMap((a) => a).find((link: Link) => link[currentlyHoveredWord.side].includes(sanitized));
     return result ? [result] : [];
   }, [links, currentlyHoveredWord?.id, currentlyHoveredWord?.side]);
 

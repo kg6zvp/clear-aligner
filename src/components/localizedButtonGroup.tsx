@@ -3,6 +3,9 @@ import { LanguageInfo, TextDirection } from '../structs';
 import { useMemo } from 'react';
 import { SxProps } from '@mui/system';
 
+/**
+ * props for {@link LocalizedButtonGroup}
+ */
 export interface LocalizedButtonGroupProps extends ButtonGroupProps {
   languageInfo?: LanguageInfo;
 }
@@ -10,6 +13,13 @@ export interface LocalizedButtonGroupProps extends ButtonGroupProps {
 const normalRoundedRadius = '4px';
 const borderRadius = 0;
 
+/**
+ * component to display buttons with localization awareness (things like LTR, RTL display, font choices, etc.)
+ * @param languageInfo language information used for the button group
+ * @param sx style information
+ * @param children buttons in the button group
+ * @param others any other parameters normally applied to a material UI {@link ButtonGroup}
+ */
 export const LocalizedButtonGroup = ({
                                       languageInfo,
                                       sx,
@@ -59,7 +69,7 @@ export const LocalizedButtonGroup = ({
       '.MuiButtonGroup-middleButton': middleButtonSx,
       '.MuiButtonGroup-lastButton': lastButtonSx
     };
-  }, [sx, languageInfo?.textDirection, languageInfo?.fontFamily, languageInfo?.code]);
+  }, [sx, languageInfo?.textDirection, languageInfo?.fontFamily, firstButtonSx, middleButtonSx, lastButtonSx]);
 
   return (
     <ButtonGroup

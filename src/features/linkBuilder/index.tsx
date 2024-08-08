@@ -12,6 +12,7 @@ import cssVar from 'styles/cssVar';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { ButtonWord } from '../wordDisplay/buttonWord';
+import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {
   containers: CorpusContainer[];
@@ -185,11 +186,13 @@ export const LinkBuilderComponent: React.FC<LinkBuilderProps> = ({
                         {lastWordId && container.findNext(lastWordId, BCVWPField.Word)?.toTruncatedReferenceString(BCVWPField.Word) !== wordId
                           ? <span id={`selected_${lastWordId}_ellipsis`}
                                   key={`selected_${lastWordId}_ellipsis`}>... </span> : ''}
-                        <ButtonWord
+                        <WordDisplay
                           suppressAfter={true}
+                          readonly={true}
                           key={wordId}
-                          tokens={selectedWord}
+                          parts={selectedWord}
                           corpus={corpusAtRef}
+                          disableHighlighting
                         />
                       </span>
                     );

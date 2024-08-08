@@ -68,9 +68,6 @@ const alignmentSlice = createSlice({
             sources: relatedLink.sources.map(BCVWP.sanitize),
             targets: relatedLink.targets.map(BCVWP.sanitize),
           };
-          if (relatedLink.metadata.origin !== LinkOriginManual) {
-            state.inProgressLink.metadata.status = LinkStatus.APPROVED;
-          }
           return;
         } else { // create
           state.inProgressLink = {
