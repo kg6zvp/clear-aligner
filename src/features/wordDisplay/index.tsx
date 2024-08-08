@@ -73,19 +73,7 @@ export const WordDisplay = ({
         }}
       >
         {
-          (hasGloss && preferences?.showGloss && allowGloss) ? (
-            <GlossSegment
-              disableHighlighting={disableHighlighting}
-              readonly={readonly}
-              suppressAfter={suppressAfter}
-              onlyLinkIds={onlyLinkIds}
-              links={links}
-              parts={parts}
-              corpus={corpus}
-              allowGloss={allowGloss}
-              languageInfo={languageInfo}
-            />
-          ) : (computedVariant === WordDisplayVariant.BUTTON ?
+          (computedVariant === WordDisplayVariant.BUTTON ?
             (
               <>
                 <ButtonWord
@@ -96,7 +84,7 @@ export const WordDisplay = ({
                   links={links}
                   tokens={parts}
                   corpus={corpus}
-                  enableGlossDisplay={allowGloss}
+                  enableGlossDisplay={preferences?.showGloss && hasGloss}
                 />
               </>
             ) : (

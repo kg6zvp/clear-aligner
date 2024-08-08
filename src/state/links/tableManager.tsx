@@ -1,7 +1,7 @@
 /**
  * This file contains the LinksTable Class and supporting functions.
  */
-import { Link } from '../../structs';
+import { Link, LinkOriginManual, LinkStatus } from '../../structs';
 import BCVWP from '../../features/bcvwp/BCVWPSupport';
 import { DatabaseStatus, InitialDatabaseStatus, VirtualTable } from '../databaseManagement';
 import uuid from 'uuid-random';
@@ -454,8 +454,9 @@ const databaseHookDebug = (text: string, ...args: any[]) => {
  * on re-render. A constant value will ensure an operation only happens once, and a UUID
  * or other ephemeral value will force a refresh. Destructive or time-consuming hooks
  * require key values to execute, others will execute when key parameters are undefined (i.e., by default).
+ * @param updateNonManualLinksToApproveOnSave whether this hook should update the status of links created by non-manual procedures to an approved state
  */
-export const useSaveLink = () => {
+export const useSaveLink = (updateNonManualLinksToApproveOnSave?: boolean) => {
   const { projectState, preferences, projects } = React.useContext(AppContext);
   const [progress, setProgress] = React.useState<Progress>(Progress.IDLE);
   const [status, setStatus] = useState<{
@@ -466,8 +467,27 @@ export const useSaveLink = () => {
     if (!linkOrLinks) {
       return;
     }
+    const linksToSave = (() => {
+      if (!!linkOrLinks && updateNonManualLinksToApproveOnSave) {
+        return (Array.isArray(linkOrLinks) ? linkOrLinks : [ linkOrLinks ])
+          .map((link) => {
+            if (link.metadata.origin !== LinkOriginManual) {
+              console.log('updating status');
+              return {
+                ...link,
+                metadata: {
+                  ...link.metadata,
+                  status: LinkStatus.APPROVED
+                }
+              };
+            }
+            return link;
+          });
+      }
+      return linkOrLinks;
+    })();
     databaseHookDebug('useSaveLink(): status', status);
-    projectState?.linksTable.save(linkOrLinks)
+    projectState?.linksTable.save(linksToSave)
       .then(result => {
         const currentProject = projects.find(p => p.id === preferences?.currentProject && !!p.id);
         if (currentProject) {
@@ -488,7 +508,7 @@ export const useSaveLink = () => {
       setProgress(Progress.FAILED);
       setTimeout(() => setProgress(Progress.IDLE), 5000);
     });
-  }, [projects, projectState, preferences, status]);
+  }, [projects, status, updateNonManualLinksToApproveOnSave, setProgress, projectState?.linksTable, preferences?.currentProject, projectState?.projectTable]);
 
   return { status, saveLink, progress };
 };

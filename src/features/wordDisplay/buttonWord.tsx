@@ -1,13 +1,13 @@
 import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
 import { useMemo } from 'react';
-import { Button, decomposeColor, SvgIconOwnProps, SxProps, Theme, useTheme } from '@mui/material';
+import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
 import { useAppDispatch, useAppSelector } from '../../app';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
+import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -37,7 +37,7 @@ export const ButtonWord = ({
                             suppressAfter,
                             disableHighlighting
                            }: ButtonWordProps) => {
-  const { language: languageInfo, hasGloss } = useMemo(() => corpus ?? { language: undefined, hasGloss: false }, [corpus]);
+  const { language: languageInfo } = useMemo(() => corpus ?? { language: undefined }, [corpus]);
 
   return (
     <LocalizedButtonGroup id={tokens?.[0]?.id}
@@ -48,7 +48,7 @@ export const ButtonWord = ({
                             '.MuiButtonGroup-grouped': {
                               padding: '0px !important',
                               minWidth: '12px !important',
-                              height: '62px !important'
+                              height: enableGlossDisplay ? '82px !important' : '62px !important'
                             },
                           }} >
       {tokens?.map((token) => <ButtonToken key={token.id} token={token} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
@@ -135,9 +135,6 @@ export const ButtonToken = ({
    */
   const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
 
-  const wasMemberOfCurrentlyEditedLink = useAppSelector((state) =>
-    state.alignment.present.inProgressLink?.id && memberOfLinks?.map(({ id }) => id).filter((v) => !!v).includes(state.alignment.present.inProgressLink?.id));
-
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
       case AlignmentSide.SOURCE:
@@ -203,13 +200,19 @@ export const ButtonToken = ({
     };
     /* eslint-disable no-fallthrough */
     switch (memberOfPrimaryLink?.metadata.origin) {
+      case 'machine':
+        return (<AutoAwesome {...{
+          ...iconProps,
+          color: undefined,
+          fill: `url(#machine-color-gradient-${token.side}-${token.id})`
+        }} />);
       case 'manual':
-        return (<Person {...iconProps} />)
+        return (<Person {...iconProps} />);
       default:
         return (<>
         </>);
     }
-  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor]);
+  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, token.side, token.id]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
@@ -230,8 +233,13 @@ export const ButtonToken = ({
           ...baseSx,
         }} />);
       case LinkStatus.CREATED:
-        return (<InsertLink sx={{
+        if (memberOfPrimaryLink?.metadata.origin === 'machine') return (<InsertLink sx={{
           ...baseSx,
+          color: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : undefined,
+          fill: color !== buttonNormalBackgroundColor ? `url(#machine-color-gradient-${token.side}-${token.id})` : undefined
+        }} />);
+        return (<InsertLink sx={{
+          ...baseSx
         }} />);
       case LinkStatus.NEEDS_REVIEW:
         return (<Flag sx={(theme) => ({
@@ -249,20 +257,36 @@ export const ButtonToken = ({
     }
     return (<>
     </>);
-  }, [memberOfPrimaryLink, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor]);
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, token.side, token.id]);
+
+  const alpha = useMemo(() => '.12', []);
+  const topColor = useMemo(() => decomposeColor('#33D6FF'), []);
+  const bottomColor = useMemo(() => decomposeColor('#AD8CFF'), []);
+
+  const backgroundImageGradientSolid = useMemo(() => `linear-gradient(rgba(${topColor.values[0]}, ${topColor.values[1]}, ${topColor.values[2]}), rgba(${bottomColor.values[0]}, ${bottomColor.values[1]}, ${bottomColor.values[2]}))`, [topColor.values, bottomColor.values]);
+
+  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${topColor.values[0]}, ${topColor.values[1]}, ${topColor.values[2]}, ${alpha}), rgba(${bottomColor.values[0]}, ${bottomColor.values[1]}, ${bottomColor.values[2]}, ${alpha}))`, [alpha, topColor.values, bottomColor.values]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
     if (buttonPrimaryColor === theme.palette.text.disabled) {
       const decomposedColor = decomposeColor(theme.palette.primary.main)
       return ({
-        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, .08)`
+        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alpha})`
       });
     }
+    if (memberOfPrimaryLink?.metadata.origin === 'machine' && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
+      return ({
+        backgroundColor: undefined,
+        backgroundImage: backgroundImageGradientTransparent
+      });
+    } //*/
     const rgbColor = decomposeColor(buttonPrimaryColor);
     return ({
-      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, .08)`
+      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alpha})`
     });
-  }, [buttonPrimaryColor, theme.palette.text.disabled, theme.palette.primary.main]);
+  }, [buttonPrimaryColor, backgroundImageGradientTransparent, alpha, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
   return (<>
       <Button
@@ -275,7 +299,8 @@ export const ButtonToken = ({
           '&:hover': hoverSx,
           padding: '0 !important',
           ...(isSelectedInEditedLink ? {
-            backgroundColor: buttonPrimaryColor
+            backgroundColor: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === 'machine' ? undefined : buttonPrimaryColor,
+            backgroundImage: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === 'machine' ? backgroundImageGradientSolid : undefined
           } : {}),
           /**
            * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
@@ -285,6 +310,12 @@ export const ButtonToken = ({
         onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
         onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
         onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
+        <svg width={0} height={0}>
+          <linearGradient id={`machine-color-gradient-${token.side}-${token.id}`} x1={1} y1={0} x2={1} y2={1}>
+            <stop offset={0} stopColor={'#33D6FF'} />
+            <stop offset={1} stopColor={'#AD8CFF'} />
+          </linearGradient>
+        </svg>
         <LocalizedTextDisplay languageInfo={languageInfo}>
           <Box
             sx={{
@@ -303,14 +334,35 @@ export const ButtonToken = ({
             </Box>
             <Box
               sx={{
-                width: '100%',
                 display: 'flex',
                 marginLeft: '12px',
                 marginRight: '12px',
-                flexGrow: 1
-                //m: '12px'
+                flexGrow: 1,
               }}>
-              {token.text}
+              <Stack>
+                {/*
+                  * word text display
+                  */}
+                <LocalizedTextDisplay
+                  languageInfo={languageInfo}
+                  sx={{
+                    width: '100%',
+                    justifyContent: 'center'
+                  }}>
+                  {token.text}
+                </LocalizedTextDisplay>
+                {/*
+                  * gloss display
+                  */}
+                {enableGlossDisplay ?
+                  <Typography
+                    variant={'caption'}
+                    sx={{
+                      color: theme.palette.tokenButtons.defaultTokenButtons.text
+                    }} >
+                    {token.gloss ?? '-'}
+                  </Typography> : <></>}
+              </Stack>
             </Box>
             <Box
               sx={{
@@ -325,7 +377,7 @@ export const ButtonToken = ({
         </LocalizedTextDisplay>
       </Button>
       {!!token.after && !suppressAfter
-        ? <Button key={`${token.id}-after`} disabled={true}>
+        ? <Button disabled={true}>
             <LocalizedTextDisplay languageInfo={languageInfo}>
               {token.after}
             </LocalizedTextDisplay>
