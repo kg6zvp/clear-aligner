@@ -1,5 +1,5 @@
 import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Button, SvgIconOwnProps, SxProps, Theme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
@@ -8,6 +8,7 @@ import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
 import { Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
+import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
 
 export interface ButtonWordProps {
   tokens?: Word[];
@@ -81,6 +82,9 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
 
+  // Allow the user to right-click on an alignment and change it's state
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(links);
+
   const memberOfLink = useMemo(() => links?.get(token.id), [links, token.id]);
 
   const sourceIndicator = useMemo<JSX.Element>(() => {
@@ -143,6 +147,9 @@ export const ButtonToken = ({
   }, [memberOfLink]);
 
   return (<>
+    <Box
+      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
+    >
       <Button
         disabled={disabled}
         component={'button'}
@@ -151,7 +158,7 @@ export const ButtonToken = ({
           color: theme.palette.text.primary,
           borderColor: `${theme.palette.text.disabled} !important`,
           '&:hover': hoverColors,
-          padding: '0 !important'
+          padding: '0 !important',
         })}
         onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
         onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
@@ -195,6 +202,8 @@ export const ButtonToken = ({
           </Box>
         </LocalizedTextDisplay>
       </Button>
+      <ContextMenuAlignmentState />
+    </Box>
       {!!token.after && !suppressAfter
         ? <Button key={`${token.id}-after`} disabled={true}>
             <LocalizedTextDisplay languageInfo={languageInfo}>
