@@ -69,7 +69,7 @@ export const LocalizedButtonGroup = ({
       '.MuiButtonGroup-middleButton': middleButtonSx,
       '.MuiButtonGroup-lastButton': lastButtonSx
     };
-  }, [sx, languageInfo?.textDirection, languageInfo?.fontFamily, languageInfo?.code]);
+  }, [sx, languageInfo?.textDirection, languageInfo?.fontFamily, firstButtonSx, middleButtonSx, lastButtonSx]);
 
   return (
     <ButtonGroup
