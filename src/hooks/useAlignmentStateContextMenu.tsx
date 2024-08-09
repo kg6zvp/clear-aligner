@@ -16,29 +16,27 @@ import { useSaveLink } from '../state/links/tableManager';
  * useAlignmentStateContextMenu hook
  * allow users to change the link state by right-clicking on an alignment
  */
-const useAlignmentStateContextMenu = (link?: Link ): any => {
+const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<undefined>, link?: Link ): any => {
   const [isLinkStateMenuOpen, setIsLinkStateMenuOpen] = React.useState(false);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [linkState ,setLinkState ] = React.useState("")
+  const [localLink, setLocalLink] = React.useState<Link>();
   const [wordPartID, setWordPartID] = React.useState("");
   const theme = useTheme();
   const {saveLink} = useSaveLink();
 
-  const handleRightClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>,
-                            wordPartID: string) => {
+  const handleRightClick = (wordPartID: string) => {
     setWordPartID(wordPartID);
 
     // if this is a valid link, open the menu
     if(link){
       setLinkState(link?.metadata.status);
-      setAnchorEl(event.currentTarget);
+      setLocalLink(link);
       setIsLinkStateMenuOpen(true);
     }
     //otherwise don't open the menu
   }
 
   const handleClose = () => {
-    setAnchorEl(null);
     setIsLinkStateMenuOpen(false);
   };
 
@@ -46,124 +44,124 @@ const useAlignmentStateContextMenu = (link?: Link ): any => {
   const handleMenuClick = React.useCallback((event: any, wordPartID: string) => {
     const { linkState } = event.currentTarget.dataset;
     // prepare an updated link to save
+
     const updatedLink = {
-      ...link,
+      ...localLink,
       metadata: {
-        ...link?.metadata,
+        ...localLink?.metadata,
         status: linkState
       }
     }
     // save link
     saveLink(updatedLink as Link);
 
-    // close menu
-    setAnchorEl(null);
-    setIsLinkStateMenuOpen(false);
-  },[saveLink])
+    handleClose()
+  },[saveLink, localLink])
 
-  const ContextMenu = () => (
-    <Menu
-      id="link-state-menu"
-      anchorEl={anchorEl}
-      open={isLinkStateMenuOpen}
-      onClose={handleClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'center',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'right',
-      }}
-    >
-      <MenuItem
-        data-link-state={'created'}
-        onClick={(e) => handleMenuClick( e, wordPartID)}
-      >
-        <ListItemIcon >
-          <LinkIcon sx={{
-            color : theme.palette.primary.main
-          }} />
-        </ListItemIcon>
-        <Box
-          sx={{width: '87px', display: 'flex', justifyContent: 'space-between'}}
+  const ContextMenu = () => {
+    return(
+        <Menu
+          id="link-state-menu"
+          anchorEl={localAnchorEl.current}
+          open={isLinkStateMenuOpen}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
         >
-          <Typography
-            sx={{fontSize: '13px'}}
+          <MenuItem
+            data-link-state={'created'}
+            onClick={(e) => handleMenuClick( e, wordPartID)}
           >
-            Aligned
-          </Typography>
-          {linkState === 'created' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-          }
-        </Box>
-      </MenuItem>
-      <MenuItem
-        data-link-state={'rejected'}
-        onClick={(e) => handleMenuClick( e, wordPartID)}
-      >
-        <ListItemIcon >
-          <Cancel sx={{
-            color : theme.palette.error.main
-          }} />
-        </ListItemIcon>
-        <Box
-          sx={{width: '87px', display: 'flex', justifyContent: 'space-between', gap: '12px'}}
-        >
-          <Typography
-            sx={{fontSize: '13px'}}
+            <ListItemIcon >
+              <LinkIcon sx={{
+                color : theme.palette.primary.main
+              }} />
+            </ListItemIcon>
+            <Box
+              sx={{width: '87px', display: 'flex', justifyContent: 'space-between'}}
+            >
+              <Typography
+                sx={{fontSize: '13px'}}
+              >
+                Aligned
+              </Typography>
+              {linkState === 'created' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
+              }
+            </Box>
+          </MenuItem>
+          <MenuItem
+            data-link-state={'rejected'}
+            onClick={(e) => handleMenuClick( e, wordPartID)}
           >
-            Rejected
-          </Typography>
-          {linkState === 'rejected' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-          }
-        </Box>
-      </MenuItem>
-      <MenuItem
-        data-link-state={'approved'}
-        onClick={(e) => handleMenuClick( e, wordPartID)}
-      >
-        <ListItemIcon>
-          <CheckCircle sx={{
-            color : theme.palette.success.main
-          }}/>
-        </ListItemIcon>
-        <Box
-          sx={{width: '87px', display: 'flex', justifyContent: 'space-between', gap: '12px'}}
-        >
-          <Typography
-            sx={{fontSize: '13px'}}
+            <ListItemIcon >
+              <Cancel sx={{
+                color : theme.palette.error.main
+              }} />
+            </ListItemIcon>
+            <Box
+              sx={{width: '87px', display: 'flex', justifyContent: 'space-between', gap: '12px'}}
+            >
+              <Typography
+                sx={{fontSize: '13px'}}
+              >
+                Rejected
+              </Typography>
+              {linkState === 'rejected' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
+              }
+            </Box>
+          </MenuItem>
+          <MenuItem
+            data-link-state={'approved'}
+            onClick={(e) => handleMenuClick( e, wordPartID)}
           >
-            Approved
-          </Typography>
-          {linkState === 'approved' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-          }
-        </Box>
-      </MenuItem>
-      <MenuItem
-        data-link-state={'needsReview'}
-        onClick={(e) => handleMenuClick( e, wordPartID)}
-      >
-        <ListItemIcon>
-          <Flag sx={{
-            color : theme.palette.warning.main
-          }} />
-        </ListItemIcon>
-        <Box
-          sx={{width: '87px', display: 'flex', justifyContent: 'space-between'}}
-        >
-          <Typography
-            sx={{fontSize: '13px'}}
+            <ListItemIcon>
+              <CheckCircle sx={{
+                color : theme.palette.success.main
+              }}/>
+            </ListItemIcon>
+            <Box
+              sx={{width: '87px', display: 'flex', justifyContent: 'space-between', gap: '12px'}}
+            >
+              <Typography
+                sx={{fontSize: '13px'}}
+              >
+                Approved
+              </Typography>
+              {linkState === 'approved' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
+              }
+            </Box>
+          </MenuItem>
+          <MenuItem
+            data-link-state={'needsReview'}
+            onClick={(e) => handleMenuClick( e, wordPartID)}
           >
-            Flagged
-          </Typography>
-          {linkState === 'needsReview' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-          }
-        </Box>
-      </MenuItem>
-    </Menu>
-  )
-
-  return [ContextMenu, handleRightClick, handleClose]
+            <ListItemIcon>
+              <Flag sx={{
+                color : theme.palette.warning.main
+              }} />
+            </ListItemIcon>
+            <Box
+              sx={{width: '87px', display: 'flex', justifyContent: 'space-between'}}
+            >
+              <Typography
+                sx={{fontSize: '13px'}}
+              >
+                Flagged
+              </Typography>
+              {linkState === 'needsReview' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
+              }
+            </Box>
+          </MenuItem>
+        </Menu>
+      )
+  }
+  return [ContextMenu, handleRightClick]
 };
 
 export default useAlignmentStateContextMenu;

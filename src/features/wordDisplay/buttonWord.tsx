@@ -1,5 +1,5 @@
 import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
@@ -165,8 +165,12 @@ export const ButtonToken = ({
    */
   const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
 
+  const anchorEl = useRef();
+
   // Allow the user to right-click on an alignment and change it's state
-  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(memberOfPrimaryLink);
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink );
+
+
 
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
@@ -324,6 +328,7 @@ export const ButtonToken = ({
   return (<>
     <Box
       onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
+      ref={anchorEl}
     >
       <Button
         disabled={disabled}
