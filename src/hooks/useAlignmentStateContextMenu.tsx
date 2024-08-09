@@ -11,7 +11,6 @@ import React from 'react';
 import { Link } from '../structs';
 import { useSaveLink } from '../state/links/tableManager';
 
-
 /**
  * useAlignmentStateContextMenu hook
  * allow users to change the link state by right-clicking on an alignment
@@ -33,7 +32,6 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
       setLocalLink(link);
       setIsLinkStateMenuOpen(true);
     }
-    //otherwise don't open the menu
   }
 
   const handleClose = () => {
@@ -43,8 +41,8 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
   // change the state of the alignment
   const handleMenuClick = React.useCallback((event: any, wordPartID: string) => {
     const { linkState } = event.currentTarget.dataset;
-    // prepare an updated link to save
 
+    // prepare an updated link to save
     const updatedLink = {
       ...localLink,
       metadata: {
