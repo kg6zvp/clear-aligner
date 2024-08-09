@@ -13,6 +13,16 @@ import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 
+const alphaTransparencyValueForButtonTokens = '.12';
+/**
+ * top color of the machine alignment gradient
+ */
+const gradientTopColor = '#33D6FF';
+/**
+ * bottom color of the machine alignment gradient
+ */
+const gradientBottomColor = '#AD8CFF';
+
 /**
  * props for the {@link ButtonWord} component
  */
@@ -118,6 +128,19 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+
+  /**
+   * element id for the color gradient svg to be referenced in order to use the gradient
+   */
+  const gradientSvgId = useMemo<string>(() => `machine-color-gradient-${token.side}-${token.id}`, [token.side, token.id]);
+  const gradientSvgUrl = useMemo<string>(() => `url(#${gradientSvgId})`, [gradientSvgId]);
+  const gradientSvg = useMemo<JSX.Element>(() =>
+    (<svg width={0} height={0}>
+      <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
+        <stop offset={0} stopColor={gradientTopColor} />
+        <stop offset={1} stopColor={gradientBottomColor} />
+      </linearGradient>
+    </svg>), [gradientSvgId]);
 
   /**
    * whether the current token is being hovered by the user
@@ -291,19 +314,18 @@ export const ButtonToken = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, token.side, token.id]);
 
-  const alpha = useMemo(() => '.12', []);
-  const topColor = useMemo(() => decomposeColor('#33D6FF'), []);
-  const bottomColor = useMemo(() => decomposeColor('#AD8CFF'), []);
+  const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
+  const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
 
-  const backgroundImageGradientSolid = useMemo(() => `linear-gradient(rgba(${topColor.values[0]}, ${topColor.values[1]}, ${topColor.values[2]}), rgba(${bottomColor.values[0]}, ${bottomColor.values[1]}, ${bottomColor.values[2]}))`, [topColor.values, bottomColor.values]);
+  const backgroundImageGradientSolid = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
-  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${topColor.values[0]}, ${topColor.values[1]}, ${topColor.values[2]}, ${alpha}), rgba(${bottomColor.values[0]}, ${bottomColor.values[1]}, ${bottomColor.values[2]}, ${alpha}))`, [alpha, topColor.values, bottomColor.values]);
+  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [alphaTransparencyValueForButtonTokens, gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
     if (buttonPrimaryColor === theme.palette.text.disabled) {
       const decomposedColor = decomposeColor(theme.palette.primary.main)
       return ({
-        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alpha})`
+        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
       });
     }
     if (memberOfPrimaryLink?.metadata.origin === 'machine' && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
@@ -314,7 +336,7 @@ export const ButtonToken = ({
     } //*/
     const rgbColor = decomposeColor(buttonPrimaryColor);
     return ({
-      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alpha})`
+      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
     });
   }, [buttonPrimaryColor, backgroundImageGradientTransparent, alpha, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
@@ -340,12 +362,7 @@ export const ButtonToken = ({
         onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
         onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
         onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
-        <svg width={0} height={0}>
-          <linearGradient id={`machine-color-gradient-${token.side}-${token.id}`} x1={1} y1={0} x2={1} y2={1}>
-            <stop offset={0} stopColor={'#33D6FF'} />
-            <stop offset={1} stopColor={'#AD8CFF'} />
-          </linearGradient>
-        </svg>
+        {gradientSvg}
         <LocalizedTextDisplay languageInfo={languageInfo}>
           <Box
             sx={{
