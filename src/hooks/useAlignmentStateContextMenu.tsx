@@ -56,6 +56,8 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
     handleClose()
   },[saveLink, localLink])
 
+  const CheckIconStyle = {width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}
+
   const ContextMenu = () => {
     return(
         <Menu
@@ -89,8 +91,7 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
               >
                 Aligned
               </Typography>
-              {linkState === 'created' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-              }
+              {linkState === 'created' && <CheckIcon sx={CheckIconStyle}/>}
             </Box>
           </MenuItem>
           <MenuItem
@@ -110,8 +111,7 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
               >
                 Rejected
               </Typography>
-              {linkState === 'rejected' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-              }
+              {linkState === 'rejected' && <CheckIcon sx={CheckIconStyle}/>}
             </Box>
           </MenuItem>
           <MenuItem
@@ -131,8 +131,7 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
               >
                 Approved
               </Typography>
-              {linkState === 'approved' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-              }
+              {linkState === 'approved' && <CheckIcon sx={CheckIconStyle}/>}
             </Box>
           </MenuItem>
           <MenuItem
@@ -152,8 +151,7 @@ const useAlignmentStateContextMenu = (localAnchorEl: React.MutableRefObject<unde
               >
                 Flagged
               </Typography>
-              {linkState === 'needsReview' && <CheckIcon sx={{width: '18px', height: '20px', color: theme.palette.alignmentStateMenu.check}}/>
-              }
+              {linkState === 'needsReview' && <CheckIcon sx={CheckIconStyle}/>}
             </Box>
           </MenuItem>
         </Menu>
