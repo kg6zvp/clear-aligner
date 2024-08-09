@@ -230,8 +230,11 @@ export const ButtonToken = ({
       case 'machine':
         return (<AutoAwesome {...{
           ...iconProps,
-          color: undefined,
-          fill: `url(#machine-color-gradient-${token.side}-${token.id})`
+          sx: {
+            ...iconProps?.sx,
+            color: undefined,
+            fill: `url(#machine-color-gradient-${token.side}-${token.id}) !important`
+          }
         }} />);
       case 'manual':
         return (<Person {...iconProps} />);
@@ -260,11 +263,11 @@ export const ButtonToken = ({
           ...baseSx,
         }} />);
       case LinkStatus.CREATED:
-        if (memberOfPrimaryLink?.metadata.origin === 'machine') return (<InsertLink sx={{
+        /*if (memberOfPrimaryLink?.metadata.origin === 'machine') return (<InsertLink sx={{
           ...baseSx,
           color: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : undefined,
           fill: color !== buttonNormalBackgroundColor ? `url(#machine-color-gradient-${token.side}-${token.id})` : undefined
-        }} />);
+        }} />); //*/
         return (<InsertLink sx={{
           ...baseSx
         }} />);
