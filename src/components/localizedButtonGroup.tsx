@@ -10,8 +10,14 @@ export interface LocalizedButtonGroupProps extends ButtonGroupProps {
   languageInfo?: LanguageInfo;
 }
 
-const normalRoundedRadius = '4px';
-const borderRadius = 0;
+const outsideCornerRadius = '4px';
+const dividerBorderRadius = 0;
+const outsideEdgeStyle = 'solid';
+const dividingEdgeStyle = 'dashed';
+const baseGroupedButtonSx: SxProps<Theme> = ({
+  borderTopStyle: outsideEdgeStyle,
+  borderBottomStyle: outsideEdgeStyle
+});
 
 /**
  * component to display buttons with localization awareness (things like LTR, RTL display, font choices, etc.)
@@ -27,30 +33,59 @@ export const LocalizedButtonGroup = ({
                                       ...others
                                      }: LocalizedButtonGroupProps) => {
 
-  const firstButtonSx = useMemo<SxProps<Theme>>(() => languageInfo?.textDirection === TextDirection.LTR
-    ? ({ })
-    : ({
-        borderTopRightRadius: normalRoundedRadius,
-        borderBottomRightRadius: normalRoundedRadius,
-        borderTopLeftRadius: borderRadius,
-        borderBottomLeftRadius: borderRadius,
-        borderLeftStyle: 'dashed !important',
-      }), [languageInfo?.textDirection]);
+  const firstButtonSx = useMemo<SxProps<Theme>>(() => {
+    if (languageInfo?.textDirection === TextDirection.RTL) {
+      return {
+        ...baseGroupedButtonSx,
+        borderTopRightRadius: outsideCornerRadius,
+        borderBottomRightRadius: outsideCornerRadius,
+        borderRightStyle: outsideEdgeStyle,
+        borderTopLeftRadius: dividerBorderRadius,
+        borderBottomLeftRadius: dividerBorderRadius,
+        borderLeftStyle: dividingEdgeStyle,
+      };
+    } else { // LTR
+      return {
+        ...baseGroupedButtonSx,
+        borderTopLeftRadius: outsideCornerRadius,
+        borderBottomLeftRadius: outsideCornerRadius,
+        borderLeftStyle: outsideEdgeStyle,
+        borderRightStyle: dividingEdgeStyle,
+        borderTopRightRadius: dividerBorderRadius,
+        borderBottomRightRadius: dividerBorderRadius
+      };
+    }
+  }, [languageInfo?.textDirection]);
 
   const middleButtonSx = useMemo<SxProps<Theme>>(() => ({
-    borderLeftStyle: 'dashed !important',
-    borderRightStyle: 'dashed !important'
+    ...baseGroupedButtonSx,
+    borderLeftStyle: dividingEdgeStyle,
+    borderRightStyle: dividingEdgeStyle
   }), []);
 
-  const lastButtonSx = useMemo<SxProps<Theme>>(() => languageInfo?.textDirection === TextDirection.LTR
-    ? ({ })
-    : ({
-      borderRightStyle: 'dashed !important',
-      borderTopRightRadius: borderRadius,
-      borderBottomRightRadius: borderRadius,
-      borderTopLeftRadius: normalRoundedRadius,
-      borderBottomLeftRadius: normalRoundedRadius
-    }), [languageInfo?.textDirection]);
+  const lastButtonSx = useMemo<SxProps<Theme>>(() => {
+    if (languageInfo?.textDirection === TextDirection.RTL) {
+      return {
+        ...baseGroupedButtonSx,
+        borderRightStyle: dividingEdgeStyle,
+        borderTopRightRadius: dividerBorderRadius,
+        borderBottomRightRadius: dividerBorderRadius,
+        borderTopLeftRadius: outsideCornerRadius,
+        borderBottomLeftRadius: outsideCornerRadius,
+        borderLeftStyle: outsideEdgeStyle
+      };
+    } else {
+      return {
+        ...baseGroupedButtonSx,
+        borderLeftStyle: dividingEdgeStyle,
+        borderTopLeftRadius: dividerBorderRadius,
+        borderBottomLeftRadius: dividerBorderRadius,
+        borderTopRightRadius: outsideCornerRadius,
+        borderBottomRightRadius: outsideCornerRadius,
+        borderRightStyle: outsideEdgeStyle
+      };
+    }
+  }, [languageInfo?.textDirection]);
 
   const sxProp = useMemo<SxProps<Theme>>(() => {
     return {

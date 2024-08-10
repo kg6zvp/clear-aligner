@@ -1,4 +1,4 @@
-import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
+import { Corpus, LanguageInfo, Link, LinkOriginMachine, LinkStatus, Word } from '../../structs';
 import { useMemo } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -250,20 +250,23 @@ export const ButtonToken = ({
     };
     /* eslint-disable no-fallthrough */
     switch (memberOfPrimaryLink?.metadata.origin) {
-      case 'machine':
+      case LinkOriginMachine:
         return (<AutoAwesome {...{
           ...iconProps,
           sx: {
             ...iconProps?.sx,
-            color: undefined,
-            fill: `url(#machine-color-gradient-${token.side}-${token.id}) !important`
+            ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
+              ? {
+                color: undefined,
+                fill: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : gradientSvgUrl
+              } : {})
           }
         }} />);
-      case 'manual':
-        return (<Person {...iconProps} />);
       default:
-        return (<>
-        </>);
+        return (<Box sx={{
+          height: '16px'
+        }}>
+        </Box>);
     }
   }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, token.side, token.id]);
 
@@ -286,11 +289,6 @@ export const ButtonToken = ({
           ...baseSx,
         }} />);
       case LinkStatus.CREATED:
-        /*if (memberOfPrimaryLink?.metadata.origin === 'machine') return (<InsertLink sx={{
-          ...baseSx,
-          color: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : undefined,
-          fill: color !== buttonNormalBackgroundColor ? `url(#machine-color-gradient-${token.side}-${token.id})` : undefined
-        }} />); //*/
         return (<InsertLink sx={{
           ...baseSx
         }} />);
@@ -308,8 +306,10 @@ export const ButtonToken = ({
           ...baseSx,
         }} />);
     }
-    return (<>
-    </>);
+    return (<Box sx={{
+      height: '16px'
+    }}>
+    </Box>);
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, token.side, token.id]);
@@ -328,7 +328,7 @@ export const ButtonToken = ({
         backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
       });
     }
-    if (memberOfPrimaryLink?.metadata.origin === 'machine' && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
+    if (memberOfPrimaryLink?.metadata.origin === LinkOriginMachine && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
       return ({
         backgroundColor: undefined,
         backgroundImage: backgroundImageGradientTransparent
@@ -338,7 +338,7 @@ export const ButtonToken = ({
     return ({
       backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
     });
-  }, [buttonPrimaryColor, backgroundImageGradientTransparent, alpha, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
+  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
   return (<>
       <Button
@@ -351,8 +351,8 @@ export const ButtonToken = ({
           '&:hover': hoverSx,
           padding: '0 !important',
           ...(isSelectedInEditedLink ? {
-            backgroundColor: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === 'machine' ? undefined : buttonPrimaryColor,
-            backgroundImage: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === 'machine' ? backgroundImageGradientSolid : undefined
+            backgroundColor: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === LinkOriginMachine ? undefined : buttonPrimaryColor,
+            backgroundImage: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === LinkOriginMachine ? backgroundImageGradientSolid : undefined
           } : {}),
           /**
            * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
