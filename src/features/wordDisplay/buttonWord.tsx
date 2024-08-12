@@ -1,4 +1,4 @@
-import { Corpus, LanguageInfo, Link, LinkOriginMachine, LinkStatus, Word } from '../../structs';
+import { Corpus, LanguageInfo, Link, LinkOriginMachine, LinkStatus, TextDirection, Word } from '../../structs';
 import { useMemo } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -74,7 +74,7 @@ export const ButtonWord = ({
                               height: enableGlossDisplay ? '82px !important' : '62px !important'
                             },
                           }} >
-      {tokens?.map((token) => <ButtonToken key={token.id} token={token} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
+      {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
     </LocalizedButtonGroup>
   );
 }
@@ -83,6 +83,10 @@ export const ButtonWord = ({
  * props used by {@link ButtonToken}
  */
 export interface ButtonTokenProps {
+  /**
+   * context of all tokens in the word of which the displayed token is a member
+   */
+  completeWord: Word[];
   token: Word;
   /**
    * whether gloss should be displayed
@@ -110,6 +114,7 @@ export interface ButtonTokenProps {
  * @param disabled whether the button is disabled
  * @param links links possibly associated with the token
  * @param token token being displayed
+ * @param completeWord all tokens in the word of which the displayed token is a member
  * @param languageInfo language information for the token
  * @param enableGlossDisplay whether gloss is toggled on
  * @param showRejected whether rejected links should be displayed
@@ -120,6 +125,7 @@ export const ButtonToken = ({
                               disabled,
                               links,
                               token,
+                              completeWord,
                               languageInfo,
                               enableGlossDisplay,
                               showRejected,
@@ -340,6 +346,17 @@ export const ButtonToken = ({
     });
   }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
+  const textJustification = useMemo<string>(() => {
+    const wordPart = BCVWP.parseFromString(token.id).part;
+    if (!wordPart || completeWord.length < 2)
+      return 'center';
+    const beginning = languageInfo?.textDirection === TextDirection.LTR ? 'left' : 'right';
+    const end = languageInfo?.textDirection === TextDirection.LTR ? 'right' : 'left';
+    debugger;
+    if (wordPart === 1) return end;
+    return beginning;
+  }, [languageInfo?.textDirection, token.id, completeWord.length]);
+
   return (<>
       <Button
         disabled={disabled}
@@ -394,7 +411,8 @@ export const ButtonToken = ({
                   languageInfo={languageInfo}
                   sx={{
                     width: '100%',
-                    justifyContent: 'center',
+                    display: 'flex',
+                    justifyContent: `${textJustification} !important`,
                     fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
                   }}>
                   {token.text}
@@ -406,7 +424,7 @@ export const ButtonToken = ({
                   <Typography
                     variant={'caption'}
                     sx={{
-                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
+                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text,
                     }} >
                     {token.gloss ?? '-'}
                   </Typography> : <></>}
