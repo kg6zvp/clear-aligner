@@ -11,7 +11,6 @@ import findWordById from 'helpers/findWord';
 import cssVar from 'styles/cssVar';
 import BCVWP, { BCVWPField } from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { ButtonWord } from '../wordDisplay/buttonWord';
 import { WordDisplay } from '../wordDisplay';
 
 interface LinkBuilderProps {

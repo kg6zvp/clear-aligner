@@ -7,7 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../app';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
+import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
@@ -244,7 +244,7 @@ export const ButtonToken = ({
     const iconProps: SvgIconOwnProps = {
       sx: {
         fontSize: '16px',
-        transform: 'translate(0, -3px)',
+        transform: `translate(0, ${languageInfo?.code === 'heb' ? 0 : -4}px)`,
         color,
       }
     };
@@ -268,7 +268,7 @@ export const ButtonToken = ({
         }}>
         </Box>);
     }
-  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, token.side, token.id]);
+  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status, languageInfo?.code]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
@@ -280,7 +280,7 @@ export const ButtonToken = ({
     })();
     const baseSx: SxProps<Theme> = {
       fontSize: '16px',
-      transform: 'translate(0, 2px)',
+      transform: `translate(0, ${languageInfo?.code === 'heb' ? 0 : 4}px)`,
       color
     };
     switch (memberOfPrimaryLink?.metadata.status) {
@@ -319,7 +319,7 @@ export const ButtonToken = ({
 
   const backgroundImageGradientSolid = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
-  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [alphaTransparencyValueForButtonTokens, gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
+  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
     if (buttonPrimaryColor === theme.palette.text.disabled) {
