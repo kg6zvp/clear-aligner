@@ -394,7 +394,8 @@ export const ButtonToken = ({
                   languageInfo={languageInfo}
                   sx={{
                     width: '100%',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
                   }}>
                   {token.text}
                 </LocalizedTextDisplay>
