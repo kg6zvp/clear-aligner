@@ -321,7 +321,7 @@ export const ButtonToken = ({
     </Box>);
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, token.side, token.id]);
+    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, languageInfo?.code]);
 
   const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
   const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
@@ -421,6 +421,8 @@ export const ButtonToken = ({
                 display: 'flex',
                 marginLeft,
                 marginRight,
+                justifyContent: `${textJustification} !important`,
+                minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
                 flexGrow: 1,
               }}>
               <Stack>
