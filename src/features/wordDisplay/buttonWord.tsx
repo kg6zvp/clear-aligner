@@ -194,6 +194,8 @@ export const ButtonToken = ({
    */
   const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
 
+  const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
+
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
       case AlignmentSide.SOURCE:
@@ -377,6 +379,8 @@ export const ButtonToken = ({
     return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
   }, [languageInfo?.textDirection, wordPart, wordLength]);
 
+  const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin === LinkOriginMachine && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
+
   return (<>
       <Button
         disabled={disabled}
@@ -384,12 +388,12 @@ export const ButtonToken = ({
         sx={(theme) => ({
           textTransform: 'none',
           color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
-          borderColor: `${buttonPrimaryColor} !important`,
+          borderColor: isSpecialMachineLearningCase && isSelectedInEditedLink ? 'transparent !important' : `${buttonPrimaryColor} !important`,
           '&:hover': hoverSx,
           padding: '0 !important',
           ...(isSelectedInEditedLink ? {
-            backgroundColor: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === LinkOriginMachine ? undefined : buttonPrimaryColor,
-            backgroundImage: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === LinkOriginMachine ? backgroundImageGradientSolid : undefined
+            backgroundColor: isSpecialMachineLearningCase ? undefined : buttonPrimaryColor,
+            backgroundImage: isSpecialMachineLearningCase ? backgroundImageGradientSolid : undefined
           } : {}),
           /**
            * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
