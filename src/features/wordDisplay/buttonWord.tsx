@@ -23,6 +23,9 @@ const gradientTopColor = '#33D6FF';
  */
 const gradientBottomColor = '#AD8CFF';
 
+const defaultMargin = '12px';
+const noMargin = '4px';
+
 /**
  * props for the {@link ButtonWord} component
  */
@@ -346,16 +349,33 @@ export const ButtonToken = ({
     });
   }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
 
+  const wordPart = useMemo<number|undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
+  const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
+
   const textJustification = useMemo<string>(() => {
-    const wordPart = BCVWP.parseFromString(token.id).part;
-    if (!wordPart || completeWord.length < 2)
+    if (!wordPart || wordLength < 2)
       return 'center';
     const beginning = languageInfo?.textDirection === TextDirection.LTR ? 'left' : 'right';
     const end = languageInfo?.textDirection === TextDirection.LTR ? 'right' : 'left';
-    debugger;
     if (wordPart === 1) return end;
     return beginning;
-  }, [languageInfo?.textDirection, token.id, completeWord.length]);
+  }, [languageInfo?.textDirection, wordPart, wordLength]);
+
+  const marginLeft = useMemo<string>(() => {
+    if (!wordPart || wordLength < 2)
+      return defaultMargin;
+    if (wordPart > 1)
+      return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
+    return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
+  }, [languageInfo?.textDirection, wordPart, wordLength]);
+
+  const marginRight = useMemo<string>(() => {
+    if (!wordPart || wordLength < 2)
+      return defaultMargin;
+    if (wordPart > 1)
+      return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
+    return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
+  }, [languageInfo?.textDirection, wordPart, wordLength]);
 
   return (<>
       <Button
@@ -399,8 +419,8 @@ export const ButtonToken = ({
             <Box
               sx={{
                 display: 'flex',
-                marginLeft: '12px',
-                marginRight: '12px',
+                marginLeft,
+                marginRight,
                 flexGrow: 1,
               }}>
               <Stack>
@@ -424,6 +444,8 @@ export const ButtonToken = ({
                   <Typography
                     variant={'caption'}
                     sx={{
+                      display: 'flex',
+                      justifyContent: `${textJustification} !important`,
                       color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text,
                     }} >
                     {token.gloss ?? '-'}
