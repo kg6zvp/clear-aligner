@@ -400,7 +400,7 @@ export const ButtonToken = ({
            */
           ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
         })}
-        onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
+        onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
         onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
         onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
         {gradientSvg}
