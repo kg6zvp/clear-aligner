@@ -328,8 +328,6 @@ export const ButtonToken = ({
   const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
   const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
 
-  const backgroundImageGradientSolid = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
-
   const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
@@ -392,8 +390,8 @@ export const ButtonToken = ({
           '&:hover': hoverSx,
           padding: '0 !important',
           ...(isSelectedInEditedLink ? {
-            backgroundColor: isSpecialMachineLearningCase ? undefined : buttonPrimaryColor,
-            backgroundImage: isSpecialMachineLearningCase ? backgroundImageGradientSolid : undefined
+            backgroundColor:  buttonPrimaryColor,
+            //backgroundImage: isSpecialMachineLearningCase ? backgroundImageGradientSolid : undefined
           } : {}),
           /**
            * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
