@@ -27,6 +27,15 @@ const defaultMargin = '12px';
 const noMargin = '4px';
 
 /**
+ * Dimension for {@link ButtonToken} status and origin icons in the X and Y directions
+ */
+const iconSize = '12px';
+/**
+ * margin around icons
+ */
+const iconMargin = '2px';
+
+/**
  * props for the {@link ButtonWord} component
  */
 export interface ButtonWordProps extends LimitedToLinks {
@@ -254,8 +263,8 @@ export const ButtonToken = ({
     })();
     const iconProps: SvgIconOwnProps = {
       sx: {
-        fontSize: '16px',
-        transform: `translate(0, ${languageInfo?.code === 'heb' ? 0 : -4}px)`,
+        fontSize: iconSize,
+        margin: iconMargin,
         color,
       }
     };
@@ -275,11 +284,12 @@ export const ButtonToken = ({
         }} />);
       default:
         return (<Box sx={{
-          height: '16px'
+          height: iconSize,
+          margin: iconMargin
         }}>
         </Box>);
     }
-  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status, languageInfo?.code]);
+  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
@@ -290,8 +300,8 @@ export const ButtonToken = ({
       return buttonPrimaryColor;
     })();
     const baseSx: SxProps<Theme> = {
-      fontSize: '16px',
-      transform: `translate(0, ${languageInfo?.code === 'heb' ? 0 : 4}px)`,
+      fontSize: iconSize,
+      margin: iconMargin,
       color
     };
     switch (memberOfPrimaryLink?.metadata.status) {
@@ -318,12 +328,13 @@ export const ButtonToken = ({
         }} />);
     }
     return (<Box sx={{
-      height: '16px'
+      height: iconSize,
+      margin: iconMargin
     }}>
     </Box>);
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, languageInfo?.code]);
+    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor]);
 
   const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
   const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
@@ -342,7 +353,7 @@ export const ButtonToken = ({
         backgroundColor: undefined,
         backgroundImage: backgroundImageGradientTransparent
       });
-    } //*/
+    }
     const rgbColor = decomposeColor(buttonPrimaryColor);
     return ({
       backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
@@ -391,7 +402,6 @@ export const ButtonToken = ({
         padding: '0 !important',
         ...(isSelectedInEditedLink ? {
           backgroundColor:  buttonPrimaryColor,
-          //backgroundImage: isSpecialMachineLearningCase ? backgroundImageGradientSolid : undefined
         } : {}),
         /**
          * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
@@ -402,7 +412,11 @@ export const ButtonToken = ({
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
       onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
       {gradientSvg}
-      <LocalizedTextDisplay languageInfo={languageInfo}>
+      <LocalizedTextDisplay
+        sx={{
+          height: '100%'
+        }}
+        languageInfo={languageInfo}>
         <Box
           sx={{
             display: 'flex',
@@ -423,6 +437,7 @@ export const ButtonToken = ({
               display: 'flex',
               marginLeft,
               marginRight,
+              alignItems: 'center',
               justifyContent: `${textJustification} !important`,
               minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
               flexGrow: 1,
