@@ -380,99 +380,99 @@ export const ButtonToken = ({
   const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin === LinkOriginMachine && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
 
   return (<>
-      <Button
-        disabled={disabled}
-        component={'button'}
-        sx={(theme) => ({
-          textTransform: 'none',
-          color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
-          borderColor: isSpecialMachineLearningCase && isSelectedInEditedLink ? 'transparent !important' : `${buttonPrimaryColor} !important`,
-          '&:hover': hoverSx,
-          padding: '0 !important',
-          ...(isSelectedInEditedLink ? {
-            backgroundColor:  buttonPrimaryColor,
-            //backgroundImage: isSpecialMachineLearningCase ? backgroundImageGradientSolid : undefined
-          } : {}),
-          /**
-           * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
-           */
-          ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
-        })}
-        onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
-        onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-        onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
-        {gradientSvg}
-        <LocalizedTextDisplay languageInfo={languageInfo}>
+    <Button
+      disabled={disabled}
+      component={'button'}
+      sx={(theme) => ({
+        textTransform: 'none',
+        color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+        borderColor: isSpecialMachineLearningCase && isSelectedInEditedLink ? 'transparent !important' : `${buttonPrimaryColor} !important`,
+        '&:hover': hoverSx,
+        padding: '0 !important',
+        ...(isSelectedInEditedLink ? {
+          backgroundColor:  buttonPrimaryColor,
+          //backgroundImage: isSpecialMachineLearningCase ? backgroundImageGradientSolid : undefined
+        } : {}),
+        /**
+         * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
+         */
+        ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
+      })}
+      onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
+      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
+      {gradientSvg}
+      <LocalizedTextDisplay languageInfo={languageInfo}>
+        <Box
+          sx={{
+            display: 'flex',
+            height: '100%',
+            flexDirection: 'column'
+          }}>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'left',
+              m: 0
+            }}>
+            {sourceIndicator}
+          </Box>
           <Box
             sx={{
               display: 'flex',
-              height: '100%',
-              flexDirection: 'column'
+              marginLeft,
+              marginRight,
+              justifyContent: `${textJustification} !important`,
+              minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
+              flexGrow: 1,
             }}>
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'left',
-                m: 0
-              }}>
-              {sourceIndicator}
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                marginLeft,
-                marginRight,
-                justifyContent: `${textJustification} !important`,
-                minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
-                flexGrow: 1,
-              }}>
-              <Stack>
-                {/*
-                  * word text display
-                  */}
-                <LocalizedTextDisplay
-                  languageInfo={languageInfo}
+            <Stack>
+              {/*
+                * word text display
+                */}
+              <LocalizedTextDisplay
+                languageInfo={languageInfo}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: `${textJustification} !important`,
+                  fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
+                }}>
+                {token.text}
+              </LocalizedTextDisplay>
+              {/*
+                * gloss display
+                */}
+              {enableGlossDisplay ?
+                <Typography
+                  variant={'caption'}
                   sx={{
-                    width: '100%',
                     display: 'flex',
                     justifyContent: `${textJustification} !important`,
-                    fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
-                  }}>
-                  {token.text}
-                </LocalizedTextDisplay>
-                {/*
-                  * gloss display
-                  */}
-                {enableGlossDisplay ?
-                  <Typography
-                    variant={'caption'}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: `${textJustification} !important`,
-                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text,
-                    }} >
-                    {token.gloss ?? '-'}
-                  </Typography> : <></>}
-              </Stack>
-            </Box>
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'right',
-                m: 0
-              }}>
-              {statusIndicator}
-            </Box>
+                    color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text,
+                  }} >
+                  {token.gloss ?? '-'}
+                </Typography> : <></>}
+            </Stack>
           </Box>
-        </LocalizedTextDisplay>
-      </Button>
-      {!!token.after && !suppressAfter
-        ? <Button disabled={true}>
-            <LocalizedTextDisplay languageInfo={languageInfo}>
-              {token.after}
-            </LocalizedTextDisplay>
-          </Button> : ''}
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'right',
+              m: 0
+            }}>
+            {statusIndicator}
+          </Box>
+        </Box>
+      </LocalizedTextDisplay>
+    </Button>
+    {!!token.after && !suppressAfter
+      ? <Button disabled={true}>
+          <LocalizedTextDisplay languageInfo={languageInfo}>
+            {token.after}
+          </LocalizedTextDisplay>
+        </Button> : ''}
   </>);
 }
