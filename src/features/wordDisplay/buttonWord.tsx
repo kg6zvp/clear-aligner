@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
-import { useAppDispatch, useAppSelector } from '../../app';
+import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
