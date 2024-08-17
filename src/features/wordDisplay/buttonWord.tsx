@@ -1,4 +1,4 @@
-import { Corpus, LanguageInfo, Link, LinkOriginMachine, LinkStatus, TextDirection, Word } from '../../structs';
+import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
 import { useMemo } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
@@ -270,7 +270,14 @@ export const ButtonToken = ({
     };
     /* eslint-disable no-fallthrough */
     switch (memberOfPrimaryLink?.metadata.origin) {
-      case LinkOriginMachine:
+      case LinkOriginManual:
+        return (<Box
+          sx={{
+            height: iconSize,
+            margin: iconMargin
+          }}>
+        </Box>);
+      default:
         return (<AutoAwesome {...{
           ...iconProps,
           sx: {
@@ -282,12 +289,6 @@ export const ButtonToken = ({
               } : {})
           }
         }} />);
-      default:
-        return (<Box sx={{
-          height: iconSize,
-          margin: iconMargin
-        }}>
-        </Box>);
     }
   }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
@@ -348,7 +349,7 @@ export const ButtonToken = ({
         backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
       });
     }
-    if (memberOfPrimaryLink?.metadata.origin === LinkOriginMachine && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
+    if (memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
       return ({
         backgroundColor: undefined,
         backgroundImage: backgroundImageGradientTransparent
@@ -388,7 +389,7 @@ export const ButtonToken = ({
     return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
   }, [languageInfo?.textDirection, wordPart, wordLength]);
 
-  const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin === LinkOriginMachine && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
+  const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
 
   return (<>
     <Button
