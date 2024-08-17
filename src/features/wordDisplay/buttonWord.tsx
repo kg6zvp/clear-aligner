@@ -205,6 +205,15 @@ export const ButtonToken = ({
 
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
+  /**
+   * indicates if this token is a member of any link
+   */
+  const isMemberOfAnyLink = useMemo(() => !!memberOfPrimaryLink, [memberOfPrimaryLink]);
+  /**
+   * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
+   */
+  const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
+
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
       case AlignmentSide.SOURCE:
@@ -294,7 +303,9 @@ export const ButtonToken = ({
           }
         }} />);
     }
-  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
@@ -397,7 +408,7 @@ export const ButtonToken = ({
 
   return (<>
     <Button
-      disabled={disabled}
+      disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
       sx={(theme) => ({
         textTransform: 'none',
