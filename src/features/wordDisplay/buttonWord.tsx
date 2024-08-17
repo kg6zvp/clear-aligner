@@ -268,15 +268,19 @@ export const ButtonToken = ({
         color,
       }
     };
+    const emptyBox = (<Box
+      sx={{
+        height: iconSize,
+        margin: iconMargin
+      }}>
+    </Box>);
+    if (!memberOfPrimaryLink) {
+      return emptyBox;
+    }
     /* eslint-disable no-fallthrough */
     switch (memberOfPrimaryLink?.metadata.origin) {
       case LinkOriginManual:
-        return (<Box
-          sx={{
-            height: iconSize,
-            margin: iconMargin
-          }}>
-        </Box>);
+        return emptyBox;
       default:
         return (<AutoAwesome {...{
           ...iconProps,
