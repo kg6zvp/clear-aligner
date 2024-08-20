@@ -426,7 +426,12 @@ export const ButtonToken = ({
       })}
       onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
       onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
+      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
+      onKeyDown={(e) => {
+        if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
+          e.preventDefault();
+        }
+      }} >
       {gradientSvg}
       <LocalizedTextDisplay
         sx={{
