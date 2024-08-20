@@ -40,7 +40,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     <Box
       display={'flex'}
       flexDirection={'column'}
-      minHeight={'17rem'}
+      minHeight={'2rem'}
       flexGrow={1}
     >
       <Stack
