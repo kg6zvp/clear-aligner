@@ -363,7 +363,7 @@ export class User extends DatabaseRecord {
 /**
  * The default origin for links created by ClearAligner
  */
-export const LinkOriginManual: string = 'manual';
+export const LinkOriginManual = 'manual';
 export type LinkOrigin = 'manual' | string;
 
 /**
