@@ -9,9 +9,13 @@ export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;
 export const OverrideUserPoolClientId = environmentVariables.userPoolClientId;
 
-export const DefaultCaApiEndpoint = 'http://awseb--AWSEB-uI8J0qxyPESc-311978805.us-east-1.elb.amazonaws.com';
-export const DefaultUserPoolId = 'us-east-1_63WiOrSMN';
-export const DefaultUserPoolClientId = 'jteqgoa1rgptil2tdi7b0nqjb';
+declare var CA_AWS_ENDPOINT: string;
+declare var CA_AWS_COGNITO_USER_POOL_ID: string;
+declare var CA_AWS_COGNITO_USER_POOL_CLIENT_ID: string;
+
+export const DefaultCaApiEndpoint = CA_AWS_ENDPOINT;
+export const DefaultUserPoolId = CA_AWS_COGNITO_USER_POOL_ID;
+export const DefaultUserPoolClientId = CA_AWS_COGNITO_USER_POOL_CLIENT_ID;
 
 export const CaApiEndpointIsDev = (environmentVariables.caApiEndpointIsDev ?? 'false') === 'true';
 export const EffectiveCaApiEndpoint = OverrideCaApiEndpoint ?? DefaultCaApiEndpoint;

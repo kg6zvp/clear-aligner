@@ -71,26 +71,9 @@ sql/create-db.sh
 
 This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
 
-## Basic Usage
+## Environment setup
 
-After install, import the react component:
-
-```js
-import TreedownEditor from 'treedown-aligner';
-```
-
-In your render function, include the component with some props:
-
-```js
-<TreedownEditor
-  theme="day"
-  corpora={[<...>]}
-  alignments={[<...>]}
-  alignmentUpdated={(newAlignmentData) => {
-    // persist alignment data here
-  }}
-/>
-```
+Copy the `.env.template` file to `.env` and replace the sample values with the correct values
 
 ## Properties and Options
 
