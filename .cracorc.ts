@@ -4,6 +4,12 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+if (!process.env.CA_AWS_ENDPOINT
+    || !process.env.CA_AWS_COGNITO_USER_POOL_ID
+    || !process.env.CA_AWS_COGNITO_USER_POOL_CLIENT_ID) {
+  throw 'Environment secrets not configured! Exiting!';
+}
+
 export default {
   jest: {
     configure: (jestConfig) => {
