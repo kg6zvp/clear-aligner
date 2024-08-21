@@ -1,14 +1,26 @@
 import { CracoConfig } from '@craco/types';
 import webpack from 'webpack';
 import * as dotenv from 'dotenv';
+import { build } from 'electron-builder';
 
 dotenv.config();
 
-if (!process.env.CA_AWS_ENDPOINT
-    || !process.env.CA_AWS_COGNITO_USER_POOL_ID
-    || !process.env.CA_AWS_COGNITO_USER_POOL_CLIENT_ID) {
-  throw 'Environment secrets not configured! Exiting!';
+const buildTimeEnvironmentRawValues = {
+  CA_AWS_ENDPOINT: process.env.CA_AWS_ENDPOINT,
+  CA_AWS_COGNITO_USER_POOL_ID: process.env.CA_AWS_COGNITO_USER_POOL_ID,
+  CA_AWS_COGNITO_USER_POOL_CLIENT_ID: process.env.CA_AWS_COGNITO_USER_POOL_CLIENT_ID,
+};
+
+if (Object.values(buildTimeEnvironmentRawValues).some(v => !v)) {
+  throw 'Environment file not configured! Exiting!';
 }
+
+const buildTimeEnvironment: { [k: string]: string } = {};
+
+Object.keys(buildTimeEnvironmentRawValues)
+  .forEach((key) => {
+    buildTimeEnvironment[key] = JSON.stringify((buildTimeEnvironmentRawValues as any)[key]);
+  });
 
 export default {
   jest: {
@@ -23,11 +35,7 @@ export default {
   webpack: {
     plugins: {
       add: [
-        [ new webpack.DefinePlugin({
-          CA_AWS_ENDPOINT: JSON.stringify(process.env.CA_AWS_ENDPOINT),
-          CA_AWS_COGNITO_USER_POOL_ID: JSON.stringify(process.env.CA_AWS_COGNITO_USER_POOL_ID),
-          CA_AWS_COGNITO_USER_POOL_CLIENT_ID: JSON.stringify(process.env.CA_AWS_COGNITO_USER_POOL_CLIENT_ID),
-        }), 'append'],
+        [ new webpack.DefinePlugin(buildTimeEnvironment), 'append'],
       ]
     }
   }
