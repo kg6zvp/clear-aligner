@@ -150,7 +150,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                     mt: 1
                   }}
                 >
-                  Please <Link href={`https://clear-aligner-2.auth.us-east-1.amazoncognito.com/login?client_id=jteqgoa1rgptil2tdi7b0nqjb&response_type=code&scope=aws.cognito.signin.user.admin+openid&redirect_uri=http://localhost:3000${location.pathname}`}>
+                  Please <Link href={`https://clear-aligner-2.auth.us-east-1.amazoncognito.com/login?client_id=jteqgoa1rgptil2tdi7b0nqjb&response_type=code&scope=aws.cognito.signin.user.admin+openid&redirect_uri=http://localhost:3000#${location.pathname}`}>
                   reset your password </Link> before signing in.
                 </Typography>
               }
