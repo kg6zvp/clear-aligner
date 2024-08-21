@@ -1,6 +1,4 @@
 import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
-import { useMemo } from 'react';
-import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
 import { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
