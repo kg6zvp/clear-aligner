@@ -23,6 +23,9 @@ The component currently supports react v18.x.
 
 ## Local development Quickstart
 
+- Setup the environment variables (secrets)
+    - Copy the `.env.template` file to `.env`
+    - replace the sample values with the correct values
 - Install dependencies: `source ./setup.sh`
 - Build: `yarn build`
     - build for Windows: `yarn build:win`
