@@ -5,21 +5,24 @@ import { build } from 'electron-builder';
 
 dotenv.config();
 
-const buildTimeEnvironmentRawValues = {
-  CA_AWS_ENDPOINT: process.env.CA_AWS_ENDPOINT,
-  CA_AWS_COGNITO_USER_POOL_ID: process.env.CA_AWS_COGNITO_USER_POOL_ID,
-  CA_AWS_COGNITO_USER_POOL_CLIENT_ID: process.env.CA_AWS_COGNITO_USER_POOL_CLIENT_ID,
-};
-
-if (Object.values(buildTimeEnvironmentRawValues).some(v => !v)) {
-  throw 'Environment file not configured! Exiting!';
-}
+/**
+ * Values from .env file which will be injected into variables with the same name at build time
+ */
+const environmentVariablesForBuildTimeInjection = [
+  'CA_AWS_ENDPOINT',
+  'CA_AWS_COGNITO_USER_POOL_ID',
+  'CA_AWS_COGNITO_USER_POOL_CLIENT_ID'
+];
 
 const buildTimeEnvironment: { [k: string]: string } = {};
 
-Object.keys(buildTimeEnvironmentRawValues)
+environmentVariablesForBuildTimeInjection
   .forEach((key) => {
-    buildTimeEnvironment[key] = JSON.stringify((buildTimeEnvironmentRawValues as any)[key]);
+    const value = process.env[key];
+    if (!value) {
+      throw 'Environment file not configured or is missing at least one value! Exiting!';
+    }
+    buildTimeEnvironment[key] = JSON.stringify(value);
   });
 
 export default {

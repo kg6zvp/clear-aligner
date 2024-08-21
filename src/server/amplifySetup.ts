@@ -9,6 +9,9 @@ export const OverrideCaApiEndpoint = environmentVariables.caApiEndpoint;
 export const OverrideUserPoolId = environmentVariables.userPoolId;
 export const OverrideUserPoolClientId = environmentVariables.userPoolClientId;
 
+/**
+ * Values from .env file which will be injected at build time
+ */
 declare var CA_AWS_ENDPOINT: string;
 declare var CA_AWS_COGNITO_USER_POOL_ID: string;
 declare var CA_AWS_COGNITO_USER_POOL_CLIENT_ID: string;
