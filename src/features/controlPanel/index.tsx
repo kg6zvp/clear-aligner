@@ -80,8 +80,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         spacing={2}
         justifyContent="center"
         alignItems="baseline"
-        style={{ marginTop: '16px', marginBottom: '16px' }}
-      >
+        style={{
+          marginTop: '16px',
+          marginBottom: '16px',
+          flexGrow: 0,
+          flexShrink: 0
+        }} >
         <ButtonGroup>
           <Tooltip title="Create Link" arrow describeChild>
           <span>

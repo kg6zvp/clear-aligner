@@ -52,7 +52,11 @@ const WorkbenchDialog: React.FC<WorkbenchDialogProps> = ({ alignment, setAlignme
           </IconButton>
         </Grid>
       </DialogTitle>
-      <DialogContent sx={{ height: '100%', width: '100%' }}>
+      <DialogContent sx={{
+        height: '80vh',
+        width: '100%',
+        paddingBottom: '0',
+      }}>
         <AlignmentEditor
           showNavigation={false}
           showProfileAvatar={false}

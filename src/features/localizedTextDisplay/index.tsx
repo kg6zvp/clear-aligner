@@ -3,7 +3,7 @@
  * to render localized text.
  */
 import { LanguageInfo } from '../../structs';
-import { SxProps, Theme, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { PropsWithChildren } from 'react';
 import * as React from 'react';
 
@@ -31,7 +31,7 @@ export const LocalizedTextDisplay = ({
         ...(languageInfo?.fontFamily
           ? { fontFamily: languageInfo?.fontFamily }
           : {}),
-        ...(typographyProps ?? {})
+        ...((typographyProps as any).sx ?? {})
       })}
     >
       {children}

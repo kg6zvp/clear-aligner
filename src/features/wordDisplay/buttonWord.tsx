@@ -1,18 +1,42 @@
+import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
+import { useMemo } from 'react';
 import { Corpus, LanguageInfo, Link, LinkStatus, Word } from '../../structs';
 import { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
-import { useAppDispatch, useAppSelector } from '../../app';
+import { useAppDispatch, useAppSelector } from '../../app/index';
 import { hover } from '../../state/textSegmentHover.slice';
 import { Box } from '@mui/system';
 import { toggleTextSegment } from '../../state/alignment.slice';
-import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink, Person } from '@mui/icons-material';
+import { AutoAwesome, Cancel, CheckCircle, Flag, InsertLink } from '@mui/icons-material';
 import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
 import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
+
+const alphaTransparencyValueForButtonTokens = '.12';
+/**
+ * top color of the machine alignment gradient
+ */
+const gradientTopColor = '#33D6FF';
+/**
+ * bottom color of the machine alignment gradient
+ */
+const gradientBottomColor = '#AD8CFF';
+
+const defaultMargin = '12px';
+const noMargin = '4px';
+
+/**
+ * Dimension for {@link ButtonToken} status and origin icons in the X and Y directions
+ */
+const iconSize = '12px';
+/**
+ * margin around icons
+ */
+const iconMargin = '2px';
 
 /**
  * props for the {@link ButtonWord} component
@@ -65,7 +89,7 @@ export const ButtonWord = ({
                               height: enableGlossDisplay ? '82px !important' : '62px !important'
                             },
                           }} >
-      {tokens?.map((token) => <ButtonToken key={token.id} token={token} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
+      {tokens?.map((token) => <ButtonToken key={token.id} token={token} completeWord={tokens} enableGlossDisplay={enableGlossDisplay} links={links} languageInfo={languageInfo} suppressAfter={suppressAfter} disabled={disabled} hoverHighlightingDisabled={disableHighlighting} />)}
     </LocalizedButtonGroup>
   );
 }
@@ -74,6 +98,10 @@ export const ButtonWord = ({
  * props used by {@link ButtonToken}
  */
 export interface ButtonTokenProps {
+  /**
+   * context of all tokens in the word of which the displayed token is a member
+   */
+  completeWord: Word[];
   token: Word;
   /**
    * whether gloss should be displayed
@@ -101,6 +129,7 @@ export interface ButtonTokenProps {
  * @param disabled whether the button is disabled
  * @param links links possibly associated with the token
  * @param token token being displayed
+ * @param completeWord all tokens in the word of which the displayed token is a member
  * @param languageInfo language information for the token
  * @param enableGlossDisplay whether gloss is toggled on
  * @param showRejected whether rejected links should be displayed
@@ -111,6 +140,7 @@ export const ButtonToken = ({
                               disabled,
                               links,
                               token,
+                              completeWord,
                               languageInfo,
                               enableGlossDisplay,
                               showRejected,
@@ -119,6 +149,19 @@ export const ButtonToken = ({
                             }: ButtonTokenProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
+
+  /**
+   * element id for the color gradient svg to be referenced in order to use the gradient
+   */
+  const gradientSvgId = useMemo<string>(() => `machine-color-gradient-${token.side}-${token.id}`, [token.side, token.id]);
+  const gradientSvgUrl = useMemo<string>(() => `url(#${gradientSvgId})`, [gradientSvgId]);
+  const gradientSvg = useMemo<JSX.Element>(() =>
+    (<svg width={0} height={0}>
+      <linearGradient id={gradientSvgId} x1={1} y1={0} x2={1} y2={1}>
+        <stop offset={0} stopColor={gradientTopColor} />
+        <stop offset={1} stopColor={gradientBottomColor} />
+      </linearGradient>
+    </svg>), [gradientSvgId]);
 
 
 
@@ -171,6 +214,17 @@ export const ButtonToken = ({
   const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink );
 
 
+
+  const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
+
+  /**
+   * indicates if this token is a member of any link
+   */
+  const isMemberOfAnyLink = useMemo(() => !!memberOfPrimaryLink, [memberOfPrimaryLink]);
+  /**
+   * indicates whether this token was a member of the link which is currently being edited (does not indicate if if it currently selected in the edited link, just that it was a member of that link before it was opened for editing)
+   */
+  const isMemberOfEditedLink = useMemo<boolean>(() => memberOfPrimaryLink?.id === editedLink?.id, [memberOfPrimaryLink?.id, editedLink?.id]);
 
   const isSelectedInEditedLink = useAppSelector((state) => {
     switch (token.side) {
@@ -230,26 +284,40 @@ export const ButtonToken = ({
     })();
     const iconProps: SvgIconOwnProps = {
       sx: {
-        fontSize: '16px',
-        transform: 'translate(0, -3px)',
+        fontSize: iconSize,
+        margin: iconMargin,
         color,
       }
     };
+    const emptyBox = (<Box
+      sx={{
+        height: iconSize,
+        margin: iconMargin
+      }}>
+    </Box>);
+    if (!memberOfPrimaryLink) {
+      return emptyBox;
+    }
     /* eslint-disable no-fallthrough */
     switch (memberOfPrimaryLink?.metadata.origin) {
-      case 'machine':
+      case LinkOriginManual:
+        return emptyBox;
+      default:
         return (<AutoAwesome {...{
           ...iconProps,
-          color: undefined,
-          fill: `url(#machine-color-gradient-${token.side}-${token.id})`
+          sx: {
+            ...iconProps?.sx,
+            ...(memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED
+              ? {
+                color: undefined,
+                fill: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : gradientSvgUrl
+              } : {})
+          }
         }} />);
-      case 'manual':
-        return (<Person {...iconProps} />);
-      default:
-        return (<>
-        </>);
     }
-  }, [memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, token.side, token.id]);
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.origin, buttonPrimaryColor, isCurrentlyHoveredToken, isSelectedInEditedLink, buttonNormalBackgroundColor, gradientSvgUrl, memberOfPrimaryLink?.metadata.status]);
 
   const statusIndicator = useMemo<JSX.Element>(() => {
     const color = (() => {
@@ -260,8 +328,8 @@ export const ButtonToken = ({
       return buttonPrimaryColor;
     })();
     const baseSx: SxProps<Theme> = {
-      fontSize: '16px',
-      transform: 'translate(0, 2px)',
+      fontSize: iconSize,
+      margin: iconMargin,
       color
     };
     switch (memberOfPrimaryLink?.metadata.status) {
@@ -270,11 +338,6 @@ export const ButtonToken = ({
           ...baseSx,
         }} />);
       case LinkStatus.CREATED:
-        if (memberOfPrimaryLink?.metadata.origin === 'machine') return (<InsertLink sx={{
-          ...baseSx,
-          color: color === buttonNormalBackgroundColor ? buttonNormalBackgroundColor : undefined,
-          fill: color !== buttonNormalBackgroundColor ? `url(#machine-color-gradient-${token.side}-${token.id})` : undefined
-        }} />);
         return (<InsertLink sx={{
           ...baseSx
         }} />);
@@ -292,138 +355,178 @@ export const ButtonToken = ({
           ...baseSx,
         }} />);
     }
-    return (<>
-    </>);
+    return (<Box sx={{
+      height: iconSize,
+      margin: iconMargin
+    }}>
+    </Box>);
   },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor, token.side, token.id]);
+    [memberOfPrimaryLink, memberOfPrimaryLink?.metadata.status, memberOfPrimaryLink?.metadata.origin, isSelectedInEditedLink, buttonNormalBackgroundColor, isCurrentlyHoveredToken, buttonPrimaryColor]);
 
-  const alpha = useMemo(() => '.12', []);
-  const topColor = useMemo(() => decomposeColor('#33D6FF'), []);
-  const bottomColor = useMemo(() => decomposeColor('#AD8CFF'), []);
+  const gradientTopColorDecomposed = useMemo(() => decomposeColor(gradientTopColor), []);
+  const gradientBottomColorDecomposed = useMemo(() => decomposeColor(gradientBottomColor), []);
 
-  const backgroundImageGradientSolid = useMemo(() => `linear-gradient(rgba(${topColor.values[0]}, ${topColor.values[1]}, ${topColor.values[2]}), rgba(${bottomColor.values[0]}, ${bottomColor.values[1]}, ${bottomColor.values[2]}))`, [topColor.values, bottomColor.values]);
-
-  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${topColor.values[0]}, ${topColor.values[1]}, ${topColor.values[2]}, ${alpha}), rgba(${bottomColor.values[0]}, ${bottomColor.values[1]}, ${bottomColor.values[2]}, ${alpha}))`, [alpha, topColor.values, bottomColor.values]);
+  const backgroundImageGradientTransparent = useMemo(() => `linear-gradient(rgba(${gradientTopColorDecomposed.values[0]}, ${gradientTopColorDecomposed.values[1]}, ${gradientTopColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}), rgba(${gradientBottomColorDecomposed.values[0]}, ${gradientBottomColorDecomposed.values[1]}, ${gradientBottomColorDecomposed.values[2]}, ${alphaTransparencyValueForButtonTokens}))`, [gradientTopColorDecomposed.values, gradientBottomColorDecomposed.values]);
 
   const hoverSx: SxProps<Theme> = useMemo(() => {
     if (buttonPrimaryColor === theme.palette.text.disabled) {
       const decomposedColor = decomposeColor(theme.palette.primary.main)
       return ({
-        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alpha})`
+        backgroundColor: `rgba(${decomposedColor.values[0]}, ${decomposedColor.values[1]}, ${decomposedColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
       });
     }
-    if (memberOfPrimaryLink?.metadata.origin === 'machine' && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
+    if (memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED) {
       return ({
         backgroundColor: undefined,
         backgroundImage: backgroundImageGradientTransparent
       });
-    } //*/
+    }
     const rgbColor = decomposeColor(buttonPrimaryColor);
     return ({
-      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alpha})`
+      backgroundColor: `rgba(${rgbColor.values[0]}, ${rgbColor.values[1]}, ${rgbColor.values[2]}, ${alphaTransparencyValueForButtonTokens})`
     });
-  }, [buttonPrimaryColor, backgroundImageGradientTransparent, alpha, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
+  }, [buttonPrimaryColor, backgroundImageGradientTransparent, memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status, theme.palette.text.disabled, theme.palette.primary.main]);
+
+  const wordPart = useMemo<number|undefined>(() => BCVWP.parseFromString(token.id).part, [token.id]);
+  const wordLength = useMemo<number>(() => completeWord.length, [completeWord.length]);
+
+  const textJustification = useMemo<string>(() => {
+    if (!wordPart || wordLength < 2)
+      return 'center';
+    const beginning = languageInfo?.textDirection === TextDirection.LTR ? 'left' : 'right';
+    const end = languageInfo?.textDirection === TextDirection.LTR ? 'right' : 'left';
+    if (wordPart === 1) return end;
+    return beginning;
+  }, [languageInfo?.textDirection, wordPart, wordLength]);
+
+  const marginLeft = useMemo<string>(() => {
+    if (!wordPart || wordLength < 2)
+      return defaultMargin;
+    if (wordPart > 1)
+      return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
+    return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
+  }, [languageInfo?.textDirection, wordPart, wordLength]);
+
+  const marginRight = useMemo<string>(() => {
+    if (!wordPart || wordLength < 2)
+      return defaultMargin;
+    if (wordPart > 1)
+      return languageInfo?.textDirection === TextDirection.LTR ? defaultMargin : noMargin;
+    return languageInfo?.textDirection === TextDirection.LTR ? noMargin : defaultMargin;
+  }, [languageInfo?.textDirection, wordPart, wordLength]);
+
+  const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
 
   return (<>
     <Box
       onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
       ref={anchorEl}
     >
-      <Button
-        disabled={disabled}
-        component={'button'}
-        sx={(theme) => ({
-          textTransform: 'none',
-          color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
-          borderColor: `${buttonPrimaryColor} !important`,
-          '&:hover': hoverSx,
-          padding: '0 !important',
-          ...(isSelectedInEditedLink ? {
-            backgroundColor: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === 'machine' ? undefined : buttonPrimaryColor,
-            backgroundImage: memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED && memberOfPrimaryLink?.metadata.origin === 'machine' ? backgroundImageGradientSolid : undefined
-          } : {}),
-          /**
-           * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
-           */
-          ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
-        })}
-        onMouseEnter={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(token))}
-        onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
-        onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}>
-        <svg width={0} height={0}>
-          <linearGradient id={`machine-color-gradient-${token.side}-${token.id}`} x1={1} y1={0} x2={1} y2={1}>
-            <stop offset={0} stopColor={'#33D6FF'} />
-            <stop offset={1} stopColor={'#AD8CFF'} />
-          </linearGradient>
-        </svg>
-        <LocalizedTextDisplay languageInfo={languageInfo}>
+    <Button
+      disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
+      component={'button'}
+      sx={(theme) => ({
+        textTransform: 'none',
+        color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.text.primary,
+        borderColor: isSpecialMachineLearningCase && isSelectedInEditedLink ? 'transparent !important' : `${buttonPrimaryColor} !important`,
+        '&:hover': hoverSx,
+        padding: '0 !important',
+        ...(isSelectedInEditedLink ? {
+          backgroundColor:  buttonPrimaryColor,
+        } : {}),
+        /**
+         * override CSS with the hover CSS if this token is a member of a link with the currently hovered token
+         */
+        ...(isInLinkWithCurrentlyHoveredToken && !isSelectedInEditedLink ? hoverSx : {})
+      })}
+      onMouseEnter={!!hoverHighlightingDisabled || (!!editedLink && !isSelectedInEditedLink) ? () => {} : () => dispatch(hover(token))}
+      onMouseLeave={!!hoverHighlightingDisabled ? () => {} : () => dispatch(hover(null))}
+      onClick={() => dispatch(toggleTextSegment({ foundRelatedLinks: [memberOfPrimaryLink].filter((v) => !!v), word: token }))}
+      onKeyDown={(e) => {
+        if (e.key === ' ') { // prevent the spacebar from triggering a click action so it can be used for control panel actions
+          e.preventDefault();
+        }
+      }} >
+      {gradientSvg}
+      <LocalizedTextDisplay
+        sx={{
+          height: '100%'
+        }}
+        languageInfo={languageInfo}>
+        <Box
+          sx={{
+            display: 'flex',
+            height: '100%',
+            flexDirection: 'column'
+          }}>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'left',
+              m: 0
+            }}>
+            {sourceIndicator}
+          </Box>
           <Box
             sx={{
               display: 'flex',
-              height: '100%',
-              flexDirection: 'column'
+              marginLeft,
+              marginRight,
+              alignItems: 'center',
+              justifyContent: `${textJustification} !important`,
+              minWidth: `calc(32px - ${marginLeft} - ${marginRight}) !important`,
+              flexGrow: 1,
             }}>
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'left',
-                m: 0
-              }}>
-              {sourceIndicator}
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                marginLeft: '12px',
-                marginRight: '12px',
-                flexGrow: 1,
-              }}>
-              <Stack>
-                {/*
-                  * word text display
-                  */}
-                <LocalizedTextDisplay
-                  languageInfo={languageInfo}
+            <Stack>
+              {/*
+                * word text display
+                */}
+              <LocalizedTextDisplay
+                languageInfo={languageInfo}
+                sx={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: `${textJustification} !important`,
+                  fontSize: languageInfo?.code === 'heb' ? '19px' : '13px'
+                }}>
+                {token.text}
+              </LocalizedTextDisplay>
+              {/*
+                * gloss display
+                */}
+              {enableGlossDisplay ?
+                <Typography
+                  variant={'caption'}
                   sx={{
-                    width: '100%',
-                    justifyContent: 'center'
-                  }}>
-                  {token.text}
-                </LocalizedTextDisplay>
-                {/*
-                  * gloss display
-                  */}
-                {enableGlossDisplay ?
-                  <Typography
-                    variant={'caption'}
-                    sx={{
-                      color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text
-                    }} >
-                    {token.gloss ?? '-'}
-                  </Typography> : <></>}
-              </Stack>
-            </Box>
-            <Box
-              sx={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'right',
-                m: 0
-              }}>
-              {statusIndicator}
-            </Box>
+                    display: 'flex',
+                    justifyContent: `${textJustification} !important`,
+                    color: isSelectedInEditedLink && !isHoveredToken ? buttonNormalBackgroundColor : theme.palette.tokenButtons.defaultTokenButtons.text,
+                  }} >
+                  {token.gloss ?? '-'}
+                </Typography> : <></>}
+            </Stack>
           </Box>
-        </LocalizedTextDisplay>
-      </Button>
+          <Box
+            sx={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'right',
+              m: 0
+            }}>
+            {statusIndicator}
+          </Box>
+        </Box>
+      </LocalizedTextDisplay>
+    </Button>
       <ContextMenuAlignmentState />
     </Box>
-      {!!token.after && !suppressAfter
-        ? <Button disabled={true}>
-            <LocalizedTextDisplay languageInfo={languageInfo}>
-              {token.after}
-            </LocalizedTextDisplay>
-          </Button> : ''}
+    {!!token.after && !suppressAfter
+      ? <Button disabled={true}>
+          <LocalizedTextDisplay languageInfo={languageInfo}>
+            {token.after}
+          </LocalizedTextDisplay>
+        </Button> : ''}
   </>);
 }
