@@ -34,7 +34,7 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
   );
 
   const scrollLock = useAppSelector((state) => state.app.scrollLock);
-  const {saveLink} = useSaveLink();
+  const {saveLink} = useSaveLink(true);
   useRemoveLink(linkRemoveState?.linkId, linkRemoveState?.removeKey);
 
   const anySegmentsSelected = useMemo(() => !!inProgressLink, [inProgressLink]);
@@ -80,8 +80,12 @@ export const ControlPanel = (props: ControlPanelProps): ReactElement => {
         spacing={2}
         justifyContent="center"
         alignItems="baseline"
-        style={{ marginTop: '16px', marginBottom: '16px' }}
-      >
+        style={{
+          marginTop: '16px',
+          marginBottom: '16px',
+          flexGrow: 0,
+          flexShrink: 0
+        }} >
         <ButtonGroup>
           <Tooltip title="Create Link" arrow describeChild>
           <span>

@@ -28,7 +28,7 @@ const Workbench: React.FC<WorkbenchProps> = ({
               marginTop: '0',
               marginBottom: '0',
               minWidth: '100%',
-              flexGrow: 1,
+              height: 'calc(100% - 64px)',
             }}
           >
             <Editor

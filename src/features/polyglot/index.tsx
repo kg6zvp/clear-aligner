@@ -40,7 +40,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
     <Box
       display={'flex'}
       flexDirection={'column'}
-      minHeight={'17rem'}
+      minHeight={'2rem'}
       flexGrow={1}
     >
       <Stack
@@ -48,7 +48,7 @@ export const Polyglot: React.FC<PolyglotProps> = ({ containers, position }) => {
         flexGrow={1}
         direction={preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? 'column' : 'row'}
         spacing={'8px'}
-        style={{ minHeight: preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? '30rem' : '17rem' }}
+        style={{ minHeight: preferences?.alignmentDirection === ControlPanelFormat[ControlPanelFormat.VERTICAL] ? undefined : '2rem' }}
         justifyContent="stretch"
         alignItems="stretch"
       >
