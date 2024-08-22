@@ -9,7 +9,6 @@ import { signIn } from "aws-amplify/auth";
 import { userState } from '../profileAvatar/profileAvatar';
 import { AppContext } from '../../App';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useLocation } from 'react-router-dom';
 
 
 interface LoginProps {
@@ -37,8 +36,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
   const [showPasswordResetURL, setShowPasswordResetURL] = React.useState(false);
 
-  const location = useLocation();
-
   const handleLogin = async() => {
     setShowLoginError(false);
     setShowPasswordResetURL(false);
@@ -65,6 +62,10 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       console.log('error signing in: ', error)
       setShowLoginError(true)
     }
+  }
+
+  const handleResetPassword = () => {
+    setShowPasswordResetURL(false);
   }
 
   return (
@@ -150,8 +151,10 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                     mt: 1
                   }}
                 >
-                  Please <Link href={`https://clear-aligner-2.auth.us-east-1.amazoncognito.com/login?client_id=jteqgoa1rgptil2tdi7b0nqjb&response_type=code&scope=aws.cognito.signin.user.admin+openid&redirect_uri=http://localhost:3000#${location.pathname}`}>
-                  reset your password </Link> before signing in.
+                  Please <Link onClick={handleResetPassword}
+                               href={'https://clear-aligner-2.auth.us-east-1.amazoncognito.com/login?client_id=jteqgoa1rgptil2tdi7b0nqjb&response_type=code&scope=aws.cognito.signin.user.admin+openid&redirect_uri=https://www.google.com'}
+                               target={"_blank"}
+                >reset your password</Link> before signing in.
                 </Typography>
               }
             </Stack>
