@@ -10,6 +10,10 @@ import { userState } from '../profileAvatar/profileAvatar';
 import { AppContext } from '../../App';
 import LogoutIcon from '@mui/icons-material/Logout';
 
+/**
+ * Value from .env file which will be injected at build time
+ */
+declare var CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: string;
 
 interface LoginProps {
   isLoginModalOpen: boolean;
@@ -152,7 +156,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                   }}
                 >
                   Please <Link onClick={handleResetPassword}
-                               href={'https://clear-aligner-2.auth.us-east-1.amazoncognito.com/login?client_id=jteqgoa1rgptil2tdi7b0nqjb&response_type=code&scope=aws.cognito.signin.user.admin+openid&redirect_uri=https://www.google.com'}
+                               href={CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}
                                target={"_blank"}
                 >reset your password</Link> before signing in.
                 </Typography>
