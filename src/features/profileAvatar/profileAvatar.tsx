@@ -52,6 +52,9 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const [showLoginError, setShowLoginError] = React.useState(false);
   const { network, setUserStatus } = useContext(AppContext);
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
+  const [showPasswordResetURL, setShowPasswordResetURL] = React.useState(false);
+  const [emailAddress, setEmailAddress] = React.useState("")
+  const [password, setPassword] = React.useState("")
 
   const open = Boolean(anchorEl);
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -69,6 +72,9 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
   const handleLoginModalClose = () => {
     setIsLoginModalOpen(false);
     setShowLoginError(false);
+    setShowPasswordResetURL(false);
+    setPassword("");
+    setEmailAddress("");
   }
   const handleSignOut = async() => {
     try{
@@ -140,6 +146,12 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({isSignInButtonVisible, isSignI
         setUserStatus={setUserStatus}
         showLoginError={showLoginError}
         setShowLoginError={setShowLoginError}
+        showPasswordResetURL={showPasswordResetURL}
+        setShowPasswordResetURL={setShowPasswordResetURL}
+        emailAddress={emailAddress}
+        setEmailAddress={setEmailAddress}
+        password={password}
+        setPassword={setPassword}
       />
     </div>
   );

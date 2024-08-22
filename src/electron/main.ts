@@ -30,8 +30,8 @@ function createWindow() {
       action: 'allow',
       overrideBrowserWindowOptions: {
         fullscreen: false,
-        width: 500,
-        height: 650,
+        width: 550,
+        height: 700,
         autoHideMenuBar: true,
     }
   }});

@@ -22,6 +22,12 @@ interface LoginProps {
   setUserStatus: Function;
   showLoginError: boolean;
   setShowLoginError: Function;
+  showPasswordResetURL: boolean;
+  setShowPasswordResetURL: Function;
+  emailAddress: string;
+  setEmailAddress: Function;
+  password: string;
+  setPassword: Function
 }
 
 /**
@@ -33,12 +39,15 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                                              popOverAnchorEl,
                                              setUserStatus,
                                              setShowLoginError,
-                                             showLoginError}): ReactElement => {
-  const [emailAddress, setEmailAddress] = React.useState("")
-  const [password, setPassword] = React.useState("")
+                                             showLoginError,
+                                             showPasswordResetURL,
+                                             setShowPasswordResetURL,
+                                             emailAddress,
+                                             setEmailAddress,
+                                             password,
+                                             setPassword}): ReactElement => {
   const theme = useTheme();
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
-  const [showPasswordResetURL, setShowPasswordResetURL] = React.useState(false);
 
   const handleLogin = async() => {
     setShowLoginError(false);
@@ -69,6 +78,8 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
 
   const handleResetPassword = () => {
     setShowPasswordResetURL(false);
+    setPassword("");
+    setEmailAddress("");
   }
 
   return (
@@ -116,6 +127,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                 onChange={(e) => {
                   setEmailAddress(e.target.value)
                 }}
+                value={emailAddress}
               />
               <TextField
                 required
@@ -124,6 +136,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                 type="password"
                 InputLabelProps={{shrink: true, required: false}}
                 onChange={(e) => setPassword(e.target.value)}
+                value={password}
               />
               <Button
                 variant="contained"
@@ -157,6 +170,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                   Please <Link onClick={handleResetPassword}
                                href={CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}
                                target={"_blank"}
+                               color={"inherit"}
                 >reset your password</Link> before signing in.
                 </Typography>
               }
