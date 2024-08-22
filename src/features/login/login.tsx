@@ -48,7 +48,6 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         username: emailAddress,
         password: password,
       })
-      console.log('signInResponse is: ', signInResponse)
 
       if (signInResponse.nextStep?.signInStep ===
         "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED"){
