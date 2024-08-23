@@ -143,7 +143,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                 onClick={handleLogin}
                 sx={{
                   borderRadius: 5,
-                  marginX: 5
+                  marginX: '5px'
                 }}
                 startIcon={<LogoutIcon/>}
 
