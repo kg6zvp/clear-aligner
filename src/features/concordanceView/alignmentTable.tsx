@@ -12,8 +12,9 @@ import {
   GridInputRowSelectionModel,
   GridRowSelectionModel, GridRowHeightParams
 } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, TableContainer, useTheme } from '@mui/material';
+import { CircularProgress, IconButton, Menu, MenuItem, TableContainer, useTheme } from '@mui/material';
 import { CancelOutlined, CheckCircle, CheckCircleOutlined, Flag, FlagOutlined, Launch } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CircleIcon from '@mui/icons-material/Circle';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
@@ -34,6 +35,8 @@ import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { grey } from '@mui/material/colors';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -73,10 +76,37 @@ export const LinkCell = ({ row, onClick }: {
   onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
 }) => {
   const tableCtx = useContext(AlignmentTableContext);
+  const[isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleLinkClick = () => {
+    setIsMenuOpen(true);
+  }
   return (
-    <IconButton onClick={() => onClick(tableCtx, row.row)}>
-      <Launch />
-    </IconButton>
+    <>
+      <IconButton onClick={() => onClick(tableCtx, row.row)}>
+        <MoreVertIcon/>
+      </IconButton>
+      <Menu
+        id="basic-menu"
+        //anchorEl={anchorEl}
+        open={true}
+        //onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem
+          onClick={() => onClick(tableCtx, row.row)}
+        >
+          Verse Editor
+        </MenuItem>
+      </Menu>
+    </>
   );
 };
 
