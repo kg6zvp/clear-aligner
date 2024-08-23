@@ -142,37 +142,42 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                 variant="contained"
                 onClick={handleLogin}
                 sx={{
-                  borderRadius: 5
+                  borderRadius: 5,
+                  marginX: 5
                 }}
                 startIcon={<LogoutIcon/>}
 
               >Sign In
               </Button>
               {showLoginError &&
-                <Typography
-                  color={'error'}
-                  fontSize={'small'}
-                  sx={{
-                    mt: 1
-                  }}
-                >
-                  Incorrect email address or password.
-                </Typography>
+                <Box sx={{maxWidth: '250px', paddingX: '5px'}}>
+                  <Typography
+                    color={'error'}
+                    fontSize={'small'}
+                    sx={{
+                      mt: 1
+                    }}
+                  >
+                    Incorrect email address or password.
+                  </Typography>
+                </Box>
               }
               {showPasswordResetURL &&
-                <Typography
-                  color={'error'}
-                  fontSize={'small'}
-                  sx={{
-                    mt: 1
-                  }}
-                >
-                  Please <Link onClick={handleResetPassword}
-                               href={CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}
-                               target={"_blank"}
-                               color={"inherit"}
-                >reset your password</Link> before signing in.
-                </Typography>
+                <Box sx={{maxWidth: '250px', paddingX: '5px'}}>
+                  <Typography
+                    color={'error'}
+                    fontSize={'small'}
+                    sx={{
+                      mt: 1
+                    }}
+                  >
+                    Please <Link onClick={handleResetPassword}
+                                 href={CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}
+                                 target={"_blank"}
+                                 color={"inherit"}
+                  >reset your password</Link> before signing in.
+                  </Typography>
+                </Box>
               }
             </Stack>
           </Box>
