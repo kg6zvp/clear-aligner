@@ -10,7 +10,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  FormControl,
+  FormControl, Grid,
   Icon,
   InputLabel,
   MenuItem,
@@ -442,7 +442,7 @@ export const ConcordanceView = () => {
                     onChange={({ target: { value } }) =>
                       setWordFilter(value as PivotWordFilter)
                     }
-                    sx={{maxHeight: '37px', width: '134px'}}
+                    sx={{maxHeight: '37px', width: '154px'}}
                   >
                       <MenuItem value={'aligned' as PivotWordFilter}>
                         <Box display={'flex'}>
@@ -469,7 +469,7 @@ export const ConcordanceView = () => {
                   flexFlow: 'column',
                   flexShrink: '1',
                   gridColumn: '1',
-                  width: '40%',
+                  width: '80%',
                   gap: '0',
                   marginLeft: '1em',
                   marginTop: '0',
@@ -517,147 +517,116 @@ export const ConcordanceView = () => {
         position: 'relative',
         display: 'flex',
       }}>
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            gridGap: '.2em',
-            gridTemplateColumns: 'repeat(18, 1fr)',
-            width: '95.5vw !important'
-          }}
+
+        {/**
+         * Grid Container for the three tables
+         */}
+        <Grid
+          container
+          spacing={'8px'}
+          marginLeft={'4px'}
+          marginRight={'12px'}
         >
           {/**
-           * Pivot Words
+           * Pivot Words Table
            */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexFlow: 'column',
-              flexGrow: '0',
-              flexShrink: '1',
-              gridColumn: '1',
-              width: '35%',
-              gap: '1em',
-              marginLeft: '12px',
-              marginTop: '0'
-            }}
-          >
-            <Paper
-              sx={(theme) => ({
-                display: 'flex',
-                width: '100%',
-                height: 'calc(100vh - 5em)',
-                backgroundColor: theme.palette.primary.contrastText,
-                backgroundImage: 'none',
-                '.MuiTableContainer-root::-webkit-scrollbar': {
-                  width: 0
-                }
-              })}
-            >
-              <PivotWordTable
-                loading={!pivotWords}
-                sort={pivotWordSortData}
-                pivotWords={pivotWords ?? []}
-                chosenWord={selectedPivotWord}
-                onChooseWord={(word) =>
-                  handleUpdateSelectedPivotWord(word)
-                }
-                onChangeSort={setPivotWordSortData}
-              />
-            </Paper>
-          </Box>
-          {/**
-           * Aligned Words
-           */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexFlow: 'column',
-              flexShrink: '1',
-              gridColumn: '1',
-              width: '40%',
-              gap: '1em',
-              marginLeft: '1em',
-              marginTop: '0'
-            }}
-          >
-            <Paper
-              sx={(theme) => ({
-                display: 'flex',
-                width: '100%',
-                backgroundColor: theme.palette.primary.contrastText,
-                backgroundImage: 'none',
-                height: 'calc(100vh - 5em)',
-                '.MuiTableContainer-root::-webkit-scrollbar': {
-                  width: 0
-                }
-              })}
-            >
-              <AlignedWordTable
-                sort={alignedWordSortData}
-                pivotWord={selectedPivotWord}
-                chosenAlignedWord={selectedAlignedWord}
-                onChooseAlignedWord={(alignedWord) =>
-                  handleUpdateSelectedAlignedWord(alignedWord)
-                }
-                onChangeSort={setAlignedWordSortData}
-              />
-            </Paper>
-          </Box>
-          {/**
-           * Alignment Links
-           */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexFlow: 'column',
-              flexShrink: '1',
-              gridColumn: '1',
-              width: '100%',
-              gap: '1em',
-              margin: '1em',
-              marginTop: '0'
-            }}
-          >
-            <Paper
-              sx={ (theme) => ({
-                display: 'flex',
-                width: '100%',
-                height: 'calc(100vh - 5em)',
-                backgroundColor: theme.palette.primary.contrastText,
-                backgroundImage: 'none',
-                '.MuiTableContainer-root::-webkit-scrollbar': {
-                  width: 0
-                }
-              })}
-            >
-              <AlignmentTable
-                wordSource={wordSource}
-                pivotWord={selectedPivotWord}
-                alignedWord={selectedAlignedWord ?? undefined}
-                chosenAlignmentLink={selectedAlignmentLink}
-                onChooseAlignmentLink={setSelectedAlignmentLink}
-                updateAlignments={(resetState: boolean) => {
-                  dispatch(resetTextSegments());
-                  if (resetState) {
-                    setSelectedAlignedWord(null);
-                    setSelectedAlignmentLink(null);
-                    setSelectedPivotWord(undefined);
+          <Grid item xs={3}>
+              <Paper
+                sx={(theme) => ({
+                  display: 'flex',
+                  width: '100%',
+                  height: 'calc(100vh - 4.2em)',
+                  backgroundColor: theme.palette.primary.contrastText,
+                  backgroundImage: 'none',
+                  '.MuiTableContainer-root::-webkit-scrollbar': {
+                    width: 0
                   }
-                }}
-                setSelectedRowsCount={setSelectedRowsCount}
-                setSelectedRows={setSelectedRows}
-                setSaveButtonDisabled={setSaveButtonDisabled}
-                setLinksPendingUpdate={setLinksPendingUpdate}
-                linksPendingUpdate={linksPendingUpdate}
-                rowSelectionModel={rowSelectionModel}
-                setRowSelectionModel={setRowSelectionModel}
-                alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-                setUpdatedSelectedRows={setUpdatedSelectedRows}
-              />
-            </Paper>
-          </Box>
-        </Box>
+                })}
+              >
+                <PivotWordTable
+                  loading={!pivotWords}
+                  sort={pivotWordSortData}
+                  pivotWords={pivotWords ?? []}
+                  chosenWord={selectedPivotWord}
+                  onChooseWord={(word) =>
+                    handleUpdateSelectedPivotWord(word)
+                  }
+                  onChangeSort={setPivotWordSortData}
+                />
+              </Paper>
+          </Grid>
+
+          {/**
+           * Aligned Words Table
+           */}
+          <Grid item xs={4} >
+              <Paper
+                sx={(theme) => ({
+                  display: 'flex',
+                  width: '100%',
+                  backgroundColor: theme.palette.primary.contrastText,
+                  backgroundImage: 'none',
+                  height: 'calc(100vh - 4.2em)',
+                  '.MuiTableContainer-root::-webkit-scrollbar': {
+                    width: 0
+                  }
+                })}
+              >
+                <AlignedWordTable
+                  sort={alignedWordSortData}
+                  pivotWord={selectedPivotWord}
+                  chosenAlignedWord={selectedAlignedWord}
+                  onChooseAlignedWord={(alignedWord) =>
+                    handleUpdateSelectedAlignedWord(alignedWord)
+                  }
+                  onChangeSort={setAlignedWordSortData}
+                />
+              </Paper>
+          </Grid>
+
+          {/**
+           * Alignment Links Table
+           */}
+          <Grid item xs={5} >
+              <Paper
+                sx={ (theme) => ({
+                  display: 'flex',
+                  width: '100%',
+                  height: 'calc(100vh - 4.2em)',
+                  backgroundColor: theme.palette.primary.contrastText,
+                  backgroundImage: 'none',
+                  '.MuiTableContainer-root::-webkit-scrollbar': {
+                    width: 0
+                  }
+                })}
+              >
+                <AlignmentTable
+                  wordSource={wordSource}
+                  pivotWord={selectedPivotWord}
+                  alignedWord={selectedAlignedWord ?? undefined}
+                  chosenAlignmentLink={selectedAlignmentLink}
+                  onChooseAlignmentLink={setSelectedAlignmentLink}
+                  updateAlignments={(resetState: boolean) => {
+                    dispatch(resetTextSegments());
+                    if (resetState) {
+                      setSelectedAlignedWord(null);
+                      setSelectedAlignmentLink(null);
+                      setSelectedPivotWord(undefined);
+                    }
+                  }}
+                  setSelectedRowsCount={setSelectedRowsCount}
+                  setSelectedRows={setSelectedRows}
+                  setSaveButtonDisabled={setSaveButtonDisabled}
+                  setLinksPendingUpdate={setLinksPendingUpdate}
+                  linksPendingUpdate={linksPendingUpdate}
+                  rowSelectionModel={rowSelectionModel}
+                  setRowSelectionModel={setRowSelectionModel}
+                  alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+                  setUpdatedSelectedRows={setUpdatedSelectedRows}
+                />
+              </Paper>
+          </Grid>
+        </Grid>
         <SaveChangesConfirmation />
         <SaveChangesConfirmationViaRouter blocker={blocker}/>
       </div>

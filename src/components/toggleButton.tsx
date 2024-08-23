@@ -31,6 +31,7 @@ export const ToggleButton = ({onSelect, variant, children, backgroundColor, butt
       variant={variant}
       onClick={handleSelect}
       sx={{
+        width: '40px',
       '&:disabled' : theme.palette.toggleButtons.disabled,
       '&:enabled' : theme.palette.toggleButtons.enabled,
       '&:hover' : theme.palette.toggleButtons.hover,
