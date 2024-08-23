@@ -12,8 +12,9 @@ import {
   GridInputRowSelectionModel,
   GridRowSelectionModel, GridRowHeightParams
 } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, TableContainer } from '@mui/material';
-import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
+import { CircularProgress, IconButton, TableContainer, useTheme } from '@mui/material';
+import { CancelOutlined, CheckCircle, CheckCircleOutlined, Flag, FlagOutlined, Launch } from '@mui/icons-material';
+import CircleIcon from '@mui/icons-material/Circle';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
@@ -32,6 +33,7 @@ import { Box } from '@mui/system';
 import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { grey } from '@mui/material/colors';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -79,6 +81,43 @@ export const LinkCell = ({ row, onClick }: {
 };
 
 /**
+ * Props for the StateCellIcon Component
+ */
+export interface StateCellIconProps {
+  state: Link;
+}
+/**
+ * Render the cell with its corresponding state icon
+ * @param state the current Link object
+ */
+export const StateCellIcon = ({
+                                state }:
+                                StateCellIconProps) => {
+  const theme = useTheme();
+
+  if (state.metadata.status === 'created'){
+    return <LinkIcon  sx={{
+      color: theme.palette.primary.main,
+      fontSize: '16px',
+    }}/>
+  }
+  else if (state.metadata.status === 'approved'){
+    return <CheckCircle  sx={{
+      color: theme.palette.success.main,
+      fontSize: '16px',
+    }}
+    />
+  }
+  else if (state.metadata.status === 'needsReview'){
+    return <Flag  sx={{
+      color: theme.palette.warning.main,
+      fontSize: '16px',
+    }}/>
+  }
+}
+
+
+/**
  * Props for the StateCell Component
  */
 export interface StateCellProps {
@@ -89,7 +128,6 @@ export interface StateCellProps {
   isRowSelected: boolean;
   alignmentTableControlPanelLinkState: LinkStatus | null;
 }
-
 
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
@@ -323,23 +361,23 @@ export const AlignmentTable = ({
     {
       field: 'state',
       headerName: 'State',
+      renderHeader: () => <CircleIcon sx={{
+        color: grey[400],
+        fontSize: '16px',
+      }}/>,
       sortable: false,
-      width: 175,
+      width: 20,
       disableColumnMenu: true,
       renderCell: row => {
-        return (<StateCell
-          setSaveButtonDisabled={setSaveButtonDisabled}
-          state={row.row}
-          isRowSelected={row.api.isRowSelected(row.id)}
-          setLinksPendingUpdate={setLinksPendingUpdate}
-          linksPendingUpdate={linksPendingUpdate}
-          alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-        />)
+        return (
+          <StateCellIcon
+            state={row.row}
+          />)
       }
     },
     {
       field: 'ref',
-      headerName: 'Ref',
+      headerName: 'Bible Ref',
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <RefCell {...row} />
       )
