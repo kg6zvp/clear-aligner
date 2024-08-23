@@ -59,7 +59,7 @@ export const RefCell = (
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
   return (
-    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
+    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useOSIS={true} />
   );
 };
 
@@ -355,7 +355,7 @@ export const AlignmentTable = ({
       disableExport: true,
       filterable: false,
       sortable: false,
-      width: 20,
+      width: 10,
       align: 'center'
     },
     {
@@ -366,7 +366,7 @@ export const AlignmentTable = ({
         fontSize: '16px',
       }}/>,
       sortable: false,
-      width: 20,
+      width: 10,
       disableColumnMenu: true,
       renderCell: row => {
         return (
