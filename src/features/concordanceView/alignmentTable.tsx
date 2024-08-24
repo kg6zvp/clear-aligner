@@ -77,20 +77,31 @@ export const LinkCell = ({ row, onClick }: {
 }) => {
   const tableCtx = useContext(AlignmentTableContext);
   const[isMenuOpen, setIsMenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleLinkClick = () => {
+    onClick(tableCtx, row.row)
+    handleClose();
+  }
+
+  const handleMoreVertIconClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    setAnchorEl(event.currentTarget)
     setIsMenuOpen(true);
+  }
+
+  const handleClose = () => {
+    setIsMenuOpen(false);
+    setAnchorEl(null);
   }
   return (
     <>
-      <IconButton onClick={() => onClick(tableCtx, row.row)}>
+      <IconButton onClick={(event) => handleMoreVertIconClick(event)} >
         <MoreVertIcon/>
       </IconButton>
       <Menu
-        id="basic-menu"
-        //anchorEl={anchorEl}
-        open={true}
-        //onClose={handleClose}
+        anchorEl={anchorEl}
+        open={isMenuOpen}
+        onClose={handleClose}
         anchorOrigin={{
           vertical: 'bottom',
           horizontal: 'center',
@@ -101,7 +112,7 @@ export const LinkCell = ({ row, onClick }: {
         }}
       >
         <MenuItem
-          onClick={() => onClick(tableCtx, row.row)}
+          onClick={() => handleLinkClick()}
         >
           Verse Editor
         </MenuItem>
