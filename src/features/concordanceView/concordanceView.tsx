@@ -306,6 +306,10 @@ export const ConcordanceView = () => {
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
+  const pivotWordTableColumns = 2;
+  const alignedWordTableColumns = 3;
+  const alignmentLinkTableColumns = 7;
+
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
         // open modal asking if users want to continue or not
@@ -399,115 +403,134 @@ export const ConcordanceView = () => {
         >
           <Toolbar >
             <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center'}}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexFlow: 'row',
-                  flexGrow: '0',
-                  flexShrink: '1',
-                  gridColumn: '1',
-                  width: '35%',
-                  gap: '0',
-                  marginTop: '0',
-                }}
+              {/**
+               * Grid Container for the three heading areas for the three tables
+               */}
+              <Grid
+                container
               >
-                <Box display={'inline'} >
-                  <SingleSelectButtonGroup
-                    sx={{ flexGrow: 1 }}
-                    value={wordSource}
-                    items={[
-                      {
-                        value: 'sources',
-                        label: <CropFree />,
-                        tooltip: 'Source'
-                      },
-                      {
-                        value: 'targets',
-                        label: <GpsFixed />,
-                        tooltip: 'Target'
-                      }
-                    ]}
-                    onSelect={(value) => setWordSource(value as AlignmentSide)}
-                  />
-                </Box>
+                {/**
+                 * Pivot Words Table Heading Area
+                 */}
+                <Grid item xs={pivotWordTableColumns}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexFlow: 'row',
+                      flexGrow: '0',
+                      flexShrink: '1',
+                      gridColumn: '1',
+                      gap: '0',
+                      marginTop: '0',
+                    }}>
+                    <Box display={'inline'} >
+                      <SingleSelectButtonGroup
+                        sx={{ flexGrow: 1 }}
+                        value={wordSource}
+                        items={[
+                          {
+                            value: 'sources',
+                            label: <CropFree />,
+                            tooltip: 'Source'
+                          },
+                          {
+                            value: 'targets',
+                            label: <GpsFixed />,
+                            tooltip: 'Target'
+                          }
+                        ]}
+                        onSelect={(value) => setWordSource(value as AlignmentSide)}
+                      />
+                    </Box>
 
-                {/*Pivot Word Filter*/}
-                <FormControl sx={{ marginLeft: '6px', display: 'inline' }}>
-                  <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
-                  <Select
-                    labelId={'pivot-word-filter'}
-                    id={'pivot-word-filter'}
-                    value={wordFilter}
-                    label={'Pivot Word Filter'}
-                    onChange={({ target: { value } }) =>
-                      setWordFilter(value as PivotWordFilter)
-                    }
-                    sx={{maxHeight: '37px', width: '154px'}}
+                    {/*Pivot Word Filter*/}
+                    <FormControl sx={{ marginLeft: '6px', display: 'inline' }}>
+                      <InputLabel id={'pivot-word-filter'}>Pivot Word Filter</InputLabel>
+                      <Select
+                        labelId={'pivot-word-filter'}
+                        id={'pivot-word-filter'}
+                        value={wordFilter}
+                        label={'Pivot Word Filter'}
+                        onChange={({ target: { value } }) =>
+                          setWordFilter(value as PivotWordFilter)
+                        }
+                        sx={{maxHeight: '37px', width: '154px'}}
+                      >
+                          <MenuItem value={'aligned' as PivotWordFilter}>
+                            <Box display={'flex'}>
+                              <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
+                                <InsertLink color={"primary"}/>
+                              </ListItemIcon>
+                              <ListItemText primary="Aligned"/>
+                            </Box>
+                          </MenuItem>
+                          <MenuItem value={'all' as PivotWordFilter}>
+                            <Box display={'flex'}>
+                              <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
+                                <Icon/>
+                            </ListItemIcon>
+                            <ListItemText primary="All"/>
+                            </Box>
+                          </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Grid>
+
+                {/**
+                 * Aligned Words Table Heading Area
+                 */}
+                <Grid item xs={alignedWordTableColumns} >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexFlow: 'column',
+                      flexShrink: '1',
+                      gridColumn: '1',
+                      gap: '0',
+                      marginLeft: '1em',
+                      marginTop: '0',
+                    }}
                   >
-                      <MenuItem value={'aligned' as PivotWordFilter}>
-                        <Box display={'flex'}>
-                          <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
-                            <InsertLink color={"primary"}/>
-                          </ListItemIcon>
-                          <ListItemText primary="Aligned"/>
-                        </Box>
-                      </MenuItem>
-                      <MenuItem value={'all' as PivotWordFilter}>
-                        <Box display={'flex'}>
-                          <ListItemIcon sx={{minWidth: '36px', alignItems: 'center'}}>
-                            <Icon/>
-                        </ListItemIcon>
-                        <ListItemText primary="All"/>
-                        </Box>
-                      </MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexFlow: 'column',
-                  flexShrink: '1',
-                  gridColumn: '1',
-                  width: '80%',
-                  gap: '0',
-                  marginLeft: '1em',
-                  marginTop: '0',
-                }}
-              >
-                {/*Empty Box for Spacing*/}
-              </Box>
+                    {/*Empty Box above Aligned Words for Spacing*/}
+                  </Box>
+                </Grid>
 
-              {/*Alignment Table Control Panel*/}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexFlow: 'column',
-                  flexShrink: '1',
-                  gridColumn: '1',
-                  width: '100%',
-                  gap: '1em',
-                  margin: '',
-                  marginTop: '0',
-                  justifyContent: 'start',
-                }}
-              >
-                <AlignmentTableControlPanel
-                  saveButtonDisabled={saveButtonDisabled}
-                  setSelectedRowsCount={setSelectedRowsCount}
-                  selectedRowsCount={selectedRowsCount}
-                  linksPendingUpdate={linksPendingUpdate}
-                  setSaveButtonDisabled={setSaveButtonDisabled}
-                  setSelectedRows={setSelectedRows}
-                  selectedRows={selectedRows}
-                  setLinksPendingUpdate={setLinksPendingUpdate}
-                  updatedSelectedRows={updatedSelectedRows}
-                  setUpdatedSelectedRows={setUpdatedSelectedRows}
-                  setRowSelectionModel={setRowSelectionModel}
-                  alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-                  setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
-                />
-              </Box>
+                {/**
+                 * Alignment Links Table Heading Area
+                 */}
+                <Grid item xs={alignmentLinkTableColumns} >
+                  {/*Alignment Table Control Panel*/}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexFlow: 'column',
+                      flexShrink: '1',
+                      gridColumn: '1',
+                      gap: '1em',
+                      margin: '',
+                      marginTop: '0',
+                      justifyContent: 'start',
+                    }}
+                  >
+                    <AlignmentTableControlPanel
+                      saveButtonDisabled={saveButtonDisabled}
+                      setSelectedRowsCount={setSelectedRowsCount}
+                      selectedRowsCount={selectedRowsCount}
+                      linksPendingUpdate={linksPendingUpdate}
+                      setSaveButtonDisabled={setSaveButtonDisabled}
+                      setSelectedRows={setSelectedRows}
+                      selectedRows={selectedRows}
+                      setLinksPendingUpdate={setLinksPendingUpdate}
+                      updatedSelectedRows={updatedSelectedRows}
+                      setUpdatedSelectedRows={setUpdatedSelectedRows}
+                      setRowSelectionModel={setRowSelectionModel}
+                      alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
+                      setAlignmentTableControlPanelLinkState={setAlignmentTableControlPanelLinkState}
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
             </Box>
             <ProfileAvatar/>
           </Toolbar>
@@ -530,7 +553,7 @@ export const ConcordanceView = () => {
           {/**
            * Pivot Words Table
            */}
-          <Grid item xs={3}>
+          <Grid item xs={pivotWordTableColumns}>
               <Paper
                 sx={(theme) => ({
                   display: 'flex',
@@ -559,7 +582,7 @@ export const ConcordanceView = () => {
           {/**
            * Aligned Words Table
            */}
-          <Grid item xs={4} >
+          <Grid item xs={alignedWordTableColumns} >
               <Paper
                 sx={(theme) => ({
                   display: 'flex',
@@ -587,7 +610,7 @@ export const ConcordanceView = () => {
           {/**
            * Alignment Links Table
            */}
-          <Grid item xs={5} >
+          <Grid item xs={alignmentLinkTableColumns} >
               <Paper
                 sx={ (theme) => ({
                   display: 'flex',
