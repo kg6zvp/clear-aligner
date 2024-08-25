@@ -6,14 +6,22 @@ import { Link, LinkStatus } from '../../structs';
 import {
   DataGrid,
   GridColDef,
-  GridRenderCellParams,
-  GridRowParams,
-  GridSortItem,
   GridInputRowSelectionModel,
-  GridRowSelectionModel, GridRowHeightParams
+  GridRenderCellParams,
+  GridRowHeightParams,
+  GridRowParams,
+  GridRowSelectionModel,
+  GridSortItem
 } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, Menu, MenuItem, TableContainer, useTheme } from '@mui/material';
-import { CancelOutlined, CheckCircle, CheckCircleOutlined, Flag, FlagOutlined, Launch } from '@mui/icons-material';
+import {
+  CancelOutlined,
+  CheckCircle,
+  CheckCircleOutlined,
+  Flag,
+  FlagOutlined,
+  Link as LinkIcon
+} from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CircleIcon from '@mui/icons-material/Circle';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
@@ -25,18 +33,16 @@ import {
   DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
+  DataGridSvgFix,
   DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
-import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { grey } from '@mui/material/colors';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import LogoutIcon from '@mui/icons-material/Logout';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -139,20 +145,17 @@ export const StateCellIcon = ({
   if (state.metadata.status === 'created'){
     return <LinkIcon  sx={{
       color: theme.palette.primary.main,
-      fontSize: '16px',
     }}/>
   }
   else if (state.metadata.status === 'approved'){
     return <CheckCircle  sx={{
       color: theme.palette.success.main,
-      fontSize: '16px',
     }}
     />
   }
   else if (state.metadata.status === 'needsReview'){
     return <Flag  sx={{
       color: theme.palette.warning.main,
-      fontSize: '16px',
     }}/>
   }
 }
@@ -458,6 +461,7 @@ export const AlignmentTable = ({
     ...DataGridResizeAnimationFixes,
     ...DataGridTripleIconMarginFix,
     ...DataGridOutlineFix,
+    ...DataGridSvgFix
   }
 
   if (loading) {
