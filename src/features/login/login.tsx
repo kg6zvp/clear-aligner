@@ -58,16 +58,21 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
         password: password,
       })
 
-      if (signInResponse.nextStep?.signInStep ===
-        "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED"){
-        setUserStatus(userState.LoggedOut);
-        setShowPasswordResetURL(true);
-      }
-      else{
+      if(signInResponse.isSignedIn === true){
         setUserStatus(userState.LoggedIn);
         setShowLoginError(false)
         setSnackBarMessage("Signed in to ClearAligner Sync.")
         setIsSnackBarOpen(true);
+      }
+
+      else if (signInResponse.nextStep?.signInStep ===
+        "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED" ){
+        setUserStatus(userState.LoggedOut);
+        setShowPasswordResetURL(true);
+      }
+      else {
+        setUserStatus(userState.LoggedOut);
+        setShowLoginError(true)
       }
     }
     catch (error){
