@@ -428,18 +428,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     const signedOutIcon = (
       <Grid container justifyContent="flex-end" alignItems="center">
         <Tooltip title="Sign in to connect to manage remote projects">
-          <Button
-            variant="text"
-            disabled
-            sx={{
-              margin: 0,
-              padding: 0,
-              textTransform: 'none',
-              minWidth: '0px !important'
-            }}>
+          <span>
+            <Button
+              variant="text"
+              disabled
+              sx={{
+                margin: 0,
+                padding: 0,
+                textTransform: 'none',
+                minWidth: '0px !important'
+              }}>
             <span style={{ color: grey['500'] }}>Unavailable</span>
             <CloudOff sx={theme => ({ fill: theme.palette.text.secondary, mb: .5, ml: .5 })} />
           </Button>
+          </span>
         </Tooltip>
       </Grid>
     );
