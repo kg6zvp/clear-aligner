@@ -5,13 +5,13 @@
 import { Link, LinkStatus } from '../../structs';
 import {
   DataGrid,
-  GridColDef,
+  GridColDef, GridEventListener,
   GridInputRowSelectionModel,
   GridRenderCellParams,
   GridRowHeightParams,
   GridRowParams,
   GridRowSelectionModel,
-  GridSortItem
+  GridSortItem, useGridApiContext, useGridApiEventHandler
 } from '@mui/x-data-grid';
 import { CircularProgress, IconButton, Menu, MenuItem, Popover, TableContainer, useTheme } from '@mui/material';
 import {
@@ -67,7 +67,35 @@ export const RefCell = (
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
+  const [rowHovered, setRowHovered] = useState(false);
+  const apiRef = useGridApiContext();
+  const theme = useTheme();
+
+  // this logic allows us to subscribe to mouse enter and mouse leave states
+  // inisde the datagrid
+  useEffect( () => {
+    if (apiRef.current.getRowElement(row.id)?.matches(":hover")){
+      setRowHovered(true);
+    }
+  })
+  const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
+    id === row.id && setRowHovered(true);
+  }
+  const handleRowLeave: GridEventListener<'rowMouseLeave'> = ({id})  => {
+    id === row.id && setRowHovered(false);
+  }
+  useGridApiEventHandler(apiRef, "rowMouseEnter", handleRowEnter);
+  useGridApiEventHandler(apiRef, "rowMouseLeave", handleRowLeave);
+
+
+
   return (
+    rowHovered ? <Box
+        sx = {{
+          border: `solid 1px ${theme.palette.linkStateSelector.border}`,
+          borderRadius: '32px' }}>
+        I'm a Box
+      </Box> :
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useOSIS={true} />
   );
 };
@@ -141,62 +169,11 @@ export const StateCellIcon = ({
                                 state }:
                                 StateCellIconProps) => {
   const theme = useTheme();
-  const [isLinkStateSelectorVisible, setIsLinkStateSelectorVisible] = useState(false);
-  //const [anchorEl, setAnchorEl] = useState<null|HTMLElement>(null);
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
-  const handleOnMouseEnter = (event: any) => {
-    console.log('event: ', event)
-    console.log('handleOnMouseEnter()')
-    setAnchorEl(event.currentTarget)
-    setIsLinkStateSelectorVisible(true)
-  }
-
-  const handleOnMouseLeave= (event: any) => {
-    console.log('event: ', event)
-    console.log('handleOnMouseLeave()')
-    setAnchorEl(null);
-    setIsLinkStateSelectorVisible(false)
-  }
 
   if (state.metadata.status === 'created'){
-    return (
-      <>
-          <LinkIcon
-            sx={{ color: theme.palette.primary.main }}
-            onMouseEnter={(event) => handleOnMouseEnter(event)}
-            onMouseLeave={(event) => handleOnMouseLeave(event)}
-          />
-        <Popover
-          style={{ pointerEvents: 'none', marginLeft: '10px'}}
-          open={isLinkStateSelectorVisible}
-          hideBackdrop={true}
-          slotProps={{
-            paper: {
-              elevation: 0,
-              sx: {
-                border: `solid 1px ${theme.palette.linkStateSelector.border}`,
-                borderRadius: '32px'
-              }
-            }
-          }}
-          // onClose={}
-          anchorEl={anchorEl}
-          anchorOrigin={{
-            vertical: 'center',
-            horizontal: 'right',
-          }}
-          transformOrigin={{
-            vertical: 'center',
-            horizontal: 'left',
-          }}
-        >
-          I'm a Popover
-        </Popover>
-      </>
-
-    )
-
+    return (<LinkIcon sx={{
+      color: theme.palette.primary.main }}
+      />)
   }
   else if (state.metadata.status === 'approved'){
     return <CheckCircle  sx={{
