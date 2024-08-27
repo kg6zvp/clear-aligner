@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { Progress } from '../ApiModels';
 import { ApiUtils } from '../utils';
@@ -38,9 +38,10 @@ export const useDeleteProject = (): DeleteState => {
         setProgress(Progress.IDLE);
       }, 5000);
     }
+    return undefined;
   };
 
-  const dialog = React.useMemo(() => (
+  const dialog = useMemo(() => (
     <Dialog
       scroll="paper"
       open={progress === Progress.IN_PROGRESS}
@@ -54,8 +55,6 @@ export const useDeleteProject = (): DeleteState => {
       </Grid>
     </Dialog>
   ), [progress, cleanupRequest]);
-
-
 
   return {
     deleteProject,

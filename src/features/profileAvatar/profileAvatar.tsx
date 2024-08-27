@@ -5,7 +5,7 @@ import { Avatar, Button, Menu, MenuItem } from '@mui/material';
 import { Person } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import Badge from '@mui/material/Badge';
-import React, { useContext, useEffect, useMemo } from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import ListItemIcon from '@mui/material/ListItemIcon';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -13,8 +13,6 @@ import Login from '../login/login';
 import { signOut } from 'aws-amplify/auth';
 import { AppContext } from '../../App';
 import { blue, green, grey, red } from '@mui/material/colors';
-import { getAuthorizationToken, getUserGroups } from '../../server/amplifySetup';
-import { useCurrentUserGroups } from '../../hooks/userInfoHooks';
 
 /**
  * userState is an object containing the different user States

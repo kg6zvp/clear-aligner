@@ -38,6 +38,7 @@ import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { ADMIN_GROUP } from '../../server/amplifySetup';
 import { useCurrentUserGroups } from '../../hooks/userInfoHooks';
+import { useDeleteProject } from '../../api/projects/useDeleteProject';
 
 enum ProjectDialogMode {
   CREATE = 'create',
@@ -97,6 +98,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                                                      }: ProjectSettingsProps) => {
   const dispatch = useAppDispatch();
   const { publishProject, dialog: publishDialog } = usePublishProject();
+  const { setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = useState<Project>(initialProjectState);
@@ -105,6 +107,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   const [openConfirmUnpublish, setOpenConfirmUnpublish] = useState(false);
   const [fileContent, setFileContent] = useState('');
   const [projectUpdated, setProjectUpdated] = useState(false);
+  const { deleteProject } = useDeleteProject();
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
@@ -459,7 +462,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   : <Box />
               }
               {
-                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn /*&& isAdmin*/)
+                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn && isAdmin)
                   ?
                   <Button
                     variant="text"
@@ -522,7 +525,20 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                 </Button>
                 <Button variant="contained" onClick={() => {
                   setOpenConfirmUnpublish(false);
-                  publishProject(project, ProjectState.DRAFT).then(() => handleClose());
+                  const initialProjectState = project.state ?? ProjectState.PUBLISHED;
+                  publishProject(project, ProjectState.DRAFT)
+                    .then(() => {
+                      return deleteProject(project.id)
+                        .then((response: unknown) => {
+                          if (!!response && (response as any)?.success)
+                            return;
+                          if (!!response && (response as any).response && ((response as any)?.response as any)?.statusCode === 403) {
+                            void publishProject(project, initialProjectState);
+                            setSnackBarMessage('You do not have permission to complete this operation');
+                            setIsSnackBarOpen(true);
+                          }
+                        });
+                    });
                 }} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
               </Grid>
             </Grid>

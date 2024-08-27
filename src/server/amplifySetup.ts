@@ -2,7 +2,7 @@ import { Amplify } from 'aws-amplify';
 import { DocumentType } from '@aws-amplify/core/internals/utils';
 import { RestApiOptionsBase } from '@aws-amplify/api-rest/src/types';
 import { EnvironmentVariables } from '../structs/environmentVariables';
-import { fetchAuthSession, fetchUserAttributes, getCurrentUser } from 'aws-amplify/auth';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const environmentVariables = ((window as any).environmentVariables as EnvironmentVariables);
 

@@ -500,10 +500,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       });
       switch (project.location) {
         case ProjectLocation.LOCAL:
-          //if (!isAdmin) return (<></>);
+          if (!isAdmin) return (<></>);
           return (
             <Button variant="text"
-                    disabled={buttonDisabled}
+                    disabled={buttonDisabled || !isAdmin}
                     sx={buttonStyle}
                     onClick={(e) => {
                       e.stopPropagation();

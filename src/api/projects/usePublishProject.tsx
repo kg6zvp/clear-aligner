@@ -4,7 +4,6 @@ import { Project } from '../../state/projects/tableManager';
 import { AppContext } from '../../App';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import useCancelTask, { CancelToken } from '../useCancelTask';
-import { useDeleteProject } from './useDeleteProject';
 import { Progress } from '../ApiModels';
 import { ApiUtils } from '../utils';
 import RequestType = ApiUtils.RequestType;
@@ -20,7 +19,6 @@ export interface PublishState {
  */
 export const usePublishProject = (): PublishState => {
   const {cancel, cancelToken, reset} = useCancelTask();
-  const {deleteProject} = useDeleteProject();
   const { projectState, setProjects } = useContext(AppContext);
   const [publishState, setPublishState] = React.useState<ProjectState>();
   const [progress, setProgress] = useState<Progress>(Progress.IDLE);
@@ -49,7 +47,6 @@ export const usePublishProject = (): PublishState => {
       if(state === ProjectState.PUBLISHED) {
         await projectState?.projectTable?.update(project, false);
       } else {
-        await deleteProject(project.id);
         project.location = ProjectLocation.LOCAL;
         project.lastSyncTime = 0;
         await projectState?.projectTable?.update(project, false);
@@ -65,7 +62,7 @@ export const usePublishProject = (): PublishState => {
         setProgress(Progress.IDLE);
       }, 5000);
     }
-  }, [projectState, cleanupRequest, deleteProject, setProjects]);
+  }, [projectState, cleanupRequest, setProjects]);
 
   React.useEffect(() => {
     if(progress === Progress.CANCELED) {

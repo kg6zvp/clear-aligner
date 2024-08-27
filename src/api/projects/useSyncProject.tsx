@@ -47,14 +47,13 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
   const { deleteProject } = useDeleteProject();
-  const { projectState, containers, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
+  const { projectState, containers, setIsProjectDialogOpen, isBusyDialogOpen, setIsSnackBarOpen, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
   const [canceled, setCanceled] = React.useState<boolean>(false);
   const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const { setIsProjectDialogOpen, isBusyDialogOpen } = useContext(AppContext);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -119,16 +118,19 @@ export const useSyncProject = (): SyncState => {
             signal: abortController.current?.signal,
             payload: mapProjectEntityToProjectDTO(project)
           });
-          if(res.success) {
+          if (res.success) {
             setProgress(SyncProgress.SYNCING_CORPORA);
           } else {
-            if((res.response?.message ?? "").includes("duplicate key")) {
+            if (res.response?.statusCode === 403) {
+              setSnackBarMessage('You do not have permission to complete this operation');
+            } else if ((res.response?.message ?? "").includes("duplicate key")) {
               setUniqueNameError(true);
               setSnackBarMessage("Failed to sync project. Project name already exists");
             } else {
               setSnackBarMessage("Failed to sync project.");
             }
             console.error("Response failed: ", res.response);
+            setIsSnackBarOpen(true);
             setProgress(SyncProgress.FAILED);
           }
           break;
@@ -185,6 +187,7 @@ export const useSyncProject = (): SyncState => {
       await publishProject(project, ProjectState.PUBLISHED);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
+    setIsSnackBarOpen,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
     dbApi,
     setProjects,

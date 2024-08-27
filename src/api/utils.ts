@@ -64,6 +64,10 @@ export module ApiUtils {
       && (contentLengthOptional || getContentLength(response.headers['content-length']) > 0)
       && 'body' in response) {
       return await (response.body as Response).json();
+    } else if (response.statusCode) {
+      return {
+        ...response
+      };
     } else {
       return {};
     }
@@ -131,7 +135,12 @@ export module ApiUtils {
         path: requestPath,
         options: payload ? getApiOptionsWithAuth(payload) : getApiOptionsWithAuth()
       });
-      const response = await responseOperation.response;
+      let response;
+      try {
+        response = await responseOperation.response;
+      } catch(x) {
+        response = (x as any).response;
+      }
       if (signal) {
         signal.onabort = () => {
           responseOperation.cancel();
