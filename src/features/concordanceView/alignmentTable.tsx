@@ -437,7 +437,9 @@ export const AlignmentTable = ({
     },
     {
       field: 'id',
-      headerName: 'Link',
+      headerName: '',
+      disableColumnMenu: true,
+      width: 1,
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <LinkCell row={row} onClick={() => {
