@@ -3,13 +3,17 @@
  */
 import React, { ReactElement, useContext } from 'react';
 import { Box } from '@mui/system';
-import { Button, DialogTitle, Popover, Stack, Typography, useTheme } from '@mui/material';
+import { Button, DialogTitle, Link, Popover, Stack, Typography, useTheme } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signIn } from "aws-amplify/auth";
 import { userState } from '../profileAvatar/profileAvatar';
 import { AppContext } from '../../App';
 import LogoutIcon from '@mui/icons-material/Logout';
 
+/**
+ * Value from .env file which will be injected at build time
+ */
+declare var CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: string;
 
 interface LoginProps {
   isLoginModalOpen: boolean;
@@ -18,6 +22,12 @@ interface LoginProps {
   setUserStatus: Function;
   showLoginError: boolean;
   setShowLoginError: Function;
+  showPasswordResetURL: boolean;
+  setShowPasswordResetURL: Function;
+  emailAddress: string;
+  setEmailAddress: Function;
+  password: string;
+  setPassword: Function
 }
 
 /**
@@ -29,28 +39,53 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                                              popOverAnchorEl,
                                              setUserStatus,
                                              setShowLoginError,
-                                             showLoginError}): ReactElement => {
-  const [emailAddress, setEmailAddress] = React.useState("")
-  const [password, setPassword] = React.useState("")
+                                             showLoginError,
+                                             showPasswordResetURL,
+                                             setShowPasswordResetURL,
+                                             emailAddress,
+                                             setEmailAddress,
+                                             password,
+                                             setPassword}): ReactElement => {
   const theme = useTheme();
   const {setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext)
 
   const handleLogin = async() => {
+    setShowLoginError(false);
+    setShowPasswordResetURL(false);
     try{
-      await signIn({
+      const signInResponse = await signIn({
         username: emailAddress,
         password: password,
       })
-      setUserStatus(userState.LoggedIn);
-      setShowLoginError(false)
-      setSnackBarMessage("Signed in to ClearAligner Sync.")
-      setIsSnackBarOpen(true);
+
+      if(signInResponse.isSignedIn === true){
+        setUserStatus(userState.LoggedIn);
+        setShowLoginError(false)
+        setSnackBarMessage("Signed in to ClearAligner Sync.")
+        setIsSnackBarOpen(true);
+      }
+
+      else if (signInResponse.nextStep?.signInStep ===
+        "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED" || signInResponse.nextStep?.signInStep ===
+        "RESET_PASSWORD"){
+        setUserStatus(userState.LoggedOut);
+        setShowPasswordResetURL(true);
+      }
+      else {
+        setUserStatus(userState.LoggedOut);
+        setShowLoginError(true)
+      }
     }
     catch (error){
       console.log('error signing in: ', error)
       setShowLoginError(true)
     }
+  }
 
+  const handleResetPassword = () => {
+    setShowPasswordResetURL(false);
+    setPassword("");
+    setEmailAddress("");
   }
 
   return (
@@ -98,6 +133,7 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                 onChange={(e) => {
                   setEmailAddress(e.target.value)
                 }}
+                value={emailAddress}
               />
               <TextField
                 required
@@ -106,27 +142,48 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
                 type="password"
                 InputLabelProps={{shrink: true, required: false}}
                 onChange={(e) => setPassword(e.target.value)}
+                value={password}
               />
               <Button
                 variant="contained"
                 onClick={handleLogin}
                 sx={{
-                  borderRadius: 5
+                  borderRadius: 5,
+                  marginX: '5px'
                 }}
                 startIcon={<LogoutIcon/>}
 
               >Sign In
               </Button>
               {showLoginError &&
-                <Typography
-                  color={'error'}
-                  fontSize={'small'}
-                  sx={{
-                    mt: 1
-                  }}
-                >
-                  Incorrect email address or password.
-                </Typography>
+                <Box sx={{maxWidth: '250px', paddingX: '5px'}}>
+                  <Typography
+                    color={'error'}
+                    fontSize={'small'}
+                    sx={{
+                      mt: 1
+                    }}
+                  >
+                    Incorrect email address or password.
+                  </Typography>
+                </Box>
+              }
+              {showPasswordResetURL &&
+                <Box sx={{maxWidth: '250px', paddingX: '5px'}}>
+                  <Typography
+                    color={'error'}
+                    fontSize={'small'}
+                    sx={{
+                      mt: 1
+                    }}
+                  >
+                    Please <Link onClick={handleResetPassword}
+                                 href={CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}
+                                 target={"_blank"}
+                                 color={"inherit"}
+                  >reset your password</Link> before signing in.
+                  </Typography>
+                </Box>
               }
             </Stack>
           </Box>

@@ -11,7 +11,8 @@ dotenv.config();
 const environmentVariablesForBuildTimeInjection = [
   'CA_AWS_ENDPOINT',
   'CA_AWS_COGNITO_USER_POOL_ID',
-  'CA_AWS_COGNITO_USER_POOL_CLIENT_ID'
+  'CA_AWS_COGNITO_USER_POOL_CLIENT_ID',
+  'CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL'
 ];
 
 const buildTimeEnvironment: { [k: string]: string } = {};
