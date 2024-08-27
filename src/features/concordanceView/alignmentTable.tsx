@@ -13,7 +13,7 @@ import {
   GridRowSelectionModel,
   GridSortItem
 } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, Menu, MenuItem, TableContainer, useTheme } from '@mui/material';
+import { CircularProgress, IconButton, Menu, MenuItem, Popover, TableContainer, useTheme } from '@mui/material';
 import {
   CancelOutlined,
   CheckCircle,
@@ -141,11 +141,75 @@ export const StateCellIcon = ({
                                 state }:
                                 StateCellIconProps) => {
   const theme = useTheme();
+  const [isLinkStateSelectorVisible, setIsLinkStateSelectorVisible] = useState(false);
+  //const [anchorEl, setAnchorEl] = useState<null|HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const handleOnMouseEnter = (event: any) => {
+    console.log('event: ', event)
+    console.log('handleOnMouseEnter()')
+    setAnchorEl(event.currentTarget)
+    setIsLinkStateSelectorVisible(true)
+  }
+
+  const handleOnMouseLeave= (event: any) => {
+    console.log('event: ', event)
+    console.log('handleOnMouseLeave()')
+    setAnchorEl(null);
+    setIsLinkStateSelectorVisible(false)
+  }
 
   if (state.metadata.status === 'created'){
-    return <LinkIcon  sx={{
-      color: theme.palette.primary.main,
-    }}/>
+    return (
+      <>
+          <LinkIcon
+            sx={{ color: theme.palette.primary.main }}
+            onMouseEnter={(event) => handleOnMouseEnter(event)}
+            onMouseLeave={(event) => handleOnMouseLeave(event)}
+          />
+        <Popover
+          style={{ pointerEvents: 'none' }}
+          open={isLinkStateSelectorVisible}
+          hideBackdrop={true}
+          slotProps={{
+            paper: {
+              elevation: 0,
+              sx: {
+                border: "solid 1px gray",
+                radius: "32px"
+              }
+            }
+          }}
+          // onClose={}
+          anchorEl={anchorEl}
+          anchorOrigin={{
+            vertical: 'center',
+            horizontal: 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right',
+          }}
+        >
+          I'm a Popover
+        </Popover>
+        {/*<Menu*/}
+        {/*  open={isLinkStateSelectorVisible}*/}
+        {/*  anchorOrigin={{*/}
+        {/*    vertical: 'bottom',*/}
+        {/*    horizontal: 'center',*/}
+        {/*  }}*/}
+        {/*  transformOrigin={{*/}
+        {/*    vertical: 'top',*/}
+        {/*    horizontal: 'right',*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  I'm a menu*/}
+        {/*</Menu>*/}
+      </>
+
+    )
+
   }
   else if (state.metadata.status === 'approved'){
     return <CheckCircle  sx={{
