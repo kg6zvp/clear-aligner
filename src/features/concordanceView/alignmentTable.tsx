@@ -168,15 +168,15 @@ export const StateCellIcon = ({
             onMouseLeave={(event) => handleOnMouseLeave(event)}
           />
         <Popover
-          style={{ pointerEvents: 'none' }}
+          style={{ pointerEvents: 'none', marginLeft: '10px'}}
           open={isLinkStateSelectorVisible}
           hideBackdrop={true}
           slotProps={{
             paper: {
               elevation: 0,
               sx: {
-                border: "solid 1px gray",
-                radius: "32px"
+                border: `solid 1px ${theme.palette.linkStateSelector.border}`,
+                borderRadius: '32px'
               }
             }
           }}
@@ -187,25 +187,12 @@ export const StateCellIcon = ({
             horizontal: 'right',
           }}
           transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
+            vertical: 'center',
+            horizontal: 'left',
           }}
         >
           I'm a Popover
         </Popover>
-        {/*<Menu*/}
-        {/*  open={isLinkStateSelectorVisible}*/}
-        {/*  anchorOrigin={{*/}
-        {/*    vertical: 'bottom',*/}
-        {/*    horizontal: 'center',*/}
-        {/*  }}*/}
-        {/*  transformOrigin={{*/}
-        {/*    vertical: 'top',*/}
-        {/*    horizontal: 'right',*/}
-        {/*  }}*/}
-        {/*>*/}
-        {/*  I'm a menu*/}
-        {/*</Menu>*/}
       </>
 
     )

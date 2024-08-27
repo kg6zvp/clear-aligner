@@ -138,5 +138,8 @@ declare module '@mui/material/styles' {
       default: string;
     }
     transparent: string;
+    linkStateSelector: {
+      border: string;
+    }
   }
 }
