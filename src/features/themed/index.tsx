@@ -148,6 +148,9 @@ const lightTheme: Theme = createTheme({
     transparent: '#00000000',
     linkStateSelector: {
       border: alpha('#000000', .12)
+    },
+    alignmentStateMenu: {
+      check: alpha('#000000', .56)
     }
   },
   typography: {
@@ -339,6 +342,9 @@ const darkTheme = createTheme({
     transparent: '#00000000',
     linkStateSelector: {
       border: alpha('#000000', .12)
+    },
+    alignmentStateMenu: {
+      check: alpha('#FFFFFF', .86)
     }
   },
   typography: {

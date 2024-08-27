@@ -1,5 +1,5 @@
 import { Corpus, LanguageInfo, Link, LinkOriginManual, LinkStatus, TextDirection, Word } from '../../structs';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Button, decomposeColor, Stack, SvgIconOwnProps, SxProps, Theme, Typography, useTheme } from '@mui/material';
 import { LocalizedTextDisplay } from '../localizedTextDisplay';
 import { LocalizedButtonGroup } from '../../components/localizedButtonGroup';
@@ -12,6 +12,7 @@ import { LimitedToLinks } from '../corpus/verseDisplay';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import _ from 'lodash';
+import useAlignmentStateContextMenu from '../../hooks/useAlignmentStateContextMenu';
 
 const alphaTransparencyValueForButtonTokens = '.12';
 /**
@@ -160,6 +161,8 @@ export const ButtonToken = ({
       </linearGradient>
     </svg>), [gradientSvgId]);
 
+
+
   /**
    * whether the current token is being hovered by the user
    */
@@ -202,6 +205,13 @@ export const ButtonToken = ({
    * since rejected links no longer show up, we must filter the links and choose a primary link to use for display purposes that this token is a member of
    */
   const memberOfPrimaryLink = useMemo(() => memberOfLinks?.[0], [memberOfLinks]);
+
+  const anchorEl = useRef();
+
+  // Allow the user to right-click on an alignment and change it's state
+  const [ContextMenuAlignmentState, handleRightClick] = useAlignmentStateContextMenu(anchorEl, memberOfPrimaryLink );
+
+
 
   const editedLink = useAppSelector((state) => state.alignment.present.inProgressLink);
 
@@ -407,6 +417,10 @@ export const ButtonToken = ({
   const isSpecialMachineLearningCase = useMemo<boolean>(() => memberOfPrimaryLink?.metadata.origin !== LinkOriginManual && memberOfPrimaryLink?.metadata.status === LinkStatus.CREATED, [memberOfPrimaryLink?.metadata.origin, memberOfPrimaryLink?.metadata.status]);
 
   return (<>
+    <Box
+      onContextMenu={(event: React.MouseEvent<HTMLDivElement, MouseEvent>) => handleRightClick(event, token.id, links)}
+      ref={anchorEl}
+    >
     <Button
       disabled={disabled || (!!editedLink && isMemberOfAnyLink && !isMemberOfEditedLink)}
       component={'button'}
@@ -504,6 +518,8 @@ export const ButtonToken = ({
         </Box>
       </LocalizedTextDisplay>
     </Button>
+      <ContextMenuAlignmentState />
+    </Box>
     {!!token.after && !suppressAfter
       ? <Button disabled={true}>
           <LocalizedTextDisplay languageInfo={languageInfo}>
