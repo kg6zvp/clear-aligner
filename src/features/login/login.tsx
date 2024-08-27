@@ -66,7 +66,8 @@ export const Login:React.FC<LoginProps> = ({isLoginModalOpen,
       }
 
       else if (signInResponse.nextStep?.signInStep ===
-        "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED" ){
+        "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED" || signInResponse.nextStep?.signInStep ===
+        "RESET_PASSWORD"){
         setUserStatus(userState.LoggedOut);
         setShowPasswordResetURL(true);
       }
