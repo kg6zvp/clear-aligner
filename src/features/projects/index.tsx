@@ -613,6 +613,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 alignItems: 'flex-start',
                 fontWeight: 'fontWeightMedium',
                 marginBottom: `calc(${projectCardMargin}/2)`,
+                ...(isCurrentProject ? {
+                  transform: `translate(0, 7px)`
+                } : {})
               }}>
               <Box
                 sx={{
