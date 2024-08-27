@@ -36,6 +36,8 @@ import { usePublishProject } from '../../api/projects/usePublishProject';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
+import { ADMIN_GROUP } from '../../server/amplifySetup';
+import { useCurrentUserGroups } from '../../hooks/userInfoHooks';
 
 enum ProjectDialogMode {
   CREATE = 'create',
@@ -318,6 +320,9 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
       </Box>);
   }, [uploadErrors, project.fileName, project.location, handleUpdate, setUploadErrors, setFileContent, projectId]);
 
+  const groups = useCurrentUserGroups({ forceRefresh: true });
+  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
+
   return (
     <>
       <Typography variant={'subtitle1'}
@@ -454,12 +459,13 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   : <Box />
               }
               {
-                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn)
+                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn /*&& isAdmin*/)
                   ?
-                  <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
-                          onClick={() => setOpenConfirmUnpublish(true)}
-                          startIcon={<Unpublished />}
-                  >Delete From Server</Button>
+                  <Button
+                    variant="text"
+                    sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
+                    onClick={() => setOpenConfirmUnpublish(true)}
+                    startIcon={<Unpublished />}>Delete From Server</Button>
                   : <Box />
               }
             </Grid>

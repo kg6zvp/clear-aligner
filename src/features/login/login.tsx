@@ -1,7 +1,7 @@
 /**
  * This file contains the Login component
  */
-import React, { ReactElement, useContext } from 'react';
+import React, { ReactElement, useContext, useEffect } from 'react';
 import { Box } from '@mui/system';
 import { Button, DialogTitle, Link, Popover, Stack, Typography, useTheme } from '@mui/material';
 import TextField from '@mui/material/TextField';
@@ -9,6 +9,7 @@ import { signIn } from "aws-amplify/auth";
 import { userState } from '../profileAvatar/profileAvatar';
 import { AppContext } from '../../App';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { useCurrentUserGroups } from '../../hooks/userInfoHooks';
 
 /**
  * Value from .env file which will be injected at build time
