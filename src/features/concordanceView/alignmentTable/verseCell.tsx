@@ -48,7 +48,9 @@ export const VerseCell = (
         ...(languageInfo?.textDirection
           ? { direction: languageInfo.textDirection }
           : {}),
-        width: '100%'
+        width: '100%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
       {verses.map((verse: Verse) => (
