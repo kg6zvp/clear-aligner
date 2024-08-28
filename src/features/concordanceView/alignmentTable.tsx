@@ -5,16 +5,20 @@
 import { Link, LinkStatus } from '../../structs';
 import {
   DataGrid,
-  GridColDef, GridEventListener,
+  GridColDef,
+  GridEventListener,
   GridInputRowSelectionModel,
   GridRenderCellParams,
   GridRowHeightParams,
   GridRowParams,
   GridRowSelectionModel,
-  GridSortItem, useGridApiContext, useGridApiEventHandler
+  GridSortItem,
+  useGridApiContext,
+  useGridApiEventHandler
 } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, Menu, MenuItem, Popover, TableContainer, useTheme } from '@mui/material';
+import { CircularProgress, IconButton, Menu, MenuItem, TableContainer, useTheme } from '@mui/material';
 import {
+  Cancel,
   CancelOutlined,
   CheckCircle,
   CheckCircleOutlined,
@@ -70,7 +74,6 @@ export const RefCell = (
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
   const [rowHovered, setRowHovered] = useState(false);
   const apiRef = useGridApiContext();
-  const theme = useTheme();
 
   // this logic allows us to subscribe to mouse enter and mouse leave states
   // inisde the datagrid
@@ -78,7 +81,7 @@ export const RefCell = (
     if (apiRef.current.getRowElement(row.id)?.matches(":hover")){
       setRowHovered(true);
     }
-  })
+  },[apiRef, row.id])
   const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
     id === row.id && setRowHovered(true);
   }
@@ -95,20 +98,23 @@ export const RefCell = (
       {
         value: 'created',
         label: <LinkIcon />,
+        color: 'primary',
       },
       {
         value: 'rejected',
-        label: <CancelOutlined />,
+        label: <Cancel />,
+        color: 'error'
       },
       {
         value: 'approved',
-        label: <CheckCircleOutlined />,
+        label: <CheckCircle />,
+        color: 'success'
       },
       {
         value: 'needsReview',
-        label: <FlagOutlined />,
+        label: <Flag />,
+        color: 'warning'
       }]}
-      onSelect={() => {console.log('selected')}}
       currentState={row.row.metadata.status}
       /> :
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useParaText={true} />

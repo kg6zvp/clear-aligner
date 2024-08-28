@@ -3,50 +3,104 @@
  * ConcordanceView
  */
 import { IconButton, Stack, SxProps, Theme, useTheme } from '@mui/material';
-import { ReactElement } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
+
+/**
+ * props for the ToggleIcon
+ */
+export interface ToggleIconProps{
+  sx?: SxProps<Theme>;
+  item: {
+    value: string;
+    label: string | ReactElement;
+    tooltip?: string;
+    color: string;
+  };
+  currentValue: string;
+  setCurrentValue: Function;
+}
+/**
+ * Display a single icon inside the perRowLinkStateSelector component
+ */
+const ToggleIcon = ({item, currentValue, setCurrentValue}: ToggleIconProps) => {
+  const theme = useTheme();
+
+  const [iconColor, setIconColor] = useState('');
+
+  // if another icon is selected, then make sure to take away this icon's color
+  useEffect(() => {
+    if(currentValue !== item.value){
+      setIconColor("")
+    }
+  },[currentValue, item.value])
+
+  const handleClick = (value: string) => {
+    setCurrentValue(value);
+    setIconColor(`${item.color}.main`)
+  }
+  const handleMouseEnter = () => {
+    // if icon is already in a seleted state, don't give it the hover color
+    if(iconColor.includes('main')){
+      return;
+    }
+    setIconColor(`${item.color}.light`)
+  }
+  const handleMouseLeave= () => {
+    //don't reset color if it's a selected color
+    if(iconColor.includes('main')){
+      return;
+    }
+    setIconColor('')
+  }
+
+  return(
+    <IconButton
+      key={item.value}
+      onClick={() => handleClick(item.value)}
+      onMouseEnter={() => handleMouseEnter()}
+      onMouseLeave={() => handleMouseLeave()}
+      sx={{
+        width: '16px',
+        "&.MuiButtonBase-root:hover": {
+          bgcolor: theme.palette.transparent
+        },
+        color: iconColor,
+      }}
+    >
+      {item.label}
+    </IconButton>
+  )
+}
 
 /**
  * props for the PerRowLinkStateSelector
  */
 export interface PerRowLinkStateSelectorProps {
   sx?: SxProps<Theme>;
-  value?: string;
   items: {
     value: string;
     label: string | ReactElement;
     tooltip?: string;
+    color: string;
   }[];
-  onSelect: (value: string) => void;
-  disabled?: boolean;
-  customDisabled?: boolean;
   currentState: string;
 }
 
 /**
  * Display a group of buttons, each with its own corresponding value
- * @param value currently chosen value, highlights the button with this value to indicate it is selected
  * @param items list of buttons and their corresponding values (string or ReactElement)
- * @param onSelect callback when a button is clicked by the user
  * @param sx style parameters
- * @param disabled (optional) flag to disable the buttons
- * @param customDisabled (optional) boolean flag to disable the non-selected buttons
  */
 export const PerRowLinkStateSelector = ({
-  value,
   items,
-  onSelect,
-  disabled = false,
-  customDisabled = false,
   currentState
 }: PerRowLinkStateSelectorProps) => {
-
   const theme = useTheme();
-
-  // remove the current state rom the list of state icons to display
+  const [currentValue, setCurrentValue] = useState("");
+  // remove the current state from the list of state icons to display
   const filteredItems = items.filter((item) => item.value !== currentState)
 
   return (
-
     <Stack
       sx={{
         border: `solid 1px ${theme.palette.linkStateSelector.border}`,
@@ -61,15 +115,13 @@ export const PerRowLinkStateSelector = ({
     >
 
       {filteredItems.map((item) =>
-        <IconButton
-          key={item.value}
-          onClick={() => onSelect(item.value)}
-          //variant={value && value === item.value ? 'contained' : undefined}
-          disabled={value && value === item.value ? false : customDisabled}
-          sx={{width: '16px'}}
-        >
-          {item.label}
-        </IconButton>
+
+        <ToggleIcon
+          item={item}
+          currentValue={currentValue}
+          setCurrentValue={setCurrentValue}
+        />
+
       )}
     </Stack>
   );
