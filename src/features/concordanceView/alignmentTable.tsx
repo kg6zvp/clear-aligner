@@ -432,8 +432,6 @@ export const AlignmentTable = ({
 
   const getRowId = useMemo( () => (row: any) => row.id, [] )
 
-  const getRowHeight = useMemo( () => (_: GridRowHeightParams) => 'auto', [])
-
   const sortModel = useMemo( () => sort ? [sort] : [], [sort])
 
   const columns: GridColDef[] = [
@@ -470,7 +468,7 @@ export const AlignmentTable = ({
       field: 'ref',
       headerName: 'Bible Ref',
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <RefCell {...row} />
+          <RefCell {...row} />
       )
     },
     {
@@ -556,7 +554,6 @@ export const AlignmentTable = ({
               rows={rows}
               columns={columns}
               getRowId={getRowId}
-              getRowHeight={getRowHeight}
               sortModel={sortModel}
               onSortModelChange={onSortModelChange}
               initialState={initialState}
@@ -567,6 +564,7 @@ export const AlignmentTable = ({
               onRowSelectionModelChange={onRowSelectionModelChange}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
+              rowHeight={35}
             />
           </>
         )}

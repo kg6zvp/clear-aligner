@@ -74,7 +74,8 @@ const ToggleIcon = ({item, currentValue, setCurrentValue, currentLink}: ToggleIc
       onMouseEnter={() => handleMouseEnter()}
       onMouseLeave={() => handleMouseLeave()}
       sx={{
-        width: '16px',
+        width: '13.33px',
+        height: '13.33px',
         "&.MuiButtonBase-root:hover": {
           bgcolor: theme.palette.transparent
         },
@@ -118,8 +119,10 @@ export const PerRowLinkStateSelector = ({
     <Stack
       sx={{
         border: `solid 1px ${theme.palette.linkStateSelector.border}`,
+        height: '24px',
+        width: '88px',
         borderRadius: '32px',
-        paddingX: '4px',
+        paddingX: '8px',
         paddingY: '4px',
         gap: '12px',
         marginLeft: '-10px',
