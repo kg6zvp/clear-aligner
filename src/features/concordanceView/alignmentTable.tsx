@@ -43,6 +43,7 @@ import { Box } from '@mui/system';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { grey } from '@mui/material/colors';
+import { PerRowLinkStateSelector } from './perRowLinkStateSelector';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -90,12 +91,26 @@ export const RefCell = (
 
 
   return (
-    rowHovered ? <Box
-        sx = {{
-          border: `solid 1px ${theme.palette.linkStateSelector.border}`,
-          borderRadius: '32px' }}>
-        I'm a Box
-      </Box> :
+    rowHovered ? <PerRowLinkStateSelector items={[
+      {
+        value: 'created',
+        label: <LinkIcon />,
+      },
+      {
+        value: 'rejected',
+        label: <CancelOutlined />,
+      },
+      {
+        value: 'approved',
+        label: <CheckCircleOutlined />,
+      },
+      {
+        value: 'needsReview',
+        label: <FlagOutlined />,
+      }]}
+      onSelect={() => {console.log('selected')}}
+      currentState={row.row.metadata.status}
+      /> :
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useOSIS={true} />
   );
 };
