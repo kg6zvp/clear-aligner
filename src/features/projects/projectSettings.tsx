@@ -36,8 +36,7 @@ import { usePublishProject } from '../../api/projects/usePublishProject';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
-import { ADMIN_GROUP } from '../../server/amplifySetup';
-import { useCurrentUserGroups } from '../../hooks/userInfoHooks';
+import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
 import { useDeleteProject } from '../../api/projects/useDeleteProject';
 
 enum ProjectDialogMode {

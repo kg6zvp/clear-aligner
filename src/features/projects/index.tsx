@@ -51,8 +51,7 @@ import { InitializationStates } from '../../workbench/query';
 import { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import ProjectSettings from './projectSettings';
-import { useCurrentUserGroups, useIsSignedIn } from '../../hooks/userInfoHooks';
-import { ADMIN_GROUP } from '../../server/amplifySetup';
+import { ADMIN_GROUP, useCurrentUserGroups, useIsSignedIn } from '../../hooks/userInfoHooks';
 import uuid from 'uuid-random';
 
 export interface ProjectsViewProps {

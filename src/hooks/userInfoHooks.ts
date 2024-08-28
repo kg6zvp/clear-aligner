@@ -6,6 +6,11 @@ import { AppContext } from '../App';
 import { userState } from '../features/profileAvatar/profileAvatar';
 
 /**
+ * name of the admin group, for comparison
+ */
+export const ADMIN_GROUP = 'admin';
+
+/**
  * props for {@link useCurrentUserGroups} hook
  */
 export interface UseCurrentUserGroupsProps {

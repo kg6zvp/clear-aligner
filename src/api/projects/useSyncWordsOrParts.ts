@@ -34,14 +34,18 @@ export const useSyncWordsOrParts = (): SyncState => {
         .flatMap(c => c.words)
         .map(mapWordOrPartToWordOrPartDTO);
 
-      const tokenResponse = await ApiUtils.generateRequest({
-        requestPath: `/api/projects/${project.id}/tokens`,
-        requestType: ApiUtils.RequestType.POST,
-        signal: abortController.current?.signal,
-        payload: tokensToUpload
-      });
-      setProgress(tokenResponse.success ? Progress.SUCCESS : Progress.FAILED);
-      return tokenResponse;
+      if (tokensToUpload.length > 0) {
+        const tokenResponse = await ApiUtils.generateRequest({
+          requestPath: `/api/projects/${project.id}/tokens`,
+          requestType: ApiUtils.RequestType.POST,
+          signal: abortController.current?.signal,
+          payload: tokensToUpload
+        });
+        setProgress(tokenResponse.success ? Progress.SUCCESS : Progress.FAILED);
+        return tokenResponse;
+      } else {
+        setProgress(Progress.SUCCESS);
+      }
     } catch (x) {
       console.error(x);
       cleanupRequest();

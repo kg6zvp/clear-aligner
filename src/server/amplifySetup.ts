@@ -117,8 +117,3 @@ export const getApiOptionsWithAuth = (inputBody?: any): RestApiOptionsBase => {
     }
   };
 };
-
-/**
- * name of the admin group, for comparison
- */
-export const ADMIN_GROUP = 'admin';
