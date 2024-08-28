@@ -4,6 +4,8 @@
  */
 import { IconButton, Stack, SxProps, Theme, useTheme } from '@mui/material';
 import { ReactElement, useEffect, useState } from 'react';
+import { useSaveLink } from '../../state/links/tableManager';
+import { Link, LinkStatus } from '../../structs';
 
 /**
  * props for the ToggleIcon
@@ -18,12 +20,14 @@ export interface ToggleIconProps{
   };
   currentValue: string;
   setCurrentValue: Function;
+  currentLink: Link;
 }
 /**
  * Display a single icon inside the perRowLinkStateSelector component
  */
-const ToggleIcon = ({item, currentValue, setCurrentValue}: ToggleIconProps) => {
+const ToggleIcon = ({item, currentValue, setCurrentValue, currentLink}: ToggleIconProps) => {
   const theme = useTheme();
+  const {saveLink} = useSaveLink();
 
   const [iconColor, setIconColor] = useState('');
 
@@ -37,9 +41,19 @@ const ToggleIcon = ({item, currentValue, setCurrentValue}: ToggleIconProps) => {
   const handleClick = (value: string) => {
     setCurrentValue(value);
     setIconColor(`${item.color}.main`)
+
+    const updatedLink = {
+      ...currentLink,
+      metadata: {
+        ...currentLink.metadata,
+        status: value as LinkStatus
+      }
+    }
+    saveLink(updatedLink);
+
   }
   const handleMouseEnter = () => {
-    // if icon is already in a seleted state, don't give it the hover color
+    // if icon is already in a selected state, don't give it the hover color
     if(iconColor.includes('main')){
       return;
     }
@@ -83,7 +97,7 @@ export interface PerRowLinkStateSelectorProps {
     tooltip?: string;
     color: string;
   }[];
-  currentState: string;
+  currentLink: Link;
 }
 
 /**
@@ -93,12 +107,12 @@ export interface PerRowLinkStateSelectorProps {
  */
 export const PerRowLinkStateSelector = ({
   items,
-  currentState
+  currentLink
 }: PerRowLinkStateSelectorProps) => {
   const theme = useTheme();
   const [currentValue, setCurrentValue] = useState("");
   // remove the current state from the list of state icons to display
-  const filteredItems = items.filter((item) => item.value !== currentState)
+  const filteredItems = items.filter((item) => item.value !== currentLink.metadata.status)
 
   return (
     <Stack
@@ -120,6 +134,7 @@ export const PerRowLinkStateSelector = ({
           item={item}
           currentValue={currentValue}
           setCurrentValue={setCurrentValue}
+          currentLink={currentLink}
         />
 
       )}

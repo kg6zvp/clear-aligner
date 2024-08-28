@@ -91,8 +91,6 @@ export const RefCell = (
   useGridApiEventHandler(apiRef, "rowMouseEnter", handleRowEnter);
   useGridApiEventHandler(apiRef, "rowMouseLeave", handleRowLeave);
 
-
-
   return (
     rowHovered ? <PerRowLinkStateSelector items={[
       {
@@ -115,7 +113,7 @@ export const RefCell = (
         label: <Flag />,
         color: 'warning'
       }]}
-      currentState={row.row.metadata.status}
+      currentLink={row.row}
       /> :
     <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useParaText={true} />
   );
