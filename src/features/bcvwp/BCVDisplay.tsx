@@ -6,7 +6,7 @@ import BCVWP from './BCVWPSupport';
 
 export interface BCVDisplayProps {
   currentPosition?: BCVWP | null;
-  useOSIS?: boolean;
+  useParaText?: boolean;
 }
 
 /**
@@ -14,17 +14,17 @@ export interface BCVDisplayProps {
  * @param currentPosition the current position, optional, will return empty JSX if not given
  * @constructor
  */
-export const BCVDisplay = ({ currentPosition, useOSIS=false }: BCVDisplayProps) => {
+export const BCVDisplay = ({ currentPosition, useParaText=false }: BCVDisplayProps) => {
   const bookInfo = currentPosition?.getBookInfo();
   const chapter = currentPosition?.chapter;
   const verse = currentPosition?.verse;
 
-  if (useOSIS){
+  if (useParaText){
     return (
       <>
         <b>
           {currentPosition &&
-            `${bookInfo?.OSIS}${
+            `${bookInfo?.ParaText}${
               chapter && chapter > 0
                 ? ` ${chapter}${verse && verse > 0 ? `:${verse}` : ''}`
                 : ''

@@ -111,7 +111,7 @@ export const RefCell = (
       onSelect={() => {console.log('selected')}}
       currentState={row.row.metadata.status}
       /> :
-    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useOSIS={true} />
+    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useParaText={true} />
   );
 };
 
