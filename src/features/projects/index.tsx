@@ -296,7 +296,7 @@ export const CreateProjectCard: React.FC<{
       sx={theme => ({
         width: projectCardWidth,
         height: projectCardHeight,
-        m: projectCardMargin,
+        m: '3px',
         backgroundColor: theme.palette.primary.contrastText,
         position: 'relative'
       })}>
@@ -673,7 +673,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           sx={theme => ({
             width: projectCardWidth,
             height: projectCardHeight,
-            m: projectCardMargin,
+            m: '3px',
             backgroundColor: theme.palette.primary.contrastText,
             ...(isCurrentProject ? {
               borderBottomWidth: currentProjectBorderIndicatorHeight,
