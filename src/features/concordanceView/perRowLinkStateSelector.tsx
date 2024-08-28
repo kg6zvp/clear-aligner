@@ -54,7 +54,7 @@ export const PerRowLinkStateSelector = ({
         paddingX: '4px',
         paddingY: '4px',
         gap: '12px',
-        marginX: '5px',
+        marginLeft: '-10px'
       }}
       direction={'row'}
     >
