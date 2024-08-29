@@ -2,9 +2,13 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { Progress } from '../ApiModels';
 import { ApiUtils } from '../utils';
+import ResponseObject = ApiUtils.ResponseObject;
 
+/**
+ * Return values for hook {@link useDeleteProject}
+ */
 export interface DeleteState {
-  deleteProject: (projectId: string) => Promise<unknown>;
+  deleteProject: (projectId: string) => Promise<ResponseObject<{}> | undefined>;
   progress: Progress;
   dialog: any;
 }
@@ -24,7 +28,7 @@ export const useDeleteProject = (): DeleteState => {
   const deleteProject = async (projectId: string) => {
     try {
       setProgress(Progress.IN_PROGRESS);
-      const res = await ApiUtils.generateRequest({
+      const res = await ApiUtils.generateRequest<{}>({
         requestPath: `/api/projects/${projectId}`,
         requestType: ApiUtils.RequestType.DELETE,
         signal: abortController.current?.signal

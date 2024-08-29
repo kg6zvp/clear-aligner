@@ -126,15 +126,15 @@ export const useSyncProject = (): SyncState => {
             if (res.success) {
               setProgress(SyncProgress.SYNCING_CORPORA);
             } else {
-              if (res.response?.statusCode === 403) {
+              if (res.response.statusCode === 403) {
                 setSnackBarMessage('You do not have permission to complete this operation');
-              } else if ((res.response?.message ?? "").includes("duplicate key")) {
+              } else if ((res.body?.message ?? "").includes("duplicate key")) {
                 setUniqueNameError(true);
                 setSnackBarMessage("Failed to sync project. Project name already exists");
               } else {
                 setSnackBarMessage("Failed to sync project.");
               }
-              console.error("Response failed: ", res.response);
+              console.error("Response failed: ", res.body);
               setIsSnackBarOpen(true);
               setProgress(SyncProgress.FAILED);
             }
@@ -152,15 +152,35 @@ export const useSyncProject = (): SyncState => {
             project.sourceCorpora = containers.sourceContainer;
             project.targetCorpora = containers.targetContainer;
           }
-          await syncWordsOrParts(project);
+          const res = await syncWordsOrParts(project);
+          if (!res?.success) {
+            if (res?.response.statusCode === 403) {
+              setSnackBarMessage('You do not have permission to sync corpora or tokens. Skipping corpora and tokens');
+            } else {
+              setSnackBarMessage('An unknown error occurred while attempting to sync tokens. Skipping corpora and tokens');
+            }
+            setIsSnackBarOpen(true);
+          }
           setProgress(SyncProgress.SYNCING_ALIGNMENTS);
           break;
         }
         case SyncProgress.SYNCING_ALIGNMENTS: {
           if (project.location === ProjectLocation.LOCAL) {
-            await uploadAlignments(project.id)
+            const uploadResponse = await uploadAlignments(project.id);
+            if (!uploadResponse?.success) {
+              if (uploadResponse?.response.statusCode === 403) {
+                setSnackBarMessage('You do not have permission to upload alignment links. Skipping links');
+              } else {
+                setSnackBarMessage('An unknown error occurred while attempting to upload alignment links. Skipping links');
+              }
+              setIsSnackBarOpen(true);
+            }
           } else {
-            await syncAlignments(project.id);
+            const syncResponse = await syncAlignments(project.id);
+            if (!syncResponse) {
+              setSnackBarMessage('An error occurred while attempting to synchronize alignment links. Skipping links');
+              setIsSnackBarOpen(true);
+            }
           }
           setProgress(SyncProgress.UPDATING_PROJECT);
           break;

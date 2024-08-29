@@ -102,9 +102,15 @@ export module ApiUtils {
     expectedStatusCode: number;
   }
 
+  /**
+   * Response object model
+   */
   export interface ResponseObject<T> {
     success: boolean;
-    response: T;
+    response: {
+      statusCode: number;
+    };
+    body: T;
   }
 
   export const generateRequest = async <T> ({
@@ -126,7 +132,8 @@ export module ApiUtils {
       });
       return {
         success: response.ok,
-        response: await getFetchResponseObject(response,
+        response: { statusCode: response.status },
+        body: await getFetchResponseObject(response,
           contentLengthOptional ?? requestType === RequestType.GET)
       };
     } else {
@@ -148,7 +155,8 @@ export module ApiUtils {
       }
       return {
         success: validateStatusCode(response.statusCode, requestType, options.expectedStatusCode),
-        response: await getAmplifyResponseObject(response as RestApiResponse,
+        response: (response as RestApiResponse),
+        body: await getAmplifyResponseObject(response as RestApiResponse,
           contentLengthOptional || requestType === RequestType.GET)
       };
     }

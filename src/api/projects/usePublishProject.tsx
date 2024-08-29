@@ -43,7 +43,7 @@ export const usePublishProject = (): PublishState => {
         contentLengthOptional: true
       });
       project.state = state;
-      project.serverUpdatedAt = updateResponse.response.updatedAt;
+      project.serverUpdatedAt = updateResponse.body.updatedAt;
       if(state === ProjectState.PUBLISHED) {
         await projectState?.projectTable?.update(project, false);
       } else {
