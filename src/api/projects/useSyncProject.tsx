@@ -14,7 +14,6 @@ import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
-import uuid from 'uuid-random';
 import { getUserGroups } from '../../server/amplifySetup';
 
 export enum SyncProgress {
