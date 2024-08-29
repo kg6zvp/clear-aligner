@@ -38,6 +38,7 @@ import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
 import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { getUserGroups } from '../../server/amplifySetup';
 
 enum ProjectDialogMode {
   CREATE = 'create',
@@ -523,19 +524,31 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   Go Back
                 </Button>
                 <Button variant="contained" onClick={() => {
-                  setOpenConfirmUnpublish(false);
-                  const initialProjectState = project.state ?? ProjectState.PUBLISHED;
-                  publishProject(project, ProjectState.DRAFT)
-                    .then(() => {
-                      return deleteProject(project.id)
-                        .then((response: unknown) => {
-                          if (!response || (response as any)?.success)
-                            return;
-                          if (((response as any)?.response as any)?.statusCode === 403) {
-                            void publishProject(project, initialProjectState);
-                            setSnackBarMessage('You do not have permission to complete this operation');
-                            setIsSnackBarOpen(true);
-                          }
+                  getUserGroups(true)
+                    .then((groups) => {
+                      const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
+                      const displayPermissionsErrorMsg = () => {
+                        setSnackBarMessage('You do not have permission to complete this operation');
+                        setIsSnackBarOpen(true);
+                      }
+                      if (!isAdmin) {
+                        displayPermissionsErrorMsg();
+                        setOpenConfirmUnpublish(false);
+                        return;
+                      }
+                      setOpenConfirmUnpublish(false);
+                      const initialProjectState = project.state ?? ProjectState.PUBLISHED;
+                      publishProject(project, ProjectState.DRAFT)
+                        .then(() => {
+                          return deleteProject(project.id)
+                            .then((response) => {
+                              if (!response || response?.success)
+                                return;
+                              if (response?.response.statusCode === 403) {
+                                void publishProject(project, initialProjectState);
+                                displayPermissionsErrorMsg();
+                              }
+                            });
                         });
                     });
                 }} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
