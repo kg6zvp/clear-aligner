@@ -17,7 +17,9 @@ jobs:
           node-version: '20.16.0'
           cache: 'yarn'
       - name: Perform linting
-        run: yarn lint
+        run: |
+          npm i -g eslint
+          yarn lint
       - name: Configure environment
         run: |
           echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env
