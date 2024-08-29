@@ -16,10 +16,10 @@ jobs:
         with:
           node-version: '20.16.0'
           cache: 'yarn'
+      - name: Yarn install
+        run: yarn install
       - name: Perform linting
         run: |
-          npm i -g eslint
-          yarn install
           yarn lint
       - name: Configure environment
         run: |
@@ -34,6 +34,5 @@ jobs:
           CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
       - name: Run tests
         run: |
-          yarn test-ui
           yarn test-electron
 

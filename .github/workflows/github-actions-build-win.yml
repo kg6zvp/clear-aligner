@@ -8,12 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Create yarn.lock
+        run: touch yarn.lock
       - uses: actions/setup-node@v4
         with:
           node-version: '20.16.0'
           cache: 'yarn'
-      - name: Perform linting
-        run: yarn lint
+      - name: Yarn install
+        run: yarn install
       - name: Configure environment
         run: |
           echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env
