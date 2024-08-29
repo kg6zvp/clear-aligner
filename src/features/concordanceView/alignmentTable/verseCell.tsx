@@ -41,6 +41,7 @@ export const VerseCell = (
   const anyVerse = verses.find((v) => !!v.bcvId);
   const languageInfo = container?.languageAtReferenceString(anyVerse?.bcvId!.toReferenceString()!);
 
+
   return (
     <div
       lang={languageInfo?.code}
@@ -49,8 +50,6 @@ export const VerseCell = (
           ? { direction: languageInfo.textDirection }
           : {}),
         width: '100%',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
       }}
     >
       {verses.map((verse: Verse) => (
