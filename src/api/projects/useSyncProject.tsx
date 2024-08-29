@@ -155,9 +155,9 @@ export const useSyncProject = (): SyncState => {
           const res = await syncWordsOrParts(project);
           if (!res?.success) {
             if (res?.response.statusCode === 403) {
-              setSnackBarMessage('You do not have permission to sync corpora or tokens. Skipping corpora and tokens');
+              setSnackBarMessage('You do not have permission to sync corpora. Skipping corpora');
             } else {
-              setSnackBarMessage('An unknown error occurred while attempting to sync tokens. Skipping corpora and tokens');
+              setSnackBarMessage('An unknown error occurred while attempting to sync corpora. Skipping corpora');
             }
             setIsSnackBarOpen(true);
           }
