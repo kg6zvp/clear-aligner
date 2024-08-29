@@ -19,6 +19,9 @@ jobs:
           python-version: '3.x'
       - name: Yarn install
         run: yarn install
+      - name: Add python packages
+        run: |
+          sudo apt-get install -y python3-regex
       - name: Configure environment
         run: |
           echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env

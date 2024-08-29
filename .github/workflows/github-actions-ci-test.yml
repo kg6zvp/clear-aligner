@@ -18,6 +18,9 @@ jobs:
           cache: 'yarn'
       - name: Yarn install
         run: yarn install
+      - name: Add python packages
+        run: |
+          sudo apt-get install -y python3-regex
       - name: Perform linting
         run: |
           yarn lint
@@ -34,5 +37,6 @@ jobs:
           CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
       - name: Run tests
         run: |
+          yarn electron-rebuild
           yarn test-electron
 
