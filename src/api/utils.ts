@@ -139,7 +139,7 @@ export module ApiUtils {
       try {
         response = await responseOperation.response;
       } catch(x) {
-        response = (x as any).response;
+        response = (x as any ?? {}).response;
       }
       if (signal) {
         signal.onabort = () => {

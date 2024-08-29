@@ -51,7 +51,5 @@ export const useCurrentUserGroups = ({ forceRefresh, refreshKey }: UseCurrentUse
 export const useIsSignedIn = (): boolean => {
   const { userStatus } = useContext(AppContext);
 
-  const isSignedIn = useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
-
-  return isSignedIn;
+  return useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
 }

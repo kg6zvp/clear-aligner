@@ -529,9 +529,9 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                     .then(() => {
                       return deleteProject(project.id)
                         .then((response: unknown) => {
-                          if (!!response && (response as any)?.success)
+                          if (!response || (response as any)?.success)
                             return;
-                          if (!!response && (response as any).response && ((response as any)?.response as any)?.statusCode === 403) {
+                          if (((response as any)?.response as any)?.statusCode === 403) {
                             void publishProject(project, initialProjectState);
                             setSnackBarMessage('You do not have permission to complete this operation');
                             setIsSnackBarOpen(true);
