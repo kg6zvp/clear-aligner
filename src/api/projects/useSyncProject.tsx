@@ -14,11 +14,14 @@ import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
 import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
+import uuid from 'uuid-random';
+import { getUserGroups } from '../../server/amplifySetup';
 
 export enum SyncProgress {
   IDLE,
   IN_PROGRESS,
   SYNCING_LOCAL,
+  REFRESHING_PERMISSIONS,
   SWITCH_TO_PROJECT,
   SYNCING_PROJECT,
   SYNCING_CORPORA,
@@ -93,6 +96,11 @@ export const useSyncProject = (): SyncState => {
         case SyncProgress.FAILED: {
           abortController.current?.abort?.();
           await cleanupRequest();
+          break;
+        }
+        case SyncProgress.REFRESHING_PERMISSIONS: {
+          await getUserGroups(true);
+          setProgress(SyncProgress.SWITCH_TO_PROJECT);
           break;
         }
         case SyncProgress.SWITCH_TO_PROJECT: {
@@ -294,7 +302,7 @@ export const useSyncProject = (): SyncState => {
       setCanceled(false);
       setInitialProjectState(project);
       setSyncTime(DateTime.now().toMillis());
-      setProgress(SyncProgress.SWITCH_TO_PROJECT);
+      setProgress(SyncProgress.REFRESHING_PERMISSIONS);
     },
     progress,
     dialog: dialog,
