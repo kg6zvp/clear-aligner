@@ -2,7 +2,7 @@ name: Mac OS build
 on:
   push:
     branches:
-      - master
+      - "**"
 jobs:
   publish:
     runs-on: macos-latest
