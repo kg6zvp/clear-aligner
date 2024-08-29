@@ -6,6 +6,7 @@ import { IconButton, Stack, SxProps, Theme, useTheme } from '@mui/material';
 import { ReactElement, useEffect, useState } from 'react';
 import { useSaveLink } from '../../state/links/tableManager';
 import { Link, LinkStatus } from '../../structs';
+import uuid from 'uuid-random';
 
 /**
  * props for the ToggleIcon
@@ -132,8 +133,8 @@ export const PerRowLinkStateSelector = ({
     >
 
       {filteredItems.map((item) =>
-
         <ToggleIcon
+          key={uuid()}
           item={item}
           currentValue={currentValue}
           setCurrentValue={setCurrentValue}
