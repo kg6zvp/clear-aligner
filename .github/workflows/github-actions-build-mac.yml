@@ -30,6 +30,14 @@ jobs:
           echo CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL="${CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}">> .env
       - name: Run MacOS build
         run: yarn build:mac
+      - name: List produced files
+        run: ls -l dist/
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'mac-os'
+          path: dist/**.dmg
+          retention-days: 7
         env:
           CA_AWS_ENDPOINT: ${{ secrets.CA_AWS_ENDPOINT }}
           CA_AWS_COGNITO_USER_POOL_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_ID }}
