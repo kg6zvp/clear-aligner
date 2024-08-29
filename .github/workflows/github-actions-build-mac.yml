@@ -28,6 +28,8 @@ jobs:
           echo CA_AWS_COGNITO_USER_POOL_ID="${CA_AWS_COGNITO_USER_POOL_ID}">> .env
           echo CA_AWS_COGNITO_USER_POOL_CLIENT_ID="${CA_AWS_COGNITO_USER_POOL_CLIENT_ID}">> .env
           echo CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL="${CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL}">> .env
+      - name: Cat env
+        run: cat .env
       - name: Run MacOS build
         run: yarn build:mac
       - name: List produced files
