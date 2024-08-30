@@ -9,6 +9,7 @@ import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
 import { compressAlignedWords } from '../../helpers/compressAlignedWords';
+import { GridApiCommunity } from '@mui/x-data-grid/internals';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -24,6 +25,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
+  apiRef?:  React.MutableRefObject<GridApiCommunity>;
 }
 
 /**
@@ -35,6 +37,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
  * @param verse verse to be displayed
  * @param onlyLinkIds
  * @param allowGloss
+ * @param apiRef optional api reference to the MUI datagrid
  * @constructor
  */
 export const VerseDisplay = ({
@@ -43,9 +46,8 @@ export const VerseDisplay = ({
                                corpus,
                                verse,
                                onlyLinkIds,
-                               allowGloss = false
+                               allowGloss = false, apiRef
                              }: VerseDisplayProps) => {
-  // const apiRef = useGridApiContext();
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
     () => groupPartsIntoWords(verse.words),
@@ -86,46 +88,44 @@ export const VerseDisplay = ({
   }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
   const displayTokens = useMemo(() => {
-    // /*
-    //  * Calculate length of the verse to see if we need to run it through a
-    //  * condensing algorithm so that tokens are visible in the table
-    //  */
-    // let isAlignedWordCutoff = false;
-    // const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
-    //
-    // // iterate over verse Tokens and calculate its length
-    // let verseCharacterLength = 0;
-    // let verseCharacterLengthUpToAlignedWord = 0;
-    // let tokenFound = false;
-    // let printableVerse = '';
-    // let printableVerseUpToAlignedWord = '';
-    //
-    // verseTokens.forEach((token) => {
-    //   token.forEach((subToken) => {
-    //     verseCharacterLength += subToken.text.length;
-    //     printableVerse += subToken.text + ' ';
-    //     if (linkMap?.has(subToken.id) && !tokenFound) {
-    //       verseCharacterLengthUpToAlignedWord = verseCharacterLength;
-    //       printableVerseUpToAlignedWord = printableVerse;
-    //       tokenFound = true;
-    //     }
-    //   });
-    // });
-    //
-    // const text = printableVerseUpToAlignedWord;
-    // const canvas = document.createElement('canvas');
-    // const ctx = canvas.getContext('2d');
-    // if (ctx) {
-    //   let printableVerseWidth = ctx.measureText(text).width;
-    //   let adjustedPrintableVerseWidth = printableVerseWidth * 1.75;
-    //   if (adjustedPrintableVerseWidth) {
-    //     if (adjustedPrintableVerseWidth > computedColumnWidth) {
-    //       isAlignedWordCutoff = true;
-    //     }
-    //   }
-    // }
+    /*
+     * Calculate length of the verse to see if we need to run it through a
+     * condensing algorithm so that tokens are visible in the table
+     */
+    let isAlignedWordCutoff = false;
+    const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
 
-    return readonly && /*isAlignedWordCutoff && */ linkMap
+    // iterate over verse Tokens and calculate its length
+    let verseCharacterLength = 0;
+    let tokenFound = false;
+    let printableVerse = '';
+    let printableVerseUpToAlignedWord = '';
+
+    verseTokens.forEach((token) => {
+      token.forEach((subToken) => {
+        verseCharacterLength += subToken.text.length;
+        printableVerse += subToken.text + ' ';
+        if (linkMap?.has(subToken.id) && !tokenFound) {
+          printableVerseUpToAlignedWord = printableVerse;
+          tokenFound = true;
+        }
+      });
+    });
+
+    const text = printableVerseUpToAlignedWord;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      let printableVerseWidth = ctx.measureText(text).width;
+      let adjustedPrintableVerseWidth = printableVerseWidth * 1.75;
+      if (adjustedPrintableVerseWidth) {
+        if (adjustedPrintableVerseWidth > computedColumnWidth) {
+          isAlignedWordCutoff = true;
+        }
+      }
+    }
+
+    return readonly && isAlignedWordCutoff && linkMap
       ? compressAlignedWords(verseTokens.flat(), linkMap).map(x => [x])
       : verseTokens;
 
