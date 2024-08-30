@@ -34,6 +34,5 @@ jobs:
           CA_AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_CLIENT_ID }}
           CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
       - name: Run tests
-        run: |
-          yarn electron-rebuild
+        run: yarn electron-rebuild
 
