@@ -123,6 +123,7 @@ export const VerseDisplay = ({
       }
     }
   }
+  console.log('verseTokens: ', verseTokens)
 
   // aligned word is cutoff from being displayed in the table
   if(isAlignedWordCutoff == true){
