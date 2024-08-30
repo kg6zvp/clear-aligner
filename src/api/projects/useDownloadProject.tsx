@@ -78,7 +78,7 @@ export const useDownloadProject = (): SyncState => {
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
       });
-      const projectData = projectResponse.response;
+      const projectData = projectResponse.body;
       const tmpProject = mapProjectDtoToProject(projectData, ProjectLocation.SYNCED)!;
       tmpProject.lastSyncServerTime = tmpProject.serverUpdatedAt;
       Array.from((await projectState.projectTable?.getProjects(true))?.values?.() ?? [])
@@ -93,7 +93,7 @@ export const useDownloadProject = (): SyncState => {
         requestPath: `/api/projects/${projectId}/tokens?side=targets`,
         requestType: ApiUtils.RequestType.GET,
           signal: abortController.current?.signal,
-      })).response?.tokens ?? []) as WordOrPartDTO[];
+      })).body?.tokens ?? []) as WordOrPartDTO[];
 
       if (projectResponse.success) {
         if (cancelToken.canceled) return;
@@ -137,7 +137,7 @@ export const useDownloadProject = (): SyncState => {
 
         const linksBody: {
           links: ServerAlignmentLinkDTO[]
-        } | undefined = alignmentResponse.response;
+        } | undefined = alignmentResponse.body;
         const prevSourceName = projectState.linksTable.getSourceName();
         if (prevSourceName !== project.id) {
           projectState.linksTable.setSourceName(project.id);

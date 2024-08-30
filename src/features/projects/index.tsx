@@ -51,6 +51,8 @@ import { InitializationStates } from '../../workbench/query';
 import { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx';
 import { RemovableTooltip } from '../../components/removableTooltip';
 import ProjectSettings from './projectSettings';
+import { ADMIN_GROUP, useCurrentUserGroups, useIsSignedIn } from '../../hooks/userInfoHooks';
+import uuid from 'uuid-random';
 
 export interface ProjectsViewProps {
   preferredTheme: 'night' | 'day' | 'auto';
@@ -77,6 +79,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
     enabled: false // Prevents immediate and useEffect-based requerying
   });
   const [disableProjectButtons, setDisableProjectButtons] = useState(false);
+  const [ groupRefreshKey, setGroupRefreshKey ] = useState<string>(uuid());
 
   useEffect(() => {
     if (remoteFetchProgress === 0) {
@@ -86,9 +89,13 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
     }
   }, [remoteFetchProgress]);
 
-  const isSignedIn = useMemo(() => (
-    userStatus === userState.LoggedIn
-  ), [userStatus]);
+  const isSignedIn = useIsSignedIn();
+
+  useEffect(() => {
+    if (isSignedIn) {
+      setGroupRefreshKey(uuid());
+    }
+  }, [isSignedIn, setGroupRefreshKey]);
 
   const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
 
@@ -111,6 +118,8 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
     projects.map(p => (p.name || '').trim())
   ), [projects]);
 
+  const groups = useCurrentUserGroups({ forceRefresh: true, refreshKey: groupRefreshKey });
+
   return (
     <>
       <Grid container flexDirection="column" flexWrap={'nowrap'}
@@ -128,7 +137,9 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
               (isSignedIn || usingCustomEndpoint) && (
                 <Button variant="text"
                         disabled={disableProjectButtons}
-                        onClick={() => refetchRemoteProjects({ persist: true, currentProjects: projects })}>
+                        onClick={() =>
+                          refetchRemoteProjects({ persist: true, currentProjects: projects })
+                            .finally(() => setGroupRefreshKey(uuid()))}>
                   <Grid container alignItems="center">
                     <Refresh sx={theme => ({
                       mr: 1,
@@ -188,6 +199,7 @@ const ProjectsView: React.FC<ProjectsViewProps> = ({ preferredTheme, setPreferre
                 <ProjectCard
                   key={`${project?.id ?? project?.name}-${project?.lastSyncTime}-${project?.updatedAt}`}
                   project={project}
+                  groups={groups}
                   onOpenProjectSettings={disableProjectButtons ? () => {} : selectProject}
                   currentProject={projects.find((p: Project) =>
                     p.id === preferences?.currentProject) ?? projects?.[0]}
@@ -283,7 +295,7 @@ export const CreateProjectCard: React.FC<{
       sx={theme => ({
         width: projectCardWidth,
         height: projectCardHeight,
-        m: projectCardMargin,
+        m: '3px',
         backgroundColor: theme.palette.primary.contrastText,
         position: 'relative'
       })}>
@@ -313,6 +325,10 @@ export interface ProjectCardProps {
    */
   project: Project;
   /**
+   * groups the current user belongs to
+   */
+  groups?: string[];
+  /**
    * the currently open project
    */
   currentProject: Project | undefined;
@@ -340,6 +356,7 @@ const currentProjectBorderIndicatorHeight = '4px';
 /**
  * component displaying a project
  * @param project project being displayed
+ * @param groups current groups the user belongs to
  * @param currentProject current project
  * @param onOpenProjectSettings callback for the project settings display
  * @param unavailableProjectNames unavailable names
@@ -349,6 +366,7 @@ const currentProjectBorderIndicatorHeight = '4px';
  */
 export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           project,
+                                                          groups,
                                                           currentProject,
                                                           onOpenProjectSettings,
                                                           unavailableProjectNames,
@@ -356,6 +374,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                                                           isProjectDialogOpen
                                                         }) => {
   useCorpusContainers();
+
+  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
 
   const { downloadProject, dialog: downloadProjectDialog } = useDownloadProject();
   const {
@@ -369,7 +389,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   const { setPreferences, projectState, preferences, userStatus } = useContext(AppContext);
   const isCurrentProject = useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
-  const isSignedIn = useMemo(() => userStatus === userState.LoggedIn || userStatus === userState.CustomEndpoint, [userStatus]);
+  const isSignedIn = useIsSignedIn();
   const usingCustomEndpoint = useMemo(() => userStatus === userState.CustomEndpoint, [userStatus]);
 
   const updateCurrentProject = useCallback(() => {
@@ -479,9 +499,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       });
       switch (project.location) {
         case ProjectLocation.LOCAL:
+          if (!isAdmin) return (<></>);
           return (
             <Button variant="text"
-                    disabled={buttonDisabled}
+                    disabled={buttonDisabled || !isAdmin}
                     sx={buttonStyle}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -526,7 +547,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {actionButton}
       </RemovableTooltip>
     );
-  }, [isSignedIn, usingCustomEndpoint, syncingProject, disableProjectButtons, syncLocalProjectWithServer, downloadProject, syncProject, project]);
+  }, [isSignedIn, usingCustomEndpoint, syncingProject, disableProjectButtons, syncLocalProjectWithServer, downloadProject, syncProject, project, isAdmin]);
 
   const settingsButton = useMemo(() => (
     <Button variant="text"
@@ -591,6 +612,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 alignItems: 'flex-start',
                 fontWeight: 'fontWeightMedium',
                 marginBottom: `calc(${projectCardMargin}/2)`,
+                ...(isCurrentProject ? {
+                  transform: `translate(0, 7px)`
+                } : {})
               }}>
               <Box
                 sx={{
@@ -648,7 +672,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           sx={theme => ({
             width: projectCardWidth,
             height: projectCardHeight,
-            m: projectCardMargin,
+            m: '3px',
             backgroundColor: theme.palette.primary.contrastText,
             ...(isCurrentProject ? {
               borderBottomWidth: currentProjectBorderIndicatorHeight,
