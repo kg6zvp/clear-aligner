@@ -1,25 +1,12 @@
 name: Execute tests
 on:
-  pull_request:
   workflow_dispatch:
   push:
     branches:
       - "**"
 jobs:
-  check-python-regex:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      - name: Add python packages
-        run: |
-          sudo apt-get install -y python3-pip
-          pip3 install regex
-          python3 -c 'import regex as re'
   lint:
     runs-on: ubuntu-latest
-    needs: check-python-regex
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,7 +17,8 @@ jobs:
       - run: yarn install --frozen-lockfile
       - name: Add python packages
         run: |
-          sudo apt-get install -y python3-regex
+          sudo apt-get install -y python3-pip
+          pip3 install regex
       - name: Perform linting
         run: |
           yarn lint
@@ -90,7 +78,8 @@ jobs:
           python-version: '3.10'
       - name: Add python packages
         run: |
-          sudo apt-get install -y python3-regex
+          sudo apt-get install -y python3-pip
+          pip3 install regex
       - name: Configure environment
         run: |
           echo CA_AWS_ENDPOINT="${CA_AWS_ENDPOINT}">> .env
