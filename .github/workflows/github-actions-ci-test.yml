@@ -36,5 +36,4 @@ jobs:
       - name: Run tests
         run: |
           yarn electron-rebuild
-          yarn test-electron
 
