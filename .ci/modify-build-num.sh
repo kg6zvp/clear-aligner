@@ -1,11 +1,11 @@
-#!/bin/bash
+#!/bin/bash -xe
 #################################################
 # To Run, environment must contain BUILD_NUMBER #
 # which will be appended to package version     #
 #################################################
 
 function parse_git_branch(){
-	git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+	git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
 }
 
 base_version="$(node -p "require('./package.json').version"|cut -d'-' -f1)"
