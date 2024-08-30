@@ -18,7 +18,7 @@ import {
   Select,
   Stack,
   Toolbar,
-  Typography
+  Typography, useTheme
 } from '@mui/material';
 import { Box } from '@mui/system';
 import { AlignedWord, PivotWord } from './structs';
@@ -269,6 +269,7 @@ export const AlignmentTableControlPanel = ({
  * and the AlignmentTable
  */
 export const ConcordanceView = () => {
+  const theme = useTheme();
   useContext(LayoutContext);
   const dispatch = useAppDispatch();
   const [selectedRowsCount, setSelectedRowsCount] = React.useState(0);
@@ -306,9 +307,9 @@ export const ConcordanceView = () => {
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
-  const pivotWordTableColumns = 2.5;
-  const alignedWordTableColumns = 3.5;
-  const alignmentLinkTableColumns = 6;
+  const pivotWordTableColumns = 2.2;
+  const alignedWordTableColumns = 3.3;
+  const alignmentLinkTableColumns = 6.5;
 
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
@@ -546,7 +547,7 @@ export const ConcordanceView = () => {
          */}
         <Grid
           container
-          spacing={'8px'}
+          spacing={theme.spacing(.5)}
           marginLeft={'4px'}
           marginRight={'12px'}
         >
