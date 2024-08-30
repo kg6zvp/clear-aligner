@@ -51,7 +51,11 @@ jobs:
           CA_AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_CLIENT_ID }}
           CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
       - name: Run MacOS build
-        run: yarn build:mac
+        run: |
+          .ci/modify-build-num.sh
+          yarn build:mac
+        env:
+          BUILD_NUMBER: ${{ vars.BUILD_NUMBER }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -87,10 +91,24 @@ jobs:
           CA_AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.CA_AWS_COGNITO_USER_POOL_CLIENT_ID }}
           CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL: ${{ secrets.CA_AWS_COGNITO_PERMANENT_PASSWORD_CREATION_URL }}
       - name: Run Windows build
-        run: yarn build:win
+        run: |
+          .ci/modify-build-num.sh
+          yarn build:win
+        env:
+          BUILD_NUMBER: ${{ vars.BUILD_NUMBER }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: 'win'
           path: dist/**.exe
           retention-days: 7
+  increment-build-number:
+    if: github.ref == 'refs/heads/main'
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Increment Build Number
+        uses: action-pack/increment@v2
+        with:
+          name: 'BUILD_NUMBER'
+          token: ${{ secrets.CA_BUILD_NUMBER_PAT }}
