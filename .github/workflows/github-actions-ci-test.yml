@@ -4,20 +4,16 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - "**"
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Create yarn.lock
-        run: touch yarn.lock
       - uses: actions/setup-node@v4
         with:
           node-version: '20.16.0'
           cache: 'yarn'
-      - name: Yarn install
-        run: yarn install
       - name: Add python packages
         run: |
           sudo apt-get install -y python3-regex
