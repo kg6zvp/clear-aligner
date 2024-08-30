@@ -11,6 +11,7 @@ import { VerseDisplay } from '../../corpus/verseDisplay';
 import { AlignmentTableContext } from '../alignmentTable';
 import { useCorpusContainers } from '../../../hooks/useCorpusContainers';
 import { AlignmentSide } from '../../../common/data/project/corpus';
+import { useTheme } from '@mui/material';
 
 /**
  * Render cells with verse text in the appropriate font and text orientation for the verse
@@ -42,6 +43,7 @@ export const VerseCell = (
   const languageInfo = container?.languageAtReferenceString(anyVerse?.bcvId!.toReferenceString()!);
 
   const apiRef = useGridApiContext();
+  const theme = useTheme();
 
   return (
     <div
@@ -53,17 +55,20 @@ export const VerseCell = (
         width: '100%',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        color: theme.typography.unlinked.color,
       }}
     >
       {verses.map((verse: Verse) => (
-        <VerseDisplay
-          key={verse?.bcvId?.toReferenceString() ?? ''}
-          onlyLinkIds={row.row.id ? [row.row.id] : []}
-          readonly
-          verse={verse}
-          corpus={container?.corpusAtReferenceString(verse?.bcvId?.toReferenceString())}
-          apiRef={apiRef}
-        />
+        <span style = {{color: theme.typography.unlinked.color}}>
+          <VerseDisplay
+            key={verse?.bcvId?.toReferenceString() ?? ''}
+            onlyLinkIds={row.row.id ? [row.row.id] : []}
+            readonly
+            verse={verse}
+            corpus={container?.corpusAtReferenceString(verse?.bcvId?.toReferenceString())}
+            apiRef={apiRef}
+          />
+        </span>
       ))}
     </div>
   );
