@@ -14,7 +14,8 @@ jobs:
           python-version: '3.10'
       - name: Add python packages
         run: |
-          sudo apt-get install -y python3-regex
+          sudo apt-get install -y python3-pip
+          pip3 install regex
           python3 -c 'import regex as re'
   lint:
     runs-on: ubuntu-latest
