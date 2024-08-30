@@ -3,11 +3,12 @@
  * CorpusComponent
  */
 import { Corpus, Link, Verse, Word } from '../../structs';
-import { ReactElement, useMemo } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { useGridApiContext } from '@mui/x-data-grid';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -83,22 +84,76 @@ export const VerseDisplay = ({
     return result;
   }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
-  return (
-    <>
-      {(verseTokens || []).map(
-        (token: Word[], index): ReactElement => (
-          <WordDisplay
-            key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-            variant={variant}
-            links={linkMap}
-            readonly={readonly}
-            onlyLinkIds={onlyLinkIds}
-            corpus={corpus}
-            parts={token}
-            allowGloss={allowGloss}
-          />
-        )
-      )}
-    </>
-  );
+  /*
+   * Calculate length of the verse to see if we need to run it through a
+   * condensing algorithm so that tokens are visible in the table
+   */
+  let isAlignedWordCutoff= false ;
+  const apiRef = useGridApiContext();
+  const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
+
+  // iterate over verse Tokens and calculate its length
+  let verseCharacterLength = 0;
+  let verseCharacterLengthUpToAlignedWord = 0;
+  let tokenFound = false;
+  let printableVerse = ""
+  let printableVerseUpToAlignedWord = ""
+
+  verseTokens.forEach((token) => {
+    token.forEach((subToken) => {
+      verseCharacterLength += subToken.text.length;
+      printableVerse += subToken.text + " ";
+      if(linkMap?.has(subToken.id) && tokenFound === false){
+        verseCharacterLengthUpToAlignedWord = verseCharacterLength
+        printableVerseUpToAlignedWord = printableVerse;
+        tokenFound = true;
+      }
+    })
+  })
+
+  const text = printableVerseUpToAlignedWord;
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext('2d');
+  if (ctx){
+    let printableVerseWidth = ctx.measureText(text).width;
+    let adjustedPrintableVerseWidth = printableVerseWidth * 1.75
+    if(adjustedPrintableVerseWidth){
+      if(adjustedPrintableVerseWidth > computedColumnWidth ){
+        isAlignedWordCutoff = true;
+      }
+    }
+  }
+
+  // aligned word is cutoff from being displayed in the table
+  if(isAlignedWordCutoff == true){
+    return (
+      <div>
+        early return
+      </div>
+    )
+  }
+  // aligned word is visible in the table
+  else{
+    return (
+      <>
+        {(verseTokens || []).map(
+          (token: Word[], index): ReactElement => (
+            <WordDisplay
+              key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+              variant={variant}
+              links={linkMap}
+              readonly={readonly}
+              onlyLinkIds={onlyLinkIds}
+              corpus={corpus}
+              parts={token}
+              allowGloss={allowGloss}
+            />
+          )
+        )}
+      </>
+    );
+  }
+
+
+
 };
