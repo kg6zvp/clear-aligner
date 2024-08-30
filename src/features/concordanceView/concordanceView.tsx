@@ -306,9 +306,9 @@ export const ConcordanceView = () => {
 
   const [ getSaveChangesConfirmation, SaveChangesConfirmation ] = useConfirm();
 
-  const pivotWordTableColumns = 2;
-  const alignedWordTableColumns = 3;
-  const alignmentLinkTableColumns = 7;
+  const pivotWordTableColumns = 2.5;
+  const alignedWordTableColumns = 3.5;
+  const alignmentLinkTableColumns = 6;
 
   const handleUpdateSelectedAlignedWord = useCallback(async (alignedWord: AlignedWord | null) => {
       if (linksPendingUpdate.size > 0 && alignedWord !== null ) {
