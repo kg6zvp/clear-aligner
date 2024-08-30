@@ -36,8 +36,9 @@ const MAX_CONTEXT_WORDS = 2;
  * will always appear.
  * - Consecutive ellipses are suppressed, meaning aligned words >4 words apart will have a single
  * ellipsis between them.
- * @param inputWords
- * @param linkMap
+ * @param inputWords Array-of-array of input words, each sub-array assumed to be tokens comprising a
+ * word (usually 1:1).
+ * @param linkMap Map of word IDs to links.
  */
 export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, Link[]>): CompressedWord[][] => {
   // compute 0-based indexes, to simplify implementation
