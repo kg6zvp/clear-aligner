@@ -1,4 +1,4 @@
-name: Execute tests
+name: Test and Build Windows and Mac
 on:
   workflow_dispatch:
   push:
