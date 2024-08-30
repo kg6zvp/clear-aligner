@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { mapProjectEntityToProjectDTO, ProjectLocation, ProjectState } from '../../common/data/project/project';
 import { Project } from '../../state/projects/tableManager';
 import { useSyncAlignments } from '../alignments/useSyncAlignments';
@@ -13,11 +13,14 @@ import { useProjectsFromServer } from './useProjectsFromServer';
 import { ApiUtils } from '../utils';
 import { UserPreference } from '../../state/preferences/tableManager';
 import { useDatabase } from '../../hooks/useDatabase';
+import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
+import { getUserGroups } from '../../server/amplifySetup';
 
 export enum SyncProgress {
   IDLE,
   IN_PROGRESS,
   SYNCING_LOCAL,
+  REFRESHING_PERMISSIONS,
   SWITCH_TO_PROJECT,
   SYNCING_PROJECT,
   SYNCING_CORPORA,
@@ -47,14 +50,15 @@ export const useSyncProject = (): SyncState => {
   const { sync: syncWordsOrParts } = useSyncWordsOrParts();
   const { sync: syncAlignments, upload: uploadAlignments, file } = useSyncAlignments();
   const { deleteProject } = useDeleteProject();
-  const { projectState, containers, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
+  const { projectState, containers, setIsProjectDialogOpen, isBusyDialogOpen, setIsSnackBarOpen, setSnackBarMessage, preferences, setPreferences, setProjects } = useContext(AppContext);
   const [initialProjectState, setInitialProjectState] = useState<Project>();
   const [progress, setProgress] = useState<SyncProgress>(SyncProgress.IDLE);
   const [syncTime, setSyncTime] = useState<number>(0);
-  const [canceled, setCanceled] = React.useState<boolean>(false);
-  const [uniqueNameError, setUniqueNameError] = React.useState<boolean>(false);
+  const [canceled, setCanceled] = useState<boolean>(false);
+  const [uniqueNameError, setUniqueNameError] = useState<boolean>(false);
   const abortController = useRef<AbortController | undefined>();
-  const { setIsProjectDialogOpen, isBusyDialogOpen } = useContext(AppContext);
+  const groups = useCurrentUserGroups({ forceRefresh: true });
+  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
 
   const cleanupRequest = useCallback(async () => {
     if(initialProjectState) {
@@ -76,7 +80,7 @@ export const useSyncProject = (): SyncState => {
     abortController.current = undefined;
   }, [initialProjectState, deleteProject, projectState.projectTable, getProjects]);
 
-  const onCancel = React.useCallback(() => {
+  const onCancel = useCallback(() => {
     setProgress(SyncProgress.CANCELED);
   }, []);
 
@@ -91,6 +95,11 @@ export const useSyncProject = (): SyncState => {
         case SyncProgress.FAILED: {
           abortController.current?.abort?.();
           await cleanupRequest();
+          break;
+        }
+        case SyncProgress.REFRESHING_PERMISSIONS: {
+          await getUserGroups(true);
+          setProgress(SyncProgress.SWITCH_TO_PROJECT);
           break;
         }
         case SyncProgress.SWITCH_TO_PROJECT: {
@@ -113,23 +122,31 @@ export const useSyncProject = (): SyncState => {
           break;
         }
         case SyncProgress.SYNCING_PROJECT: {
-          const res = await ApiUtils.generateRequest<any>({
-            requestPath: '/api/projects',
-            requestType: ApiUtils.RequestType.POST,
-            signal: abortController.current?.signal,
-            payload: mapProjectEntityToProjectDTO(project)
-          });
-          if(res.success) {
-            setProgress(SyncProgress.SYNCING_CORPORA);
-          } else {
-            if((res.response?.message ?? "").includes("duplicate key")) {
-              setUniqueNameError(true);
-              setSnackBarMessage("Failed to sync project. Project name already exists");
+          if ((project.location === ProjectLocation.SYNCED && isAdmin)
+              || (project.location === ProjectLocation.LOCAL)) {
+            const res = await ApiUtils.generateRequest<any>({
+              requestPath: '/api/projects',
+              requestType: ApiUtils.RequestType.POST,
+              signal: abortController.current?.signal,
+              payload: mapProjectEntityToProjectDTO(project)
+            });
+            if (res.success) {
+              setProgress(SyncProgress.SYNCING_CORPORA);
             } else {
-              setSnackBarMessage("Failed to sync project.");
+              if (res.response.statusCode === 403) {
+                setSnackBarMessage('You do not have permission to complete this operation');
+              } else if ((res.body?.message ?? "").includes("duplicate key")) {
+                setUniqueNameError(true);
+                setSnackBarMessage("Failed to sync project. Project name already exists");
+              } else {
+                setSnackBarMessage("Failed to sync project.");
+              }
+              console.error("Response failed: ", res.body);
+              setIsSnackBarOpen(true);
+              setProgress(SyncProgress.FAILED);
             }
-            console.error("Response failed: ", res.response);
-            setProgress(SyncProgress.FAILED);
+          } else {
+            setProgress(SyncProgress.SYNCING_CORPORA);
           }
           break;
         }
@@ -142,15 +159,35 @@ export const useSyncProject = (): SyncState => {
             project.sourceCorpora = containers.sourceContainer;
             project.targetCorpora = containers.targetContainer;
           }
-          await syncWordsOrParts(project);
+          const res = await syncWordsOrParts(project);
+          if (!res?.success) {
+            if (res?.response.statusCode === 403) {
+              setSnackBarMessage('You do not have permission to sync corpora. Skipping corpora');
+            } else {
+              setSnackBarMessage('An unknown error occurred while attempting to sync corpora. Skipping corpora');
+            }
+            setIsSnackBarOpen(true);
+          }
           setProgress(SyncProgress.SYNCING_ALIGNMENTS);
           break;
         }
         case SyncProgress.SYNCING_ALIGNMENTS: {
           if (project.location === ProjectLocation.LOCAL) {
-            await uploadAlignments(project.id)
+            const uploadResponse = await uploadAlignments(project.id);
+            if (!uploadResponse?.success) {
+              if (uploadResponse?.response.statusCode === 403) {
+                setSnackBarMessage('You do not have permission to upload alignment links. Skipping links');
+              } else {
+                setSnackBarMessage('An unknown error occurred while attempting to upload alignment links. Skipping links');
+              }
+              setIsSnackBarOpen(true);
+            }
           } else {
-            await syncAlignments(project.id);
+            const syncResponse = await syncAlignments(project.id);
+            if (!syncResponse) {
+              setSnackBarMessage('An error occurred while attempting to synchronize alignment links. Skipping links');
+              setIsSnackBarOpen(true);
+            }
           }
           setProgress(SyncProgress.UPDATING_PROJECT);
           break;
@@ -185,6 +222,8 @@ export const useSyncProject = (): SyncState => {
       await publishProject(project, ProjectState.PUBLISHED);
     }
   }, [progress, projectState, cleanupRequest, publishProject,
+    setIsSnackBarOpen,
+    isAdmin,
     setSnackBarMessage, syncAlignments, syncWordsOrParts,
     dbApi,
     setProjects,
@@ -205,7 +244,7 @@ export const useSyncProject = (): SyncState => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
-  React.useEffect(() =>{
+  useEffect(() =>{
     // Prevent the Database busyDialog from showing concurrently
     // with this project dialog
     setIsProjectDialogOpen(![
@@ -215,7 +254,7 @@ export const useSyncProject = (): SyncState => {
     ].includes(progress))
   }, [progress, setIsProjectDialogOpen])
 
-  const dialog = React.useMemo(() => {
+  const dialog = useMemo(() => {
     let dialogMessage = 'Loading...';
     switch (progress) {
       case SyncProgress.SYNCING_LOCAL:
@@ -262,7 +301,7 @@ export const useSyncProject = (): SyncState => {
       setCanceled(false);
       setInitialProjectState(project);
       setSyncTime(DateTime.now().toMillis());
-      setProgress(SyncProgress.SWITCH_TO_PROJECT);
+      setProgress(SyncProgress.REFRESHING_PERMISSIONS);
     },
     progress,
     dialog: dialog,

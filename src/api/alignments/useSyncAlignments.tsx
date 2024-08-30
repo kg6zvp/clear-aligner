@@ -9,12 +9,13 @@ import { JournalEntryTableName, LinksTable } from '../../state/links/tableManage
 import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { ApiUtils } from '../utils';
+import ResponseObject = ApiUtils.ResponseObject;
 
 export interface SyncState {
   file?: AlignmentFile;
   progress: Progress;
-  sync: (projectId?: string, controller?: AbortController) => Promise<unknown>;
-  upload: (projectId?: string, controller?: AbortController) => Promise<unknown>;
+  sync: (projectId?: string, controller?: AbortController) => Promise<boolean>;
+  upload: (projectId?: string, controller?: AbortController) => Promise<ResponseObject<{}>|undefined>;
   dialog: any;
 }
 
@@ -55,7 +56,7 @@ export const useSyncAlignments = (): SyncState => {
   const fetchLinks = useCallback(async (signal: AbortSignal, projectId?: string) => {
     let resultLinks: ServerAlignmentLinkDTO[] = [];
     try {
-      const { response: alignmentLinkResponse } = await ApiUtils.generateRequest<ServerLinksDTO>({
+      const { body: alignmentLinkResponse } = await ApiUtils.generateRequest<ServerLinksDTO>({
         requestPath: `/api/projects/${projectId}/alignment_links`,
         requestType: ApiUtils.RequestType.GET,
         signal: abortController.current?.signal
@@ -91,6 +92,7 @@ export const useSyncAlignments = (): SyncState => {
       return true;
     } catch (x) {
       console.error(x);
+      return false;
     }
   }, [sendJournal, fetchLinks]);
 
@@ -101,7 +103,7 @@ export const useSyncAlignments = (): SyncState => {
       const linksTable = new LinksTable(alignmentProjectId);
       const linksInDb = (await linksTable.getAll())
         .map(mapLinkEntityToServerAlignmentLink);
-      await ApiUtils.generateRequest({
+      return await ApiUtils.generateRequest<{}>({
         requestPath: `/api/projects/${alignmentProjectId}/alignment_links`,
         requestType: ApiUtils.RequestType.POST,
         signal,

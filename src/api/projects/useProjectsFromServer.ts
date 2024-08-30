@@ -38,7 +38,7 @@ export const useProjectsFromServer = ({ syncProjectsKey, enabled = true }: UsePr
         requestPath: '/api/projects',
         requestType: RequestType.GET
       });
-      const projectDtos = (projectsResponse.response ?? []) as ProjectDTO[];
+      const projectDtos = (projectsResponse.body ?? []) as ProjectDTO[];
 
       const projects = (
         Array.isArray(projectDtos)

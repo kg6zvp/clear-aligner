@@ -64,6 +64,10 @@ export module ApiUtils {
       && (contentLengthOptional || getContentLength(response.headers['content-length']) > 0)
       && 'body' in response) {
       return await (response.body as Response).json();
+    } else if (response.statusCode) {
+      return {
+        ...response
+      };
     } else {
       return {};
     }
@@ -98,9 +102,15 @@ export module ApiUtils {
     expectedStatusCode: number;
   }
 
+  /**
+   * Response object model
+   */
   export interface ResponseObject<T> {
     success: boolean;
-    response: T;
+    response: {
+      statusCode: number;
+    };
+    body: T;
   }
 
   export const generateRequest = async <T> ({
@@ -122,7 +132,8 @@ export module ApiUtils {
       });
       return {
         success: response.ok,
-        response: await getFetchResponseObject(response,
+        response: { statusCode: response.status },
+        body: await getFetchResponseObject(response,
           contentLengthOptional ?? requestType === RequestType.GET)
       };
     } else {
@@ -131,7 +142,12 @@ export module ApiUtils {
         path: requestPath,
         options: payload ? getApiOptionsWithAuth(payload) : getApiOptionsWithAuth()
       });
-      const response = await responseOperation.response;
+      let response;
+      try {
+        response = await responseOperation.response;
+      } catch(x) {
+        response = (x as any ?? {}).response;
+      }
       if (signal) {
         signal.onabort = () => {
           responseOperation.cancel();
@@ -139,7 +155,8 @@ export module ApiUtils {
       }
       return {
         success: validateStatusCode(response.statusCode, requestType, options.expectedStatusCode),
-        response: await getAmplifyResponseObject(response as RestApiResponse,
+        response: (response as RestApiResponse),
+        body: await getAmplifyResponseObject(response as RestApiResponse,
           contentLengthOptional || requestType === RequestType.GET)
       };
     }
