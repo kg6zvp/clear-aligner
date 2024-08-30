@@ -8,7 +8,7 @@ import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
-import { useGridApiContext } from '@mui/x-data-grid';
+import { GridApiCommunity } from '@mui/x-data-grid/internals';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -24,6 +24,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
+  apiRef?:  React.MutableRefObject<GridApiCommunity>
 }
 
 /**
@@ -43,7 +44,8 @@ export const VerseDisplay = ({
                                corpus,
                                verse,
                                onlyLinkIds,
-                               allowGloss = false
+                               allowGloss = false,
+                               apiRef
                              }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -89,7 +91,6 @@ export const VerseDisplay = ({
    * condensing algorithm so that tokens are visible in the table
    */
   let isAlignedWordCutoff= false ;
-  const apiRef = useGridApiContext();
   const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
 
   // iterate over verse Tokens and calculate its length
@@ -126,7 +127,7 @@ export const VerseDisplay = ({
   console.log('verseTokens: ', verseTokens)
 
   // aligned word is cutoff from being displayed in the table
-  if(isAlignedWordCutoff == true){
+  if(isAlignedWordCutoff == true && apiRef){
     return (
       <div>
         early return

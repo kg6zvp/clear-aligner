@@ -9,7 +9,6 @@ import {
   GridEventListener,
   GridInputRowSelectionModel,
   GridRenderCellParams,
-  GridRowHeightParams,
   GridRowParams,
   GridRowSelectionModel,
   GridSortItem,
@@ -477,7 +476,7 @@ export const AlignmentTable = ({
       flex: 1,
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <VerseCell {...row} />
+        <VerseCell {...row}  />
       )
     },
     {

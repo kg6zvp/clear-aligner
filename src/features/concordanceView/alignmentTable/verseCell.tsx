@@ -2,7 +2,7 @@
  * This file contains the VerseCell component which renders verse text for use
  * in the AlignmentTable
  */
-import { GridRenderCellParams } from '@mui/x-data-grid';
+import { GridRenderCellParams, useGridApiContext } from '@mui/x-data-grid';
 import { Link, Verse } from '../../../structs';
 import { useContext } from 'react';
 import _ from 'lodash';
@@ -41,6 +41,7 @@ export const VerseCell = (
   const anyVerse = verses.find((v) => !!v.bcvId);
   const languageInfo = container?.languageAtReferenceString(anyVerse?.bcvId!.toReferenceString()!);
 
+  const apiRef = useGridApiContext();
 
   return (
     <div
@@ -59,6 +60,7 @@ export const VerseCell = (
           readonly
           verse={verse}
           corpus={container?.corpusAtReferenceString(verse?.bcvId?.toReferenceString())}
+          apiRef={apiRef}
         />
       ))}
     </div>
