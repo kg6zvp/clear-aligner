@@ -16,6 +16,6 @@ then
 	exit 0
 fi
 
-sanitized_branch_name=$(parse_git_branch|sed 's~[^[:alnum:]/]\+~~g')
+sanitized_branch_name=$(parse_git_branch|sed 's~[^[[:alnum:]-]/]\+~~g')
 
-npm --no-git-tag-version --allow-same-version --no-commit-hooks version "${base_version}-${sanitized_branch_name}--$(date +%Y-%m-%d-%H-%M)"
+npm --no-git-tag-version --allow-same-version --no-commit-hooks version "${base_version}--${sanitized_branch_name}--$(date +%Y-%m-%d-%H-%M)"
