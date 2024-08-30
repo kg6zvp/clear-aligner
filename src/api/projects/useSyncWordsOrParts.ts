@@ -66,6 +66,9 @@ export const useSyncWordsOrParts = (): SyncState => {
         return tokenResponse;
       } else {
         setProgress(Progress.SUCCESS);
+        return {
+          success: true,
+        } as ResponseObject<ProjectTokenReport>;
       }
     } catch (x) {
       console.error(x);
