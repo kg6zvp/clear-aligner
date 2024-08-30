@@ -10,6 +10,7 @@ import { Progress } from '../ApiModels';
 import { Button, CircularProgress, Dialog, Grid, Typography } from '@mui/material';
 import { ApiUtils } from '../utils';
 import ResponseObject = ApiUtils.ResponseObject;
+import { useCurrentUserGroups } from '../../hooks/userInfoHooks';
 
 export interface SyncState {
   file?: AlignmentFile;
