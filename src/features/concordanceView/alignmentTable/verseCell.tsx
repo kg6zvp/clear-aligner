@@ -59,7 +59,7 @@ export const VerseCell = (
       }}
     >
       {verses.map((verse: Verse) => (
-        <span style = {{color: theme.typography.unlinked.color}}>
+        <span style = {{color: theme.typography.linked.color}}>
           <VerseDisplay
             key={verse?.bcvId?.toReferenceString() ?? ''}
             onlyLinkIds={row.row.id ? [row.row.id] : []}

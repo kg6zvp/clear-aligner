@@ -158,6 +158,9 @@ const lightTheme: Theme = createTheme({
       fontStyle: 'italic',
       color: grey['500'],
     },
+    linked: {
+      color: '#000000',
+    },
     selected: {
       color: grey['50'],
       backgroundColor: grey['800'],
@@ -351,6 +354,9 @@ const darkTheme = createTheme({
     unlinked: {
       fontStyle: 'italic',
       color: grey['500'],
+    },
+    linked: {
+      color: '#FFFFFF',
     },
     selected: {
       color: grey['50'],
