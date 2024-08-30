@@ -126,10 +126,10 @@ export const VerseDisplay = ({
     }
 
     return readonly && isAlignedWordCutoff && linkMap
-      ? compressAlignedWords(verseTokens.flat(), linkMap).map(x => [x])
+      ? compressAlignedWords(verseTokens, linkMap)
       : verseTokens;
 
-  }, [linkMap, readonly, verseTokens]);
+  }, [apiRef, linkMap, readonly, verseTokens]);
 
   // aligned word is visible in the table
   return (

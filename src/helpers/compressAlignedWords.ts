@@ -39,27 +39,28 @@ const MAX_CONTEXT_WORDS = 2;
  * @param inputWords
  * @param linkMap
  */
-export const compressAlignedWords = (inputWords: Word[], linkMap: Map<string, Link[]>): CompressedWord[] => {
+export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, Link[]>): CompressedWord[][] => {
   // compute 0-based indexes, to simplify implementation
-  const alignedWordIdxs = inputWords
+  const workInputWords = inputWords.flat();
+  const alignedWordIdxs = workInputWords
     .map((inputWord, inputIdx) => linkMap.has(inputWord.id) ? inputIdx : -1)
     .filter(inputIdx => inputIdx >= 0);
   if (alignedWordIdxs.length === 0) {
-    return inputWords.map(inputWord => {
+    return workInputWords.map(inputWord => {
       return {
         ...inputWord,
         wordType: WordType.ContextWord
       } as CompressedWord;
-    });
+    }).map(outputWord => [outputWord]);
   }
-  const maxWordIdx = inputWords.length - 1;
+  const maxWordIdx = workInputWords.length - 1;
   // output is a fixed-sized array as large as the input, to simplify implementation
-  const workWords: (CompressedWord | undefined)[] = new Array(inputWords.length).fill(undefined);
+  const workWords: (CompressedWord | undefined)[] = new Array(workInputWords.length).fill(undefined);
   // iterate supplied words
   alignedWordIdxs.forEach(alignedWordIdx => {
     // always place aligned words in output (take priority over everything else)
     workWords[alignedWordIdx] = {
-      ...inputWords[alignedWordIdx],
+      ...workInputWords[alignedWordIdx],
       wordType: WordType.AlignedWord
     };
     // build context words and ellipses
@@ -77,7 +78,7 @@ export const compressAlignedWords = (inputWords: Word[], linkMap: Map<string, Li
         // only place words in the output when there's nothing or a lower-priority word type
         // at the given position (e.g., aligned > context, context > ellipsis, aligned > ellipsis)
         if ((outputWord?.wordType ?? WordType.NoWord) < targetType) {
-          const inputWord = inputWords[nextCtr];
+          const inputWord = workInputWords[nextCtr];
           workWords[nextCtr] = {
             ...inputWord,
             text: targetType === WordType.Ellipsis ? '\u2026' : inputWord.text,
@@ -88,11 +89,29 @@ export const compressAlignedWords = (inputWords: Word[], linkMap: Map<string, Li
       });
     }
   });
-  // filter out unused (undefined) output array entries and consecutive ellipses
-  const outputWords = workWords.filter(Boolean) as CompressedWord[];
-  return outputWords.filter(
+  // filter out unused (undefined) output array entries
+  const outputWords1 = workWords.filter(Boolean) as CompressedWord[];
+  // filter out consecutive ellipses
+  const outputWords2 = outputWords1.filter(
     (outputWord, outputIdx) =>
       outputIdx === 0
       || outputWord.wordType !== WordType.Ellipsis
-      || outputWords[outputIdx - 1].wordType !== WordType.Ellipsis);
+      || outputWords1[outputIdx - 1].wordType !== WordType.Ellipsis);
+  // create array-of-arrays of words with integral ellipses
+  let tempOutputWords3: CompressedWord[] = [];
+  const outputWords3: CompressedWord[][] = [];
+  outputWords2.forEach(outputWord => {
+    if (tempOutputWords3.length === 0
+      || outputWord.wordType === WordType.Ellipsis
+      || tempOutputWords3[tempOutputWords3.length - 1].wordType === WordType.Ellipsis) {
+      tempOutputWords3.push(outputWord);
+    } else {
+      outputWords3.push(tempOutputWords3);
+      tempOutputWords3 = [outputWord];
+    }
+  });
+  if (tempOutputWords3.length > 0) {
+    outputWords3.push(tempOutputWords3);
+  }
+  return outputWords3;
 };
