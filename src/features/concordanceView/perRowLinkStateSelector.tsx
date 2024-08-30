@@ -126,7 +126,7 @@ export const PerRowLinkStateSelector = ({
         paddingY: '4px',
         gap: '12px',
         marginLeft: '-10px',
-        backgroundColor: 'white'
+        backgroundColor: theme.palette.linkStateSelector.backgroundColor,
       }}
       direction={'row'}
     >

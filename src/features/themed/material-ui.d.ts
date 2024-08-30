@@ -146,6 +146,7 @@ declare module '@mui/material/styles' {
     }
     linkStateSelector: {
       border: string;
+      backgroundColor: string;
     }
   }
 }

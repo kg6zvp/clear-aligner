@@ -147,7 +147,8 @@ const lightTheme: Theme = createTheme({
     },
     transparent: '#00000000',
     linkStateSelector: {
-      border: alpha('#000000', .12)
+      border: alpha('#000000', .12),
+      backgroundColor: '#FFFFFF',
     },
     alignmentStateMenu: {
       check: alpha('#000000', .56)
@@ -344,7 +345,8 @@ const darkTheme = createTheme({
     },
     transparent: '#00000000',
     linkStateSelector: {
-      border: alpha('#000000', .12)
+      border: alpha('#000000', .12),
+      backgroundColor: alpha('#FFFFFF', .12)
     },
     alignmentStateMenu: {
       check: alpha('#FFFFFF', .86)
