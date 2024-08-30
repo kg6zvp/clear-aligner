@@ -326,6 +326,12 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   const groups = useCurrentUserGroups({ forceRefresh: true });
   const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
 
+  const isFormReadOnly = useMemo<boolean>(() => {
+    if (project.location === ProjectLocation.REMOTE) return true;
+    if (project.location === ProjectLocation.SYNCED && (!isAdmin || !isSignedIn)) return true;
+    return false;
+  }, [isAdmin, isSignedIn, project.location]);
+
   return (
     <>
       <Typography variant={'subtitle1'}
@@ -350,7 +356,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                     flexGrow: 1
                   }}>
                   <TextField size="small" label={'Name'} sx={{  }} fullWidth type="text" value={project.name}
-                             disabled={project.location === ProjectLocation.REMOTE}
+                             disabled={isFormReadOnly}
                              onChange={({ target: { value: name } }) =>
                                handleUpdate({ name })}
                              error={invalidProjectName}
@@ -368,7 +374,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                             fullWidth
                             type="text"
                             value={project.abbreviation}
-                            disabled={project.location === ProjectLocation.REMOTE}
+                            disabled={isFormReadOnly}
                             onChange={({ target: { value: abbreviation } }) =>
                                handleUpdate({ abbreviation })}
                   />
@@ -399,7 +405,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                           sx={{
                           }}
                           fullWidth type="text" value={project.textDirection}
-                          disabled={project.location === ProjectLocation.REMOTE}
+                          disabled={isFormReadOnly}
                           onChange={({ target: { value: textDirection } }) =>
                             handleUpdate({ textDirection: textDirection as string })
                           }>
@@ -429,7 +435,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                         maxHeight: 250
                       }
                     }}
-                    disabled={project.location === ProjectLocation.REMOTE}
+                    disabled={isFormReadOnly}
                     value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
                     onChange={(_, language) =>
                       handleUpdate({
@@ -482,7 +488,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
         <Button
           onClick={handleClose}>Cancel</Button>
         <Button
-          disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
+          disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || isFormReadOnly}
           onClick={e => {
             handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
               // handleClose() in the .then() ensures dialog doesn't close prematurely
