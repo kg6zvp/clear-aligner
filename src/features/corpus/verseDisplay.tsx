@@ -28,7 +28,7 @@ export interface VerseDisplayProps extends LimitedToLinks {
   apiRef?: React.MutableRefObject<GridApiCommunity>;
 }
 
-const VerseWidthAdjustmentFactor = 1.8;
+const VerseWidthAdjustmentFactor = 1.88;
 
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
