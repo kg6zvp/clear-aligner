@@ -146,6 +146,10 @@ const lightTheme: Theme = createTheme({
       default: '#FAFAFA'
     },
     transparent: '#00000000',
+    linkStateSelector: {
+      border: alpha('#000000', .12),
+      backgroundColor: '#FFFFFF',
+    },
     alignmentStateMenu: {
       check: alpha('#000000', .56)
     }
@@ -154,6 +158,9 @@ const lightTheme: Theme = createTheme({
     unlinked: {
       fontStyle: 'italic',
       color: grey['500'],
+    },
+    linked: {
+      color: '#000000',
     },
     selected: {
       color: grey['50'],
@@ -337,6 +344,10 @@ const darkTheme = createTheme({
       default: '#121212',
     },
     transparent: '#00000000',
+    linkStateSelector: {
+      border: alpha('#000000', .12),
+      backgroundColor: alpha('#FFFFFF', .12)
+    },
     alignmentStateMenu: {
       check: alpha('#FFFFFF', .86)
     }
@@ -345,6 +356,9 @@ const darkTheme = createTheme({
     unlinked: {
       fontStyle: 'italic',
       color: grey['500'],
+    },
+    linked: {
+      color: '#FFFFFF',
     },
     selected: {
       color: grey['50'],

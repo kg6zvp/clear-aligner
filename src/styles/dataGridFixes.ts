@@ -44,3 +44,10 @@ export const DataGridOutlineFix = {
     outline: "none !important"
   }
 }
+
+/**
+ * add to sx on DataGrid to resize the Svg Icons
+ */
+export const DataGridSvgFix = {
+  '& .MuiSvgIcon-root': { fontSize: 20 }
+};
