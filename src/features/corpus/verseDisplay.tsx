@@ -101,8 +101,8 @@ export const VerseDisplay = ({
     let printableVerse = '';
     let printableVerseUpToAlignedWord = '';
 
-    verseTokens.forEach((token) => {
-      token.forEach((subToken) => {
+    verseTokens.forEach(token => {
+      token.forEach(subToken => {
         verseCharacterLength += subToken.text.length;
         printableVerse += subToken.text + ' ';
         if (linkMap?.has(subToken.id) && !tokenFound) {
@@ -132,24 +132,20 @@ export const VerseDisplay = ({
   }, [apiRef, linkMap, readonly, verseTokens]);
 
   // aligned word is visible in the table
-  return (
-    <>
-      {(displayTokens || []).map(
-        (token: Word[], index): ReactElement => (
-          <WordDisplay
-            key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-            variant={variant}
-            links={linkMap}
-            readonly={readonly}
-            onlyLinkIds={onlyLinkIds}
-            corpus={corpus}
-            parts={token}
-            allowGloss={allowGloss}
-          />
-        )
-      )}
-    </>
-  );
+  return <>
+    {(displayTokens || []).map(
+      (token: Word[], index): ReactElement => <WordDisplay
+          key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+          variant={variant}
+          links={linkMap}
+          readonly={readonly}
+          onlyLinkIds={onlyLinkIds}
+          corpus={corpus}
+          parts={token}
+          allowGloss={allowGloss}
+        />
+    )}
+  </>;
 
 
 };
