@@ -25,8 +25,10 @@ export interface VerseDisplayProps extends LimitedToLinks {
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
-  apiRef?:  React.MutableRefObject<GridApiCommunity>;
+  apiRef?: React.MutableRefObject<GridApiCommunity>;
 }
+
+const VerseWidthAdjustmentFactor = 1.8;
 
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
@@ -96,32 +98,27 @@ export const VerseDisplay = ({
     const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
 
     // iterate over verse Tokens and calculate its length
-    let verseCharacterLength = 0;
-    let tokenFound = false;
     let printableVerse = '';
     let printableVerseUpToAlignedWord = '';
 
     verseTokens.forEach(token => {
       token.forEach(subToken => {
-        verseCharacterLength += subToken.text.length;
-        printableVerse += subToken.text + ' ';
-        if (linkMap?.has(subToken.id) && !tokenFound) {
+        printableVerse += ((!!printableVerse ? ' ' : '') + subToken.text);
+        // we want to keep going in case we're looking at multiple target tokens
+        if (linkMap?.has(subToken.id)) {
           printableVerseUpToAlignedWord = printableVerse;
-          tokenFound = true;
         }
       });
     });
 
-    const text = printableVerseUpToAlignedWord;
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      let printableVerseWidth = ctx.measureText(text).width;
-      let adjustedPrintableVerseWidth = printableVerseWidth * 1.75;
-      if (adjustedPrintableVerseWidth) {
-        if (adjustedPrintableVerseWidth > computedColumnWidth) {
-          isAlignedWordCutoff = true;
-        }
+    const verseText = printableVerseUpToAlignedWord;
+    const textCanvas = document.createElement('canvas');
+    const canvasContext = textCanvas.getContext('2d');
+    if (canvasContext) {
+      const printableVerseWidth = canvasContext.measureText(verseText).width;
+      const adjustedPrintableVerseWidth = printableVerseWidth * VerseWidthAdjustmentFactor;
+      if (adjustedPrintableVerseWidth > computedColumnWidth) {
+        isAlignedWordCutoff = true;
       }
     }
 
@@ -135,15 +132,15 @@ export const VerseDisplay = ({
   return <>
     {(displayTokens || []).map(
       (token: Word[], index): ReactElement => <WordDisplay
-          key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-          variant={variant}
-          links={linkMap}
-          readonly={readonly}
-          onlyLinkIds={onlyLinkIds}
-          corpus={corpus}
-          parts={token}
-          allowGloss={allowGloss}
-        />
+        key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+        variant={variant}
+        links={linkMap}
+        readonly={readonly}
+        onlyLinkIds={onlyLinkIds}
+        corpus={corpus}
+        parts={token}
+        allowGloss={allowGloss}
+      />
     )}
   </>;
 

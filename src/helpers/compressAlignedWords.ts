@@ -20,7 +20,7 @@ export interface CompressedWord extends Word {
 /**
  * Maximum number of words on either side of an aligned words to retain in the compressed output.
  */
-const MAX_CONTEXT_WORDS = 2;
+const MaxContextWords = 2;
 
 /**
  * Takes an array of word objects and 1-based indexes (IDs) and produces an array of compressed words
@@ -65,7 +65,7 @@ export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, 
       wordType: WordType.AlignedWord
     };
     // build context words and ellipses
-    for (let ctr = 1; ctr <= MAX_CONTEXT_WORDS + 1; ctr++) {
+    for (let ctr = 1; ctr <= MaxContextWords + 1; ctr++) {
       // iterate outward from aligned word index, before and after
       const nextCtrs = [
         Math.min(maxWordIdx, alignedWordIdx + ctr),
@@ -74,7 +74,7 @@ export const compressAlignedWords = (inputWords: Word[][], linkMap: Map<string, 
       nextCtrs.forEach(nextCtr => {
         const outputWord = workWords[nextCtr];
         // figure out if we're placing a context word or are far enough for an ellipsis
-        const targetType = ctr <= MAX_CONTEXT_WORDS
+        const targetType = ctr <= MaxContextWords
           ? WordType.ContextWord : WordType.Ellipsis;
         // only place words in the output when there's nothing or a lower-priority word type
         // at the given position (e.g., aligned > context, context > ellipsis, aligned > ellipsis)
