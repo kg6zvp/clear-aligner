@@ -55,7 +55,7 @@ jobs:
           .ci/modify-build-num.sh
           yarn build:mac
         env:
-          BUILD_NUMBER: ${{ vars.BUILD_NUMBER }}
+          BUILD_NUMBER: ${{ github.run_number }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -96,20 +96,10 @@ jobs:
           .ci/modify-build-num.sh
           yarn build:win
         env:
-          BUILD_NUMBER: ${{ vars.BUILD_NUMBER }}
+          BUILD_NUMBER: ${{ github.run_number }}
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: 'win'
           path: dist/**.exe
           retention-days: 7
-  increment-build-number:
-    if: github.ref == 'refs/heads/main'
-    needs: [build-mac, build-win]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Increment Build Number
-        uses: action-pack/increment@v2
-        with:
-          name: 'BUILD_NUMBER'
-          token: ${{ secrets.CA_BUILD_NUMBER_PAT }}
