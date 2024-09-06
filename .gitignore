@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Secrets
+.env
+
 # dependencies
 /node_modules
 /.pnp
@@ -14,7 +17,6 @@
 /ui
 
 # Prevent the npm package lock files
-yarn.lock
 package-lock.json
 
 # misc

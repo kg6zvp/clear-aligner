@@ -36,6 +36,9 @@ import { usePublishProject } from '../../api/projects/usePublishProject';
 import { AlignmentSide, CORPORA_TABLE_NAME } from '../../common/data/project/corpus';
 import { useDatabase } from '../../hooks/useDatabase';
 import UploadAlignmentGroup from '../controlPanel/uploadAlignmentGroup';
+import { ADMIN_GROUP, useCurrentUserGroups } from '../../hooks/userInfoHooks';
+import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { getUserGroups } from '../../server/amplifySetup';
 
 enum ProjectDialogMode {
   CREATE = 'create',
@@ -95,6 +98,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                                                      }: ProjectSettingsProps) => {
   const dispatch = useAppDispatch();
   const { publishProject, dialog: publishDialog } = usePublishProject();
+  const { setIsSnackBarOpen, setSnackBarMessage } = useContext(AppContext);
   const { projectState, preferences, setProjects, setPreferences, projects } = useContext(AppContext);
   const initialProjectState = useMemo<Project>(() => getInitialProjectState(), []);
   const [project, setProject] = useState<Project>(initialProjectState);
@@ -103,6 +107,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
   const [openConfirmUnpublish, setOpenConfirmUnpublish] = useState(false);
   const [fileContent, setFileContent] = useState('');
   const [projectUpdated, setProjectUpdated] = useState(false);
+  const { deleteProject } = useDeleteProject();
   const languageOptions = useMemo(() =>
     ['', ...Object.keys(ISO6393).map((key: string) => ISO6393[key as keyof typeof ISO6393])]
       .sort((a, b) => a.localeCompare(b)), []);
@@ -318,6 +323,15 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
       </Box>);
   }, [uploadErrors, project.fileName, project.location, handleUpdate, setUploadErrors, setFileContent, projectId]);
 
+  const groups = useCurrentUserGroups({ forceRefresh: true });
+  const isAdmin = useMemo<boolean>(() => (groups ?? []).includes(ADMIN_GROUP), [groups]);
+
+  const isFormReadOnly = useMemo<boolean>(() => {
+    if (project.location === ProjectLocation.REMOTE) return true;
+    if (project.location === ProjectLocation.SYNCED && (!isAdmin || !isSignedIn)) return true;
+    return false;
+  }, [isAdmin, isSignedIn, project.location]);
+
   return (
     <>
       <Typography variant={'subtitle1'}
@@ -342,7 +356,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                     flexGrow: 1
                   }}>
                   <TextField size="small" label={'Name'} sx={{  }} fullWidth type="text" value={project.name}
-                             disabled={project.location === ProjectLocation.REMOTE}
+                             disabled={isFormReadOnly}
                              onChange={({ target: { value: name } }) =>
                                handleUpdate({ name })}
                              error={invalidProjectName}
@@ -360,7 +374,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                             fullWidth
                             type="text"
                             value={project.abbreviation}
-                            disabled={project.location === ProjectLocation.REMOTE}
+                            disabled={isFormReadOnly}
                             onChange={({ target: { value: abbreviation } }) =>
                                handleUpdate({ abbreviation })}
                   />
@@ -391,7 +405,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                           sx={{
                           }}
                           fullWidth type="text" value={project.textDirection}
-                          disabled={project.location === ProjectLocation.REMOTE}
+                          disabled={isFormReadOnly}
                           onChange={({ target: { value: textDirection } }) =>
                             handleUpdate({ textDirection: textDirection as string })
                           }>
@@ -421,7 +435,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                         maxHeight: 250
                       }
                     }}
-                    disabled={project.location === ProjectLocation.REMOTE}
+                    disabled={isFormReadOnly}
                     value={ISO6393[project.languageCode as keyof typeof ISO6393] || ''}
                     onChange={(_, language) =>
                       handleUpdate({
@@ -454,12 +468,13 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   : <Box />
               }
               {
-                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn)
+                (project && allowDelete && project.location === ProjectLocation.SYNCED && isSignedIn && isAdmin)
                   ?
-                  <Button variant="text" sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
-                          onClick={() => setOpenConfirmUnpublish(true)}
-                          startIcon={<Unpublished />}
-                  >Delete From Server</Button>
+                  <Button
+                    variant="text"
+                    sx={theme => ({ textTransform: 'none', color: theme.palette.text.secondary })}
+                    onClick={() => setOpenConfirmUnpublish(true)}
+                    startIcon={<Unpublished />}>Delete From Server</Button>
                   : <Box />
               }
             </Grid>
@@ -473,7 +488,7 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
         <Button
           onClick={handleClose}>Cancel</Button>
         <Button
-          disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || project.location === ProjectLocation.REMOTE}
+          disabled={!enableCreate || projectState.projectTable?.isDatabaseBusy() || isFormReadOnly}
           onClick={e => {
             handleSubmit(projectId ? ProjectDialogMode.EDIT : ProjectDialogMode.CREATE, e).then(() => {
               // handleClose() in the .then() ensures dialog doesn't close prematurely
@@ -515,8 +530,33 @@ const ProjectSettings: React.FC<ProjectSettingsProps> = ({
                   Go Back
                 </Button>
                 <Button variant="contained" onClick={() => {
-                  setOpenConfirmUnpublish(false);
-                  publishProject(project, ProjectState.DRAFT).then(() => handleClose());
+                  getUserGroups(true)
+                    .then((groups) => {
+                      const isAdmin = (groups ?? [] as string[])?.includes(ADMIN_GROUP);
+                      const displayPermissionsErrorMsg = () => {
+                        setSnackBarMessage('You do not have permission to complete this operation');
+                        setIsSnackBarOpen(true);
+                      }
+                      if (!isAdmin) {
+                        displayPermissionsErrorMsg();
+                        setOpenConfirmUnpublish(false);
+                        return;
+                      }
+                      setOpenConfirmUnpublish(false);
+                      const initialProjectState = project.state ?? ProjectState.PUBLISHED;
+                      publishProject(project, ProjectState.DRAFT)
+                        .then(() => {
+                          return deleteProject(project.id)
+                            .then((response) => {
+                              if (!response || response?.success)
+                                return;
+                              if (response?.response.statusCode === 403) {
+                                void publishProject(project, initialProjectState);
+                                displayPermissionsErrorMsg();
+                              }
+                            });
+                        });
+                    });
                 }} sx={{ ml: 2, borderRadius: 10 }}>Delete</Button>
               </Grid>
             </Grid>

@@ -6,14 +6,27 @@ import { Link, LinkStatus } from '../../structs';
 import {
   DataGrid,
   GridColDef,
+  GridEventListener,
+  GridInputRowSelectionModel,
   GridRenderCellParams,
   GridRowParams,
+  GridRowSelectionModel,
   GridSortItem,
-  GridInputRowSelectionModel,
-  GridRowSelectionModel, GridRowHeightParams
+  useGridApiContext,
+  useGridApiEventHandler
 } from '@mui/x-data-grid';
-import { CircularProgress, IconButton, TableContainer } from '@mui/material';
-import { CancelOutlined, CheckCircleOutlined, FlagOutlined, Launch } from '@mui/icons-material';
+import { CircularProgress, IconButton, Menu, MenuItem, TableContainer, useTheme } from '@mui/material';
+import {
+  Cancel,
+  CancelOutlined,
+  CheckCircle,
+  CheckCircleOutlined,
+  Flag,
+  FlagOutlined,
+  Link as LinkIcon
+} from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CircleIcon from '@mui/icons-material/Circle';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import BCVWP from '../bcvwp/BCVWPSupport';
 import { BCVDisplay } from '../bcvwp/BCVDisplay';
@@ -23,15 +36,17 @@ import {
   DataGridOutlineFix,
   DataGridResizeAnimationFixes,
   DataGridScrollbarDisplayFix,
+  DataGridSvgFix,
   DataGridTripleIconMarginFix
 } from '../../styles/dataGridFixes';
 import { VerseCell } from './alignmentTable/verseCell';
 import { useLinksFromAlignedWord } from './useLinksFromAlignedWord';
 import WorkbenchDialog from './workbenchDialog';
 import { Box } from '@mui/system';
-import { Link as LinkIcon } from '@mui/icons-material';
 import { SingleSelectButtonGroup } from './singleSelectButtonGroup';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { grey } from '@mui/material/colors';
+import { PerRowLinkStateSelector } from './perRowLinkStateSelector';
 
 /**
  * Interface for the AlignmentTableContext Component
@@ -56,8 +71,50 @@ export const RefCell = (
 ) => {
   const tableCtx = useContext(AlignmentTableContext);
   const refString = findFirstRefFromLink(row.row, tableCtx.wordSource);
+  const [rowHovered, setRowHovered] = useState(false);
+  const apiRef = useGridApiContext();
+
+  // this logic allows us to subscribe to mouse enter and mouse leave states
+  // inisde the datagrid
+  useEffect( () => {
+    if (apiRef.current.getRowElement(row.id)?.matches(":hover")){
+      setRowHovered(true);
+    }
+  },[apiRef, row.id])
+  const handleRowEnter: GridEventListener<"rowMouseEnter"> = ({id})  => {
+    id === row.id && setRowHovered(true);
+  }
+  const handleRowLeave: GridEventListener<'rowMouseLeave'> = ({id})  => {
+    id === row.id && setRowHovered(false);
+  }
+  useGridApiEventHandler(apiRef, "rowMouseEnter", handleRowEnter);
+  useGridApiEventHandler(apiRef, "rowMouseLeave", handleRowLeave);
+
   return (
-    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} />
+    rowHovered ? <PerRowLinkStateSelector items={[
+      {
+        value: 'created',
+        label: <LinkIcon />,
+        color: 'primary',
+      },
+      {
+        value: 'rejected',
+        label: <Cancel />,
+        color: 'error'
+      },
+      {
+        value: 'approved',
+        label: <CheckCircle />,
+        color: 'success'
+      },
+      {
+        value: 'needsReview',
+        label: <Flag />,
+        color: 'warning'
+      }]}
+      currentLink={row.row}
+      /> :
+    <BCVDisplay currentPosition={refString ? BCVWP.parseFromString(refString) : null} useParaText={true} />
   );
 };
 
@@ -71,12 +128,84 @@ export const LinkCell = ({ row, onClick }: {
   onClick: (tableCtx: AlignmentTableContextProps, link: Link) => void;
 }) => {
   const tableCtx = useContext(AlignmentTableContext);
+  const[isMenuOpen, setIsMenuOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const handleLinkClick = () => {
+    onClick(tableCtx, row.row)
+    handleClose();
+  }
+
+  const handleMoreVertIconClick = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    setAnchorEl(event.currentTarget)
+    setIsMenuOpen(true);
+  }
+
+  const handleClose = () => {
+    setIsMenuOpen(false);
+    setAnchorEl(null);
+  }
   return (
-    <IconButton onClick={() => onClick(tableCtx, row.row)}>
-      <Launch />
-    </IconButton>
+    <>
+      <IconButton onClick={(event) => handleMoreVertIconClick(event)} >
+        <MoreVertIcon/>
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={isMenuOpen}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+      >
+        <MenuItem
+          onClick={() => handleLinkClick()}
+        >
+          Verse Editor
+        </MenuItem>
+      </Menu>
+    </>
   );
 };
+
+/**
+ * Props for the StateCellIcon Component
+ */
+export interface StateCellIconProps {
+  state: Link;
+}
+/**
+ * Render the cell with its corresponding state icon
+ * @param state the current Link object
+ */
+export const StateCellIcon = ({
+                                state }:
+                                StateCellIconProps) => {
+  const theme = useTheme();
+
+  if (state.metadata.status === 'created'){
+    return (<LinkIcon sx={{
+      color: theme.palette.primary.main }}
+      />)
+  }
+  else if (state.metadata.status === 'approved'){
+    return <CheckCircle  sx={{
+      color: theme.palette.success.main,
+    }}
+    />
+  }
+  else if (state.metadata.status === 'needsReview'){
+    return <Flag  sx={{
+      color: theme.palette.warning.main,
+    }}/>
+  }
+}
+
 
 /**
  * Props for the StateCell Component
@@ -89,7 +218,6 @@ export interface StateCellProps {
   isRowSelected: boolean;
   alignmentTableControlPanelLinkState: LinkStatus | null;
 }
-
 
 /**
  * Render the cell with the link button from an alignment row to the alignment editor at the corresponding verse
@@ -303,8 +431,6 @@ export const AlignmentTable = ({
 
   const getRowId = useMemo( () => (row: any) => row.id, [] )
 
-  const getRowHeight = useMemo( () => (_: GridRowHeightParams) => 'auto', [])
-
   const sortModel = useMemo( () => sort ? [sort] : [], [sort])
 
   const columns: GridColDef[] = [
@@ -317,31 +443,31 @@ export const AlignmentTable = ({
       disableExport: true,
       filterable: false,
       sortable: false,
-      width: 20,
+      width: 10,
       align: 'center'
     },
     {
       field: 'state',
       headerName: 'State',
+      renderHeader: () => <CircleIcon sx={{
+        color: grey[400],
+        fontSize: '16px',
+      }}/>,
       sortable: false,
-      width: 175,
+      width: 10,
       disableColumnMenu: true,
       renderCell: row => {
-        return (<StateCell
-          setSaveButtonDisabled={setSaveButtonDisabled}
-          state={row.row}
-          isRowSelected={row.api.isRowSelected(row.id)}
-          setLinksPendingUpdate={setLinksPendingUpdate}
-          linksPendingUpdate={linksPendingUpdate}
-          alignmentTableControlPanelLinkState={alignmentTableControlPanelLinkState || null}
-        />)
+        return (
+          <StateCellIcon
+            state={row.row}
+          />)
       }
     },
     {
       field: 'ref',
-      headerName: 'Ref',
+      headerName: 'Bible Ref',
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <RefCell {...row} />
+          <RefCell {...row} />
       )
     },
     {
@@ -350,12 +476,14 @@ export const AlignmentTable = ({
       flex: 1,
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
-        <VerseCell {...row} />
+        <VerseCell {...row}  />
       )
     },
     {
       field: 'id',
-      headerName: 'Link',
+      headerName: '',
+      disableColumnMenu: true,
+      width: 1,
       sortable: false,
       renderCell: (row: GridRenderCellParams<Link, any, any>) => (
         <LinkCell row={row} onClick={() => {
@@ -379,6 +507,7 @@ export const AlignmentTable = ({
     ...DataGridResizeAnimationFixes,
     ...DataGridTripleIconMarginFix,
     ...DataGridOutlineFix,
+    ...DataGridSvgFix
   }
 
   if (loading) {
@@ -424,7 +553,6 @@ export const AlignmentTable = ({
               rows={rows}
               columns={columns}
               getRowId={getRowId}
-              getRowHeight={getRowHeight}
               sortModel={sortModel}
               onSortModelChange={onSortModelChange}
               initialState={initialState}
@@ -435,6 +563,7 @@ export const AlignmentTable = ({
               onRowSelectionModelChange={onRowSelectionModelChange}
               hideFooterSelectedRowCount
               disableRowSelectionOnClick
+              rowHeight={35}
             />
           </>
         )}

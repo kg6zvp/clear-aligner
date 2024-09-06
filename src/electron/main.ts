@@ -24,6 +24,18 @@ function createWindow() {
     }
   });
 
+  // allow links to external sites to be opened outside the Electron
+  win.webContents.setWindowOpenHandler(() => {
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        fullscreen: false,
+        width: 550,
+        height: 700,
+        autoHideMenuBar: true,
+    }
+  }});
+
   // and load the index.html of the app.
   if (isDev) {
     win.loadURL('http://localhost:3000');

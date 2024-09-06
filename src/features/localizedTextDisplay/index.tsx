@@ -31,7 +31,7 @@ export const LocalizedTextDisplay = ({
         ...(languageInfo?.fontFamily
           ? { fontFamily: languageInfo?.fontFamily }
           : {}),
-        ...((typographyProps.sx as CallableFunction | undefined)?.(theme) ?? {})
+        ...((typographyProps as any).sx ?? {})
       })}
     >
       {children}

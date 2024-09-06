@@ -6,6 +6,9 @@ Read the [public documentation](https://biblica.gitbook.io/clear-aligner) to lea
 
 ## Local development Quickstart
 
+- Setup the environment variables (secrets)
+  - Copy the `.env.template` file to `.env`
+  - replace the sample values with the correct values
 - Install dependencies: `source ./setup.sh`
 - Build: `yarn build`
   - build for Windows: `yarn build:win`
@@ -54,6 +57,4 @@ sql/create-db.sh
 
 This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
 
----
-
-ClearAligner is stewarded by [Biblica](https://biblica.com) and is released under an open source [license](LICENSE).
+**ClearAligner** is stewarded by [Biblica](https://biblica.com) and is released under an open source [license](LICENSE).

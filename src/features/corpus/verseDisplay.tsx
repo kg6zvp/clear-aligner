@@ -4,10 +4,12 @@
  */
 import { Corpus, Link, Verse, Word } from '../../structs';
 import { ReactElement, useMemo } from 'react';
-import { WordDisplay } from '../wordDisplay';
+import { WordDisplay, WordDisplayVariant } from '../wordDisplay';
 import { groupPartsIntoWords } from '../../helpers/groupPartsIntoWords';
 import { useDataLastUpdated, useFindLinksByBCV, useGetLink } from '../../state/links/tableManager';
 import { AlignmentSide } from '../../common/data/project/corpus';
+import { compressAlignedWords } from '../../helpers/compressAlignedWords';
+import { GridApiCommunity } from '@mui/x-data-grid/internals';
 
 /**
  * optionally declare only link data from the given links will be reflected in the verse display
@@ -19,27 +21,34 @@ export interface LimitedToLinks {
 
 export interface VerseDisplayProps extends LimitedToLinks {
   readonly?: boolean;
+  variant?: WordDisplayVariant;
   corpus?: Corpus;
   verse: Verse;
   allowGloss?: boolean;
+  apiRef?: React.MutableRefObject<GridApiCommunity>;
 }
+
+const VerseWidthAdjustmentFactor = 1.895;
 
 /**
  * Display the text of a verse and highlight the words included in alignments, includes a read-only mode for display
  * which doesn't edit alignments
  * @param readonly optional property to specify if the verse should be displayed in read-only mode
+ * @param variant which component variant to use
  * @param corpus Corpus containing language information to determine how the verse should be displayed
  * @param verse verse to be displayed
  * @param onlyLinkIds
  * @param allowGloss
+ * @param apiRef optional api reference to the MUI datagrid
  * @constructor
  */
 export const VerseDisplay = ({
                                readonly,
+                               variant,
                                corpus,
                                verse,
                                onlyLinkIds,
-                               allowGloss = false
+                               allowGloss = false, apiRef
                              }: VerseDisplayProps) => {
   const dataLastUpdated = useDataLastUpdated();
   const verseTokens: Word[][] = useMemo(
@@ -65,31 +74,75 @@ export const VerseDisplay = ({
       && !onlyLink) {
       return;
     }
-    const result = new Map<string, Link>();
+    const result = new Map<string, Link[]>();
     (allLinks ?? [onlyLink as Link])
       .filter(link => onlyLinkIds?.includes(link!.id!) ?? true)
       .forEach(link => ((alignmentSide === AlignmentSide.SOURCE
         ? link!.sources
         : link!.targets) ?? [])
-        .forEach(wordId => result.set(wordId, link!)));
+        .forEach(wordId => {
+          if (!result.has(wordId)) {
+            result.set(wordId, []);
+          }
+          result.get(wordId)!.push(link!);
+        }));
     return result;
   }, [onlyLinkIds, allLinks, onlyLink, alignmentSide]);
 
-  return (
-    <>
-      {(verseTokens || []).map(
-        (token: Word[], index): ReactElement => (
-          <WordDisplay
-            key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
-            links={linkMap}
-            readonly={readonly}
-            onlyLinkIds={onlyLinkIds}
-            corpus={corpus}
-            parts={token}
-            allowGloss={allowGloss}
-          />
-        )
-      )}
-    </>
-  );
+  const displayTokens = useMemo(() => {
+    /*
+     * Calculate length of the verse to see if we need to run it through a
+     * condensing algorithm so that tokens are visible in the table
+     */
+    let isAlignedWordCutoff = false;
+    const computedColumnWidth = apiRef ? apiRef.current.getColumn('verse').computedWidth : 0;
+
+    // iterate over verse Tokens and calculate its length
+    let printableVerse = '';
+    let printableVerseUpToAlignedWord = '';
+
+    verseTokens.forEach(token => {
+      token.forEach(subToken => {
+        printableVerse += ((!!printableVerse ? ' ' : '') + subToken.text);
+        // we want to keep going in case we're looking at multiple target tokens
+        if (linkMap?.has(subToken.id)) {
+          printableVerseUpToAlignedWord = printableVerse;
+        }
+      });
+    });
+
+    const verseText = printableVerseUpToAlignedWord;
+    const textCanvas = document.createElement('canvas');
+    const canvasContext = textCanvas.getContext('2d');
+    if (canvasContext) {
+      const printableVerseWidth = canvasContext.measureText(verseText).width;
+      const adjustedPrintableVerseWidth = printableVerseWidth * VerseWidthAdjustmentFactor;
+      if (adjustedPrintableVerseWidth > computedColumnWidth) {
+        isAlignedWordCutoff = true;
+      }
+    }
+
+    return readonly && isAlignedWordCutoff && linkMap
+      ? compressAlignedWords(verseTokens, linkMap)
+      : verseTokens;
+
+  }, [apiRef, linkMap, readonly, verseTokens]);
+
+  // aligned word is visible in the table
+  return <>
+    {(displayTokens || []).map(
+      (token: Word[], index): ReactElement => <WordDisplay
+        key={`${alignmentSide}:${index}/${token.at(0)?.id}`}
+        variant={variant}
+        links={linkMap}
+        readonly={readonly}
+        onlyLinkIds={onlyLinkIds}
+        corpus={corpus}
+        parts={token}
+        allowGloss={allowGloss}
+      />
+    )}
+  </>;
+
+
 };
