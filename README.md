@@ -57,4 +57,6 @@ sql/create-db.sh
 
 This script requires Python3 installed and the corpora TSV files to be in `src/tsv`.
 
+---
+
 **ClearAligner** is stewarded by [Biblica](https://biblica.com) and is released under an open source [license](LICENSE).
