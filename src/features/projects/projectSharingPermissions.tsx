@@ -12,7 +12,7 @@ import {
   TableRow, TextField,
   Theme
 } from '@mui/material';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useUsersFromServer } from '../../hooks/userInfoHooks';
 
 interface UserEntryRowProps {
@@ -39,15 +39,22 @@ const UserEntryRow = ({
 interface UserEmailAutocompleteProps {
   disabled?: boolean;
   onSubmit: (email: string) => void;
+  currentMembers: string[];
 }
 
 const UserEmailAutocomplete = ({
                                  disabled,
-                                 onSubmit
+                                 onSubmit,
+                                 currentMembers
 }: UserEmailAutocompleteProps) => {
 
-  const usersOnServer = useUsersFromServer();
+  const usersFromServer = useUsersFromServer();
   const [ draftEmail, setDraftEmail ] = useState<string>('');
+
+  const filteredUsersFromServer = useMemo<string[]|undefined>(() => {
+    if (!usersFromServer) return undefined;
+    return usersFromServer.filter((v) => !currentMembers.includes(v));
+  }, [ usersFromServer, currentMembers ]);
 
   return (<>
     <Grid
@@ -68,14 +75,17 @@ const UserEmailAutocomplete = ({
         freeSolo
         clearOnBlur
         value={draftEmail}
-        options={!!usersOnServer ? usersOnServer : ['Loading...']}
+        options={!!filteredUsersFromServer ? filteredUsersFromServer : ['Loading...']}
         onChange={(e, v, r) => setDraftEmail(v ?? '')}
         renderInput={(params) => <TextField {...params} label={'Add User'} />}
       />
-      <Button variant={'contained'} onClick={() => {
-        onSubmit(draftEmail);
-        setDraftEmail('');
-      }}>Add</Button>
+      <Button
+        disabled={disabled}
+        variant={'contained'}
+        onClick={() => {
+          onSubmit(draftEmail);
+          setDraftEmail('');
+        }}>Add</Button>
     </Grid>
   </>);
 }
@@ -116,7 +126,8 @@ const ProjectSharingPermissions = ({
   }}>
     <UserEmailAutocomplete
       disabled={disabled}
-      onSubmit={handleAdd} />
+      onSubmit={handleAdd}
+      currentMembers={members} />
     <TableContainer
       sx={{
         marginTop: '8px',
