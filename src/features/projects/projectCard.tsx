@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useCorpusContainers } from '../../hooks/useCorpusContainers';
 import { ADMIN_GROUP, useIsSignedIn } from '../../hooks/userInfoHooks';
 import { useDownloadProject } from '../../api/projects/useDownloadProject';
@@ -17,7 +17,6 @@ import {
   CollectionsBookmark,
   Computer,
   Download,
-  Settings,
   Sync,
   Upload
 } from '@mui/icons-material';
@@ -29,6 +28,8 @@ import { DateTime } from 'luxon';
 import ProjectCreationDialog from './projectCreationDialog';
 import { Project } from '../../state/projects/tableManager';
 import { currentProjectBorderIndicatorHeight, projectCardHeight, projectCardMargin, projectCardWidth } from './index';
+import useProjectCardSettingsMenu from './projectCardSettingsMenu';
+import useProjectSharingDialog from './useProjectSharingDialog';
 
 /**
  * props for the project card component
@@ -97,7 +98,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     setUniqueNameError
   } = useSyncProject();
 
-  const { setPreferences, projectState, preferences, userStatus } = useContext(AppContext);
+  const { setPreferences, projectState, preferences, userStatus, setProjects } = useContext(AppContext);
   const isCurrentProject = useMemo(() => project.id === currentProject?.id, [project.id, currentProject?.id]);
 
   const isSignedIn = useIsSignedIn();
@@ -133,6 +134,32 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         return (<CloudDoneOutlined sx={propCompute} />);
     }
   }, [project.location]);
+
+  const serverActionButtonDisabled: boolean = useMemo(() => {
+    switch (project.location) {
+      case ProjectLocation.SYNCED:
+        if (!project) {
+          return true;
+        }
+        if (disableProjectButtons) {
+          return true;
+        }
+        const containers = [project.sourceCorpora, project.targetCorpora];
+        if (!isSignedIn || containers.length < 1) {
+          return true;
+        }
+        if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
+          return false;
+        }
+        if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
+          return false;
+        }
+        return !([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
+          .some((corpus) => !!corpus.updatedSinceSync));
+      default:
+        return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
+    }
+  }, [project, disableProjectButtons, isSignedIn, syncingProject]);
 
   const serverActionButton = useMemo(() => {
     const signedOutIcon = (
@@ -172,32 +199,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       }
     })();
 
-    const buttonDisabled: boolean = (() => {
-      switch (project.location) {
-        case ProjectLocation.SYNCED:
-          if (!project) {
-            return true;
-          }
-          if (disableProjectButtons) {
-            return true;
-          }
-          const containers = [project.sourceCorpora, project.targetCorpora];
-          if (!isSignedIn || containers.length < 1) {
-            return true;
-          }
-          if ((project.updatedAt ?? 0) > (project.lastSyncTime ?? 0)) {
-            return false;
-          }
-          if ((project.serverUpdatedAt ?? 0) > (project.lastSyncServerTime ?? 0)) {
-            return false;
-          }
-          return !([...(project.sourceCorpora?.corpora ?? []), ...(project.targetCorpora?.corpora ?? [])]
-            .some((corpus) => !!corpus.updatedSinceSync));
-        default:
-          return ![SyncProgress.IDLE, SyncProgress.FAILED].includes(syncingProject) || disableProjectButtons;
-      }
-    })();
-
     const actionButton = (() => {
       const buttonStyle = {
         margin: 0,
@@ -206,14 +207,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         minWidth: '0px !important'
       };
       const iconStyle = (theme: Theme) => ({
-        fill: buttonDisabled ? theme.palette.text.secondary : theme.palette.primary.main
+        fill: serverActionButtonDisabled ? theme.palette.text.secondary : theme.palette.primary.main
       });
       switch (project.location) {
         case ProjectLocation.LOCAL:
           if (!isAdmin) return (<></>);
           return (
             <Button variant="text"
-                    disabled={buttonDisabled || !isAdmin}
+                    disabled={serverActionButtonDisabled || !isAdmin}
                     sx={buttonStyle}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -225,7 +226,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         case ProjectLocation.REMOTE:
           return (
             <Button variant="text"
-                    disabled={buttonDisabled}
+                    disabled={serverActionButtonDisabled}
                     sx={buttonStyle}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -237,7 +238,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         case ProjectLocation.SYNCED:
           return (
             <Button variant="text"
-                    disabled={buttonDisabled}
+                    disabled={serverActionButtonDisabled}
                     sx={buttonStyle}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -253,29 +254,43 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
     return (
       <RemovableTooltip
-        removed={buttonDisabled}
+        removed={serverActionButtonDisabled}
         title={tooltipText}>
         {actionButton}
       </RemovableTooltip>
     );
-  }, [isSignedIn, usingCustomEndpoint, syncingProject, disableProjectButtons, syncLocalProjectWithServer, downloadProject, syncProject, project, isAdmin]);
+  }, [isSignedIn, usingCustomEndpoint, syncLocalProjectWithServer, downloadProject, syncProject, project, isAdmin, serverActionButtonDisabled]);
 
-  const settingsButton = useMemo(() => (
-    <Button variant="text"
-            size="small"
-            sx={{
-              margin: 0,
-              padding: 0,
-              textTransform: 'none',
-              minWidth: '0px !important'
-            }}
-            disabled={disableProjectButtons}
-            onClick={e => {
-              e.stopPropagation();
-              onOpenProjectSettings(project);
-            }}
-    ><Settings /></Button>
-  ), [project, onOpenProjectSettings, disableProjectButtons]);
+  const [ isProjectSharingDialogOpen, setIsProjectSharingDialogOpen ] = useState<boolean>();
+
+  const { settingsMenu, isSettingsMenuOpen } = useProjectCardSettingsMenu({
+    disabled: disableProjectButtons,
+    project: project,
+    onEdit: () => onOpenProjectSettings(project),
+    onShare: () => setIsProjectSharingDialogOpen(true),
+    onSync: !serverActionButtonDisabled ? syncLocalProjectWithServer : undefined,
+    showDeleteFromServer: isAdmin && (project.location === ProjectLocation.SYNCED || project.location === ProjectLocation.REMOTE),
+    onDeleteFromServer: () => undefined/* TODO: delete project from server */,
+    showDeleteLocalProject: project.location === ProjectLocation.SYNCED || project.location === ProjectLocation.LOCAL,
+    onDeleteLocalProject: () => undefined /* TODO: delete local project */
+  });
+
+  const { dialog: projectSharingDialog } = useProjectSharingDialog({
+    project,
+    open: isProjectSharingDialogOpen,
+    onCancel: () => setIsProjectSharingDialogOpen(false),
+    onSave: async (project: Project) => {
+      project.updatedAt = DateTime.now().toMillis();
+      await projectState.projectTable?.update?.(project, false, false, true);
+      setPreferences((p) => ({
+        ...(p ?? {}) as UserPreference,
+        initialized: InitializationStates.UNINITIALIZED
+      }));
+      const updatedProjects = await projectState.projectTable?.getProjects(true);
+      setProjects(p => Array.from(updatedProjects?.values?.() ?? p));
+      setIsProjectSharingDialogOpen(false);
+    }
+  });
 
   const cardContents: JSX.Element = (
     <CardContent sx={{
@@ -284,6 +299,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       flexDirection: 'column',
       height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%'
     }}>
+      {projectSharingDialog}
       {isProjectDialogOpen ?
         (<>
           <ProjectSettings closeCallback={() => onOpenProjectSettings(undefined)} projectId={project.id}
@@ -306,7 +322,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 variant={'h6'}>
                 {project.name}
               </Typography>
-              {locationIndicator}
+              {settingsMenu}
             </Box>
             <Grid container justifyContent="center" alignItems="center" sx={{ height: '100%' }}>
               <Typography variant="h6"
@@ -335,7 +351,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   justifyContent: 'flex-end',
                   alignItems: 'initial'
                 }}>
-                {settingsButton}
+                {locationIndicator}
               </Box>
               <Box
                 sx={{
@@ -401,10 +417,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 width: '100%',
                 height: '100%'
               }}
-              onClick={(e) => {
+              onClick={!isSettingsMenuOpen ? (e) => {
                 e.preventDefault();
                 !isCurrentProject && updateCurrentProject();
-              }}>
+              } : undefined}>
               {cardContents}
             </CardActionArea>
           </>
