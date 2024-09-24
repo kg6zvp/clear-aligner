@@ -30,6 +30,9 @@ import { Project } from '../../state/projects/tableManager';
 import { currentProjectBorderIndicatorHeight, projectCardHeight, projectCardMargin, projectCardWidth } from './index';
 import useProjectCardSettingsMenu from './projectCardSettingsMenu';
 import useProjectSharingDialog from './useProjectSharingDialog';
+import { useDeleteProject } from '../../api/projects/useDeleteProject';
+import { useDeleteProjectFromServerWithDialog } from '../../api/projects/useDeleteProjectFromServerWithDialog';
+import { useDeleteProjectFromLocalWithDialog } from '../../api/projects/useDeleteProjectFromLocalWithDialog';
 
 /**
  * props for the project card component
@@ -263,6 +266,15 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   const [ isProjectSharingDialogOpen, setIsProjectSharingDialogOpen ] = useState<boolean>();
 
+  const {
+    dialog: deleteRemoteProjectDialog,
+    showDeleteProjectDialog: showDeleteRemoteProjectDialog
+  } = useDeleteProjectFromServerWithDialog({ project });
+  const {
+    dialog: deleteLocalProjectDialog,
+    showDeleteProjectDialog: showDeleteLocalProjectDialog
+  } = useDeleteProjectFromLocalWithDialog({ project });
+
   const { settingsMenu, isSettingsMenuOpen } = useProjectCardSettingsMenu({
     disabled: disableProjectButtons,
     project: project,
@@ -270,9 +282,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     onShare: () => setIsProjectSharingDialogOpen(true),
     onSync: !serverActionButtonDisabled ? syncLocalProjectWithServer : undefined,
     showDeleteFromServer: isAdmin && (project.location === ProjectLocation.SYNCED || project.location === ProjectLocation.REMOTE),
-    onDeleteFromServer: () => undefined/* TODO: delete project from server */,
+    onDeleteFromServer: showDeleteRemoteProjectDialog,
     showDeleteLocalProject: project.location === ProjectLocation.SYNCED || project.location === ProjectLocation.LOCAL,
-    onDeleteLocalProject: () => undefined /* TODO: delete local project */
+    onDeleteLocalProject: showDeleteLocalProjectDialog
   });
 
   const { dialog: projectSharingDialog } = useProjectSharingDialog({
@@ -299,6 +311,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       flexDirection: 'column',
       height: isCurrentProject ? `calc(100% + ${currentProjectBorderIndicatorHeight})` : '100%'
     }}>
+      {project.location !== ProjectLocation.REMOTE && deleteLocalProjectDialog}
+      {project.location !== ProjectLocation.LOCAL && deleteRemoteProjectDialog}
       {projectSharingDialog}
       {isProjectDialogOpen ?
         (<>

@@ -76,7 +76,7 @@ export const useUsersFromServer = (): string[]|undefined => {
   useEffect(() => {
     const retrieveList = async () => {
       const usersResponse = await generateRequest<string[]>({
-        requestPath: '/api/users',
+        requestPath: '/api/non_admin_users',
         requestType: RequestType.GET
       });
       if (usersResponse.success) {
